@@ -1,0 +1,41 @@
+# makefile for macosx
+
+flags = -msse3 -mfpmath=sse -march=prescott -O3 -Wall -Iode
+#flags = -Wall -Iode -DDEBUG
+
+headers := $(wildcard *.h)
+examples := $(patsubst %.cpp,%,$(wildcard *.cpp))
+
+libs := -Lode -lode -lruby
+frameworks := -framework Carbon -framework OpenGL -framework AGL
+
+all : ${examples} sandbox Client.app
+
+% : %.cpp makefile ${headers}
+	g++ $< -o $@ ${flags} ${libs} ${frameworks}
+
+%.app : %
+	rm -rf $<.app
+	mkdir $<.app
+	mkdir $<.app/Contents
+	mkdir $<.app/Contents/MacOS
+	cp $< $<.app/Contents/MacOS/
+	
+client : Client
+	./Client
+
+client_app : Client.app
+	open Client.app
+
+Sandbox.bundle : Sandbox.cpp ${headers}
+	g++ Sandbox.cpp -dynamiclib -o Sandbox.bundle ${flags} ${libs} ${frameworks}
+
+sandbox : Sandbox.bundle
+
+clean:
+	rm *.bundle
+	rm -f ${examples}
+	rm -rf *.app
+	rm -f *.a
+	rm game.xml
+	rm export.xml

@@ -1,0 +1,31 @@
+<!-- scene declaration -->
+<objects>
+	
+	<object id="1" type="a">
+		<component name="a" version="1">
+			<property name="integerProperty" value="20"/>
+			<property name="floatProperty" value="2.0"/>
+			<property name="vectorProperty" value="(0.123,0.234,0.345)"/>
+		</component>
+		<component name="c" version="1">
+			<property name="booleanProperty" value="true"/>
+			<property name="integerProperty" value="5"/>
+		</component>
+		<component name="d" version="1">
+			<property name="integerProperty" value="3"/>
+			<property name="unitVectorProperty" value="(0,1,0)"/>
+		</component>
+	</object>
+	
+	<object id="2" type="b">
+		<component name="b" version="1">
+			<property name="vectorProperty" value="(0.321,0.6432,0.1234)"/>
+			<property name="quaternionProperty" value="(1,0,0,0)"/>
+		</component>
+		<component name="c" version="1">
+			<property name="booleanProperty" value="true"/>
+			<property name="integerProperty" value="7"/>
+		</component>
+	</object>
+	
+</objects>
