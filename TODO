@@ -1,0 +1,36 @@
+DONE:
+
+    Basic serialization, serialize_int etc.
+
+    Base object for serialization with virtual Serialize( Stream & stream ) method.
+
+    Back packet class with serialize, address string (eg. sent from), and type int.
+
+    Factory class to create packets from type.
+
+    If you try to create an object of a type that is not registered, throw a runtime_error
+    or assert in the blah with the X.
+
+TODO:
+
+    Implement actual network interface. 
+
+    First implement map from address string to destination IP low level
+
+    First, determine if IPv6 or IPv6 address and create appropriate address.
+
+    Next, if possible it would be cool to lookup the address if not a valid IPv6 or IPv6
+    via DNS asynchronously
+
+    Network interface should run on a separate thread.
+
+    Sending and receiving packets should be done on this thread, and it should wake when packets
+    come in. 
+
+    Worker thread should handle the serialize read/write of packets, and automatically
+    discard any packets that cannot be serialized. eg. catch exception.
+
+    Main thread should just see atomic queues of shared_ptr to packets that it can
+    push on to send, and pop from to receive.
+
+

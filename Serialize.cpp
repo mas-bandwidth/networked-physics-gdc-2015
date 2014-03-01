@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include <queue>
+#include <map>
 #include <iostream>
 #include <stdexcept>
 
@@ -128,6 +129,32 @@ namespace protocol
 
         virtual std::shared_ptr<Packet> Receive() = 0;
     };
+
+    template <typename T> class Factory
+    {
+    public:
+
+        typedef std::function< std::shared_ptr<T>() > create_function;
+
+        void Register( int type, create_function const & function )
+        {
+            create_map[type] = function;
+        }
+
+        std::shared_ptr<T> Create( int type )
+        {
+            auto itor = create_map.find( type );
+            assert( itor != create_map.end() );
+            if ( itor == create_map.end() )
+                throw std::runtime_error( "invalid object type passed to create" );
+            else
+                return itor->second();
+        }
+
+    private:
+
+        std::map<int,create_function> create_map;
+    };  
 }
 
 // -------------------------------------------------------
@@ -231,7 +258,6 @@ struct UpdatePacket : public Packet
     }
 };
 
-
 struct DisconnectPacket : public Packet
 {
     DisconnectPacket() : Packet( PACKET_Disconnect ) {}
@@ -288,12 +314,34 @@ void test_interface()
     assert( interface.Receive() == nullptr );
 }
 
+void test_factory()
+{
+    cout << "test_factory" << endl;
+
+    Factory<Packet> factory;
+
+    factory.Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
+    factory.Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
+    factory.Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+
+    auto connectPacket = factory.Create( PACKET_Connect );
+    auto updatePacket = factory.Create( PACKET_Update );
+    auto disconnectPacket = factory.Create( PACKET_Disconnect );
+
+    assert( connectPacket->GetType() == PACKET_Connect );
+    assert( updatePacket->GetType() == PACKET_Update );
+    assert( disconnectPacket->GetType() == PACKET_Disconnect );
+
+    factory.Create( 5 );
+}
+
 int main()
 {
     try
     {
         test_serialize_object();
         test_interface();
+        test_factory();
     }
     catch ( runtime_error & e )
     {
@@ -302,19 +350,3 @@ int main()
 
     return 0;
 }
-
-/*
-
-#include <memory>
-#include <vector>
-// ...
-// circle and shape are user-defined types
-auto p = make_shared<circle>( 42 );
-vector<shared_ptr<shape>> v = load_shapes();
-
-for_each( begin(v), end(v), [&]( const shared_ptr<shape>& s ) {
-    if( s && *s == *p )
-        cout << *s << " is a match\n";
-} );
-
-*/
