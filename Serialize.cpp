@@ -187,32 +187,37 @@ namespace protocol
 
         Address( std::string address )
         {
-            // todo: if address starts with "[" then it is an IPv6 address with port
-            // strip out the [ ] and port in this case, then leave the string as the bit inside []
-
-            // try to parse what remains as an IPv6 address. if it passes then go with that.
-            /*
-            struct in6_addr sockaddr6;
-            rc = inet_pton( AF_INET6, address.c_str(), &sockaddr6 );
-            if ( rc == 1 )
-            {
-                memcpy( address6, &sockaddr6, 16 );
-                // todo: print ipv6 address bytes
-                type = AddressType::IPv6;
-            }
-            else
-            {
-                type = AddressType::Undefined;
-                memset( address6, 0, sizeof( address6 ) );
-                port = 0;
-            }
-            */            
-
-            // otherwise it's probably an IPv4 address.
-            // 1. look for ":portnum", if found strip out
-            // 2. parse remaining ipv4 address
+            // first try to parse as an IPv6 address:
+            // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
+            // 2. otherwise try to parse as raw IPv6 address, parse using inet_pton
 
             port = 0;
+            if ( address[0] == '[' )
+            {
+                const int base_index = address.size() - 1;
+                for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
+                {
+                    const int index = base_index - i;
+                    if ( address[index] == ':' )
+                    {
+                        const char * port_string = address.substr( index + 1, 6 ).c_str();
+                        port = atoi( port_string );
+                        address = address.substr( 1, index - 2 );
+                    }
+                }
+            }
+            struct in6_addr sockaddr6;
+            if ( inet_pton( AF_INET6, address.c_str(), &sockaddr6 ) == 1 )
+            {
+                memcpy( address6, &sockaddr6, 16 );
+                type = AddressType::IPv6;
+                return;
+            }
+
+            // otherwise it's probably an IPv4 address:
+            // 1. look for ":portnum", if found save the portnum and strip it out
+            // 2. parse remaining ipv4 address via inet_pton
+
             const int base_index = address.size() - 1;
             for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
             {
@@ -226,8 +231,7 @@ namespace protocol
             }
 
             struct sockaddr_in sockaddr4;
-            int rc = inet_pton( AF_INET, address.c_str(), &sockaddr4.sin_addr );
-            if ( rc == 1 )
+            if ( inet_pton( AF_INET, address.c_str(), &sockaddr4.sin_addr ) == 1 )
             {
                 type = AddressType::IPv4;
                 address4 = sockaddr4.sin_addr.s_addr;
@@ -283,8 +287,12 @@ namespace protocol
             }
             else if ( type == AddressType::IPv6 )
             {
-                // todo: convert to string representation
-                return "[::1]:200";
+                char addressString[INET6_ADDRSTRLEN];
+                inet_ntop( AF_INET6, &address6, addressString, INET6_ADDRSTRLEN );
+                if ( port != 0 )
+                    return format_string( "[%s]:%d", addressString, port );
+                else
+                    return addressString;
             }
             else
             {
@@ -777,10 +785,13 @@ void test_address6()
 {
     cout << "test_address6" << endl;
 
+    // without port numbers
+
     {
         const uint16_t address6[] = { 0xFE80, 0x0000, 0x0000, 0x0000, 0x0202, 0xB3FF, 0xFE1E, 0x8329 };
 
-        Address address( address6, 0 );
+        Address address( address6[0], address6[1], address6[2], address6[2],
+                         address6[4], address6[5], address6[6], address6[7] );
 
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
@@ -789,35 +800,122 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        assert( address.ToString() == "FE80:0000:0000:0000:0202:B3FF:FE1E:8329" );
+        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
     }
 
-    /*
+    {
+        const uint16_t address6[] = { 0xFE80, 0x0000, 0x0000, 0x0000, 0x0202, 0xB3FF, 0xFE1E, 0x8329 };
+
+        Address address( address6 );
+
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 0 );
+
+        for ( int i = 0; i < 8; ++i )
+            assert( htons( address6[i] ) == address.GetAddress6()[i] );
+
+        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
+    }
+
+    {
+        const uint16_t address6[] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001 };
+
+        Address address( address6 );
+
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 0 );
+
+        for ( int i = 0; i < 8; ++i )
+            assert( htons( address6[i] ) == address.GetAddress6()[i] );
+
+        assert( address.ToString() == "::1" );
+    }
+
+    // same addresses but with port numbers
+
+    {
+        const uint16_t address6[] = { 0xFE80, 0x0000, 0x0000, 0x0000, 0x0202, 0xB3FF, 0xFE1E, 0x8329 };
+
+        Address address( address6[0], address6[1], address6[2], address6[2],
+                         address6[4], address6[5], address6[6], address6[7], 65535 );
+
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 65535 );
+
+        for ( int i = 0; i < 8; ++i )
+            assert( htons( address6[i] ) == address.GetAddress6()[i] );
+
+        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
+    }
+
+    {
+        const uint16_t address6[] = { 0xFE80, 0x0000, 0x0000, 0x0000, 0x0202, 0xB3FF, 0xFE1E, 0x8329 };
+
+        Address address( address6, 65535 );
+
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 65535 );
+
+        for ( int i = 0; i < 8; ++i )
+            assert( htons( address6[i] ) == address.GetAddress6()[i] );
+
+        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
+    }
+
+    {
+        const uint16_t address6[] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0001 };
+
+        Address address( address6, 65535 );
+
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 65535 );
+
+        for ( int i = 0; i < 8; ++i )
+            assert( htons( address6[i] ) == address.GetAddress6()[i] );
+
+        assert( address.ToString() == "[::1]:65535" );
+    }
+
+    // parse addresses from strings (no ports)
+
+    {
+        Address address( "fe80::202:b3ff:fe1e:8329" );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 0 );
+        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
+    }
 
     {
         Address address( "::1" );
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
         assert( address.GetPort() == 0 );
-        const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
-        assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
+        assert( address.ToString() == "::1" );
+    }
 
-        //assert( address.ToString() == "::1" );
+    // parse addresses from strings (with ports)
+
+    {
+        Address address( "[fe80::202:b3ff:fe1e:8329]:65535" );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 65535 );
+        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
     }
 
     {
-        Address address( "[::1]:300" );
+        Address address( "[::1]:65535" );
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
-        assert( address.GetPort() == 300 );
-        const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
-        assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
-
-        //assert( address.ToString() == "[::1]:300" );
+        assert( address.GetPort() == 65535 );
+        assert( address.ToString() == "[::1]:65535" );
     }
-    */
-
-    // todo: other ipv6 addresses
 }
 
 // --------------------------------------------------------------

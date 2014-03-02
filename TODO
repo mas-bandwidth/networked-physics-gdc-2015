@@ -8,8 +8,7 @@ DONE:
 
     Factory class to create packets from type.
 
-    If you try to create an object of a type that is not registered, throw a runtime_error
-    or assert in the blah with the X.
+    If you try to create an object of a type that is not registered, throw a runtime_error.
 
     Explore "getaddrinfo" for IPv6 aware hostname -> IP address etc.
 
@@ -25,13 +24,13 @@ DONE:
     Added code to initialize IPv6 with 16bit pairs, including htons
     (decided on network byte order for internal address data...)
 
+    Handle port number in IPv6 output string, eg. "[v6addr]:portnum"
+
 TODO:
 
-    Implement function to convert IPv6 address to string, with shortening.    
+    Implement IPv6 parse from string
 
-    Implement IPv6 parse with optional port, eg. []:portnum
-
-    Implement function to convert IPv6 string to address 16 bytes + port
+    Implement IPv6 parse from string with port, eg. "[addr6]:portnum"
 
     -----------------------------
 
