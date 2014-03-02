@@ -15,9 +15,17 @@ DONE:
 
     Implement basic address class capable of handling IPv6 and IPv6
 
+    Implement function to convert IPv4 string to address int + port
+
 TODO:
 
-    Implement function to convert IPv4 string to address int + port
+    Verify IPv4 UDP broadcast address is converted properly: 0xffffffff
+
+    Implement function to convert IPv6 address + port back to string
+
+    Test various cases.
+
+    ----------------------------------
 
     Implement function to convert IPv6 string to address 16 bytes + port
 
