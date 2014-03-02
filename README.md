@@ -13,11 +13,11 @@ This code is not production ready and never will be. Many things I do here are f
 
 Some things I do here that would never do at work include:
 
-a) Extensive use of C++11 features, lambdas, shared_ptr etc
-b) Usage of stl containers
-c) Usage of std::string
-d) Dynamic heap allocations at runtime
-e) Use of exceptions to report error conditions
+* Extensive use of C++11 features, lambdas, shared_ptr etc
+* Usage of stl containers
+* Usage of std::string
+* Dynamic heap allocations at runtime
+* Use of exceptions to report error conditions
 
 Please note that at the same time as wishing to explore network ideas at home, I am also using this project to explore C++11 features. So expect a bit of craziness as I learn this stuff.
 
