@@ -121,15 +121,6 @@ namespace protocol
         object.Serialize( stream );
     }
 
-    class Interface
-    {
-    public:
-
-        virtual void Send( const std::string & address, std::shared_ptr<Packet> packet ) = 0;
-
-        virtual std::shared_ptr<Packet> Receive() = 0;
-    };
-
     template <typename T> class Factory
     {
     public:
@@ -144,9 +135,8 @@ namespace protocol
         std::shared_ptr<T> Create( int type )
         {
             auto itor = create_map.find( type );
-            assert( itor != create_map.end() );
             if ( itor == create_map.end() )
-                throw std::runtime_error( "invalid object type passed to create" );
+                throw std::runtime_error( "invalid object type id in factory create" );
             else
                 return itor->second();
         }
@@ -154,7 +144,42 @@ namespace protocol
     private:
 
         std::map<int,create_function> create_map;
-    };  
+    };
+
+    class Interface
+    {
+    public:
+
+        virtual void Send( const std::string & address, std::shared_ptr<Packet> packet ) = 0;
+
+        virtual std::shared_ptr<Packet> Receive() = 0;
+    };
+
+    class NetworkInterface : public Interface
+    {
+    public:
+
+        void Send( const std::string & address, std::shared_ptr<Packet> packet )
+        {
+            // todo
+        }
+
+        std::shared_ptr<Packet> Receive()
+        {
+            // todo
+            return nullptr;
+        }
+
+    private:
+
+        // todo: send queue
+
+        // todo: recv queue
+
+        // todo: worker thread for sending packets (wakes up when work to do to send packets...)
+
+        // todo: worker thread for receiving packets (use blocking sockets initially...)
+    };
 }
 
 // -------------------------------------------------------
@@ -331,17 +356,278 @@ void test_factory()
     assert( connectPacket->GetType() == PACKET_Connect );
     assert( updatePacket->GetType() == PACKET_Update );
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
-
-    factory.Create( 5 );
 }
+
+// --------------------------------------------------------------
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
+void test_dns()
+{
+   struct addrinfo hints, *res, *p;
+   char ipstr[INET6_ADDRSTRLEN];
+
+   memset(&hints, 0, sizeof hints);
+   hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
+   hints.ai_socktype = SOCK_DGRAM;
+
+   const char hostname[] = "google.com";
+   printf( "IP addresses for %s:\n", hostname );
+
+    if ( getaddrinfo( hostname, NULL, &hints, &res ) != 0) 
+    {
+        cout << "error: getaddrinfo failed" << endl;
+        return;
+    }
+
+   for( p = res;p != NULL; p = p->ai_next )
+   {
+       void *addr;
+       const char *ipver;
+       // get the pointer to the address itself,
+       // different fields in IPv4 and IPv6:
+       if (p->ai_family == AF_INET) 
+       { 
+            // IPv4
+           struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+           addr = &(ipv4->sin_addr);/*error*/
+           ipver = "IPv4";
+       } 
+       else 
+       { 
+            // IPv6
+           struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
+           addr = &(ipv6->sin6_addr);/*error*/
+           ipver = "IPv6";
+       }
+       // convert the IP to a string and print it:
+       inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
+       printf( "  %s: %s\n", ipver, ipstr );
+   }
+   freeaddrinfo( res );
+}
+
+// --------------------------------------------------------------
+
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+void test_address()
+{
+    int    rc;
+    struct in6_addr serveraddr;
+    struct addrinfo hints, *res = NULL;
+
+    const char * server = "127.0.0.1:300";
+    //"2001:db8::1";
+    //"[2001:db8::1]:80";
+    //"google.com";   
+
+    memset( &hints, 0, sizeof(hints) );
+    hints.ai_flags = AI_NUMERICSERV;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    /********************************************************************/
+    /* Check if we were provided the address of the server using        */
+    /* inet_pton() to convert the text form of the address to binary    */
+    /* form. If it is numeric then we want to prevent getaddrinfo()     */
+    /* from doing any name resolution.                                  */
+    /********************************************************************/
+    rc = inet_pton( AF_INET, server, &serveraddr );
+    if (rc == 1)    /* valid IPv4 text address? */
+    {
+        cout << "valid IPv4 address" << endl;
+        hints.ai_family = AF_INET;
+        hints.ai_flags |= AI_NUMERICHOST;
+    }
+    else 
+    {
+        rc = inet_pton( AF_INET6, server, &serveraddr );
+        if (rc == 1) /* valid IPv6 text address? */
+        {
+            cout << "valid IPv6 address" << endl;
+            hints.ai_family = AF_INET6;
+            hints.ai_flags |= AI_NUMERICHOST;
+        }
+        else
+        {
+            cout << "hostname that needs to be resolved: " + string( server ) << endl;
+        }
+    }
+
+    /********************************************************************/
+    /* Get the address information for the server using getaddrinfo().  */
+    /********************************************************************/
+    cout << "before getaddrinfo" << endl;
+    rc = getaddrinfo( server, "4000", &hints, &res );
+    if (rc != 0)
+    {
+        cout << "error: getaddrinfo" << endl; 
+        return;
+    }
+
+    cout << "getaddrinfo succeeded" << endl;
+}
+
+// --------------------------------------------------------------
+
+enum class AddressType : char
+{
+    Undefined,
+    IPv4,
+    IPv6
+};
+
+class Address
+{
+public:
+
+    Address()
+    {
+        type = AddressType::Undefined;
+        memset( address_ipv6, 0, sizeof( address_ipv6 ) );
+        port = 0;
+    }
+
+    explicit Address( uint32_t address, int16_t _port )
+    {
+        type = AddressType::IPv4;
+        address_ipv4 = address;
+        port = _port;
+    }
+
+    explicit Address( uint16_t address[], uint16_t _port )
+    {
+        type = AddressType::IPv6;
+        memcpy( address_ipv6, address, sizeof( address_ipv6 ) );
+        port = _port;
+    }
+
+    Address( const std::string & address )
+    {
+        // todo: convert address, including port -- if port is not specified, set to zero.
+        type = AddressType::IPv6;
+        memset( address_ipv6, 0, sizeof( address_ipv6 ) );
+        port = 0;
+    }
+
+    const uint32_t GetAddress4() const
+    {
+        assert( type == AddressType::IPv4 );
+        return address_ipv4;
+    }
+
+    const uint8_t * GetAddress6() const
+    {
+        assert( type == AddressType::IPv6 );
+        return address_ipv6;
+    }
+
+    void SetPort( uint64_t _port )
+    {
+        port = _port;
+    }
+
+    const uint16_t GetPort() const 
+    {
+        return port;
+    }
+
+    AddressType GetType() const
+    {
+        return type;
+    }
+
+    std::string ToString() const
+    {
+        if ( type == AddressType::IPv4 )
+        {
+            // todo: convert to standard string representation
+            return "127.0.0.1:200";
+        }
+        else if ( type == AddressType::IPv6 )
+        {
+            // todo: convert to string representation
+            return "[::1]:200";
+        }
+        else
+        {
+            return "undefined";
+        }
+    }
+
+    bool IsValid() const
+    {
+        return type != AddressType::Undefined;
+    }
+
+private:
+
+    AddressType type;
+
+    union
+    {
+        uint32_t address_ipv4;
+        uint8_t address_ipv6[16];
+    };
+
+    uint16_t port;    
+};
+
+void test_address_4()
+{
+    cout << "test_address2" << endl;
+
+    Address address( "127.0.0.1:300" );
+    assert( address.IsValid() );
+    assert( address.GetType() == AddressType::IPv4 );
+    assert( address.GetPort() == 300 );
+    assert( address.GetAddress4() == 0x7F000001 );
+    assert( address.ToString() == "127.0.0.1:300" );
+
+    // todo: other ipv6 addresses, including with and without port, as well as broadcast address 0xffffffff
+}
+
+void test_address_6()
+{
+    Address address( "[::1]:300" );
+    assert( address.IsValid() );
+    assert( address.GetType() == AddressType::IPv6 );
+    assert( address.GetPort() == 300 );
+    const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
+    assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
+    assert( address.ToString() == "[::1]:300" );
+
+    // todo: other ipv6 addresses
+}
+
+// --------------------------------------------------------------
 
 int main()
 {
     try
     {
+        /*
         test_serialize_object();
         test_interface();
         test_factory();
+        test_dns();
+        test_address();
+        */
+        test_address_4();
+        test_address_6();
     }
     catch ( runtime_error & e )
     {
@@ -350,3 +636,35 @@ int main()
 
     return 0;
 }
+
+// ----------------------------------------------------------------
+
+// const expression
+
+#if 0
+enum Flags { good=0, fail=1, bad=2, eof=4 };
+
+    constexpr int operator|(Flags f1, Flags f2) { return Flags(int(f1)|int(f2)); }
+
+    void f(Flags x)
+    {
+        switch (x) {
+        case bad:         /* ... */ break;
+        case eof:         /* ... */ break;
+        case bad|eof:     /* ... */ break;
+        default:          /* ... */ break;
+        }
+    }
+#endif
+
+// quite cute
+
+/*
+    template<class T, class U>
+    auto mul(T x, U y) -> decltype(x*y)
+    {
+        return x*y;
+    }
+*/
+
+// ----------------------------------------------------------------

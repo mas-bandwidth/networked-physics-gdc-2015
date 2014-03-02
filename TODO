@@ -11,9 +11,62 @@ DONE:
     If you try to create an object of a type that is not registered, throw a runtime_error
     or assert in the blah with the X.
 
+    Explore "getaddrinfo" for IPv6 aware hostname -> IP address etc.
+
+    Implement basic address class capable of handling IPv6 and IPv6
+
 TODO:
 
-    Implement actual network interface. 
+    Implement function to convert IPv4 string to address int + port
+
+    Implement function to convert IPv6 string to address 16 bytes + port
+
+    Add unit tests to handle common cases
+
+    -----------------------------
+
+    Add new class "Resolver" to manage hash of hostnames -> address lists
+
+    New class should be separate from network interface so we can have
+    different implementations of network interface per-platform, network
+    library etc.
+
+    Once resolver is working it can be used as part of the platform
+    specific network interface, eg. MacOSX network interface.
+
+    ----------------------------
+
+    Initially what I want is to have an asynchronous resolve of address,
+    eg. take address string and resolve it either immediately to IPv6
+    or IPv6 --- or, try a DNS resolve on it asynchronously, and when
+    the resolution comes back (succeed or failure), add that DNS to
+    correct hash (known good, known bad).
+
+    This will allow me to have an interface that seamlessly allows me
+    to send packets to hostnames, IPv6 or IPv4 addresses as strings
+    without significant overhead.
+
+    Trick will be that for packets getting queued up that do not yet
+    have a resolved IP address they must be queued up in their own
+    (main thread side) queue, which is hashed to from the hostname
+
+    Once that queue resolves, we can either take all those packets
+    and add them to the *real* send queue with address, or discard
+    that queue on failure.
+
+    It appears now that even though I wish to send via hostname,
+    the actual thing I want to pass on from the packet to the 
+    actual worker thread doing the send is a low-level address
+    
+    eg. never want to do DNS lookups on the worker thread.
+
+    I think this makes sense. Keep the worker thread single purpose.
+
+    Async lookups from DNS -> IP address can be done 
+
+    ---------------
+
+
 
     First implement map from address string to destination IP low level
 
