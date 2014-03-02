@@ -10,6 +10,12 @@
 #include <map>
 #include <iostream>
 #include <stdexcept>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 namespace protocol
 {
@@ -65,6 +71,8 @@ namespace protocol
 
         void SerializeValue( int64_t & value, int64_t min, int64_t max )
         {
+            // note: this is a dummy stream implementation to be replaced with a bitpacker, range encoder or arithmetic encoder in future
+
             if ( m_mode == STREAM_Write )
             {
                 assert( value >= min );
@@ -98,15 +106,223 @@ namespace protocol
         virtual void Serialize( Stream & stream ) = 0;
     };
 
+    std::string format_string( const std::string & fmt_str, ... ) 
+    {
+        int final_n, n = fmt_str.size() * 2; /* reserve 2 times as much as the length of the fmt_str */
+        std::string str;
+        std::unique_ptr<char[]> formatted;
+        va_list ap;
+        while(1) {
+            formatted.reset(new char[n]); /* wrap the plain char array into the unique_ptr */
+            strcpy(&formatted[0], fmt_str.c_str());
+            va_start(ap, fmt_str);
+            final_n = vsnprintf(&formatted[0], n, fmt_str.c_str(), ap);
+            va_end(ap);
+            if (final_n < 0 || final_n >= n)
+                n += abs(final_n - n + 1);
+            else
+                break;
+        }
+        return std::string(formatted.get());
+    }
+
+    enum class AddressType : char
+    {
+        Undefined,
+        IPv4,
+        IPv6
+    };
+
+    class Address
+    {
+    public:
+
+        Address()
+        {
+            type = AddressType::Undefined;
+            memset( address6, 0, sizeof( address6 ) );
+            port = 0;
+        }
+
+        Address( uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t _port = 0 )
+        {
+            type = AddressType::IPv4;
+            // todo: verify correct byte order
+            address4 = uint32_t(a) | (uint32_t(b)<<8) | (uint32_t(c)<<16) | (uint32_t(d)<<24);
+            port = _port;
+        }
+
+        explicit Address( uint32_t address, int16_t _port = 0 )
+        {
+            type = AddressType::IPv4;
+            address4 = address;
+            port = _port;
+        }
+
+        explicit Address( uint16_t a, uint16_t b, uint16_t c, uint16_t d,
+                          uint16_t e, uint16_t f, uint16_t g, uint16_t h,
+                          uint16_t _port = 0 )
+        {
+            type = AddressType::IPv6;
+            // todo: copy across to address6
+            port = _port;
+        }
+
+        explicit Address( uint8_t address[], uint16_t _port = 0 )
+        {
+            type = AddressType::IPv6;
+            memcpy( address6, address, sizeof( address6 ) );
+            port = _port;
+        }
+
+        Address( std::string address )
+        {
+            // todo: if address starts with "[" then it is an IPv6 address with port
+            // strip out the [ ] and port in this case, then leave the string as the bit inside []
+
+            // try to parse what remains as an IPv6 address. if it passes then go with that.
+            /*
+            struct in6_addr sockaddr6;
+            rc = inet_pton( AF_INET6, address.c_str(), &sockaddr6 );
+            if ( rc == 1 )
+            {
+                memcpy( address6, &sockaddr6, 16 );
+                // todo: print ipv6 address bytes
+                type = AddressType::IPv6;
+            }
+            else
+            {
+                type = AddressType::Undefined;
+                memset( address6, 0, sizeof( address6 ) );
+                port = 0;
+            }
+            */            
+
+            // otherwise it's probably an IPv4 address.
+            // 1. look for ":portnum", if found strip out
+            // 2. parse remaining ipv4 address
+
+            port = 0;
+            const int base_index = address.size() - 1;
+            for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
+            {
+                const int index = base_index - i;
+                if ( address[index] == ':' )
+                {
+                    const char * port_string = address.substr( index + 1, 6 ).c_str();
+                    port = atoi( port_string );
+                    address = address.substr( 0, index );
+                }
+            }
+
+            struct sockaddr_in sockaddr4;
+            int rc = inet_pton( AF_INET, address.c_str(), &sockaddr4.sin_addr );
+            if ( rc == 1 )
+            {
+                type = AddressType::IPv4;
+                address4 = sockaddr4.sin_addr.s_addr;
+            }
+            else
+            {
+                // nope: it's not an IPv4 address. maybe it's a hostname? set address as undefined.
+                type = AddressType::Undefined;
+                memset( address6, 0, sizeof( address6 ) );
+                port = 0;
+            }
+        }
+
+        const uint32_t GetAddress4() const
+        {
+            assert( type == AddressType::IPv4 );
+            return address4;
+        }
+
+        const uint8_t * GetAddress6() const
+        {
+            assert( type == AddressType::IPv6 );
+            return address6;
+        }
+
+        void SetPort( uint64_t _port )
+        {
+            port = _port;
+        }
+
+        const uint16_t GetPort() const 
+        {
+            return port;
+        }
+
+        AddressType GetType() const
+        {
+            return type;
+        }
+
+        std::string ToString() const
+        {
+            if ( type == AddressType::IPv4 )
+            {
+                const uint8_t a = address4 & 0xff;
+                const uint8_t b = (address4>>8) & 0xff;
+                const uint8_t c = (address4>>16) & 0xff;
+                const uint8_t d = (address4>>24) & 0xff;
+                if ( port != 0 )
+                    return format_string( "%d.%d.%d.%d:%d", a, b, c, d, port );
+                else
+                    return format_string( "%d.%d.%d.%d", a, b, c, d );
+            }
+            else if ( type == AddressType::IPv6 )
+            {
+                // todo: convert to string representation
+                return "[::1]:200";
+            }
+            else
+            {
+                return "undefined";
+            }
+        }
+
+        bool IsValid() const
+        {
+            return type != AddressType::Undefined;
+        }
+
+        bool operator ==( const Address & other ) const
+        {
+            if ( type != other.type )
+                return false;
+            if ( port != other.port )
+                return false;
+            if ( type == AddressType::IPv4 && address4 == other.address4 )
+                return true;
+            else if ( type == AddressType::IPv6 && memcmp( address6, other.address6, sizeof( address6 ) ) == 0 )
+                return true;
+            else
+                return false;
+        }
+
+    private:
+
+        AddressType type;
+
+        union
+        {
+            uint32_t address4;
+            uint8_t address6[16];
+        };
+
+        uint16_t port;    
+    };
+
     class Packet : public Object
     {
-        std::string address;
+        Address address;
         int type;
     public:
         Packet( int _type ) :type(_type) {}
         int GetType() const { return type; }
         void SetAddress( const std::string & _address ) { address = _address; }
-        const std::string & GetAddress() const { return address; }
+        const Address & GetAddress() const { return address; }
     };
 
     template<typename T> void serialize_int( Stream & stream, T & value, int64_t min, int64_t max )
@@ -150,6 +366,8 @@ namespace protocol
     {
     public:
 
+        virtual void Send( const Address & address, std::shared_ptr<Packet> packet ) = 0;
+
         virtual void Send( const std::string & address, std::shared_ptr<Packet> packet ) = 0;
 
         virtual std::shared_ptr<Packet> Receive() = 0;
@@ -158,6 +376,11 @@ namespace protocol
     class NetworkInterface : public Interface
     {
     public:
+
+        void Send( const Address & address, std::shared_ptr<Packet> packet )
+        {
+            // todo
+        }
 
         void Send( const std::string & address, std::shared_ptr<Packet> packet )
         {
@@ -295,6 +518,12 @@ class TestInterface : public Interface
 {
 public:
 
+    virtual void Send( const Address & address, std::shared_ptr<Packet> packet )
+    {
+        packet->SetAddress( "127.0.0.1" );
+        packet_queue.push( packet );
+    }
+
     virtual void Send( const std::string & address, shared_ptr<Packet> packet )
     {
         packet->SetAddress( "127.0.0.1" );
@@ -328,13 +557,13 @@ void test_interface()
     auto disconnectPacket = interface.Receive();
 
     assert( connectPacket->GetType() == PACKET_Connect );
-    assert( connectPacket->GetAddress() == "127.0.0.1" );
+    assert( connectPacket->GetAddress() == Address( "127.0.0.1" ) );
 
     assert( updatePacket->GetType() == PACKET_Update );
-    assert( updatePacket->GetAddress() == "127.0.0.1" );
+    assert( updatePacket->GetAddress() == Address( "127.0.0.1" ) );
 
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
-    assert( disconnectPacket->GetAddress() == "127.0.0.1" );
+    assert( disconnectPacket->GetAddress() == Address( "127.0.0.1" ) );
 
     assert( interface.Receive() == nullptr );
 }
@@ -359,14 +588,6 @@ void test_factory()
 }
 
 // --------------------------------------------------------------
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 
 void test_dns()
 {
@@ -483,163 +704,27 @@ void test_address()
 
 // --------------------------------------------------------------
 
-enum class AddressType : char
+void test_address4()
 {
-    Undefined,
-    IPv4,
-    IPv6
-};
+    cout << "test_address4" << endl;
 
-class Address
-{
-public:
-
-    Address()
     {
-        type = AddressType::Undefined;
-        memset( address6, 0, sizeof( address6 ) );
-        port = 0;
+        Address address( 127, 0, 0, 1 );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetPort() == 0 );
+        assert( address.GetAddress4() == 0x100007f );
+        assert( address.ToString() == "127.0.0.1" );
     }
 
-    explicit Address( uint32_t address, int16_t _port )
     {
-        type = AddressType::IPv4;
-        address4 = address;
-        port = _port;
+        Address address( 127, 0, 0, 1, 1000 );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetPort() == 1000 );
+        assert( address.GetAddress4() == 0x100007f );
+        assert( address.ToString() == "127.0.0.1:1000" );
     }
-
-    explicit Address( uint8_t address[], uint16_t _port )
-    {
-        type = AddressType::IPv6;
-        memcpy( address6, address, sizeof( address6 ) );
-        port = _port;
-    }
-
-    Address( std::string address )
-    {
-        // todo: if address starts with "[" then it is an IPv6 address with port
-        // strip out the [ ] and port in this case, then leave the string as the bit inside []
-
-        // try to parse what remains as an IPv6 address. if it passes then go with that.
-
-        // otherwise it's probably an IPv6 address. 
-        // 1. look for port, if found strip out
-        // 2. parse ipv4 address
-
-        port = 0;
-        const int base_index = address.size() - 1;
-        for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
-        {
-            const int index = base_index - i;
-            if ( address[index] == ':' )
-            {
-                const char * port_string = address.substr( index + 1, 6 ).c_str();
-                printf( "port string = %s\n", port_string );
-                port = atoi( port_string );
-                printf( "found port: %d\n", port );
-
-                address = address.substr( 0, index );
-
-                // todo: detect IPv6. if first and last characters are '[' and ']' respectively. trim the string again
-
-                printf( "remaining address = %s\n", address.c_str() );
-            }
-        }
-
-        struct sockaddr_in sockaddr4;
-        int rc = inet_pton( AF_INET, address.c_str(), &(sockaddr4.sin_addr) );
-        if ( rc == 1 )
-        {
-            cout << "valid IPv4 address" << endl;
-            type = AddressType::IPv4;
-            address4 = sockaddr4.sin_addr.s_addr;
-            printf( "ipv4 address: %x\n", address4 );
-        }
-        else 
-        {
-            struct in6_addr sockaddr6;
-            rc = inet_pton( AF_INET6, address.c_str(), &sockaddr6 );
-            if ( rc == 1 )
-            {
-                cout << "valid IPv6 address" << endl;
-                memcpy( address6, &sockaddr6, 16 );
-                type = AddressType::IPv6;
-            }
-            else
-            {
-                type = AddressType::Undefined;
-                memset( address6, 0, sizeof( address6 ) );
-                port = 0;
-            }
-        }
-    }
-
-    const uint32_t GetAddress4() const
-    {
-        assert( type == AddressType::IPv4 );
-        return address4;
-    }
-
-    const uint8_t * GetAddress6() const
-    {
-        assert( type == AddressType::IPv6 );
-        return address6;
-    }
-
-    void SetPort( uint64_t _port )
-    {
-        port = _port;
-    }
-
-    const uint16_t GetPort() const 
-    {
-        return port;
-    }
-
-    AddressType GetType() const
-    {
-        return type;
-    }
-
-    std::string ToString() const
-    {
-        if ( type == AddressType::IPv4 )
-        {
-            // todo: convert to standard string representation
-            return "127.0.0.1:200";
-        }
-        else if ( type == AddressType::IPv6 )
-        {
-            // todo: convert to string representation
-            return "[::1]:200";
-        }
-        else
-        {
-            return "undefined";
-        }
-    }
-
-    bool IsValid() const
-    {
-        return type != AddressType::Undefined;
-    }
-
-private:
-
-    AddressType type;
-
-    union
-    {
-        uint32_t address4;
-        uint8_t address6[16];
-    };
-
-    uint16_t port;    
-};
-
-void test_address_4()
-{
-    cout << "test_address2" << endl;
 
     {
         Address address( "127.0.0.1" );
@@ -647,9 +732,7 @@ void test_address_4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 0 );
         assert( address.GetAddress4() == 0x100007f );
-
-        // todo: convert ipv6 address back to string
-        //assert( address.ToString() == "127.0.0.1" );
+        assert( address.ToString() == "127.0.0.1" );
     }
 
     {
@@ -658,9 +741,16 @@ void test_address_4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 65535 );
         assert( address.GetAddress4() == 0x100007f );
+        assert( address.ToString() == "127.0.0.1:65535" );
+    }
 
-        // todo: convert ipv6 address back to string
-        //assert( address.ToString() == "127.0.0.1:65535" );
+    {
+        Address address( "10.24.168.192:3000" );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetPort() == 3000 );
+        assert( address.GetAddress4() == 0xc0a8180a );
+        assert( address.ToString() == "10.24.168.192:3000" );
     }
 
     {
@@ -669,16 +759,25 @@ void test_address_4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 65535 );
         assert( address.GetAddress4() == 0xffffffff );
-
-        // todo: convert ipv6 address back to string
-        //assert( address.ToString() == "255.255.255.255:65535" );
+        assert( address.ToString() == "255.255.255.255:65535" );
     }
-
-    // todo: other ipv6 addresses
 }
 
-void test_address_6()
+void test_address6()
 {
+    cout << "test_address6" << endl;
+
+    {
+        Address address( 0, 0, 0, 0, 0, 0, 0, 1, 0 );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 0 );
+        const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
+        assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
+
+        //assert( address.ToString() == "::1" );
+    }
+
     {
         Address address( "::1" );
         assert( address.IsValid() );
@@ -710,14 +809,14 @@ int main()
 {
     try
     {
-        /*
         test_serialize_object();
         test_interface();
         test_factory();
+        /*
         test_dns();
         test_address();
         */
-        test_address_4();
+        test_address4();
         //test_address_6();
     }
     catch ( runtime_error & e )
