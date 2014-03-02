@@ -9,7 +9,7 @@ When I'm coding at home I want to be able to quickly explore new game networking
 
 This library enables that. It is based on source and ideas from my "Networking for Game Programmers" article series: http://gafferongames.com/networking-for-game-programmers/
 
-This code is not production ready and never will be. Many things I do here are focused around quick iteration time for myself so I can explore new ideas, rather than efficiency and the best practices that I would take when developing professional level code at work.
+This code is not production ready and never will be. Many things I do here are focused around quick iteration time for myself so I can explore new ideas, rather than runtime efficiency and the best practices that I would take when developing professional level code at work.
 
 Some things I do here that would never do at work include:
 
