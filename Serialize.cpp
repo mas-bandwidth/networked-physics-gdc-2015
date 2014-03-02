@@ -673,6 +673,8 @@ void test_address_4()
         // todo: convert ipv6 address back to string
         //assert( address.ToString() == "255.255.255.255:65535" );
     }
+
+    // todo: other ipv6 addresses
 }
 
 void test_address_6()
@@ -685,18 +687,19 @@ void test_address_6()
         const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
         assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
 
-        // todo: check to string
+        //assert( address.ToString() == "::1" );
     }
 
-    /*
-    Address address( "[::1]:300" );
-    assert( address.IsValid() );
-    assert( address.GetType() == AddressType::IPv6 );
-    assert( address.GetPort() == 300 );
-    const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
-    assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
-    assert( address.ToString() == "[::1]:300" );
-    */
+    {
+        Address address( "[::1]:300" );
+        assert( address.IsValid() );
+        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetPort() == 300 );
+        const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
+        assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
+
+        //assert( address.ToString() == "[::1]:300" );
+    }
 
     // todo: other ipv6 addresses
 }
