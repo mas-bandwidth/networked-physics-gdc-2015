@@ -1,4 +1,7 @@
-// serialize test
+/*
+    Sketching out ideas for protocol library in C++11
+    Author: Glenn Fiedler <glenn.fiedler@gmail.com>
+*/
 
 #include <cassert>
 #include <string>
@@ -147,7 +150,6 @@ namespace protocol
         Address( uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t _port = 0 )
         {
             type = AddressType::IPv4;
-            // todo: verify correct byte order
             address4 = uint32_t(a) | (uint32_t(b)<<8) | (uint32_t(c)<<16) | (uint32_t(d)<<24);
             port = _port;
         }
@@ -155,7 +157,7 @@ namespace protocol
         explicit Address( uint32_t address, int16_t _port = 0 )
         {
             type = AddressType::IPv4;
-            address4 = address;
+            address4 = htonl( address );        // IMPORTANT: stored in network byte order. eg. big endian!
             port = _port;
         }
 
@@ -164,14 +166,22 @@ namespace protocol
                           uint16_t _port = 0 )
         {
             type = AddressType::IPv6;
-            // todo: copy across to address6
+            address6[0] = htons( a );
+            address6[1] = htons( b );
+            address6[2] = htons( c );
+            address6[3] = htons( d );
+            address6[4] = htons( e );
+            address6[5] = htons( f );
+            address6[6] = htons( g );
+            address6[7] = htons( h );
             port = _port;
         }
 
-        explicit Address( uint8_t address[], uint16_t _port = 0 )
+        explicit Address( const uint16_t _address[], uint16_t _port = 0 )
         {
             type = AddressType::IPv6;
-            memcpy( address6, address, sizeof( address6 ) );
+            for ( int i = 0; i < 8; ++i )
+                address6[i] = htons( _address[i] );
             port = _port;
         }
 
@@ -237,7 +247,7 @@ namespace protocol
             return address4;
         }
 
-        const uint8_t * GetAddress6() const
+        const uint16_t * GetAddress6() const
         {
             assert( type == AddressType::IPv6 );
             return address6;
@@ -308,7 +318,7 @@ namespace protocol
         union
         {
             uint32_t address4;
-            uint8_t address6[16];
+            uint16_t address6[8];
         };
 
         uint16_t port;    
@@ -591,15 +601,15 @@ void test_factory()
 
 void test_dns()
 {
-   struct addrinfo hints, *res, *p;
-   char ipstr[INET6_ADDRSTRLEN];
+    struct addrinfo hints, *res, *p;
+    char ipstr[INET6_ADDRSTRLEN];
 
-   memset(&hints, 0, sizeof hints);
-   hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
-   hints.ai_socktype = SOCK_DGRAM;
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
+    hints.ai_socktype = SOCK_DGRAM;
 
-   const char hostname[] = "google.com";
-   printf( "IP addresses for %s:\n", hostname );
+    const char hostname[] = "google.com";
+    printf( "IP addresses for %s:\n", hostname );
 
     if ( getaddrinfo( hostname, NULL, &hints, &res ) != 0) 
     {
@@ -607,31 +617,31 @@ void test_dns()
         return;
     }
 
-   for( p = res;p != NULL; p = p->ai_next )
-   {
-       void *addr;
-       const char *ipver;
-       // get the pointer to the address itself,
-       // different fields in IPv4 and IPv6:
-       if (p->ai_family == AF_INET) 
-       { 
+    for( p = res;p != NULL; p = p->ai_next )
+    {
+        void *addr;
+        const char *ipver;
+        // get the pointer to the address itself,
+        // different fields in IPv4 and IPv6:
+        if (p->ai_family == AF_INET) 
+        { 
             // IPv4
-           struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-           addr = &(ipv4->sin_addr);/*error*/
-           ipver = "IPv4";
-       } 
-       else 
-       { 
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+            addr = &(ipv4->sin_addr);/*error*/
+            ipver = "IPv4";
+        } 
+        else 
+        { 
             // IPv6
-           struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-           addr = &(ipv6->sin6_addr);/*error*/
-           ipver = "IPv6";
-       }
-       // convert the IP to a string and print it:
-       inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-       printf( "  %s: %s\n", ipver, ipstr );
-   }
-   freeaddrinfo( res );
+            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
+            addr = &(ipv6->sin6_addr);/*error*/
+            ipver = "IPv6";
+        }
+        // convert the IP to a string and print it:
+        inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
+        printf( "  %s: %s\n", ipver, ipstr );
+    }
+    freeaddrinfo( res );
 }
 
 // --------------------------------------------------------------
@@ -768,15 +778,21 @@ void test_address6()
     cout << "test_address6" << endl;
 
     {
-        Address address( 0, 0, 0, 0, 0, 0, 0, 1, 0 );
+        const uint16_t address6[] = { 0xFE80, 0x0000, 0x0000, 0x0000, 0x0202, 0xB3FF, 0xFE1E, 0x8329 };
+
+        Address address( address6, 0 );
+
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
         assert( address.GetPort() == 0 );
-        const uint8_t address6[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 };
-        assert( memcmp( address.GetAddress6(), address6, 16 ) == 1 );
 
-        //assert( address.ToString() == "::1" );
+        for ( int i = 0; i < 8; ++i )
+            assert( htons( address6[i] ) == address.GetAddress6()[i] );
+
+        assert( address.ToString() == "FE80:0000:0000:0000:0202:B3FF:FE1E:8329" );
     }
+
+    /*
 
     {
         Address address( "::1" );
@@ -799,6 +815,7 @@ void test_address6()
 
         //assert( address.ToString() == "[::1]:300" );
     }
+    */
 
     // todo: other ipv6 addresses
 }
@@ -817,7 +834,7 @@ int main()
         test_address();
         */
         test_address4();
-        //test_address_6();
+        test_address6();
     }
     catch ( runtime_error & e )
     {

@@ -22,9 +22,12 @@ DONE:
     Implement function to convert IPv4 address + port back to string
     (Omit the port if it is zero).
 
+    Added code to initialize IPv6 with 16bit pairs, including htons
+    (decided on network byte order for internal address data...)
+
 TODO:
 
-    ----------------------------------
+    Implement function to convert IPv6 address to string, with shortening.    
 
     Implement IPv6 parse with optional port, eg. []:portnum
 
