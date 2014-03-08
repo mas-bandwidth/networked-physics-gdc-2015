@@ -1,94 +1,18 @@
 DONE:
 
-    Basic serialization, serialize_int etc.
-
-    Base object for serialization with virtual Serialize( Stream & stream ) method.
-
-    Back packet class with serialize, address string (eg. sent from), and type int.
-
-    Factory class to create packets from type.
-
-    If you try to create an object of a type that is not registered, throw a runtime_error.
-
-    Explore "getaddrinfo" for IPv6 aware hostname -> IP address etc.
-
-    Implement basic address class capable of handling IPv6 and IPv6
-
-    Implement function to convert IPv4 string to address int + port
-
-    Verify IPv4 UDP broadcast address is converted properly: 0xffffffff
-
-    Implement function to convert IPv4 address + port back to string
-    (Omit the port if it is zero).
-
-    Added code to initialize IPv6 with 16bit pairs, including htons
-    (decided on network byte order for internal address data...)
-
-    Handle port number in IPv6 output string, eg. "[v6addr]:portnum"
-
 TODO:
 
-    Implement IPv6 parse from string
+    Implement network interface to send and receive packets.
 
-    Implement IPv6 parse from string with port, eg. "[addr6]:portnum"
+    Just do it simple, eg. sendto/recvfrom but make sure IPv6 ready.
 
-    -----------------------------
+    Should be able to pass a resolver interface to the network interface, which it will use
+    to take name strings to addresses if passed in. Can also send packets to addresses directly!
 
-    Add new class "Resolver" to manage hash of hostnames -> address lists
+    First, implement the network interface simply with non-blocking sockets running on the main
+    thread. 
 
-    New class should be separate from network interface so we can have
-    different implementations of network interface per-platform, network
-    library etc.
+    Next investigate other methods for sending and receiving packets, especially running
+    packet encode and decode on separate worker threads (assume packet encode/decode can be expensive)
 
-    Once resolver is working it can be used as part of the platform
-    specific network interface, eg. MacOSX network interface.
-
-    ----------------------------
-
-    Initially what I want is to have an asynchronous resolve of address,
-    eg. take address string and resolve it either immediately to IPv6
-    or IPv6 --- or, try a DNS resolve on it asynchronously, and when
-    the resolution comes back (succeed or failure), add that DNS to
-    correct hash (known good, known bad).
-
-    This will allow me to have an interface that seamlessly allows me
-    to send packets to hostnames, IPv6 or IPv4 addresses as strings
-    without significant overhead.
-
-    Trick will be that for packets getting queued up that do not yet
-    have a resolved IP address they must be queued up in their own
-    (main thread side) queue, which is hashed to from the hostname
-
-    Once that queue resolves, we can either take all those packets
-    and add them to the *real* send queue with address, or discard
-    that queue on failure.
-
-    It appears now that even though I wish to send via hostname,
-    the actual thing I want to pass on from the packet to the 
-    actual worker thread doing the send is a low-level address
-    
-    eg. never want to do DNS lookups on the worker thread.
-
-    I think this makes sense. Keep the worker thread single purpose.
-
-    Async lookups from DNS -> IP address can be done 
-
-    ---------------
-
-    First implement map from address string to destination IP low level
-
-    First, determine if IPv6 or IPv6 address and create appropriate address.
-
-    Next, if possible it would be cool to lookup the address if not a valid IPv6 or IPv6
-    via DNS asynchronously
-
-    Network interface should run on a separate thread.
-
-    Sending and receiving packets should be done on this thread, and it should wake when packets
-    come in. 
-
-    Worker thread should handle the serialize read/write of packets, and automatically
-    discard any packets that cannot be serialized. eg. catch exception.
-
-    Main thread should just see atomic queues of shared_ptr to packets that it can
-    push on to send, and pop from to receive.
+    -----------------------------------

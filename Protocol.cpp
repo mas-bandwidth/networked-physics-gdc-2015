@@ -9,7 +9,10 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <thread>
+#include <future>
 #include <queue>
+#include <chrono>
 #include <map>
 #include <iostream>
 #include <stdexcept>
@@ -20,13 +23,44 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#define PLATFORM_WINDOWS  1
+#define PLATFORM_MAC      2
+#define PLATFORM_UNIX     3
+
+#if defined(_WIN32)
+#define PLATFORM PLATFORM_WINDOWS
+#elif defined(__APPLE__)
+#define PLATFORM PLATFORM_MAC
+#else
+#define PLATFORM PLATFORM_UNIX
+#endif
+
+#if PLATFORM == PLATFORM_WINDOWS
+
+    #include <winsock2.h>
+    #pragma comment( lib, "wsock32.lib" )
+
+#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <fcntl.h>
+
+#else
+
+    #error unknown platform!
+
+#endif
+
 namespace protocol
 {
-    class serialize_exception : public std::runtime_error
+    using namespace std;
+
+    class serialize_exception : public runtime_error
     {
     public:
-        serialize_exception( const std::string & err )
-            : std::runtime_error( err ) {}
+        serialize_exception( const string & err )
+            : runtime_error( err ) {}
     };
 
     struct StreamValue
@@ -99,7 +133,7 @@ namespace protocol
         }
 
         StreamMode m_mode;
-        std::vector<StreamValue> m_values;
+        vector<StreamValue> m_values;
         size_t m_readIndex;
     };
 
@@ -109,11 +143,11 @@ namespace protocol
         virtual void Serialize( Stream & stream ) = 0;
     };
 
-    std::string format_string( const std::string & fmt_str, ... ) 
+    string format_string( const string & fmt_str, ... ) 
     {
         int final_n, n = fmt_str.size() * 2; /* reserve 2 times as much as the length of the fmt_str */
-        std::string str;
-        std::unique_ptr<char[]> formatted;
+        string str;
+        unique_ptr<char[]> formatted;
         va_list ap;
         while(1) {
             formatted.reset(new char[n]); /* wrap the plain char array into the unique_ptr */
@@ -126,7 +160,7 @@ namespace protocol
             else
                 break;
         }
-        return std::string(formatted.get());
+        return string(formatted.get());
     }
 
     enum class AddressType : char
@@ -142,9 +176,7 @@ namespace protocol
 
         Address()
         {
-            type = AddressType::Undefined;
-            memset( address6, 0, sizeof( address6 ) );
-            port = 0;
+            Clear();
         }
 
         Address( uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t _port = 0 )
@@ -185,7 +217,28 @@ namespace protocol
             port = _port;
         }
 
-        Address( std::string address )
+        explicit Address( addrinfo * p )
+        {
+            port = 0;
+            if ( p->ai_family == AF_INET )
+            { 
+                type = AddressType::IPv4;
+                struct sockaddr_in * ipv4 = (struct sockaddr_in *)p->ai_addr;
+                address4 = ipv4->sin_addr.s_addr;
+            } 
+            else if ( p->ai_family == AF_INET6 )
+            { 
+                type = AddressType::IPv6;
+                struct sockaddr_in6 * ipv6 = (struct sockaddr_in6 *)p->ai_addr;
+                memcpy( address6, &ipv6->sin6_addr, 16 );
+            }
+            else
+            {
+                Clear();
+            }
+        }
+
+        Address( string address )
         {
             // first try to parse as an IPv6 address:
             // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
@@ -239,10 +292,15 @@ namespace protocol
             else
             {
                 // nope: it's not an IPv4 address. maybe it's a hostname? set address as undefined.
-                type = AddressType::Undefined;
-                memset( address6, 0, sizeof( address6 ) );
-                port = 0;
+                Clear();
             }
+        }
+
+        void Clear()
+        {
+            type = AddressType::Undefined;
+            memset( address6, 0, sizeof( address6 ) );
+            port = 0;
         }
 
         const uint32_t GetAddress4() const
@@ -272,7 +330,7 @@ namespace protocol
             return type;
         }
 
-        std::string ToString() const
+        string ToString() const
         {
             if ( type == AddressType::IPv4 )
             {
@@ -339,7 +397,7 @@ namespace protocol
     public:
         Packet( int _type ) :type(_type) {}
         int GetType() const { return type; }
-        void SetAddress( const std::string & _address ) { address = _address; }
+        void SetAddress( const Address & _address ) { address = _address; }
         const Address & GetAddress() const { return address; }
     };
 
@@ -359,59 +417,263 @@ namespace protocol
     {
     public:
 
-        typedef std::function< std::shared_ptr<T>() > create_function;
+        typedef function< shared_ptr<T>() > create_function;
 
         void Register( int type, create_function const & function )
         {
             create_map[type] = function;
         }
 
-        std::shared_ptr<T> Create( int type )
+        shared_ptr<T> Create( int type )
         {
             auto itor = create_map.find( type );
             if ( itor == create_map.end() )
-                throw std::runtime_error( "invalid object type id in factory create" );
+                throw runtime_error( "invalid object type id in factory create" );
             else
                 return itor->second();
         }
 
     private:
 
-        std::map<int,create_function> create_map;
+        map<int,create_function> create_map;
+    };
+
+    struct ResolveResult
+    {
+        vector<Address> addresses;
+    };
+
+    enum class ResolveStatus
+    {
+        InProgress,
+        Succeeded,
+        Failed
+    };
+
+    typedef function< void( const string & name, shared_ptr<ResolveResult> result ) > ResolveCallback;
+
+    struct ResolveEntry
+    {
+        ResolveStatus status;
+        shared_ptr<ResolveResult> result;
+        future<shared_ptr<ResolveResult>> future;
+        vector<ResolveCallback> callbacks;
+    };
+
+    class Resolver
+    {
+    public:
+
+        virtual void Resolve( const string & name, ResolveCallback cb = nullptr ) = 0;
+
+        virtual void Update( double t, double dt ) = 0;
+
+        virtual void Clear() = 0;
+
+        virtual shared_ptr<ResolveEntry> GetEntry( const string & name ) = 0;
+    };
+
+    static shared_ptr<ResolveResult> DNSResolve_Blocking( const string & name )
+    {
+        struct addrinfo hints, *res, *p;
+        memset( &hints, 0, sizeof hints );
+        hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
+        hints.ai_socktype = SOCK_DGRAM;
+
+        const char * hostname = name.c_str();
+
+        if ( getaddrinfo( hostname, nullptr, &hints, &res ) != 0 )
+            return nullptr;
+
+        auto result = make_shared<ResolveResult>();
+
+        for ( p = res; p != nullptr; p = p->ai_next )
+        {
+            auto address = Address( p );
+            if ( address.IsValid() )
+                result->addresses.push_back( address );
+        }
+
+        freeaddrinfo( res );
+
+        if ( result->addresses.size() == 0 )
+            return nullptr;
+
+        return result;
+    }
+
+    typedef map<string,shared_ptr<ResolveEntry>> ResolveMap;
+
+    class DNSResolver : public Resolver
+    {
+    public:
+
+        // todo: add some flags to control the resolve. eg. IPv6 only. IPv4 only. Prefer IPv6 etc.
+
+        virtual void Resolve( const string & name, ResolveCallback callback )
+        {
+            auto itor = map.find( name );
+            if ( itor != map.end() )
+            {
+                auto name = itor->first;
+                auto entry = itor->second;
+                switch ( entry->status )
+                {
+                    case ResolveStatus::InProgress:
+                        entry->callbacks.push_back( callback );
+                        break;
+
+                    case ResolveStatus::Succeeded:
+                    case ResolveStatus::Failed:             // note: result is nullptr if resolve failed
+                        callback( name, entry->result );      
+                        break;
+                }
+                return;
+            }
+
+            auto entry = make_shared<ResolveEntry>();
+            entry->status = ResolveStatus::InProgress;
+            entry->callbacks.push_back( callback );
+            entry->future = async( launch::async, [name] () -> shared_ptr<ResolveResult> 
+            { 
+                return DNSResolve_Blocking( name );
+            } );
+
+            map[name] = entry;
+
+            in_progress[name] = entry;
+        }
+
+        virtual void Update( double t, double dt )
+        {
+            for ( auto itor = in_progress.begin(); itor != in_progress.end(); )
+            {
+                auto name = itor->first;
+                auto entry = itor->second;
+
+                if ( entry->future.wait_for( chrono::seconds(0) ) == future_status::ready )
+                {
+                    entry->result = entry->future.get();
+                    entry->status = entry->result ? ResolveStatus::Succeeded : ResolveStatus::Failed;
+                    for ( auto callback : entry->callbacks )
+                        callback( name, entry->result );
+                    in_progress.erase( itor++ );
+                }
+                else
+                    ++itor;
+            }
+        }
+
+        virtual void Clear()
+        {
+            map.clear();
+        }
+
+        virtual shared_ptr<ResolveEntry> GetEntry( const string & name )
+        {
+            auto itor = map.find( name );
+            if ( itor != map.end() )
+                return itor->second;
+            else
+                return nullptr;
+        }
+
+    private:
+
+        ResolveMap map;
+        ResolveMap in_progress;
     };
 
     class Interface
     {
     public:
 
-        virtual void Send( const Address & address, std::shared_ptr<Packet> packet ) = 0;
+        virtual ~Interface() {}
 
-        virtual void Send( const std::string & address, std::shared_ptr<Packet> packet ) = 0;
+        virtual void SendPacket( const Address & address, shared_ptr<Packet> packet ) = 0;
 
-        virtual std::shared_ptr<Packet> Receive() = 0;
+        virtual void SendPacket( const string & hostname, shared_ptr<Packet> packet ) = 0;
+
+        virtual shared_ptr<Packet> ReceivePacket() = 0;
+
+        virtual void Update() = 0;
     };
 
     class NetworkInterface : public Interface
     {
     public:
 
-        void Send( const Address & address, std::shared_ptr<Packet> packet )
+        NetworkInterface( shared_ptr<Resolver> resolver )
         {
-            // todo
+            m_resolver = resolver;
         }
 
-        void Send( const std::string & address, std::shared_ptr<Packet> packet )
+        void SendPacket( const Address & address, shared_ptr<Packet> packet )
         {
-            // todo
+            packet->SetAddress( address );
+            send_queue.push( packet );
         }
 
-        std::shared_ptr<Packet> Receive()
+        void SendPacket( const string & hostname, shared_ptr<Packet> packet )
         {
-            // todo
-            return nullptr;
+            if ( !m_resolver )
+                throw runtime_error( "cannot resolve address: resolver is null" );
+
+            auto resolveEntry = m_resolver->GetEntry( hostname );
+
+            if ( resolveEntry )
+            {
+                if ( resolveEntry->status == ResolveStatus::Succeeded )
+                {
+                    // hostname has already been successfully resolved
+                    // add packet to send queue with the resolved address
+                    assert( resolveEntry->result->addresses.size() >= 1 );
+                    packet->SetAddress( resolveEntry->result->addresses[0] );
+                    send_queue.push( packet );
+                }
+                else
+                {
+                    // hostname has already failed to resolve. discard packet.
+                    // todo: bump discarded packet counter
+                    return;
+                }
+            }
+            else
+            {
+                // hostname has not been resolved yet. kick off a resolve if it isn't already running
+                // and add the packet to a special "pending" send queue for the hostname, so it will be
+                // sent once we resolve the hostname (or discarded if the hostname fails to resolve)
+
+                m_resolver->Resolve( hostname, nullptr );
+
+                // todo: look up pending resolve send queue by hostname, if doesn't exist, create it and push packet in queue
+                // if it already exists, just push packet on it.
+            }
         }
+
+        shared_ptr<Packet> ReceivePacket()
+        {
+            if ( receive_queue.empty() )
+                return nullptr;
+            auto packet = receive_queue.front();
+            receive_queue.pop();
+            return packet;
+        }
+
+        void Update()
+        {
+            // todo: update resolver. if packets are queued up for a resolve and the resolve
+            // has succeded, send the packets to the address. if the resolve has failed, discard packets.
+
+            // todo: make sure to set the address
+        }
+
+        // todo: counters etc.
 
     private:
+
+        std::queue<shared_ptr<Packet>> send_queue;
+        std::queue<shared_ptr<Packet>> receive_queue;
 
         // todo: send queue
 
@@ -420,7 +682,171 @@ namespace protocol
         // todo: worker thread for sending packets (wakes up when work to do to send packets...)
 
         // todo: worker thread for receiving packets (use blocking sockets initially...)
+
+        shared_ptr<Resolver> m_resolver;
     };
+
+#if 0 
+
+    // sockets
+
+    inline bool InitializeSockets()
+    {
+        #if PLATFORM == PLATFORM_WINDOWS
+        WSADATA WsaData;
+        return WSAStartup( MAKEWORD(2,2), &WsaData ) == NO_ERROR;
+        #else
+        return true;
+        #endif
+    }
+
+    inline void ShutdownSockets()
+    {
+        #if PLATFORM == PLATFORM_WINDOWS
+        WSACleanup();
+        #endif
+    }
+
+    class Socket
+    {
+    public:
+    
+        Socket()
+        {
+            socket = 0;
+        }
+    
+        ~Socket()
+        {
+            Close();
+        }
+    
+        bool Open( unsigned short port )
+        {
+            assert( !IsOpen() );
+        
+            // create socket
+
+            socket = ::socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+
+            if ( socket <= 0 )
+            {
+                printf( "failed to create socket\n" );
+                socket = 0;
+                return false;
+            }
+
+            // bind to port
+
+            sockaddr_in address;
+            address.sin_family = AF_INET;
+            address.sin_addr.s_addr = INADDR_ANY;
+            address.sin_port = htons( (unsigned short) port );
+        
+            if ( bind( socket, (const sockaddr*) &address, sizeof(sockaddr_in) ) < 0 )
+            {
+                printf( "failed to bind socket\n" );
+                Close();
+                return false;
+            }
+
+            // set non-blocking io
+
+            #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+        
+                int nonBlocking = 1;
+                if ( fcntl( socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
+                {
+                    printf( "failed to set non-blocking socket\n" );
+                    Close();
+                    return false;
+                }
+            
+            #elif PLATFORM == PLATFORM_WINDOWS
+        
+                DWORD nonBlocking = 1;
+                if ( ioctlsocket( socket, FIONBIO, &nonBlocking ) != 0 )
+                {
+                    printf( "failed to set non-blocking socket\n" );
+                    Close();
+                    return false;
+                }
+
+            #endif
+        
+            return true;
+        }
+    
+        void Close()
+        {
+            if ( socket != 0 )
+            {
+                #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+                close( socket );
+                #elif PLATFORM == PLATFORM_WINDOWS
+                closesocket( socket );
+                #endif
+                socket = 0;
+            }
+        }
+    
+        bool IsOpen() const
+        {
+            return socket != 0;
+        }
+    
+        bool Send( const Address & destination, const void * data, int size )
+        {
+            assert( data );
+            assert( size > 0 );
+        
+            if ( socket == 0 )
+                return false;
+        
+            sockaddr_in address;
+            address.sin_family = AF_INET;
+            address.sin_addr.s_addr = htonl( destination.GetAddress() );
+            address.sin_port = htons( (unsigned short) destination.GetPort() );
+
+            int sent_bytes = sendto( socket, (const char*)data, size, 0, (sockaddr*)&address, sizeof(sockaddr_in) );
+
+            return sent_bytes == size;
+        }
+    
+        int Receive( Address & sender, void * data, int size )
+        {
+            assert( data );
+            assert( size > 0 );
+        
+            if ( socket == 0 )
+                return false;
+            
+            #if PLATFORM == PLATFORM_WINDOWS
+            typedef int socklen_t;
+            #endif
+            
+            sockaddr_in from;
+            socklen_t fromLength = sizeof( from );
+
+            int received_bytes = recvfrom( socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
+
+            if ( received_bytes <= 0 )
+                return 0;
+
+            unsigned int address = ntohl( from.sin_addr.s_addr );
+            unsigned int port = ntohs( from.sin_port );
+
+            sender = Address( address, port );
+
+            return received_bytes;
+        }
+        
+    private:
+    
+        int socket;
+    };
+
+#endif
 }
 
 // -------------------------------------------------------
@@ -530,31 +956,36 @@ struct DisconnectPacket : public Packet
     void Serialize( Stream & stream ) {}
 };
 
-typedef std::queue< shared_ptr<Packet> > PacketQueue;
+typedef queue<shared_ptr<Packet>> PacketQueue;
 
 class TestInterface : public Interface
 {
 public:
 
-    virtual void Send( const Address & address, std::shared_ptr<Packet> packet )
+    virtual void SendPacket( const Address & address, shared_ptr<Packet> packet )
     {
-        packet->SetAddress( "127.0.0.1" );
+        packet->SetAddress( address );
         packet_queue.push( packet );
     }
 
-    virtual void Send( const std::string & address, shared_ptr<Packet> packet )
+    virtual void SendPacket( const string & address, shared_ptr<Packet> packet )
     {
-        packet->SetAddress( "127.0.0.1" );
+        packet->SetAddress( address );
         packet_queue.push( packet );
     }
 
-    virtual shared_ptr<Packet> Receive()
+    virtual shared_ptr<Packet> ReceivePacket()
     {
         if ( packet_queue.empty() )
             return nullptr;
         auto packet = packet_queue.front();
         packet_queue.pop();
         return packet;
+    }
+
+    virtual void Update()
+    {
+        // ...
     }
 
     PacketQueue packet_queue;
@@ -566,13 +997,13 @@ void test_interface()
 
     TestInterface interface;
 
-    interface.Send( "127.0.0.1", make_shared<ConnectPacket>() );
-    interface.Send( "127.0.0.1", make_shared<UpdatePacket>() );
-    interface.Send( "127.0.0.1", make_shared<DisconnectPacket>() );
+    interface.SendPacket( "127.0.0.1", make_shared<ConnectPacket>() );
+    interface.SendPacket( "127.0.0.1", make_shared<UpdatePacket>() );
+    interface.SendPacket( "127.0.0.1", make_shared<DisconnectPacket>() );
 
-    auto connectPacket = interface.Receive();
-    auto updatePacket = interface.Receive();
-    auto disconnectPacket = interface.Receive();
+    auto connectPacket = interface.ReceivePacket();
+    auto updatePacket = interface.ReceivePacket();
+    auto disconnectPacket = interface.ReceivePacket();
 
     assert( connectPacket->GetType() == PACKET_Connect );
     assert( connectPacket->GetAddress() == Address( "127.0.0.1" ) );
@@ -583,7 +1014,7 @@ void test_interface()
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
     assert( disconnectPacket->GetAddress() == Address( "127.0.0.1" ) );
 
-    assert( interface.Receive() == nullptr );
+    assert( interface.ReceivePacket() == nullptr );
 }
 
 void test_factory()
@@ -604,123 +1035,6 @@ void test_factory()
     assert( updatePacket->GetType() == PACKET_Update );
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
 }
-
-// --------------------------------------------------------------
-
-void test_dns()
-{
-    struct addrinfo hints, *res, *p;
-    char ipstr[INET6_ADDRSTRLEN];
-
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
-    hints.ai_socktype = SOCK_DGRAM;
-
-    const char hostname[] = "google.com";
-    printf( "IP addresses for %s:\n", hostname );
-
-    if ( getaddrinfo( hostname, NULL, &hints, &res ) != 0) 
-    {
-        cout << "error: getaddrinfo failed" << endl;
-        return;
-    }
-
-    for( p = res;p != NULL; p = p->ai_next )
-    {
-        void *addr;
-        const char *ipver;
-        // get the pointer to the address itself,
-        // different fields in IPv4 and IPv6:
-        if (p->ai_family == AF_INET) 
-        { 
-            // IPv4
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-            addr = &(ipv4->sin_addr);/*error*/
-            ipver = "IPv4";
-        } 
-        else 
-        { 
-            // IPv6
-            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-            addr = &(ipv6->sin6_addr);/*error*/
-            ipver = "IPv6";
-        }
-        // convert the IP to a string and print it:
-        inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-        printf( "  %s: %s\n", ipver, ipstr );
-    }
-    freeaddrinfo( res );
-}
-
-// --------------------------------------------------------------
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
-void test_address()
-{
-    int    rc;
-    struct in6_addr serveraddr;
-    struct addrinfo hints, *res = NULL;
-
-    const char * server = "127.0.0.1:300";
-    //"2001:db8::1";
-    //"[2001:db8::1]:80";
-    //"google.com";   
-
-    memset( &hints, 0, sizeof(hints) );
-    hints.ai_flags = AI_NUMERICSERV;
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    /********************************************************************/
-    /* Check if we were provided the address of the server using        */
-    /* inet_pton() to convert the text form of the address to binary    */
-    /* form. If it is numeric then we want to prevent getaddrinfo()     */
-    /* from doing any name resolution.                                  */
-    /********************************************************************/
-    rc = inet_pton( AF_INET, server, &serveraddr );
-    if (rc == 1)    /* valid IPv4 text address? */
-    {
-        cout << "valid IPv4 address" << endl;
-        hints.ai_family = AF_INET;
-        hints.ai_flags |= AI_NUMERICHOST;
-    }
-    else 
-    {
-        rc = inet_pton( AF_INET6, server, &serveraddr );
-        if (rc == 1) /* valid IPv6 text address? */
-        {
-            cout << "valid IPv6 address" << endl;
-            hints.ai_family = AF_INET6;
-            hints.ai_flags |= AI_NUMERICHOST;
-        }
-        else
-        {
-            cout << "hostname that needs to be resolved: " + string( server ) << endl;
-        }
-    }
-
-    /********************************************************************/
-    /* Get the address information for the server using getaddrinfo().  */
-    /********************************************************************/
-    cout << "before getaddrinfo" << endl;
-    rc = getaddrinfo( server, "4000", &hints, &res );
-    if (rc != 0)
-    {
-        cout << "error: getaddrinfo" << endl; 
-        return;
-    }
-
-    cout << "getaddrinfo succeeded" << endl;
-}
-
-// --------------------------------------------------------------
 
 void test_address4()
 {
@@ -918,6 +1232,157 @@ void test_address6()
     }
 }
 
+void test_dns_resolve()
+{
+    cout << "test_dns_resolve" << endl;
+
+    DNSResolver resolver;
+
+    int num_google_success_callbacks = 0;
+    int num_google_failure_callbacks = 0;
+
+    string google_hostname( "google.com" );
+
+    cout << "resolving " << google_hostname << endl;
+
+    const int num_google_iterations = 10;
+
+    for ( int i = 0; i < num_google_iterations; ++i )
+    {
+        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, shared_ptr<ResolveResult> result ) 
+        { 
+            assert( name == google_hostname );
+            assert( result );
+            if ( result )
+                ++num_google_success_callbacks;
+            else
+                ++num_google_failure_callbacks;
+        } );
+    }
+
+    auto google_entry = resolver.GetEntry( google_hostname );
+    assert( google_entry );
+    assert( google_entry->status == ResolveStatus::InProgress );
+
+    auto start = chrono::steady_clock::now();
+
+    double t = 0.0;
+    double dt = 0.1f;
+    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+
+    for ( int i = 0; i < 50; ++i )
+    {
+        resolver.Update( t, dt );
+
+        if ( num_google_success_callbacks == num_google_iterations )
+            break;
+
+        this_thread::sleep_for( ms );
+
+        t += dt;
+    }
+
+    assert( num_google_success_callbacks == num_google_iterations );
+    assert( num_google_failure_callbacks == 0 );
+
+    auto finish = chrono::steady_clock::now();
+
+    auto delta = finish - start;
+
+    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
+
+    google_entry = resolver.GetEntry( google_hostname );
+    assert( google_entry );
+    assert( google_entry->status == ResolveStatus::Succeeded );
+
+    cout << google_hostname << ":" << endl;
+    for ( auto & address : google_entry->result->addresses )
+        cout << " + " << address.ToString() << endl;
+}
+
+void test_dns_resolve_failure()
+{
+    cout << "test_dns_resolve_failure" << endl;
+
+    DNSResolver resolver;
+
+    bool resolved = false;
+
+    string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
+
+    cout << "resolving garbage hostname: " << garbage_hostname << endl;
+
+    resolver.Resolve( garbage_hostname, [&resolved, &garbage_hostname] ( const string & name, shared_ptr<ResolveResult> result ) 
+    { 
+        assert( name == garbage_hostname );
+        assert( result == nullptr );
+        resolved = true;
+    } );
+
+    auto entry = resolver.GetEntry( garbage_hostname );
+    assert( entry );
+    assert( entry->status == ResolveStatus::InProgress );
+
+    auto start = chrono::steady_clock::now();
+
+    double t = 0.0;
+    double dt = 0.1f;
+    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+
+    for ( int i = 0; i < 50; ++i )
+    {
+        resolver.Update( t, dt );
+
+        if ( resolved )
+            break;
+
+        this_thread::sleep_for( ms );
+
+        t += dt;
+    }
+
+    auto finish = chrono::steady_clock::now();
+
+    auto delta = finish - start;
+
+    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
+
+    entry = resolver.GetEntry( garbage_hostname );
+    assert( entry );
+    assert( entry->status == ResolveStatus::Failed );
+    assert( entry->result == nullptr );
+}
+
+void test_network_interface()
+{
+    cout << "test_network_interface" << endl;
+
+    auto resolver = make_shared<DNSResolver>();
+
+    NetworkInterface networkInterface( resolver );
+
+    Interface & interface = networkInterface;
+
+    Factory<Packet> factory;
+
+    factory.Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
+    factory.Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
+    factory.Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+
+    for ( int i = 0; i < 10; ++i )
+    {
+        auto packet = factory.Create( PACKET_Connect );
+
+        interface.SendPacket( "google.com", packet );
+
+        interface.Update();
+    }
+
+    // todo: add counters to interface, eg. uint64_t counters -- num packets sent, receive, discarded, addresses resolved etc.
+
+    // todo: wait until 10 packets sent, eg. use counters to verify behavior
+}
+
 // --------------------------------------------------------------
 
 int main()
@@ -927,49 +1392,16 @@ int main()
         test_serialize_object();
         test_interface();
         test_factory();
-        /*
-        test_dns();
-        test_address();
-        */
         test_address4();
         test_address6();
+        test_dns_resolve();
+        test_dns_resolve_failure();
+        test_network_interface();
     }
     catch ( runtime_error & e )
     {
-        cout << string( "error: " ) + e.what() << endl;
+        cerr << string( "error: " ) + e.what() << endl;
     }
 
     return 0;
 }
-
-// ----------------------------------------------------------------
-
-// const expression
-
-#if 0
-enum Flags { good=0, fail=1, bad=2, eof=4 };
-
-    constexpr int operator|(Flags f1, Flags f2) { return Flags(int(f1)|int(f2)); }
-
-    void f(Flags x)
-    {
-        switch (x) {
-        case bad:         /* ... */ break;
-        case eof:         /* ... */ break;
-        case bad|eof:     /* ... */ break;
-        default:          /* ... */ break;
-        }
-    }
-#endif
-
-// quite cute
-
-/*
-    template<class T, class U>
-    auto mul(T x, U y) -> decltype(x*y)
-    {
-        return x*y;
-    }
-*/
-
-// ----------------------------------------------------------------

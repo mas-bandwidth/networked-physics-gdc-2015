@@ -1,0 +1,67 @@
+Tuesday March 5th, 2014:
+------------------------
+
+    Need a way to resolve DNS into addresses.
+
+    Add a new interface "Resolver". 
+
+    Derive from this and create a new "DNSResolver"
+
+    This will keep it generic, for example I could create redis
+    based server resolver for giving game instances server names,
+    or a master server list etc.
+
+    By having a resolver interface I won't care how the name -> address
+    resolution occurs, just that it *does* occur.
+
+    Added way to initialize address from addrinfo ptr (from resolve DNS...)
+
+    Cache data on lookup so it can be queried.
+
+    If an address has already been looked up, don't fire off a new async for it.
+    (but must you call the callback?! not sure... probably.)
+
+    There should have the option to clear the cache.
+
+    There should be a way to look up an address without calling lambda.
+
+    Optimize DNS resolver so that in-progress queries are in a separate hash,
+    so we don't go O(n) in the udptae after lots of queries have been done.
+
+    Verify that multiple overlapping resolve calls work, and all the lambdas are called on completion
+
+    Verify resolve failure works as well, and cached fail result.
+
+
+Sunday March 2nd, 2014:
+-----------------------
+
+    Basic serialization, serialize_int etc.
+
+    Base object for serialization with virtual Serialize( Stream & stream ) method.
+
+    Back packet class with serialize, address string (eg. sent from), and type int.
+
+    Factory class to create packets from type.
+
+    If you try to create an object of a type that is not registered, throw a runtime_error.
+
+    Explore "getaddrinfo" for IPv6 aware hostname -> IP address etc.
+
+    Implement basic address class capable of handling IPv6 and IPv6
+
+    Implement function to convert IPv4 string to address int + port
+
+    Verify IPv4 UDP broadcast address is converted properly: 0xffffffff
+
+    Implement function to convert IPv4 address + port back to string
+    (Omit the port if it is zero).
+
+    Added code to initialize IPv6 with 16bit pairs, including htons
+    (decided on network byte order for internal address data...)
+
+    Handle port number in IPv6 output string, eg. "[v6addr]:portnum"
+
+    Implement IPv6 parse from string
+
+    Implement IPv6 parse from string with port, eg. "[addr6]:portnum"
