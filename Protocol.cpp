@@ -401,6 +401,8 @@ namespace protocol
         const Address & GetAddress() const { return address; }
     };
 
+    typedef queue<shared_ptr<Packet>> PacketQueue;
+
     template<typename T> void serialize_int( Stream & stream, T & value, int64_t min, int64_t max )
     {                        
         int64_t int64_value = (int64_t) value;
@@ -466,7 +468,7 @@ namespace protocol
 
         virtual void Resolve( const string & name, ResolveCallback cb = nullptr ) = 0;
 
-        virtual void Update( double t, double dt ) = 0;
+        virtual void Update() = 0;
 
         virtual void Clear() = 0;
 
@@ -520,12 +522,14 @@ namespace protocol
                 switch ( entry->status )
                 {
                     case ResolveStatus::InProgress:
-                        entry->callbacks.push_back( callback );
+                        if ( callback )
+                            entry->callbacks.push_back( callback );
                         break;
 
                     case ResolveStatus::Succeeded:
                     case ResolveStatus::Failed:             // note: result is nullptr if resolve failed
-                        callback( name, entry->result );      
+                        if ( callback )
+                            callback( name, entry->result );      
                         break;
                 }
                 return;
@@ -533,7 +537,8 @@ namespace protocol
 
             auto entry = make_shared<ResolveEntry>();
             entry->status = ResolveStatus::InProgress;
-            entry->callbacks.push_back( callback );
+            if ( callback != nullptr )
+                entry->callbacks.push_back( callback );
             entry->future = async( launch::async, [name] () -> shared_ptr<ResolveResult> 
             { 
                 return DNSResolve_Blocking( name );
@@ -544,7 +549,7 @@ namespace protocol
             in_progress[name] = entry;
         }
 
-        virtual void Update( double t, double dt )
+        virtual void Update()
         {
             for ( auto itor = in_progress.begin(); itor != in_progress.end(); )
             {
@@ -611,7 +616,7 @@ namespace protocol
         void SendPacket( const Address & address, shared_ptr<Packet> packet )
         {
             packet->SetAddress( address );
-            send_queue.push( packet );
+            m_send_queue.push( packet );
         }
 
         void SendPacket( const string & hostname, shared_ptr<Packet> packet )
@@ -623,67 +628,112 @@ namespace protocol
 
             if ( resolveEntry )
             {
-                if ( resolveEntry->status == ResolveStatus::Succeeded )
+                switch ( resolveEntry->status )
                 {
-                    // hostname has already been successfully resolved
-                    // add packet to send queue with the resolved address
-                    assert( resolveEntry->result->addresses.size() >= 1 );
-                    packet->SetAddress( resolveEntry->result->addresses[0] );
-                    send_queue.push( packet );
-                }
-                else
-                {
-                    // hostname has already failed to resolve. discard packet.
-                    // todo: bump discarded packet counter
-                    return;
+                    case ResolveStatus::Succeeded:
+                    {
+                        cout << "resolve succeeded: sending packet to " << resolveEntry->result->addresses[0].ToString() << endl;
+                        assert( resolveEntry->result->addresses.size() >= 1 );
+                        packet->SetAddress( resolveEntry->result->addresses[0] );
+                        m_send_queue.push( packet );
+                    }
+                    break;
+
+                    case ResolveStatus::InProgress:
+                    {
+                        cout << "resolve in progress: buffering packet" << endl;
+                        auto resolve_send_queue = m_resolve_send_queues[hostname];
+                        assert( resolve_send_queue );
+                        resolve_send_queue->push( packet );
+                    }
+                    break;
+
+                    case ResolveStatus::Failed:
+                    {
+                        cout << "resolve failed: discarding packet for \"" << hostname << "\"" << endl;
+                    }
+                    break;
                 }
             }
             else
             {
-                // hostname has not been resolved yet. kick off a resolve if it isn't already running
-                // and add the packet to a special "pending" send queue for the hostname, so it will be
-                // sent once we resolve the hostname (or discarded if the hostname fails to resolve)
-
-                m_resolver->Resolve( hostname, nullptr );
-
-                // todo: look up pending resolve send queue by hostname, if doesn't exist, create it and push packet in queue
-                // if it already exists, just push packet on it.
+                cout << "resolving \"" << hostname << "\": buffering packet" << endl;
+                m_resolver->Resolve( hostname );
+                auto resolve_send_queue = make_shared<PacketQueue>();
+                resolve_send_queue->push( packet );
+                m_resolve_send_queues[hostname] = resolve_send_queue;
             }
         }
 
         shared_ptr<Packet> ReceivePacket()
         {
-            if ( receive_queue.empty() )
+            if ( m_receive_queue.empty() )
                 return nullptr;
-            auto packet = receive_queue.front();
-            receive_queue.pop();
+            auto packet = m_receive_queue.front();
+            m_receive_queue.pop();
             return packet;
         }
 
         void Update()
         {
-            // todo: update resolver. if packets are queued up for a resolve and the resolve
-            // has succeded, send the packets to the address. if the resolve has failed, discard packets.
+            if ( !m_resolver )
+                return;
 
-            // todo: make sure to set the address
+            m_resolver->Update();
+
+            for ( auto itor = m_resolve_send_queues.begin(); itor != m_resolve_send_queues.end(); )
+            {
+                auto hostname = itor->first;
+                auto resolve_send_queue = itor->second;
+
+                auto entry = m_resolver->GetEntry( hostname );
+                assert( entry );
+                if ( entry->status != ResolveStatus::InProgress )
+                {
+                    if ( entry->status == ResolveStatus::Succeeded )
+                    {
+                        assert( entry->result->addresses.size() > 0 );
+                        auto address = entry->result->addresses[0];
+                        cout << format_string( "resolved \"%s\" to %s", hostname.c_str(), address.ToString().c_str() ) << endl;
+
+                        // todo: we need a port here. port needs to be passed in to SendPacket with hostname!
+                        const uint16_t port = 1000;
+                        address.SetPort( port );
+
+                        cout << "sending " << resolve_send_queue->size() << " buffered packets to " << address.ToString() << endl;
+                        while ( !resolve_send_queue->empty() )
+                        {
+                            auto packet = resolve_send_queue->front();
+                            resolve_send_queue->pop();
+                            packet->SetAddress( address );
+                            m_send_queue.push( packet );
+                        }
+                        m_resolve_send_queues.erase( itor++ );
+                    }
+                    else if ( entry->status == ResolveStatus::Failed )
+                    {
+                        cout << "failed to resolve \"" << hostname << "\". discarding " << resolve_send_queue->size() << " packets" << endl;
+                        ++itor;
+                    }
+                }
+                else
+                    ++itor;
+            }
+
+            // todo: iterate across send queues and serialize packets to raw data. send this raw data via "sendto"
+
+            // todo: poll the network layer and get raw packets via "recvfrom". serialize this data to get packets
+            // add these packets to the receive queue.
         }
 
         // todo: counters etc.
 
     private:
 
-        std::queue<shared_ptr<Packet>> send_queue;
-        std::queue<shared_ptr<Packet>> receive_queue;
-
-        // todo: send queue
-
-        // todo: recv queue
-
-        // todo: worker thread for sending packets (wakes up when work to do to send packets...)
-
-        // todo: worker thread for receiving packets (use blocking sockets initially...)
-
         shared_ptr<Resolver> m_resolver;
+        PacketQueue m_send_queue;
+        PacketQueue m_receive_queue;
+        map<string,shared_ptr<PacketQueue>> m_resolve_send_queues;
     };
 
 #if 0 
@@ -1272,7 +1322,7 @@ void test_dns_resolve()
 
     for ( int i = 0; i < 50; ++i )
     {
-        resolver.Update( t, dt );
+        resolver.Update();
 
         if ( num_google_success_callbacks == num_google_iterations )
             break;
@@ -1331,7 +1381,7 @@ void test_dns_resolve_failure()
 
     for ( int i = 0; i < 50; ++i )
     {
-        resolver.Update( t, dt );
+        resolver.Update();
 
         if ( resolved )
             break;
@@ -1353,9 +1403,9 @@ void test_dns_resolve_failure()
     assert( entry->result == nullptr );
 }
 
-void test_network_interface()
+void test_network_interface_send_to_hostname()
 {
-    cout << "test_network_interface" << endl;
+    cout << "test_network_interface_send_to_hostname" << endl;
 
     auto resolver = make_shared<DNSResolver>();
 
@@ -1369,19 +1419,47 @@ void test_network_interface()
     factory.Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
     factory.Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
 
-    for ( int i = 0; i < 10; ++i )
+    int numPackets = 10;
+
+    for ( int i = 0; i < numPackets; ++i )
     {
         auto packet = factory.Create( PACKET_Connect );
 
         interface.SendPacket( "google.com", packet );
-
-        interface.Update();
     }
 
-    // todo: add counters to interface, eg. uint64_t counters -- num packets sent, receive, discarded, addresses resolved etc.
+    auto start = chrono::steady_clock::now();
 
-    // todo: wait until 10 packets sent, eg. use counters to verify behavior
+    double t = 0.0;
+    double dt = 0.1f;
+    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+
+    for ( int i = 0; i < 20; ++i )
+    {
+        interface.Update();
+
+        // todo: stop if we have sent the 10 packets
+
+//        if ( resolved )
+//            break;
+
+        this_thread::sleep_for( ms );
+
+        t += dt;
+    }
+
+    auto finish = chrono::steady_clock::now();
+
+    auto delta = finish - start;
+
+    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
 }
+
+// todo: send_to_hostname_failure
+
+// todo: send and receive to localhost
+
+// todo: ...
 
 // --------------------------------------------------------------
 
@@ -1389,6 +1467,7 @@ int main()
 {
     try
     {
+        /*
         test_serialize_object();
         test_interface();
         test_factory();
@@ -1396,7 +1475,8 @@ int main()
         test_address6();
         test_dns_resolve();
         test_dns_resolve_failure();
-        test_network_interface();
+        */
+        test_network_interface_send_to_hostname();
     }
     catch ( runtime_error & e )
     {
