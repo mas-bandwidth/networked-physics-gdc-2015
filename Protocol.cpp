@@ -14,6 +14,7 @@
 #include <queue>
 #include <chrono>
 #include <map>
+#include <unistd.h>
 #include <iostream>
 #include <stdexcept>
 #include <string.h>
@@ -597,7 +598,7 @@ namespace protocol
 
         virtual void SendPacket( const Address & address, shared_ptr<Packet> packet ) = 0;
 
-        virtual void SendPacket( const string & hostname, shared_ptr<Packet> packet ) = 0;
+        virtual void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet ) = 0;
 
         virtual shared_ptr<Packet> ReceivePacket() = 0;
 
@@ -608,21 +609,90 @@ namespace protocol
     {
     public:
 
-        NetworkInterface( shared_ptr<Resolver> resolver )
+        enum Counters
         {
+            PacketsSent,                    // number of packets sent (eg. added to send queue)
+            PacketsReceived,                // number of packets received (eg. added to recv queue)
+            PacketsDiscarded,               // number of packets discarded on send because we couldn't resolve host
+            NumCounters
+        };
+
+        NetworkInterface( uint16_t port, shared_ptr<Resolver> resolver = make_shared<DNSResolver>() )
+        {
+            cout << "creating network interface on port " << port << endl;
+
+            m_port = port;
             m_resolver = resolver;
+            m_counters.resize( NumCounters, 0 );
+
+            // create socket
+
+            m_socket = ::socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+
+            if ( socket <= 0 )
+                throw runtime_error( "network interface failed to create socket" );
+
+            // bind to port
+
+            sockaddr_in address;
+            address.sin_family = AF_INET;
+            address.sin_addr.s_addr = INADDR_ANY;
+            address.sin_port = htons( (unsigned short) port );
+        
+            if ( ::bind( m_socket, (const sockaddr*) &address, sizeof(sockaddr_in) ) < 0 )
+                throw runtime_error( "network interface failed to bind socket" );
+
+            // set non-blocking io
+
+            #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+        
+                int nonBlocking = 1;
+                if ( fcntl( m_socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
+                    throw runtime_error( "network interface failed to set non-blocking on socket" );
+            
+            #elif PLATFORM == PLATFORM_WINDOWS
+        
+                DWORD nonBlocking = 1;
+                if ( ioctlsocket( m_socket, FIONBIO, &nonBlocking ) != 0 )
+                    throw runtime_error( "network interface failed to set non-blocking on socket" );
+
+            #else
+
+                #error unsupported platform
+
+            #endif
+        }
+
+        ~NetworkInterface()
+        {
+            if ( m_socket != 0 )
+            {
+                #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+                close( m_socket );
+                #elif PLATFORM == PLATFORM_WINDOWS
+                closesocket( m_socket );
+                #else
+                #error unsupported platform
+                #endif
+                m_socket = 0;
+            }
         }
 
         void SendPacket( const Address & address, shared_ptr<Packet> packet )
         {
+            assert( address.IsValid() );
             packet->SetAddress( address );
             m_send_queue.push( packet );
         }
 
-        void SendPacket( const string & hostname, shared_ptr<Packet> packet )
+        void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet )
         {
             if ( !m_resolver )
                 throw runtime_error( "cannot resolve address: resolver is null" );
+
+            Address address;
+            address.SetPort( port );
+            packet->SetAddress( address );
 
             auto resolveEntry = m_resolver->GetEntry( hostname );
 
@@ -632,10 +702,13 @@ namespace protocol
                 {
                     case ResolveStatus::Succeeded:
                     {
-                        cout << "resolve succeeded: sending packet to " << resolveEntry->result->addresses[0].ToString() << endl;
                         assert( resolveEntry->result->addresses.size() >= 1 );
-                        packet->SetAddress( resolveEntry->result->addresses[0] );
+                        Address address = resolveEntry->result->addresses[0];
+                        address.SetPort( port );
+                        packet->SetAddress( address );
                         m_send_queue.push( packet );
+                        m_counters[PacketsSent]++;
+                        cout << "resolve succeeded: sending packet to " << address.ToString() << endl;
                     }
                     break;
 
@@ -651,6 +724,7 @@ namespace protocol
                     case ResolveStatus::Failed:
                     {
                         cout << "resolve failed: discarding packet for \"" << hostname << "\"" << endl;
+                        m_counters[PacketsDiscarded]++;
                     }
                     break;
                 }
@@ -696,15 +770,14 @@ namespace protocol
                         auto address = entry->result->addresses[0];
                         cout << format_string( "resolved \"%s\" to %s", hostname.c_str(), address.ToString().c_str() ) << endl;
 
-                        // todo: we need a port here. port needs to be passed in to SendPacket with hostname!
-                        const uint16_t port = 1000;
-                        address.SetPort( port );
-
-                        cout << "sending " << resolve_send_queue->size() << " buffered packets to " << address.ToString() << endl;
+                        m_counters[PacketsSent] += resolve_send_queue->size();
                         while ( !resolve_send_queue->empty() )
                         {
                             auto packet = resolve_send_queue->front();
                             resolve_send_queue->pop();
+                            const uint16_t port = packet->GetAddress().GetPort();
+                            address.SetPort( port );
+                            cout << "sent buffered packet to " << address.ToString() << endl;
                             packet->SetAddress( address );
                             m_send_queue.push( packet );
                         }
@@ -713,32 +786,100 @@ namespace protocol
                     else if ( entry->status == ResolveStatus::Failed )
                     {
                         cout << "failed to resolve \"" << hostname << "\". discarding " << resolve_send_queue->size() << " packets" << endl;
-                        ++itor;
+                        m_counters[PacketsDiscarded] += resolve_send_queue->size();
+                        m_resolve_send_queues.erase( itor++ );
                     }
                 }
                 else
                     ++itor;
             }
 
-            // todo: iterate across send queues and serialize packets to raw data. send this raw data via "sendto"
+            SendPackets();
 
-            // todo: poll the network layer and get raw packets via "recvfrom". serialize this data to get packets
-            // add these packets to the receive queue.
+            ReceivePackets();
         }
 
-        // todo: counters etc.
+        uint64_t GetCounter( int index ) const
+        {
+            assert( index >= 0 );
+            assert( index < NumCounters );
+            return m_counters[index];
+        }
 
     private:
 
+        void ReceivePackets()
+        {
+            // ...
+        }
+
+        void SendPackets()
+        {
+            // ...
+        }
+
+        bool SendPacketInternal( const Address & destination, const void * data, int size )
+        {
+            assert( data );
+            assert( size > 0 );
+            assert( m_socket );
+        
+            /*
+            // todo: update to support IPv6 address types
+        
+            sockaddr_in address;
+            address.sin_family = AF_INET;
+            address.sin_addr.s_addr = htonl( destination.GetAddress() );
+            address.sin_port = htons( (unsigned short) destination.GetPort() );
+
+            int sent_bytes = sendto( m_socket, (const char*)data, size, 0, (sockaddr*)&address, sizeof(sockaddr_in) );
+
+            return sent_bytes == size;
+            */
+
+            return false;
+        }
+    
+        int Receive( Address & sender, void * data, int size )
+        {
+            assert( data );
+            assert( size > 0 );
+            assert( m_socket );
+
+            /*        
+            #if PLATFORM == PLATFORM_WINDOWS
+            typedef int socklen_t;
+            #endif
+            
+            // todo: update to support IPv6 address types
+
+            sockaddr_in from;
+            socklen_t fromLength = sizeof( from );
+
+            int received_bytes = recvfrom( socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
+
+            if ( received_bytes <= 0 )
+                return 0;
+
+            unsigned int address = ntohl( from.sin_addr.s_addr );
+            unsigned int port = ntohs( from.sin_port );
+
+            sender = Address( address, port );
+
+            return received_bytes;
+            */
+
+            return 0;
+        }
+
+        int m_socket;
+        uint16_t m_port;
         shared_ptr<Resolver> m_resolver;
         PacketQueue m_send_queue;
         PacketQueue m_receive_queue;
         map<string,shared_ptr<PacketQueue>> m_resolve_send_queues;
+        vector<uint64_t> m_counters;
     };
-
-#if 0 
-
-    // sockets
 
     inline bool InitializeSockets()
     {
@@ -755,148 +896,7 @@ namespace protocol
         #if PLATFORM == PLATFORM_WINDOWS
         WSACleanup();
         #endif
-    }
-
-    class Socket
-    {
-    public:
-    
-        Socket()
-        {
-            socket = 0;
-        }
-    
-        ~Socket()
-        {
-            Close();
-        }
-    
-        bool Open( unsigned short port )
-        {
-            assert( !IsOpen() );
-        
-            // create socket
-
-            socket = ::socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
-
-            if ( socket <= 0 )
-            {
-                printf( "failed to create socket\n" );
-                socket = 0;
-                return false;
-            }
-
-            // bind to port
-
-            sockaddr_in address;
-            address.sin_family = AF_INET;
-            address.sin_addr.s_addr = INADDR_ANY;
-            address.sin_port = htons( (unsigned short) port );
-        
-            if ( bind( socket, (const sockaddr*) &address, sizeof(sockaddr_in) ) < 0 )
-            {
-                printf( "failed to bind socket\n" );
-                Close();
-                return false;
-            }
-
-            // set non-blocking io
-
-            #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-        
-                int nonBlocking = 1;
-                if ( fcntl( socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
-                {
-                    printf( "failed to set non-blocking socket\n" );
-                    Close();
-                    return false;
-                }
-            
-            #elif PLATFORM == PLATFORM_WINDOWS
-        
-                DWORD nonBlocking = 1;
-                if ( ioctlsocket( socket, FIONBIO, &nonBlocking ) != 0 )
-                {
-                    printf( "failed to set non-blocking socket\n" );
-                    Close();
-                    return false;
-                }
-
-            #endif
-        
-            return true;
-        }
-    
-        void Close()
-        {
-            if ( socket != 0 )
-            {
-                #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-                close( socket );
-                #elif PLATFORM == PLATFORM_WINDOWS
-                closesocket( socket );
-                #endif
-                socket = 0;
-            }
-        }
-    
-        bool IsOpen() const
-        {
-            return socket != 0;
-        }
-    
-        bool Send( const Address & destination, const void * data, int size )
-        {
-            assert( data );
-            assert( size > 0 );
-        
-            if ( socket == 0 )
-                return false;
-        
-            sockaddr_in address;
-            address.sin_family = AF_INET;
-            address.sin_addr.s_addr = htonl( destination.GetAddress() );
-            address.sin_port = htons( (unsigned short) destination.GetPort() );
-
-            int sent_bytes = sendto( socket, (const char*)data, size, 0, (sockaddr*)&address, sizeof(sockaddr_in) );
-
-            return sent_bytes == size;
-        }
-    
-        int Receive( Address & sender, void * data, int size )
-        {
-            assert( data );
-            assert( size > 0 );
-        
-            if ( socket == 0 )
-                return false;
-            
-            #if PLATFORM == PLATFORM_WINDOWS
-            typedef int socklen_t;
-            #endif
-            
-            sockaddr_in from;
-            socklen_t fromLength = sizeof( from );
-
-            int received_bytes = recvfrom( socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
-
-            if ( received_bytes <= 0 )
-                return 0;
-
-            unsigned int address = ntohl( from.sin_addr.s_addr );
-            unsigned int port = ntohs( from.sin_port );
-
-            sender = Address( address, port );
-
-            return received_bytes;
-        }
-        
-    private:
-    
-        int socket;
-    };
-
-#endif
+    }    
 }
 
 // -------------------------------------------------------
@@ -1006,7 +1006,16 @@ struct DisconnectPacket : public Packet
     void Serialize( Stream & stream ) {}
 };
 
-typedef queue<shared_ptr<Packet>> PacketQueue;
+class TestPacketFactory : public Factory<Packet>
+{
+public:
+    TestPacketFactory()
+    {
+        Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
+        Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
+        Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+    }
+};
 
 class TestInterface : public Interface
 {
@@ -1018,10 +1027,9 @@ public:
         packet_queue.push( packet );
     }
 
-    virtual void SendPacket( const string & address, shared_ptr<Packet> packet )
+    virtual void SendPacket( const string & address, uint16_t port, shared_ptr<Packet> packet )
     {
-        packet->SetAddress( address );
-        packet_queue.push( packet );
+        assert( false );        // not supported
     }
 
     virtual shared_ptr<Packet> ReceivePacket()
@@ -1047,22 +1055,24 @@ void test_interface()
 
     TestInterface interface;
 
-    interface.SendPacket( "127.0.0.1", make_shared<ConnectPacket>() );
-    interface.SendPacket( "127.0.0.1", make_shared<UpdatePacket>() );
-    interface.SendPacket( "127.0.0.1", make_shared<DisconnectPacket>() );
+    Address address( 127,0,0,1, 1000 );
+
+    interface.SendPacket( address, make_shared<ConnectPacket>() );
+    interface.SendPacket( address, make_shared<UpdatePacket>() );
+    interface.SendPacket( address, make_shared<DisconnectPacket>() );
 
     auto connectPacket = interface.ReceivePacket();
     auto updatePacket = interface.ReceivePacket();
     auto disconnectPacket = interface.ReceivePacket();
 
     assert( connectPacket->GetType() == PACKET_Connect );
-    assert( connectPacket->GetAddress() == Address( "127.0.0.1" ) );
+    assert( connectPacket->GetAddress() == address );
 
     assert( updatePacket->GetType() == PACKET_Update );
-    assert( updatePacket->GetAddress() == Address( "127.0.0.1" ) );
+    assert( updatePacket->GetAddress() == address );
 
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
-    assert( disconnectPacket->GetAddress() == Address( "127.0.0.1" ) );
+    assert( disconnectPacket->GetAddress() == address );
 
     assert( interface.ReceivePacket() == nullptr );
 }
@@ -1071,11 +1081,7 @@ void test_factory()
 {
     cout << "test_factory" << endl;
 
-    Factory<Packet> factory;
-
-    factory.Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
-    factory.Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
-    factory.Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+    TestPacketFactory factory;
 
     auto connectPacket = factory.Create( PACKET_Connect );
     auto updatePacket = factory.Create( PACKET_Update );
@@ -1407,17 +1413,11 @@ void test_network_interface_send_to_hostname()
 {
     cout << "test_network_interface_send_to_hostname" << endl;
 
-    auto resolver = make_shared<DNSResolver>();
+    const uint16_t port = 10000;
 
-    NetworkInterface networkInterface( resolver );
+    NetworkInterface interface( port );
 
-    Interface & interface = networkInterface;
-
-    Factory<Packet> factory;
-
-    factory.Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
-    factory.Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
-    factory.Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+    TestPacketFactory factory;
 
     int numPackets = 10;
 
@@ -1425,7 +1425,7 @@ void test_network_interface_send_to_hostname()
     {
         auto packet = factory.Create( PACKET_Connect );
 
-        interface.SendPacket( "google.com", packet );
+        interface.SendPacket( "google.com", port, packet );
     }
 
     auto start = chrono::steady_clock::now();
@@ -1438,10 +1438,8 @@ void test_network_interface_send_to_hostname()
     {
         interface.Update();
 
-        // todo: stop if we have sent the 10 packets
-
-//        if ( resolved )
-//            break;
+        if ( interface.GetCounter( NetworkInterface::PacketsSent ) == numPackets )
+            break;
 
         this_thread::sleep_for( ms );
 
@@ -1455,16 +1453,124 @@ void test_network_interface_send_to_hostname()
     cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
 }
 
-// todo: send_to_hostname_failure
+void test_network_interface_send_to_hostname_failure()
+{
+    cout << "test_network_interface_send_to_hostname_failure" << endl;
 
-// todo: send and receive to localhost
+    const uint16_t port = 10000;
 
-// todo: ...
+    NetworkInterface interface( port );
+
+    TestPacketFactory factory;
+
+    int numPackets = 10;
+
+    for ( int i = 0; i < numPackets; ++i )
+    {
+        auto packet = factory.Create( PACKET_Connect );
+
+        interface.SendPacket( "aoesortuhantuehanthua", port, packet );
+    }
+
+    auto start = chrono::steady_clock::now();
+
+    double t = 0.0;
+    double dt = 0.1f;
+    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+
+    for ( int i = 0; i < 20; ++i )
+    {
+        interface.Update();
+
+        if ( interface.GetCounter( NetworkInterface::PacketsDiscarded ) == numPackets )
+            break;
+
+        this_thread::sleep_for( ms );
+
+        t += dt;
+    }
+
+    auto finish = chrono::steady_clock::now();
+
+    auto delta = finish - start;
+
+    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
+}
+
+void test_network_interface_send_and_receive()
+{
+    cout << "test_network_interface_send_and_receive" << endl;
+
+    const uint16_t port = 10000;
+
+    NetworkInterface interface( port );
+
+    TestPacketFactory factory;
+
+    Address address( "::1" );
+    address.SetPort( port );
+
+    double dt = 0.01f;
+    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+
+    bool receivedConnectPacket = false;
+    bool receivedUpdatePacket = false;
+    bool receivedDisconnectPacket = false;
+
+    int iterations = 0;
+
+    while ( true )
+    {
+        // temporary!
+        if ( iterations++ > 100 )
+            break;
+
+        interface.SendPacket( address, make_shared<ConnectPacket>() );
+        interface.SendPacket( address, make_shared<UpdatePacket>() );
+        interface.SendPacket( address, make_shared<DisconnectPacket>() );
+
+        interface.Update();
+
+        this_thread::sleep_for( ms );
+
+        while ( true )
+        {
+            auto packet = interface.ReceivePacket();
+            if ( !packet )
+                break;
+
+            switch ( packet->GetType() )
+            {
+                case PACKET_Connect:
+                    // todo: how the fuck to cast to the correct packet type?!
+                    //auto connectPacket = static_cast< shared_ptr<ConnectPacket> >( packet );
+                    // todo: verify address and packet data
+                    receivedConnectPacket = true;
+                    break;
+
+                case PACKET_Update:
+                    // todo: verify address and packet data
+                    receivedUpdatePacket = true;
+                    break;
+
+                case PACKET_Disconnect:
+                    // todo: verify address and packet data
+                    receivedDisconnectPacket = true;
+                    break;
+            }
+        }
+
+        if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
+            break;
+    }
+}
 
 // --------------------------------------------------------------
 
 int main()
 {
+    InitializeSockets();
+
     try
     {
         /*
@@ -1475,13 +1581,17 @@ int main()
         test_address6();
         test_dns_resolve();
         test_dns_resolve_failure();
-        */
         test_network_interface_send_to_hostname();
+        test_network_interface_send_to_hostname_failure();
+        */
+        test_network_interface_send_and_receive();
     }
     catch ( runtime_error & e )
     {
         cerr << string( "error: " ) + e.what() << endl;
     }
+
+    ShutdownSockets();
 
     return 0;
 }

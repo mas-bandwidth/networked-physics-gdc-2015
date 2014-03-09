@@ -1,3 +1,17 @@
+Sunday March 9th, 2014:
+-----------------------
+
+    Implement lookup from hostname to address inside network interface via resolver
+
+    Added counters to network interface to aid in unit tests (eg. num packets sent, received, discarded)
+
+    Add test to verify hostname lookup + resolve send queue + send on resolve works
+
+    Add test to verify hostname failure discards packets
+
+    Carry the port # from send to address -> internal send queue (resolve). Verify with logs.
+
+
 Tuesday March 5th, 2014:
 ------------------------
 

@@ -1,18 +1,72 @@
 DONE:
 
+    Add test to verify send and receive packet by address.
+
+    Create non-blocking socket inside network interface.    
+
+    Clean up socket in network interface dtor.
+
 TODO:
 
-    Implement network interface to send and receive packets.
+    Hack up the sendto to work with IPv6 address types.
 
-    Just do it simple, eg. sendto/recvfrom but make sure IPv6 ready.
+    Will need to know max packet size for network interface, otherwise will
+    not be able to call recvfrom, because we need to know max buffer size
+    ahead of time. Use a std::vector for the buffer.
 
-    Should be able to pass a resolver interface to the network interface, which it will use
-    to take name strings to addresses if passed in. Can also send packets to addresses directly!
+    Seems like I need a function to convert an Address to a sockaddr_in struct,
+    or a sockaddr_storage, depending on address type: IPv6 or IPv6.
 
-    First, implement the network interface simply with non-blocking sockets running on the main
-    thread. 
+    Iterate across send queue and pop packets off, attempt to serialize this packet to a buffer
+    and if it fails increment serialize write failure counter. If succeeds, pass this buffer
+    to the internal send function which calls "sendto".
 
-    Next investigate other methods for sending and receiving packets, especially running
-    packet encode and decode on separate worker threads (assume packet encode/decode can be expensive)
+    Seems I need a function to take a sockaddr_in to my own address class (already have this?)
 
-    -----------------------------------
+    Call recvfrom and get packets. Immediately attempt to serialize this data into a packet.
+    If the serialize fails, discard the packet. If it succeeds, add the packet to recv queue.
+
+    Verify network interface send/recv is working properly across IPv4 and IPv6
+
+    --------------------------------------------------------
+
+    Implement connection protocol. This should basically be a new packet type "ConnectionPacket"
+    which internally allows me to implement the reliability header, reliable messages w. channels
+    and so on.
+
+    Key difference here is that messages should be arbitrary length (short or long) and should
+    be fragmented and reassembled as needed to fit in the packet, vs. previous systems where I
+    have treated small (events) and large (chunks) separately.
+
+    Basic idea is a reliable-ordered protocol with flexible messages of any size, plus channels
+    so I can avoid waiting for long blocks of data if I don't wish to, plus unreliable-unordered
+    state messages, and potentially delta encoding.
+
+    Connection should be flexible enough to define your own paylod as well.
+
+INTERNET READY:
+
+    Implement proper range encoder. Don't do a bitpacker this time that's already been done.
+
+    Study how it works. Implement something that encodes and decodes in-place. Optimize for CPU later.
+
+    Add encryption for packets, assuming that matchmaker will provide secret key, any fast key
+    based encryption is acceptable. Do this at the network interface level, eg. network interface
+    accepts a key. If the key is a non-empty string, apply the encrytion before send, and decrypt
+    on recvfrom.
+
+    Make sure there is some checksum or basic check for packets, eg. signing packets. tamper check.
+    Reuse the same key for encryption if possible. Research this and study how it is done.
+
+OPTIMIZATION:
+
+    Optimize range encoder
+
+    Send and receive queues should be lockless threadsafe
+
+    Separate send and receive threads for NetworkInterface
+
+    Investigate different methods for sending and receiving UDP packets,
+    eg. completion ports on Win32, whatever method is fastest on linux etc.
+
+    Run throughput tests with linux hosts. Test CPU usage etc.
