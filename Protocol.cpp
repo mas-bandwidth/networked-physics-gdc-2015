@@ -57,12 +57,26 @@ namespace protocol
 {
     using namespace std;
 
-    class serialize_exception : public runtime_error
+    string format_string( const char * fmt_str, ... ) 
     {
-    public:
-        serialize_exception( const string & err )
-            : runtime_error( err ) {}
-    };
+        int final_n, n = 256;
+        string str;
+        unique_ptr<char[]> formatted;
+        va_list ap;
+        while(1) 
+        {
+            formatted.reset(new char[n]);
+            strcpy(&formatted[0], fmt_str);
+            va_start(ap, fmt_str);
+            final_n = vsnprintf(&formatted[0], n, fmt_str, ap);
+            va_end(ap);
+            if (final_n < 0 || final_n >= n)
+                n += abs(final_n - n + 1);
+            else
+                break;
+        }
+        return string(formatted.get());
+    }
 
     struct StreamValue
     {
@@ -120,22 +134,49 @@ namespace protocol
             else
             {
                 if ( m_readIndex >= m_values.size() )
-                    throw serialize_exception( "read past end of stream" );
+                    throw runtime_error( "read past end of stream" );
 
                 StreamValue & streamValue = m_values[m_readIndex++];
-                if ( streamValue.min != min || streamValue.max != max )
-                    throw serialize_exception( "stream min/max desync between read and write" );
 
-                if ( streamValue.value < streamValue.min || streamValue.value > streamValue.max )
-                    throw serialize_exception( "value read from stream is outside min/max range" );
+                if ( streamValue.min != min || streamValue.max != max )
+                    throw runtime_error( format_string( "min/max stream mismatch: [%lld,%lld] vs. [%lld,%lld]", streamValue.min, streamValue.max, min, max ) );
+
+                if ( streamValue.value < min || streamValue.value > max )
+                    throw runtime_error( format_string( "value %lld read from stream is outside min/max range [%lld,%lld]", streamValue.value, min, max ) );
 
                 value = streamValue.value;
             }
         }
 
+        const uint8_t * GetWriteBuffer( size_t & bufferSize )
+        {
+            bufferSize = sizeof( StreamValue ) * m_values.size();
+            return reinterpret_cast<uint8_t*>( &m_values[0] );
+        }
+
+        void SetReadBuffer( uint8_t * readBuffer, size_t bufferSize )
+        {
+            int numValues = bufferSize / sizeof( StreamValue );
+//            cout << "numValues = " << numValues << endl;
+            StreamValue * streamValues = reinterpret_cast<StreamValue*>( readBuffer );
+            m_values = vector<StreamValue>( streamValues, streamValues + numValues );
+            m_readIndex = 0;
+            /*
+            cout << "-----------------------------" << endl;
+            cout << "read values:" << endl;
+            for ( int i = 0; i < m_values.size(); ++i )
+            {
+                cout << " + value = " << m_values[i].value << " min = " << m_values[i].min << " max = " << m_values[i].max << endl;
+            }
+            cout << "-----------------------------" << endl;
+            */
+        }
+
+    private:
+
         StreamMode m_mode;
-        vector<StreamValue> m_values;
         size_t m_readIndex;
+        vector<StreamValue> m_values;
     };
 
     class Object
@@ -143,26 +184,6 @@ namespace protocol
     public:
         virtual void Serialize( Stream & stream ) = 0;
     };
-
-    string format_string( const string & fmt_str, ... ) 
-    {
-        int final_n, n = fmt_str.size() * 2; /* reserve 2 times as much as the length of the fmt_str */
-        string str;
-        unique_ptr<char[]> formatted;
-        va_list ap;
-        while(1) {
-            formatted.reset(new char[n]); /* wrap the plain char array into the unique_ptr */
-            strcpy(&formatted[0], fmt_str.c_str());
-            va_start(ap, fmt_str);
-            final_n = vsnprintf(&formatted[0], n, fmt_str.c_str(), ap);
-            va_end(ap);
-            if (final_n < 0 || final_n >= n)
-                n += abs(final_n - n + 1);
-            else
-                break;
-        }
-        return string(formatted.get());
-    }
 
     enum class AddressType : char
     {
@@ -218,6 +239,20 @@ namespace protocol
             port = _port;
         }
 
+        explicit Address( const sockaddr_in & addr_ipv4 )
+        {
+            type = AddressType::IPv4;
+            address4 = addr_ipv4.sin_addr.s_addr;
+            port = ntohs( addr_ipv4.sin_port );
+        }
+
+        explicit Address( const sockaddr_in6 & addr_ipv6 )
+        {
+            type = AddressType::IPv6;
+            memcpy( address6, &addr_ipv6.sin6_addr, 16 );
+            port = ntohs( addr_ipv6.sin6_port );
+        }
+
         explicit Address( addrinfo * p )
         {
             port = 0;
@@ -226,12 +261,14 @@ namespace protocol
                 type = AddressType::IPv4;
                 struct sockaddr_in * ipv4 = (struct sockaddr_in *)p->ai_addr;
                 address4 = ipv4->sin_addr.s_addr;
+                port = ntohs( ipv4->sin_port );
             } 
             else if ( p->ai_family == AF_INET6 )
             { 
                 type = AddressType::IPv6;
                 struct sockaddr_in6 * ipv6 = (struct sockaddr_in6 *)p->ai_addr;
                 memcpy( address6, &ipv6->sin6_addr, 16 );
+                port = ntohs( ipv6->sin6_port );
             }
             else
             {
@@ -408,7 +445,7 @@ namespace protocol
     {                        
         int64_t int64_value = (int64_t) value;
         stream.SerializeValue( int64_value, min, max );
-        value = (T) value;
+        value = (T) int64_value;
     }
 
     void serialize_object( Stream & stream, Object & object )
@@ -609,24 +646,46 @@ namespace protocol
     {
     public:
 
+        struct Config
+        {
+            Config()
+            {
+                port = 10000;
+                maxPacketSize = 10*1024;
+            }
+
+            uint16_t port;                          // port to bind UDP socket to
+            int maxPacketSize;                      // maximum packet size
+            shared_ptr<Resolver> resolver;          // resolver eg: DNS (optional)
+            shared_ptr<Factory<Packet>> factory;    // packet factory (required)
+        };
+
         enum Counters
         {
-            PacketsSent,                    // number of packets sent (eg. added to send queue)
-            PacketsReceived,                // number of packets received (eg. added to recv queue)
-            PacketsDiscarded,               // number of packets discarded on send because we couldn't resolve host
+            PacketsSent,                            // number of packets sent (eg. added to send queue)
+            PacketsReceived,                        // number of packets received (eg. added to recv queue)
+            PacketsDiscarded,                       // number of packets discarded on send because we couldn't resolve host
+            SendToFailures,                         // number of packets lost due to sendto failure
+            SerializeWriteFailures,                 // number of serialize write failures
+            SerializeReadFailures,                  // number of serialize read failures
             NumCounters
         };
 
-        NetworkInterface( uint16_t port, shared_ptr<Resolver> resolver = make_shared<DNSResolver>() )
+        NetworkInterface( const Config & config = Config() )
+            : m_config( config )
         {
-            cout << "creating network interface on port " << port << endl;
+            assert( m_config.factory );
+            assert( m_config.maxPacketSize > 0 );
 
-            m_port = port;
-            m_resolver = resolver;
+            m_receiveBuffer.resize( m_config.maxPacketSize );
+
+            cout << "creating network interface on port " << m_config.port << endl;
+
             m_counters.resize( NumCounters, 0 );
 
             // create socket
 
+            // todo: need to decide IPv6 or IPv6 at this point?!
             m_socket = ::socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
 
             if ( socket <= 0 )
@@ -637,7 +696,7 @@ namespace protocol
             sockaddr_in address;
             address.sin_family = AF_INET;
             address.sin_addr.s_addr = INADDR_ANY;
-            address.sin_port = htons( (unsigned short) port );
+            address.sin_port = htons( m_config.port );
         
             if ( ::bind( m_socket, (const sockaddr*) &address, sizeof(sockaddr_in) ) < 0 )
                 throw runtime_error( "network interface failed to bind socket" );
@@ -687,14 +746,14 @@ namespace protocol
 
         void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet )
         {
-            if ( !m_resolver )
+            if ( !m_config.resolver )
                 throw runtime_error( "cannot resolve address: resolver is null" );
 
             Address address;
             address.SetPort( port );
             packet->SetAddress( address );
 
-            auto resolveEntry = m_resolver->GetEntry( hostname );
+            auto resolveEntry = m_config.resolver->GetEntry( hostname );
 
             if ( resolveEntry )
             {
@@ -732,7 +791,7 @@ namespace protocol
             else
             {
                 cout << "resolving \"" << hostname << "\": buffering packet" << endl;
-                m_resolver->Resolve( hostname );
+                m_config.resolver->Resolve( hostname );
                 auto resolve_send_queue = make_shared<PacketQueue>();
                 resolve_send_queue->push( packet );
                 m_resolve_send_queues[hostname] = resolve_send_queue;
@@ -750,17 +809,17 @@ namespace protocol
 
         void Update()
         {
-            if ( !m_resolver )
+            if ( !m_config.resolver )
                 return;
 
-            m_resolver->Update();
+            m_config.resolver->Update();
 
             for ( auto itor = m_resolve_send_queues.begin(); itor != m_resolve_send_queues.end(); )
             {
                 auto hostname = itor->first;
                 auto resolve_send_queue = itor->second;
 
-                auto entry = m_resolver->GetEntry( hostname );
+                auto entry = m_config.resolver->GetEntry( hostname );
                 assert( entry );
                 if ( entry->status != ResolveStatus::InProgress )
                 {
@@ -808,77 +867,161 @@ namespace protocol
 
     private:
 
-        void ReceivePackets()
-        {
-            // ...
-        }
-
         void SendPackets()
         {
-            // ...
+            while ( !m_send_queue.empty() )
+            {
+                auto packet = m_send_queue.front();
+                m_send_queue.pop();
+
+                // todo: really need to know max # of packet type registered -- query from factory?
+
+                try
+                {
+                    Stream stream( STREAM_Write );
+
+                    const int MaxPacketTypes = 1024;
+                    int packetType = packet->GetType();
+
+                    serialize_int( stream, packetType, 0, MaxPacketTypes - 1 );
+                    packet->Serialize( stream );                
+
+                    size_t bufferSize = 0;
+                    const uint8_t * writeBuffer = stream.GetWriteBuffer( bufferSize );
+
+                    if ( bufferSize > m_config.maxPacketSize )
+                        throw runtime_error( format_string( "packet is larger than max size %llu", m_config.maxPacketSize ) );
+
+                    if ( !SendPacketInternal( packet->GetAddress(), writeBuffer, bufferSize ) )
+                        cout << "failed to send packet" << endl;
+                }
+                catch ( runtime_error & error )
+                {
+                    cout << "failed to serialize write packet: " << error.what() << endl;
+                    m_counters[SerializeWriteFailures]++;
+                    continue;
+                }
+            }
         }
 
-        bool SendPacketInternal( const Address & destination, const void * data, int size )
+        void ReceivePackets()
         {
-            assert( data );
-            assert( size > 0 );
+            while ( true )
+            {
+                Address address;
+                int received_bytes = ReceivePacketInternal( address, &m_receiveBuffer[0], m_receiveBuffer.size() );
+                if ( !received_bytes )
+                    break;
+
+                try
+                {
+                    Stream stream( STREAM_Read );
+
+                    stream.SetReadBuffer( &m_receiveBuffer[0], received_bytes );
+
+                    // todo: get max packet types from factory
+                    const int MaxPacketTypes = 1024;
+                    int packetType = 0;
+                    serialize_int( stream, packetType, 0, MaxPacketTypes - 1 );
+
+                    auto packet = m_config.factory->Create( packetType );
+
+                    if ( !packet )
+                        throw runtime_error( "failed to create packet from type" );
+
+                    packet->Serialize( stream );
+                    packet->SetAddress( address );
+
+                    m_receive_queue.push( packet );
+                }
+                catch ( runtime_error & error )
+                {
+                    cout << "failed to serialize read packet: " << error.what() << endl;
+                    m_counters[SerializeReadFailures]++;
+                    continue;
+                }
+            }
+        }
+
+        bool SendPacketInternal( const Address & address, const uint8_t * data, size_t bytes )
+        {
             assert( m_socket );
-        
-            /*
-            // todo: update to support IPv6 address types
-        
-            sockaddr_in address;
-            address.sin_family = AF_INET;
-            address.sin_addr.s_addr = htonl( destination.GetAddress() );
-            address.sin_port = htons( (unsigned short) destination.GetPort() );
+            assert( address.IsValid() );
+            assert( bytes > 0 );
+            assert( bytes <= m_config.maxPacketSize );
 
-            int sent_bytes = sendto( m_socket, (const char*)data, size, 0, (sockaddr*)&address, sizeof(sockaddr_in) );
+            bool result = false;
 
-            return sent_bytes == size;
-            */
+            if ( address.GetType() == AddressType::IPv6 )
+            {
+                sockaddr_in6 s_addr;
+                memset( &s_addr, 0, sizeof(s_addr) );
+                s_addr.sin6_family = AF_INET6;
+                s_addr.sin6_port = htons( address.GetPort() );
+                memcpy( &s_addr.sin6_addr, address.GetAddress6(), sizeof( s_addr.sin6_addr ) );
+                const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in6) );
+                result = sent_bytes == bytes;
+            }
+            else if ( address.GetType() == AddressType::IPv4 )
+            {
+                sockaddr_in s_addr;
+                s_addr.sin_family = AF_INET;
+                s_addr.sin_addr.s_addr = address.GetAddress4();
+                s_addr.sin_port = htons( (unsigned short) address.GetPort() );
+                const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in) );
+                result = sent_bytes == bytes;
+            }
 
-            return false;
+            if ( !result )
+                m_counters[SendToFailures]++;
+
+            return result;
         }
     
-        int Receive( Address & sender, void * data, int size )
+        int ReceivePacketInternal( Address & sender, void * data, int size )
         {
             assert( data );
             assert( size > 0 );
             assert( m_socket );
 
-            /*        
             #if PLATFORM == PLATFORM_WINDOWS
             typedef int socklen_t;
             #endif
             
-            // todo: update to support IPv6 address types
+            // todo: update to support IPv6
 
             sockaddr_in from;
             socklen_t fromLength = sizeof( from );
 
-            int received_bytes = recvfrom( socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
+            int result = recvfrom( m_socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
 
-            if ( received_bytes <= 0 )
+            if ( errno == EAGAIN )
                 return 0;
+
+            if ( result < 0 )
+            {
+                cout << "recvfrom failed: " << strerror( errno ) << endl;
+                return 0;
+            }
 
             unsigned int address = ntohl( from.sin_addr.s_addr );
             unsigned int port = ntohs( from.sin_port );
 
             sender = Address( address, port );
 
-            return received_bytes;
-            */
+            assert( result >= 0 );
 
-            return 0;
+            return result;
         }
 
+        const Config m_config;
+
         int m_socket;
-        uint16_t m_port;
-        shared_ptr<Resolver> m_resolver;
         PacketQueue m_send_queue;
         PacketQueue m_receive_queue;
         map<string,shared_ptr<PacketQueue>> m_resolve_send_queues;
         vector<uint64_t> m_counters;
+        vector<uint8_t> m_receiveBuffer;
     };
 
     inline bool InitializeSockets()
@@ -979,9 +1122,19 @@ struct ConnectPacket : public Packet
 
     void Serialize( Stream & stream )
     {
-        serialize_int( stream, a, 0, 10 );
-        serialize_int( stream, b, 0, 10 );
-        serialize_int( stream, c, 0, 10 );
+        serialize_int( stream, a, -10, 10 );
+        serialize_int( stream, b, -10, 10 );
+        serialize_int( stream, c, -10, 10 );
+    }
+
+    bool operator ==( const ConnectPacket & other ) const
+    {
+        return a == other.a && b == other.b && c == other.c;
+    }
+
+    bool operator !=( const ConnectPacket & other ) const
+    {
+        return !( *this == other );
     }
 };
 
@@ -998,12 +1151,41 @@ struct UpdatePacket : public Packet
     {
         serialize_int( stream, timestamp, 0, 65535 );
     }
+
+    bool operator ==( const UpdatePacket & other ) const
+    {
+        return timestamp == other.timestamp;
+    }
+
+    bool operator !=( const UpdatePacket & other ) const
+    {
+        return !( *this == other );
+    }
 };
 
 struct DisconnectPacket : public Packet
 {
-    DisconnectPacket() : Packet( PACKET_Disconnect ) {}
-    void Serialize( Stream & stream ) {}
+    int x;
+
+    DisconnectPacket() : Packet( PACKET_Disconnect ) 
+    {
+        x = 2;
+    }
+
+    void Serialize( Stream & stream )
+    {
+        serialize_int( stream, x, -100, +100 );
+    }
+
+    bool operator ==( const DisconnectPacket & other ) const
+    {
+        return x == other.x;
+    }
+
+    bool operator !=( const DisconnectPacket & other ) const
+    {
+        return !( *this == other );
+    }
 };
 
 class TestPacketFactory : public Factory<Packet>
@@ -1413,19 +1595,24 @@ void test_network_interface_send_to_hostname()
 {
     cout << "test_network_interface_send_to_hostname" << endl;
 
-    const uint16_t port = 10000;
+    NetworkInterface::Config config;
 
-    NetworkInterface interface( port );
+    auto factory = make_shared<TestPacketFactory>();
 
-    TestPacketFactory factory;
+    config.port = 10000;
+    config.maxPacketSize = 1024;
+    config.factory = static_pointer_cast<Factory<Packet>>( factory );
+    config.resolver = make_shared<DNSResolver>();
+
+    NetworkInterface interface( config );
 
     int numPackets = 10;
 
     for ( int i = 0; i < numPackets; ++i )
     {
-        auto packet = factory.Create( PACKET_Connect );
+        auto packet = factory->Create( PACKET_Connect );
 
-        interface.SendPacket( "google.com", port, packet );
+        interface.SendPacket( "google.com", config.port, packet );
     }
 
     auto start = chrono::steady_clock::now();
@@ -1457,19 +1644,24 @@ void test_network_interface_send_to_hostname_failure()
 {
     cout << "test_network_interface_send_to_hostname_failure" << endl;
 
-    const uint16_t port = 10000;
+    NetworkInterface::Config config;
 
-    NetworkInterface interface( port );
+    auto factory = make_shared<TestPacketFactory>();
 
-    TestPacketFactory factory;
+    config.port = 10000;
+    config.maxPacketSize = 1024;
+    config.factory = static_pointer_cast<Factory<Packet>>( factory );
+    config.resolver = make_shared<DNSResolver>();
+
+    NetworkInterface interface( config );
 
     int numPackets = 10;
 
     for ( int i = 0; i < numPackets; ++i )
     {
-        auto packet = factory.Create( PACKET_Connect );
+        auto packet = factory->Create( PACKET_Connect );
 
-        interface.SendPacket( "aoesortuhantuehanthua", port, packet );
+        interface.SendPacket( "aoesortuhantuehanthua", config.port, packet );
     }
 
     auto start = chrono::steady_clock::now();
@@ -1497,18 +1689,23 @@ void test_network_interface_send_to_hostname_failure()
     cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
 }
 
-void test_network_interface_send_and_receive()
+void test_network_interface_send_and_receive_ipv4()
 {
-    cout << "test_network_interface_send_and_receive" << endl;
+    cout << "test_network_interface_send_and_receive_ipv4" << endl;
 
-    const uint16_t port = 10000;
+    NetworkInterface::Config config;
 
-    NetworkInterface interface( port );
+    auto factory = make_shared<TestPacketFactory>();
 
-    TestPacketFactory factory;
+    config.port = 10000;
+    config.maxPacketSize = 1024;
+    config.factory = static_pointer_cast<Factory<Packet>>( factory );
+    config.resolver = make_shared<DNSResolver>();
 
-    Address address( "::1" );
-    address.SetPort( port );
+    NetworkInterface interface( config );
+
+    Address address( "127.0.0.1" );
+    address.SetPort( config.port );
 
     double dt = 0.01f;
     chrono::milliseconds ms( (int) ( dt * 1000 ) );
@@ -1517,17 +1714,23 @@ void test_network_interface_send_and_receive()
     bool receivedUpdatePacket = false;
     bool receivedDisconnectPacket = false;
 
-    int iterations = 0;
-
     while ( true )
     {
-        // temporary!
-        if ( iterations++ > 100 )
-            break;
+        auto connectPacket = make_shared<ConnectPacket>();
+        auto updatePacket = make_shared<UpdatePacket>();
+        auto disconnectPacket = make_shared<DisconnectPacket>();
 
-        interface.SendPacket( address, make_shared<ConnectPacket>() );
-        interface.SendPacket( address, make_shared<UpdatePacket>() );
-        interface.SendPacket( address, make_shared<DisconnectPacket>() );
+        connectPacket->a = 2;
+        connectPacket->b = 6;
+        connectPacket->c = -1;
+
+        updatePacket->timestamp = 500;
+
+        disconnectPacket->x = -100;
+
+        interface.SendPacket( address, connectPacket );
+        interface.SendPacket( address, updatePacket );
+        interface.SendPacket( address, disconnectPacket );
 
         interface.Update();
 
@@ -1539,24 +1742,36 @@ void test_network_interface_send_and_receive()
             if ( !packet )
                 break;
 
+            assert( packet->GetAddress() == address );
+
             switch ( packet->GetType() )
             {
                 case PACKET_Connect:
-                    // todo: how the fuck to cast to the correct packet type?!
-                    //auto connectPacket = static_cast< shared_ptr<ConnectPacket> >( packet );
-                    // todo: verify address and packet data
+                {
+                    cout << "received connect packet" << endl;
+                    auto recv_connectPacket = static_pointer_cast<ConnectPacket>( packet );
+                    assert( *recv_connectPacket == *connectPacket );
                     receivedConnectPacket = true;
-                    break;
+                }
+                break;
 
                 case PACKET_Update:
-                    // todo: verify address and packet data
+                {
+                    cout << "received update packet" << endl;
+                    auto recv_updatePacket = static_pointer_cast<UpdatePacket>( packet );
+                    assert( *recv_updatePacket == *updatePacket );
                     receivedUpdatePacket = true;
-                    break;
+                }
+                break;
 
                 case PACKET_Disconnect:
-                    // todo: verify address and packet data
+                {
+                    cout << "received disconnect packet" << endl;
+                    auto recv_disconnectPacket = static_pointer_cast<DisconnectPacket>( packet );
+                    assert( *recv_disconnectPacket == *disconnectPacket );
                     receivedDisconnectPacket = true;
-                    break;
+                }
+                break;
             }
         }
 
@@ -1584,7 +1799,9 @@ int main()
         test_network_interface_send_to_hostname();
         test_network_interface_send_to_hostname_failure();
         */
-        test_network_interface_send_and_receive();
+        test_network_interface_send_and_receive_ipv4();         
+
+        // todo: ipv6
     }
     catch ( runtime_error & e )
     {

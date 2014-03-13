@@ -1,3 +1,54 @@
+Wednesday March 12th, 2014:
+---------------------------
+
+    Add test to verify send and receive packet by address.
+
+    Create non-blocking socket inside network interface.    
+
+    Clean up socket in network interface dtor.
+
+    Fixed address initialize from addrinfo to include port.
+
+    Hack up the sendto to work with IPv6 address types.
+
+    Added comparison operators to packets and learned about static_pointer_cast.
+
+    Added code to verify the packets received on the other side verify the 
+    packets that were sent, before serialize read and write.
+
+    Hacked up a really nasty serialize write buffer for stream. I'll fix this up later.
+
+    Implemented internal packet send code that calls through to sendto with
+    serialize write buffer contents.
+
+    Need a config to pass into the network interface, we'll need to specify
+    the maximum packet size in there, otherwise we're going to not know
+    what size buffer to use for recvfrom.
+
+    Need to pass factory into network interface. It needs it so it knows
+    what the maximum packet type is (for serialize).
+
+    Added network interface config. config specifies max packet size,
+    packet factory, dns resolver (optional) and UDP port to bind to.
+
+    Call recvfrom and get packet data. 
+
+    Some problem where recvfrom is always returning -1. Possible that my address is wrong
+    and it is always WSAWOULDBLOCK? Need to dig in and get socket error in this case.
+
+    Address int32 was double converted using htonl. Fixed.
+
+    Serialize read this buffer into a stream and then determine the packet type.
+
+    Create an object of the correct type. If packet for type cannot be created, 
+    increment a counter and discard the packet.
+
+    Serialize the packet. If the packet serialize fails discard the packet
+    and increment serialize read failure counter.
+
+    If the packet serializes properly, add the packet to the receive queue
+
+
 Sunday March 9th, 2014:
 -----------------------
 

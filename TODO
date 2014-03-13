@@ -1,32 +1,8 @@
 DONE:
 
-    Add test to verify send and receive packet by address.
-
-    Create non-blocking socket inside network interface.    
-
-    Clean up socket in network interface dtor.
-
 TODO:
 
-    Hack up the sendto to work with IPv6 address types.
-
-    Will need to know max packet size for network interface, otherwise will
-    not be able to call recvfrom, because we need to know max buffer size
-    ahead of time. Use a std::vector for the buffer.
-
-    Seems like I need a function to convert an Address to a sockaddr_in struct,
-    or a sockaddr_storage, depending on address type: IPv6 or IPv6.
-
-    Iterate across send queue and pop packets off, attempt to serialize this packet to a buffer
-    and if it fails increment serialize write failure counter. If succeeds, pass this buffer
-    to the internal send function which calls "sendto".
-
-    Seems I need a function to take a sockaddr_in to my own address class (already have this?)
-
-    Call recvfrom and get packets. Immediately attempt to serialize this data into a packet.
-    If the serialize fails, discard the packet. If it succeeds, add the packet to recv queue.
-
-    Verify network interface send/recv is working properly across IPv4 and IPv6
+    Get the network interface working across IPv6 too ("::1")
 
     --------------------------------------------------------
 
