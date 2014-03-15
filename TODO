@@ -2,9 +2,19 @@ DONE:
 
 TODO:
 
-    Get the network interface working across IPv6 too ("::1")
+    Should there be nodes? Yes. But strictly client/server. No support for P2P.
 
-    --------------------------------------------------------
+    This means there is just the server, with data per-client, and the client's
+    view of the server data that is synchronized to it.
+
+    So calling each connection a "client" instead of a node is probably correct.
+
+    But a node is more generic, and it makes sense for a server to have n nodes,
+    one per-client, but on the client to just have one node.
+
+    Alternatively, it could be called "connection"?
+
+    ----
 
     Implement connection protocol. This should basically be a new packet type "ConnectionPacket"
     which internally allows me to implement the reliability header, reliable messages w. channels

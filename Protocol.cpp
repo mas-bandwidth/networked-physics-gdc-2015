@@ -239,11 +239,26 @@ namespace protocol
             port = _port;
         }
 
-        explicit Address( const sockaddr_in & addr_ipv4 )
+        explicit Address( const sockaddr_storage & addr )
         {
-            type = AddressType::IPv4;
-            address4 = addr_ipv4.sin_addr.s_addr;
-            port = ntohs( addr_ipv4.sin_port );
+            if ( addr.ss_family == AF_INET )
+            {
+                const sockaddr_in & addr_ipv4 = reinterpret_cast<const sockaddr_in&>( addr );
+                type = AddressType::IPv4;
+                address4 = addr_ipv4.sin_addr.s_addr;
+                port = ntohs( addr_ipv4.sin_port );
+            }
+            else if ( addr.ss_family == AF_INET6 )
+            {
+                const sockaddr_in6 & addr_ipv6 = reinterpret_cast<const sockaddr_in6&>( addr );
+                type = AddressType::IPv6;
+                memcpy( address6, &addr_ipv6.sin6_addr, 16 );
+                port = ntohs( addr_ipv6.sin6_port );
+            }
+            else
+            {
+                throw runtime_error( "unknown address family" );
+            }
         }
 
         explicit Address( const sockaddr_in6 & addr_ipv6 )
@@ -459,9 +474,15 @@ namespace protocol
 
         typedef function< shared_ptr<T>() > create_function;
 
+        Factory()
+        {
+            max_type = 0;
+        }
+
         void Register( int type, create_function const & function )
         {
             create_map[type] = function;
+            max_type = max( type, max_type );
         }
 
         shared_ptr<T> Create( int type )
@@ -473,8 +494,14 @@ namespace protocol
                 return itor->second();
         }
 
+        int GetMaxType() const
+        {
+            return max_type;
+        }
+
     private:
 
+        int max_type;
         map<int,create_function> create_map;
     };
 
@@ -513,12 +540,12 @@ namespace protocol
         virtual shared_ptr<ResolveEntry> GetEntry( const string & name ) = 0;
     };
 
-    static shared_ptr<ResolveResult> DNSResolve_Blocking( const string & name )
+    static shared_ptr<ResolveResult> DNSResolve_Blocking( const string & name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
     {
         struct addrinfo hints, *res, *p;
         memset( &hints, 0, sizeof hints );
-        hints.ai_family = AF_UNSPEC; // AF_INET or AF_INET6 to force version
-        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_family = family;
+        hints.ai_socktype = socktype;
 
         const char * hostname = name.c_str();
 
@@ -548,7 +575,11 @@ namespace protocol
     {
     public:
 
-        // todo: add some flags to control the resolve. eg. IPv6 only. IPv4 only. Prefer IPv6 etc.
+        DNSResolver( int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
+        {
+            m_family = family;
+            m_socktype = socktype;
+        }
 
         virtual void Resolve( const string & name, ResolveCallback callback )
         {
@@ -577,9 +608,11 @@ namespace protocol
             entry->status = ResolveStatus::InProgress;
             if ( callback != nullptr )
                 entry->callbacks.push_back( callback );
-            entry->future = async( launch::async, [name] () -> shared_ptr<ResolveResult> 
+            const int family = m_family;
+            const int socktype = m_socktype;
+            entry->future = async( launch::async, [name, family, socktype] () -> shared_ptr<ResolveResult> 
             { 
-                return DNSResolve_Blocking( name );
+                return DNSResolve_Blocking( name, family, socktype );
             } );
 
             map[name] = entry;
@@ -623,6 +656,8 @@ namespace protocol
 
     private:
 
+        int m_family;
+        int m_socktype;
         ResolveMap map;
         ResolveMap in_progress;
     };
@@ -651,10 +686,12 @@ namespace protocol
             Config()
             {
                 port = 10000;
+                family = AF_INET;                   // default to IPv6 for now. may change this.
                 maxPacketSize = 10*1024;
             }
 
             uint16_t port;                          // port to bind UDP socket to
+            int family;                             // socket family: eg. AF_INET (IPv4 only), AF_INET6 (IPv6 only)
             int maxPacketSize;                      // maximum packet size
             shared_ptr<Resolver> resolver;          // resolver eg: DNS (optional)
             shared_ptr<Factory<Packet>> factory;    // packet factory (required)
@@ -685,21 +722,52 @@ namespace protocol
 
             // create socket
 
-            // todo: need to decide IPv6 or IPv6 at this point?!
-            m_socket = ::socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+            assert( m_config.family == AF_INET || m_config.family == AF_INET6 );
 
-            if ( socket <= 0 )
+            m_socket = socket( m_config.family, SOCK_DGRAM, IPPROTO_UDP );
+
+            if ( m_socket <= 0 )
+            {
+                cout << "socket failed: " << strerror( errno ) << endl;
                 throw runtime_error( "network interface failed to create socket" );
+            }
+
+            // force IPv6 only if necessary
+
+            if ( m_config.family == AF_INET6 )
+            {
+                int yes = 1;
+                setsockopt( m_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&yes, sizeof(yes) );
+            }
 
             // bind to port
 
-            sockaddr_in address;
-            address.sin_family = AF_INET;
-            address.sin_addr.s_addr = INADDR_ANY;
-            address.sin_port = htons( m_config.port );
-        
-            if ( ::bind( m_socket, (const sockaddr*) &address, sizeof(sockaddr_in) ) < 0 )
-                throw runtime_error( "network interface failed to bind socket" );
+            if ( m_config.family == AF_INET6 )
+            {
+                sockaddr_in6 sock_address;
+                sock_address.sin6_family = AF_INET6;
+                sock_address.sin6_addr = in6addr_any;
+                sock_address.sin6_port = htons( m_config.port );
+            
+                if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
+                {
+                    cout << "bind failed: " << strerror( errno ) << endl;
+                    throw runtime_error( "network interface failed to bind socket (ipv6)" );
+                }
+            }
+            else if ( m_config.family == AF_INET )
+            {
+                sockaddr_in sock_address;
+                sock_address.sin_family = AF_INET;
+                sock_address.sin_addr.s_addr = INADDR_ANY;
+                sock_address.sin_port = htons( m_config.port );
+            
+                if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
+                {
+                    cout << "bind failed: " << strerror( errno ) << endl;
+                    throw runtime_error( "network interface failed to bind socket (ipv4)" );
+                }
+            }
 
             // set non-blocking io
 
@@ -874,16 +942,13 @@ namespace protocol
                 auto packet = m_send_queue.front();
                 m_send_queue.pop();
 
-                // todo: really need to know max # of packet type registered -- query from factory?
-
                 try
                 {
                     Stream stream( STREAM_Write );
 
-                    const int MaxPacketTypes = 1024;
+                    const int maxPacketType = m_config.factory->GetMaxType();
                     int packetType = packet->GetType();
-
-                    serialize_int( stream, packetType, 0, MaxPacketTypes - 1 );
+                    serialize_int( stream, packetType, 0, maxPacketType );
                     packet->Serialize( stream );                
 
                     size_t bufferSize = 0;
@@ -919,10 +984,9 @@ namespace protocol
 
                     stream.SetReadBuffer( &m_receiveBuffer[0], received_bytes );
 
-                    // todo: get max packet types from factory
-                    const int MaxPacketTypes = 1024;
+                    const int maxPacketType = m_config.factory->GetMaxType();
                     int packetType = 0;
-                    serialize_int( stream, packetType, 0, MaxPacketTypes - 1 );
+                    serialize_int( stream, packetType, 0, maxPacketType );
 
                     auto packet = m_config.factory->Create( packetType );
 
@@ -954,6 +1018,7 @@ namespace protocol
 
             if ( address.GetType() == AddressType::IPv6 )
             {
+                cout << "sent ipv6 packet" << endl;
                 sockaddr_in6 s_addr;
                 memset( &s_addr, 0, sizeof(s_addr) );
                 s_addr.sin6_family = AF_INET6;
@@ -964,6 +1029,7 @@ namespace protocol
             }
             else if ( address.GetType() == AddressType::IPv4 )
             {
+                cout << "sent ipv4 packet" << endl;
                 sockaddr_in s_addr;
                 s_addr.sin_family = AF_INET;
                 s_addr.sin_addr.s_addr = address.GetAddress4();
@@ -973,7 +1039,10 @@ namespace protocol
             }
 
             if ( !result )
+            {
+                cout << "sendto failed: " << strerror( errno ) << endl;
                 m_counters[SendToFailures]++;
+            }
 
             return result;
         }
@@ -988,9 +1057,7 @@ namespace protocol
             typedef int socklen_t;
             #endif
             
-            // todo: update to support IPv6
-
-            sockaddr_in from;
+            sockaddr_storage from;
             socklen_t fromLength = sizeof( from );
 
             int result = recvfrom( m_socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
@@ -1004,10 +1071,7 @@ namespace protocol
                 return 0;
             }
 
-            unsigned int address = ntohl( from.sin_addr.s_addr );
-            unsigned int port = ntohs( from.sin_port );
-
-            sender = Address( address, port );
+            sender = Address( from );
 
             assert( result >= 0 );
 
@@ -1700,7 +1764,7 @@ void test_network_interface_send_and_receive_ipv4()
     config.port = 10000;
     config.maxPacketSize = 1024;
     config.factory = static_pointer_cast<Factory<Packet>>( factory );
-    config.resolver = make_shared<DNSResolver>();
+    config.resolver = make_shared<DNSResolver>( AF_INET );
 
     NetworkInterface interface( config );
 
@@ -1714,8 +1778,12 @@ void test_network_interface_send_and_receive_ipv4()
     bool receivedUpdatePacket = false;
     bool receivedDisconnectPacket = false;
 
+    int iterations = 0;
+
     while ( true )
     {
+        assert ( iterations++ < 10 );
+
         auto connectPacket = make_shared<ConnectPacket>();
         auto updatePacket = make_shared<UpdatePacket>();
         auto disconnectPacket = make_shared<DisconnectPacket>();
@@ -1780,6 +1848,104 @@ void test_network_interface_send_and_receive_ipv4()
     }
 }
 
+void test_network_interface_send_and_receive_ipv6()
+{
+    cout << "test_network_interface_send_and_receive_ipv6" << endl;
+
+    NetworkInterface::Config config;
+
+    auto factory = make_shared<TestPacketFactory>();
+
+    config.port = 10000;
+    config.family = AF_INET6;
+    config.maxPacketSize = 1024;
+    config.factory = static_pointer_cast<Factory<Packet>>( factory );
+    config.resolver = make_shared<DNSResolver>( AF_INET6 );
+
+    NetworkInterface interface( config );
+
+    Address address( "::1" );
+    address.SetPort( config.port );
+
+    double dt = 0.01f;
+    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+
+    bool receivedConnectPacket = false;
+    bool receivedUpdatePacket = false;
+    bool receivedDisconnectPacket = false;
+
+    int iterations = 0;
+
+    while ( true )
+    {
+        assert ( iterations++ < 10 );
+
+        auto connectPacket = make_shared<ConnectPacket>();
+        auto updatePacket = make_shared<UpdatePacket>();
+        auto disconnectPacket = make_shared<DisconnectPacket>();
+
+        connectPacket->a = 2;
+        connectPacket->b = 6;
+        connectPacket->c = -1;
+
+        updatePacket->timestamp = 500;
+
+        disconnectPacket->x = -100;
+
+        interface.SendPacket( address, connectPacket );
+        interface.SendPacket( address, updatePacket );
+        interface.SendPacket( address, disconnectPacket );
+
+        interface.Update();
+
+        this_thread::sleep_for( ms );
+
+        while ( true )
+        {
+            auto packet = interface.ReceivePacket();
+            if ( !packet )
+                break;
+
+            cout << "receive packet from address " << packet->GetAddress().ToString() << endl;
+
+            assert( packet->GetAddress() == address );
+
+            switch ( packet->GetType() )
+            {
+                case PACKET_Connect:
+                {
+                    cout << "received connect packet" << endl;
+                    auto recv_connectPacket = static_pointer_cast<ConnectPacket>( packet );
+                    assert( *recv_connectPacket == *connectPacket );
+                    receivedConnectPacket = true;
+                }
+                break;
+
+                case PACKET_Update:
+                {
+                    cout << "received update packet" << endl;
+                    auto recv_updatePacket = static_pointer_cast<UpdatePacket>( packet );
+                    assert( *recv_updatePacket == *updatePacket );
+                    receivedUpdatePacket = true;
+                }
+                break;
+
+                case PACKET_Disconnect:
+                {
+                    cout << "received disconnect packet" << endl;
+                    auto recv_disconnectPacket = static_pointer_cast<DisconnectPacket>( packet );
+                    assert( *recv_disconnectPacket == *disconnectPacket );
+                    receivedDisconnectPacket = true;
+                }
+                break;
+            }
+        }
+
+        if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
+            break;
+    }
+}
+
 // --------------------------------------------------------------
 
 int main()
@@ -1788,7 +1954,6 @@ int main()
 
     try
     {
-        /*
         test_serialize_object();
         test_interface();
         test_factory();
@@ -1798,10 +1963,10 @@ int main()
         test_dns_resolve_failure();
         test_network_interface_send_to_hostname();
         test_network_interface_send_to_hostname_failure();
-        */
-        test_network_interface_send_and_receive_ipv4();         
+        test_network_interface_send_and_receive_ipv4();
+        test_network_interface_send_and_receive_ipv6();
 
-        // todo: ipv6
+        // todo: test_network_interface_send_and_receive_dual_stack();
     }
     catch ( runtime_error & e )
     {

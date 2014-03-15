@@ -1,3 +1,18 @@
+Friday March 14th, 2014:
+------------------------
+
+    Get the network interface working across IPv6 too ("::1")
+
+    Now adjust so you can create the network interface in IPv4 mode or IPv6 mode.
+
+    Currently using AF_INET to mean IPv4, AF_INET6 to mean IPv6 only and
+    AF_UNSPEC to mean dual stack. This may not be the best.
+
+    Do I care about dual stack at this point? No I don't. Cut dual stack support.
+
+    Add query fn to get maximum packet type from factory. Necessary for serialization.
+
+
 Wednesday March 12th, 2014:
 ---------------------------
 
