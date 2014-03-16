@@ -1104,12 +1104,341 @@ namespace protocol
         WSACleanup();
         #endif
     }    
-}
 
-// -------------------------------------------------------
+    struct ConnectionPacket : public Packet
+    {
+        uint16_t sequence;
+        uint16_t ack;
+        uint32_t ack_bits;
+
+        ConnectionPacket( int type ) : Packet( type )
+        {
+            sequence = 0;
+            ack = 0;
+            ack_bits = 0;
+        }
+
+        void Serialize( Stream & stream )
+        {
+            serialize_int( stream, sequence, 0, 65535 );
+            serialize_int( stream, ack, 0, 65535 );
+            serialize_int( stream, ack_bits, 0, 0xFFFFFFFF );
+        }
+
+        bool operator ==( const ConnectionPacket & other ) const
+        {
+            return sequence == other.sequence &&
+                        ack == other.ack &&
+                   ack_bits == other.ack_bits;
+        }
+
+        bool operator !=( const ConnectionPacket & other ) const
+        {
+            return !( *this == other );
+        }
+    };
+
+    bool sequence_less_than( uint16_t a, uint16_t b )
+    {
+        // todo: handle wrap around
+        return a < b;
+    }
+
+    bool sequence_greater_than( uint16_t a, uint16_t b )
+    {
+        // todo: handle wrap around
+        return a > b;
+    }
+
+    template <typename T> class SlidingWindow
+    {
+    public:
+
+        SlidingWindow( int size )
+        {
+            assert( size > 0 );
+            m_entries.resize( size );
+        }
+
+        void Reset()
+        {
+            m_first_entry = true;
+            m_sequence = 0;
+            const int size = m_entries.size();
+            m_entries.clear();
+            m_entries.resize( size );
+        }
+
+        void Insert( const T & entry )
+        {
+            if ( m_first_entry )
+            {
+                m_sequence = entry.sequence;
+                m_first_entry = false;
+            }
+            else if ( sequence_greater_than( entry.sequence, m_sequence ) )
+            {
+                m_sequence = entry.sequence;
+            }
+            const int index = entry.sequence % m_entries.size();
+            assert( index >= 0 );
+            assert( index < m_entries.size() );
+            m_entries[index] = entry;
+        }
+
+        const T * Find( uint16_t sequence ) const
+        {
+            const int index = sequence % m_entries.size();
+            assert( index >= 0 );
+            assert( index < m_entries.size() );
+            if ( m_entries[index].valid && m_entries[index].sequence == sequence )
+                return &m_entries[index];
+            else
+                return NULL;
+        }
+
+        uint16_t GetSequence() const 
+        {
+            return m_sequence;
+        }
+
+    private:
+
+        bool m_first_entry;
+        uint16_t m_sequence;
+        vector<T> m_entries;
+    };
+
+    struct SentPacketData
+    {
+        SentPacketData()
+            : valid(0), acked(0), sequence(0) {}
+
+        uint32_t valid : 1;                     // is this packet entry valid?
+        uint32_t acked : 1;                     // has packet been acked?
+        uint32_t sequence : 16;                 // packet sequence #
+    };
+
+    struct ReceivedPacketData
+    {
+        ReceivedPacketData()
+            : valid(0), sequence(0) {}
+
+        uint32_t valid : 1;                     // is this packet entry valid?
+        uint32_t sequence : 16;                 // packet sequence #
+    };
+
+    typedef SlidingWindow<SentPacketData> SentPackets;
+    typedef SlidingWindow<ReceivedPacketData> ReceivedPackets;
+
+    class Connection
+    {
+    public:
+
+        struct Config
+        {
+            Config()
+            {
+                packetType = 0;
+                maxPacketSize = 1024;
+                slidingWindowSize = 256;
+            }
+
+            int packetType;
+            int maxPacketSize;
+            int slidingWindowSize;
+        };
+
+        Connection( const Config & config )
+            : m_config( config )
+        {
+            m_sent_packets = make_shared<SentPackets>( m_config.slidingWindowSize );
+            m_received_packets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
+            Reset();
+        }
+
+        void Reset()
+        {
+            m_has_received_packet = false;
+            m_send_sequence = 0;
+            m_recv_sequence = 0;
+            m_sent_packets->Reset();
+            m_received_packets->Reset();
+        }
+
+        shared_ptr<ConnectionPacket> WritePacket()
+        {
+            auto packet = make_shared<ConnectionPacket>( m_config.packetType );
+
+            packet->sequence = m_send_sequence++;
+            packet->ack = m_recv_sequence;
+            packet->ack_bits = GenerateAckBits();
+
+            cout << format_string( "write packet: sequence = %u, ack = %u, ack_bits = %x", packet->sequence, packet->ack, packet->ack_bits ) << endl;
+
+            SentPacketData packetData;
+            packetData.valid = 1;
+            packetData.acked = 0;
+            packetData.sequence = packet->sequence;
+            m_sent_packets->Insert( packetData );
+
+            return packet;
+        }
+
+        void ReadPacket( shared_ptr<ConnectionPacket> packet )
+        {
+            assert( packet );
+            assert( packet->GetType() == m_config.packetType );
+
+            cout << format_string( "read packet: sequence = %u, ack = %u, ack_bits = %x", packet->sequence, packet->ack, packet->ack_bits ) << endl;
+
+            if ( m_has_received_packet || sequence_greater_than( packet->sequence, m_recv_sequence ) )
+                m_recv_sequence = packet->sequence;
+
+            // todo: check if received packet is too old for recv sliding window. if so discard it
+
+            ReceivedPacketData packetData;
+            packetData.valid = 1;
+            packetData.sequence = packet->sequence;
+            m_received_packets->Insert( packetData );
+        }
+
+    private:
+
+        void PacketAcked( uint16_t sequence )
+        {
+            cout << "packet " << sequence << " acked" << endl;
+        }
+
+        uint32_t GenerateAckBits()
+        {
+            // todo: take m_recv_sequence and set one bit for every sequence (including it) that has been received
+            return 0xffffffff;
+        }
+
+        const Config m_config;                              // const configuration data
+        bool m_has_received_packet;                         // have we received a packet yet?
+        uint16_t m_send_sequence;                           // most recently sent sequence
+        uint16_t m_recv_sequence;                           // most recently received sequence
+        shared_ptr<SentPackets> m_sent_packets;             // sliding window of recently sent packets
+        shared_ptr<ReceivedPackets> m_received_packets;     // sliding window of recently received packets
+    };
+
+} //------------------------------------------------------
 
 using namespace std;
 using namespace protocol;
+
+void test_sliding_window()
+{
+    cout << "test_sliding_window" << endl;
+
+    const int size = 256;
+
+    SlidingWindow<SentPacketData> slidingWindow( size );
+
+    for ( int i = 0; i < size; ++i )
+        assert( slidingWindow.Find(i) == nullptr );
+
+    for ( int i = 0; i <= 1000; ++i )
+    {
+        SentPacketData data;
+        data.valid = true;
+        data.sequence = i;
+        slidingWindow.Insert( data );
+        assert( slidingWindow.GetSequence() == i );
+    }
+
+    int index = 1000;
+    for ( int i = 0; i < size; ++i )
+    {
+        auto entry = slidingWindow.Find( index );
+        assert( entry );
+        assert( entry->valid );
+        assert( entry->sequence == index );
+        index--;
+    }
+
+    slidingWindow.Reset();
+
+    assert( slidingWindow.GetSequence() == 0 );
+
+    for ( int i = 0; i < size; ++i )
+        assert( slidingWindow.Find(i) == nullptr );
+}
+
+enum PacketType
+{
+    PACKET_Connection,           // for connection class
+    PACKET_Connect,
+    PACKET_Update,
+    PACKET_Disconnect
+};
+
+void test_connection()
+{
+    cout << "test_connection" << endl;
+
+    Connection::Config config;
+
+    config.packetType = PACKET_Connection;
+    config.maxPacketSize = 4 * 1024;
+
+    Connection connection( config );
+
+    for ( int i = 0; i < 5; ++i )
+    {
+        auto packet = connection.WritePacket();
+
+        connection.ReadPacket( packet );
+    }
+}
+
+void test_serialize_object();
+void test_interface();
+void test_factory();
+void test_address4();
+void test_address6();
+void test_dns_resolve();
+void test_dns_resolve_failure();
+void test_network_interface_send_to_hostname();
+void test_network_interface_send_to_hostname_failure();
+void test_network_interface_send_and_receive_ipv4();
+void test_network_interface_send_and_receive_ipv6();
+
+int main()
+{
+    InitializeSockets();
+
+    try
+    {
+        /*
+        test_serialize_object();
+        test_interface();
+        test_factory();
+        test_address4();
+        test_address6();
+        test_dns_resolve();
+        test_dns_resolve_failure();
+        test_network_interface_send_to_hostname();
+        test_network_interface_send_to_hostname_failure();
+        test_network_interface_send_and_receive_ipv4();
+        test_network_interface_send_and_receive_ipv6();
+        */
+
+        test_sliding_window();
+        test_connection();
+    }
+    catch ( runtime_error & e )
+    {
+        cerr << string( "error: " ) + e.what() << endl;
+    }
+
+    ShutdownSockets();
+
+    return 0;
+}
+
 
 const int MaxItems = 16;
 
@@ -1165,13 +1494,6 @@ void test_serialize_object()
     for ( int i = 0; i < readObject.numItems; ++i )
         assert( readObject.items[i] == writeObject.items[i] );
 }
-
-enum PacketType
-{
-    PACKET_Connect,
-    PACKET_Update,
-    PACKET_Disconnect
-};
 
 struct ConnectPacket : public Packet
 {
@@ -1944,36 +2266,4 @@ void test_network_interface_send_and_receive_ipv6()
         if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
             break;
     }
-}
-
-// --------------------------------------------------------------
-
-int main()
-{
-    InitializeSockets();
-
-    try
-    {
-        test_serialize_object();
-        test_interface();
-        test_factory();
-        test_address4();
-        test_address6();
-        test_dns_resolve();
-        test_dns_resolve_failure();
-        test_network_interface_send_to_hostname();
-        test_network_interface_send_to_hostname_failure();
-        test_network_interface_send_and_receive_ipv4();
-        test_network_interface_send_and_receive_ipv6();
-
-        // todo: test_network_interface_send_and_receive_dual_stack();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
-
-    ShutdownSockets();
-
-    return 0;
 }

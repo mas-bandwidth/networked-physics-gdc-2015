@@ -1,3 +1,44 @@
+Saturday March 15th, 2014:
+--------------------------
+
+    Should there be nodes? Yes. But strictly client/server. No support for P2P.
+
+    This means there is just the server, with data per-client, and the client's
+    view of the server data that is synchronized to it.
+
+    So calling each connection a "client" instead of a node is probably correct.
+
+    But a node is more generic, and it makes sense for a server to have n nodes,
+    one per-client, but on the client to just have one node.
+
+    Alternatively, it could be called "connection"?
+
+    Yes. Going with connection. I can then later on create a server class
+    with one connection per-client, and a client class with a single connection
+    to the server. SORTED.
+
+    Sketched out connection packet with sequence, ack, ack_bits.
+
+    Sketched out functions and data structures required to implement reliability.
+
+    Implement sliding window class.
+
+    Maybe consider moving the sequence numbers, eg. most recent sent packet, most recent received *into* the sliding window.
+
+    Maybe add a bool into sliding window, eg. have you ever had an entry inserted yet? (eg. for initial sliding window set sequence)
+
+    Yes. Everything becomes simple if the sliding window class is well designed like this...
+
+    Sliding window is basic. But it seems additional logic is required, like how to 
+    detect if a received packet is in the window. Discarding of old packets etc.
+
+    This logic I think is specific to the send and receive sliding windows.
+
+    I will keep it out of the sliding window class.
+
+    Unit test the sliding window class.
+
+
 Friday March 14th, 2014:
 ------------------------
 

@@ -1,20 +1,28 @@
 DONE:
 
+    Add sent packets to the sliding window
+
+    Add received packets to the sliding window
+
 TODO:
 
-    Should there be nodes? Yes. But strictly client/server. No support for P2P.
+    Extend sliding window to return false if packet is too old
+    to add to sliding window, eg. discard packet
 
-    This means there is just the server, with data per-client, and the client's
-    view of the server data that is synchronized to it.
+    Detect if received packet is too old to add to sliding window
 
-    So calling each connection a "client" instead of a node is probably correct.
+    Implement "GenerateAckBits" function.
 
-    But a node is more generic, and it makes sense for a server to have n nodes,
-    one per-client, but on the client to just have one node.
+    Unit test the generate ack bits function (it should basically take a sliding window and return ack, ack_bits)
 
-    Alternatively, it could be called "connection"?
+    Properly implement "sequence_less_than" and "sequence_greater_than" functions, 
+    and test that they correctly handle 16 bit wrap around.
 
-    ----
+    Hook up everything in connection layer, end result is a callback when sent packet is acked.
+
+    Extend to include other stats via counters, eg. number of packets written, read, acked.
+
+    ------
 
     Implement connection protocol. This should basically be a new packet type "ConnectionPacket"
     which internally allows me to implement the reliability header, reliable messages w. channels
