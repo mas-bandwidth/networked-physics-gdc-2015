@@ -1,3 +1,34 @@
+Sunday March 16th, 2014:
+------------------------
+
+    Add sent packets to the sliding window
+
+    Add received packets to the sliding window
+
+    Extend sliding window to return false if packet is too old
+    to add to sliding window, eg. discard packet
+
+    Properly implement "sequence_less_than" and "sequence_greater_than" functions, 
+    and test that they correctly handle 16 bit wrap around.
+
+    Fixed bug in sliding window. Uninitialized data in ctor.
+
+    Detect if received packet is too old to add to sliding window. Discard packet.
+
+    Implement "GenerateAckBits" function.
+
+    Unit test the generate ack bits function (it should basically take a sliding window and return ack, ack_bits)
+
+    Yep. It was slightly off with or then shift. needed to be shift then or.
+
+    Implement the "ProcessAcks" function to take ack + ack_bits and check for sent packets matching,
+    call "PacketAcked" if it is the first time a sent packet with that sequence was acked.
+
+    Add counters and include basics stats such as number of packets writter, read, acked, discarded.
+
+    Extend unit test to verify counters match expected results, eg. acks especially.
+
+
 Saturday March 15th, 2014:
 --------------------------
 

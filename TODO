@@ -1,42 +1,16 @@
 DONE:
 
-    Add sent packets to the sliding window
-
-    Add received packets to the sliding window
-
 TODO:
 
-    Extend sliding window to return false if packet is too old
-    to add to sliding window, eg. discard packet
+    Next define internals of connection. I want there to be user defined number of channels (config)
 
-    Detect if received packet is too old to add to sliding window
+    Each channel can send data down, and has a reliable-ordered set of events.
 
-    Implement "GenerateAckBits" function.
+    These reliable ordered events can be small or large, bigger than packet size.
 
-    Unit test the generate ack bits function (it should basically take a sliding window and return ack, ack_bits)
-
-    Properly implement "sequence_less_than" and "sequence_greater_than" functions, 
-    and test that they correctly handle 16 bit wrap around.
-
-    Hook up everything in connection layer, end result is a callback when sent packet is acked.
-
-    Extend to include other stats via counters, eg. number of packets written, read, acked.
-
-    ------
-
-    Implement connection protocol. This should basically be a new packet type "ConnectionPacket"
-    which internally allows me to implement the reliability header, reliable messages w. channels
-    and so on.
-
-    Key difference here is that messages should be arbitrary length (short or long) and should
-    be fragmented and reassembled as needed to fit in the packet, vs. previous systems where I
-    have treated small (events) and large (chunks) separately.
-
-    Basic idea is a reliable-ordered protocol with flexible messages of any size, plus channels
-    so I can avoid waiting for long blocks of data if I don't wish to, plus unreliable-unordered
-    state messages, and potentially delta encoding.
-
-    Connection should be flexible enough to define your own paylod as well.
+    This unifies treatement of events vs. chunks and makes ordering of data simpler
+    when sending across the network connection. If you send a large block of data
+    all other elements will just block waiting for that to be received.
 
 INTERNET READY:
 

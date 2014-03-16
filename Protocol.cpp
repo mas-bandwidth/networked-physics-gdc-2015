@@ -1138,16 +1138,15 @@ namespace protocol
         }
     };
 
-    bool sequence_less_than( uint16_t a, uint16_t b )
+    bool sequence_greater_than( uint16_t s1, uint16_t s2 )
     {
-        // todo: handle wrap around
-        return a < b;
+        return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
+               ( ( s1 < s2 ) && ( s2 - s1  > 32768 ) );
     }
 
-    bool sequence_greater_than( uint16_t a, uint16_t b )
+    bool sequence_less_than( uint16_t s1, uint16_t s2 )
     {
-        // todo: handle wrap around
-        return a > b;
+        return sequence_greater_than( s2, s1 );
     }
 
     template <typename T> class SlidingWindow
@@ -1157,6 +1156,8 @@ namespace protocol
         SlidingWindow( int size )
         {
             assert( size > 0 );
+            m_first_entry = true;
+            m_sequence = 0;
             m_entries.resize( size );
         }
 
@@ -1164,13 +1165,13 @@ namespace protocol
         {
             m_first_entry = true;
             m_sequence = 0;
-            const int size = m_entries.size();
-            m_entries.clear();
-            m_entries.resize( size );
+            assert( m_entries.size() );
+            m_entries.resize( m_entries.size() );
         }
 
-        void Insert( const T & entry )
+        bool Insert( const T & entry )
         {
+            assert( entry.valid );
             if ( m_first_entry )
             {
                 m_sequence = entry.sequence;
@@ -1180,13 +1181,29 @@ namespace protocol
             {
                 m_sequence = entry.sequence;
             }
+            else if ( sequence_less_than( entry.sequence, ( m_sequence - ( m_entries.size() - 1 ) ) ) )
+            {
+                return false;
+            }
             const int index = entry.sequence % m_entries.size();
             assert( index >= 0 );
             assert( index < m_entries.size() );
             m_entries[index] = entry;
+            return true;
         }
 
         const T * Find( uint16_t sequence ) const
+        {
+            const int index = sequence % m_entries.size();
+            assert( index >= 0 );
+            assert( index < m_entries.size() );
+            if ( m_entries[index].valid && m_entries[index].sequence == sequence )
+                return &m_entries[index];
+            else
+                return NULL;
+        }
+
+        T * Find( uint16_t sequence )
         {
             const int index = sequence % m_entries.size();
             assert( index >= 0 );
@@ -1231,6 +1248,23 @@ namespace protocol
     typedef SlidingWindow<SentPacketData> SentPackets;
     typedef SlidingWindow<ReceivedPacketData> ReceivedPackets;
 
+    void GenerateAckBits( ReceivedPackets & received_packets, 
+                          uint16_t & ack,
+                          uint32_t & ack_bits )
+    {
+        ack = received_packets.GetSequence();
+        ack_bits = 0;
+        for ( int i = 0; i < 32; ++i )
+        {
+            uint16_t sequence = ack - i;
+            if ( received_packets.Find( sequence ) )
+            {
+                ack_bits <<= 1;
+                ack_bits |= 1;
+            }
+        }
+    }
+
     class Connection
     {
     public:
@@ -1249,19 +1283,26 @@ namespace protocol
             int slidingWindowSize;
         };
 
+        enum Counters
+        {
+            PacketsRead,                            // number of packets read
+            PacketsWritten,                         // number of packets written
+            PacketsDiscarded,                       // number of packets discarded
+            PacketsAcked,                           // number of packets acked
+            NumCounters
+        };
+
         Connection( const Config & config )
             : m_config( config )
         {
             m_sent_packets = make_shared<SentPackets>( m_config.slidingWindowSize );
             m_received_packets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
+            m_counters.resize( NumCounters, 0 );
             Reset();
         }
 
         void Reset()
         {
-            m_has_received_packet = false;
-            m_send_sequence = 0;
-            m_recv_sequence = 0;
             m_sent_packets->Reset();
             m_received_packets->Reset();
         }
@@ -1269,18 +1310,18 @@ namespace protocol
         shared_ptr<ConnectionPacket> WritePacket()
         {
             auto packet = make_shared<ConnectionPacket>( m_config.packetType );
+            packet->sequence = m_sent_packets->GetSequence() + 1;
+            GenerateAckBits( *m_received_packets, packet->ack, packet->ack_bits );
 
-            packet->sequence = m_send_sequence++;
-            packet->ack = m_recv_sequence;
-            packet->ack_bits = GenerateAckBits();
-
-            cout << format_string( "write packet: sequence = %u, ack = %u, ack_bits = %x", packet->sequence, packet->ack, packet->ack_bits ) << endl;
+            // todo: fill packet with data etc.
 
             SentPacketData packetData;
             packetData.valid = 1;
             packetData.acked = 0;
             packetData.sequence = packet->sequence;
             m_sent_packets->Insert( packetData );
+
+            m_counters[PacketsWritten]++;
 
             return packet;
         }
@@ -1290,44 +1331,75 @@ namespace protocol
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
 
-            cout << format_string( "read packet: sequence = %u, ack = %u, ack_bits = %x", packet->sequence, packet->ack, packet->ack_bits ) << endl;
-
-            if ( m_has_received_packet || sequence_greater_than( packet->sequence, m_recv_sequence ) )
-                m_recv_sequence = packet->sequence;
-
-            // todo: check if received packet is too old for recv sliding window. if so discard it
-
             ReceivedPacketData packetData;
             packetData.valid = 1;
             packetData.sequence = packet->sequence;
-            m_received_packets->Insert( packetData );
+            if ( !m_received_packets->Insert( packetData ) )
+            {
+                m_counters[PacketsDiscarded]++;
+                return;
+            }
+
+            m_counters[PacketsRead]++;
+
+            ProcessAcks( packet->ack, packet->ack_bits );
+        }
+
+        uint64_t GetCounter( int index ) const
+        {
+            assert( index >= 0 );
+            assert( index < NumCounters );
+            return m_counters[index];
         }
 
     private:
 
-        void PacketAcked( uint16_t sequence )
+        void ProcessAcks( uint16_t ack, uint32_t ack_bits )
         {
-            cout << "packet " << sequence << " acked" << endl;
+            for ( int i = 0; i < 32; ++i )
+            {
+                if ( ack_bits & 1 )
+                {                    
+                    const uint16_t sequence = ack - i;
+                    SentPacketData * sent_packet = m_sent_packets->Find( sequence );
+                    if ( sent_packet && !sent_packet->acked )
+                    {
+                        PacketAcked( sequence );
+                        sent_packet->acked = 1;
+                    }
+                }
+                ack_bits >>= 1;
+            }
         }
 
-        uint32_t GenerateAckBits()
+        void PacketAcked( uint16_t sequence )
         {
-            // todo: take m_recv_sequence and set one bit for every sequence (including it) that has been received
-            return 0xffffffff;
+            m_counters[PacketsAcked]++;
         }
 
         const Config m_config;                              // const configuration data
-        bool m_has_received_packet;                         // have we received a packet yet?
-        uint16_t m_send_sequence;                           // most recently sent sequence
-        uint16_t m_recv_sequence;                           // most recently received sequence
         shared_ptr<SentPackets> m_sent_packets;             // sliding window of recently sent packets
         shared_ptr<ReceivedPackets> m_received_packets;     // sliding window of recently received packets
+        vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
     };
 
 } //------------------------------------------------------
 
 using namespace std;
 using namespace protocol;
+
+void test_sequence()
+{
+    cout << "test_sequence" << endl;
+
+    assert( sequence_greater_than( 0, 0 ) == false );
+    assert( sequence_greater_than( 1, 0 ) == true );
+    assert( sequence_greater_than( 0, -1 ) == true );
+
+    assert( sequence_less_than( 0, 0 ) == false );
+    assert( sequence_less_than( 0, 1 ) == true );
+    assert( sequence_less_than( -1, 0 ) == true );
+}
 
 void test_sliding_window()
 {
@@ -1340,16 +1412,26 @@ void test_sliding_window()
     for ( int i = 0; i < size; ++i )
         assert( slidingWindow.Find(i) == nullptr );
 
-    for ( int i = 0; i <= 1000; ++i )
+    for ( int i = 0; i <= size*4; ++i )
     {
         SentPacketData data;
         data.valid = true;
         data.sequence = i;
-        slidingWindow.Insert( data );
+        bool insertOk = slidingWindow.Insert( data );
+        assert( insertOk );
         assert( slidingWindow.GetSequence() == i );
     }
 
-    int index = 1000;
+    for ( int i = 0; i <= size; ++i )
+    {
+        SentPacketData data;
+        data.valid = true;
+        data.sequence = i;
+        bool insertOk = slidingWindow.Insert( data );
+        assert( !insertOk );
+    }    
+
+    int index = size*4;
     for ( int i = 0; i < size; ++i )
     {
         auto entry = slidingWindow.Find( index );
@@ -1365,6 +1447,34 @@ void test_sliding_window()
 
     for ( int i = 0; i < size; ++i )
         assert( slidingWindow.Find(i) == nullptr );
+}
+
+void test_generate_ack_bits()
+{
+    cout << "test_generate_ack_bits" << endl;
+
+    const int size = 256;
+
+    SlidingWindow<ReceivedPacketData> received_packets( size );
+
+    uint16_t ack = -1;
+    uint32_t ack_bits = -1;
+    GenerateAckBits( received_packets, ack, ack_bits );
+    assert( ack == 0 );
+    assert( ack_bits == 0 );
+
+    for ( int i = 0; i <= size; ++i )
+    {
+        ReceivedPacketData data;
+        data.valid = true;
+        data.sequence = i;
+        bool insertOk = received_packets.Insert( data );
+        assert( insertOk );
+    }    
+
+    GenerateAckBits( received_packets, ack, ack_bits );
+    assert( ack == size );
+    assert( ack_bits == 0xFFFFFFFF );
 }
 
 enum PacketType
@@ -1386,12 +1496,22 @@ void test_connection()
 
     Connection connection( config );
 
-    for ( int i = 0; i < 5; ++i )
+    const int NumAcks = 100;
+
+    while ( true )
     {
         auto packet = connection.WritePacket();
 
         connection.ReadPacket( packet );
+
+        if ( connection.GetCounter( Connection::PacketsAcked ) == NumAcks )
+            break;
     }
+
+    assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
+    assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
+    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
+    assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
 }
 
 void test_serialize_object();
@@ -1426,7 +1546,9 @@ int main()
         test_network_interface_send_and_receive_ipv6();
         */
 
+        test_sequence();
         test_sliding_window();
+        test_generate_ack_bits();
         test_connection();
     }
     catch ( runtime_error & e )
@@ -1439,6 +1561,7 @@ int main()
     return 0;
 }
 
+// --------------------------------------------------------------
 
 const int MaxItems = 16;
 
