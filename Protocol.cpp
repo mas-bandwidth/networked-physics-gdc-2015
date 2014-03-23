@@ -1265,6 +1265,42 @@ namespace protocol
         }
     }
 
+    class Event : public Object
+    {
+    public:
+
+        Event( int type )
+        {
+            m_type = type;
+        }
+
+        int GetType() const
+        {
+            return m_type;
+        }
+
+    private:
+
+        int m_type;
+    };
+
+    typedef queue<shared_ptr<Event>> EventQueue;
+
+    class Channel
+    {
+    public:
+
+        Channel()
+        {
+            // ...
+        }
+
+    private:
+        
+        EventQueue m_send_queue;
+        EventQueue m_receive_queue;
+    };
+
     class Connection
     {
     public:
@@ -1276,11 +1312,13 @@ namespace protocol
                 packetType = 0;
                 maxPacketSize = 1024;
                 slidingWindowSize = 256;
+                numChannels = 256;
             }
 
             int packetType;
             int maxPacketSize;
             int slidingWindowSize;
+            int numChannels;
         };
 
         enum Counters
@@ -1298,6 +1336,9 @@ namespace protocol
             m_sent_packets = make_shared<SentPackets>( m_config.slidingWindowSize );
             m_received_packets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
             m_counters.resize( NumCounters, 0 );
+            m_channels.resize( m_config.numChannels );
+            for ( int i = 0; i < m_config.numChannels; ++i )
+                m_channels[i] = make_shared<Channel>();
             Reset();
         }
 
@@ -1352,6 +1393,27 @@ namespace protocol
             return m_counters[index];
         }
 
+        // todo: I'd really like to keep the actual payload *separate* from the connection
+        // eg. have it so that the reliability can stand on its own, and there is a separate
+        // class of protocol managers, or packet sections, or whatever that have their own
+        // policy of you can take max X bytes, OK *go*?
+
+        void SendEvent( int channel, shared_ptr<Event> event )
+        {
+            // todo: queue event in channel recv queue
+        }
+
+        // todo: events come in frequently. might be nicer to have events
+        // that can be received in a block, eg. give me all the events
+        // for channel 0, or give me a data structure with all recv'd events.
+
+        shared_ptr<Event> ReceiveEvent( int & channel )
+        {
+            // todo: dequeue event in recv queue
+            channel = 0;
+            return nullptr;
+        }
+
     private:
 
         void ProcessAcks( uint16_t ack, uint32_t ack_bits )
@@ -1381,12 +1443,112 @@ namespace protocol
         shared_ptr<SentPackets> m_sent_packets;             // sliding window of recently sent packets
         shared_ptr<ReceivedPackets> m_received_packets;     // sliding window of recently received packets
         vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
+        vector<shared_ptr<Channel>> m_channels;             // event channels.
     };
 
 } //------------------------------------------------------
 
 using namespace std;
 using namespace protocol;
+
+enum PacketType
+{
+    PACKET_Connection,           // for connection class
+    PACKET_Connect,
+    PACKET_Update,
+    PACKET_Disconnect
+};
+
+enum EventType
+{
+    EVENT_Test
+};
+
+class TestEvent : public Event
+{
+public:
+
+    int a,b,c;
+
+    TestEvent() : Event( EVENT_Test )
+    {
+        a = 5;
+        b = 10;
+        c = 15;
+    }
+
+    void Serialize( Stream & stream )
+    {
+        serialize_int( stream, a, -1000, +1000 );
+        serialize_int( stream, b, -1000, +1000 );
+        serialize_int( stream, c, -1000, +1000 );
+    }
+};
+
+void test_events()
+{
+    cout << "test_events" << endl;
+
+    Connection::Config config;
+
+    config.packetType = PACKET_Connection;
+    config.maxPacketSize = 4 * 1024;
+    config.numChannels = 4;
+
+    Connection connection( config );
+
+    // todo: iterate until all events are received
+
+    for ( int i = 0; i < 10; ++i )
+    {
+        auto event = make_shared<TestEvent>();
+
+        connection.SendEvent( 0, event );
+        cout << "sent event to channel 0" << endl;
+
+        auto packet = connection.WritePacket();
+
+        connection.ReadPacket( packet );
+
+        while ( true )
+        {
+            int channel = 0;
+            auto event = connection.ReceiveEvent( channel );
+            if ( !event )
+                break;
+            cout << "received event on channel " << channel << endl;
+        }
+    }
+}
+
+void test_connection()
+{
+    cout << "test_connection" << endl;
+
+    Connection::Config config;
+
+    config.packetType = PACKET_Connection;
+    config.maxPacketSize = 4 * 1024;
+
+    Connection connection( config );
+
+    const int NumAcks = 100;
+
+    while ( true )
+    {
+        auto packet = connection.WritePacket();
+
+        connection.ReadPacket( packet );
+
+        if ( connection.GetCounter( Connection::PacketsAcked ) == NumAcks )
+            break;
+    }
+
+    assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
+    assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
+    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
+    assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
+}
 
 void test_sequence()
 {
@@ -1477,43 +1639,6 @@ void test_generate_ack_bits()
     assert( ack_bits == 0xFFFFFFFF );
 }
 
-enum PacketType
-{
-    PACKET_Connection,           // for connection class
-    PACKET_Connect,
-    PACKET_Update,
-    PACKET_Disconnect
-};
-
-void test_connection()
-{
-    cout << "test_connection" << endl;
-
-    Connection::Config config;
-
-    config.packetType = PACKET_Connection;
-    config.maxPacketSize = 4 * 1024;
-
-    Connection connection( config );
-
-    const int NumAcks = 100;
-
-    while ( true )
-    {
-        auto packet = connection.WritePacket();
-
-        connection.ReadPacket( packet );
-
-        if ( connection.GetCounter( Connection::PacketsAcked ) == NumAcks )
-            break;
-    }
-
-    assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
-    assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-}
-
 void test_serialize_object();
 void test_interface();
 void test_factory();
@@ -1544,12 +1669,13 @@ int main()
         test_network_interface_send_to_hostname_failure();
         test_network_interface_send_and_receive_ipv4();
         test_network_interface_send_and_receive_ipv6();
-        */
-
         test_sequence();
         test_sliding_window();
         test_generate_ack_bits();
         test_connection();
+        */
+
+        test_events();
     }
     catch ( runtime_error & e )
     {

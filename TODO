@@ -2,33 +2,62 @@ DONE:
 
 TODO:
 
-    Next define internals of connection. I want there to be user defined number of channels (config)
+    Work out how the user adds channels and works with them?
 
-    Each channel can send data down, and has a reliable-ordered set of events.
+    My guess is the user owns the channels and gives shared ptr to connection,
+    then the user can continue to work with the channels defined natively
+    eg. talk directly to them so they have their own interfaces.
 
-    These reliable ordered events can be small or large, bigger than packet size.
+    No need to work through the connection class to get to channels!
 
-    This unifies treatement of events vs. chunks and makes ordering of data simpler
-    when sending across the network connection. If you send a large block of data
-    all other elements will just block waiting for that to be received.
+    Define channel base class functions
 
-INTERNET READY:
+    It must:
 
-    Implement proper range encoder. Don't do a bitpacker this time that's already been done.
+        a) process acks
+        b) bool HasData()
+        c) Serialize
+        d) should also have functions that get called on successful serialize read/write and fail (discards etc.)
+        e) It should have the ability to decide the data is crap *post* deserialize and discard packet
 
-    Study how it works. Implement something that encodes and decodes in-place. Optimize for CPU later.
+    Implement connection packet serialize fn. eg: skip per-channel if it doesnt have data to write.
 
-    Add encryption for packets, assuming that matchmaker will provide secret key, any fast key
-    based encryption is acceptable. Do this at the network interface level, eg. network interface
-    accepts a key. If the key is a non-empty string, apply the encrytion before send, and decrypt
-    on recvfrom.
+    Implement a simple channel serializer that just sends blocks of data
+    eg. BlockChannel -- stupid serialize sends bytes per-block, then
+    block data. Only one block per-packet.
 
-    Make sure there is some checksum or basic check for packets, eg. signing packets. tamper check.
-    Reuse the same key for encryption if possible. Research this and study how it is done.
+    Verify that everything works.
+
+    Channel should have basic stats per-channel, eg. how much data is read/written per-channel.
+
+PROTOCOL AND SERVER:
+
+    Install Captain Proto
+
+    Work out how to use it for internet messages between servers
+
+    Google snappy looks like a nice candidate for message compression
+
+    Is there a nice library for message encryption between servers over UDP?
+    (eg. a shared secret is fine, server code is not distributed)
+
+    Nettle library looks OK. Does google have a library that they use?
+
+    On write:
+
+        serialize write -> compress -> encrypt -> sign -> send
+
+    On read:
+
+        recv -> verify signature -> decrypt -> serialize read
 
 OPTIMIZATION:
 
-    Optimize range encoder
+    Implement bit packer first.
+
+    Next try to implement range encoder.
+
+    Study range encoder. How does it work? Can the decryption be done in place as per bitpacker?
 
     Send and receive queues should be lockless threadsafe
 
