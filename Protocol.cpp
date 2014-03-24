@@ -1105,39 +1105,6 @@ namespace protocol
         #endif
     }    
 
-    struct ConnectionPacket : public Packet
-    {
-        uint16_t sequence;
-        uint16_t ack;
-        uint32_t ack_bits;
-
-        ConnectionPacket( int type ) : Packet( type )
-        {
-            sequence = 0;
-            ack = 0;
-            ack_bits = 0;
-        }
-
-        void Serialize( Stream & stream )
-        {
-            serialize_int( stream, sequence, 0, 65535 );
-            serialize_int( stream, ack, 0, 65535 );
-            serialize_int( stream, ack_bits, 0, 0xFFFFFFFF );
-        }
-
-        bool operator ==( const ConnectionPacket & other ) const
-        {
-            return sequence == other.sequence &&
-                        ack == other.ack &&
-                   ack_bits == other.ack_bits;
-        }
-
-        bool operator !=( const ConnectionPacket & other ) const
-        {
-            return !( *this == other );
-        }
-    };
-
     bool sequence_greater_than( uint16_t s1, uint16_t s2 )
     {
         return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
@@ -1265,40 +1232,83 @@ namespace protocol
         }
     }
 
-    class Event : public Object
+    class ChannelData : public Object
     {
-    public:
-
-        Event( int type )
-        {
-            m_type = type;
-        }
-
-        int GetType() const
-        {
-            return m_type;
-        }
-
-    private:
-
-        int m_type;
+        // ...
     };
-
-    typedef queue<shared_ptr<Event>> EventQueue;
 
     class Channel
     {
     public:
 
-        Channel()
+        virtual ~Channel()
         {
             // ...
         }
 
-    private:
-        
-        EventQueue m_send_queue;
-        EventQueue m_receive_queue;
+        virtual shared_ptr<ChannelData> CreateData() = 0;
+
+        virtual shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence ) = 0;
+
+        virtual void ProcessDataFromPacket( shared_ptr<ChannelData> data ) = 0;
+
+        virtual void ProcessAck( uint16_t ack ) = 0;
+    };
+
+    struct ConnectionPacket : public Packet
+    {
+        uint16_t sequence;
+        uint16_t ack;
+        uint32_t ack_bits;
+
+        vector<shared_ptr<ChannelData>> channel_data;
+
+        ConnectionPacket( int type ) : Packet( type )
+        {
+            sequence = 0;
+            ack = 0;
+            ack_bits = 0;
+        }
+
+        void Serialize( Stream & stream )
+        {
+            serialize_int( stream, sequence, 0, 65535 );
+            serialize_int( stream, ack, 0, 65535 );
+            serialize_int( stream, ack_bits, 0, 0xFFFFFFFF );
+
+            if ( stream.IsWriting() )
+            {
+                cout << "serialize write connection packet" << endl;
+
+                for ( auto data : channel_data )
+                {
+                    int has_data = data != nullptr;
+                    serialize_int( stream, has_data, 0, 1 );
+                    if ( data )
+                        data->Serialize( stream );
+                }
+            }
+            else                
+            {
+                cout << "serialize read connection packet" << endl;
+
+                // todo: need to know num channels
+
+                // todo: need the ability to create data corresponding to channel #
+            }
+        }
+
+        bool operator ==( const ConnectionPacket & other ) const
+        {
+            return sequence == other.sequence &&
+                        ack == other.ack &&
+                   ack_bits == other.ack_bits;
+        }
+
+        bool operator !=( const ConnectionPacket & other ) const
+        {
+            return !( *this == other );
+        }
     };
 
     class Connection
@@ -1312,13 +1322,11 @@ namespace protocol
                 packetType = 0;
                 maxPacketSize = 1024;
                 slidingWindowSize = 256;
-                numChannels = 256;
             }
 
             int packetType;
             int maxPacketSize;
             int slidingWindowSize;
-            int numChannels;
         };
 
         enum Counters
@@ -1336,10 +1344,21 @@ namespace protocol
             m_sent_packets = make_shared<SentPackets>( m_config.slidingWindowSize );
             m_received_packets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
             m_counters.resize( NumCounters, 0 );
-            m_channels.resize( m_config.numChannels );
-            for ( int i = 0; i < m_config.numChannels; ++i )
-                m_channels[i] = make_shared<Channel>();
             Reset();
+        }
+
+        void AddChannel( shared_ptr<Channel> channel )
+        {
+            assert( channel );
+            m_channels.push_back( channel );
+        }
+
+        shared_ptr<Channel> GetChannel( int index )
+        {
+            if ( index >= 0 && index < m_channels.size() )
+                return m_channels[index];
+            else
+                return nullptr;
         }
 
         void Reset()
@@ -1354,7 +1373,9 @@ namespace protocol
             packet->sequence = m_sent_packets->GetSequence() + 1;
             GenerateAckBits( *m_received_packets, packet->ack, packet->ack_bits );
 
-            // todo: fill packet with data etc.
+            packet->channel_data.resize( m_channels.size(), nullptr );
+            for ( int i = 0; i < m_channels.size(); ++i )
+                packet->channel_data[i] = m_channels[i]->GetDataForPacket( packet->sequence );
 
             SentPacketData packetData;
             packetData.valid = 1;
@@ -1371,6 +1392,8 @@ namespace protocol
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
+
+            // todo: process packet 
 
             ReceivedPacketData packetData;
             packetData.valid = 1;
@@ -1391,27 +1414,6 @@ namespace protocol
             assert( index >= 0 );
             assert( index < NumCounters );
             return m_counters[index];
-        }
-
-        // todo: I'd really like to keep the actual payload *separate* from the connection
-        // eg. have it so that the reliability can stand on its own, and there is a separate
-        // class of protocol managers, or packet sections, or whatever that have their own
-        // policy of you can take max X bytes, OK *go*?
-
-        void SendEvent( int channel, shared_ptr<Event> event )
-        {
-            // todo: queue event in channel recv queue
-        }
-
-        // todo: events come in frequently. might be nicer to have events
-        // that can be received in a block, eg. give me all the events
-        // for channel 0, or give me a data structure with all recv'd events.
-
-        shared_ptr<Event> ReceiveEvent( int & channel )
-        {
-            // todo: dequeue event in recv queue
-            channel = 0;
-            return nullptr;
         }
 
     private:
@@ -1459,65 +1461,137 @@ enum PacketType
     PACKET_Disconnect
 };
 
-enum EventType
-{
-    EVENT_Test
-};
+typedef vector<uint8_t> Block;
 
-class TestEvent : public Event
+const int MaxBlockSize = 1024;
+
+class DumbChannelData : public ChannelData
 {
 public:
 
-    int a,b,c;
-
-    TestEvent() : Event( EVENT_Test )
-    {
-        a = 5;
-        b = 10;
-        c = 15;
-    }
+    shared_ptr<Block> block;
 
     void Serialize( Stream & stream )
     {
-        serialize_int( stream, a, -1000, +1000 );
-        serialize_int( stream, b, -1000, +1000 );
-        serialize_int( stream, c, -1000, +1000 );
+        if ( stream.IsWriting() )
+        {  
+            cout << "serialize write block" << endl;
+            assert( block );
+            int bytes = block->size();
+            assert( bytes > 0 );
+            serialize_int( stream, bytes, 1, MaxBlockSize );
+            for ( int i = 0; i < bytes; ++i )
+                serialize_int( stream, block->at(i), 0, 255 );
+        }
+        else
+        {
+            cout << "serialize read block" << endl;
+            int bytes = 0;
+            serialize_int( stream, bytes, 1, MaxBlockSize );
+            block = make_shared<Block>( bytes, 0 );
+            for ( int i = 0; i < bytes; ++i )
+                serialize_int( stream, block->at(i), 0, 255 );
+        }
     }
 };
 
-void test_events()
+class DumbChannel : public Channel
 {
-    cout << "test_events" << endl;
+public:
+
+    void SendBlock( shared_ptr<Block> block )
+    {
+        cout << "sent block" << endl;
+        assert( block->size() > 0 );
+        m_send_queue.push( block );
+    }
+
+    shared_ptr<Block> RecieveBlock()
+    {
+        if ( m_receive_queue.empty() )
+            return nullptr;
+        auto block = m_receive_queue.front();
+        m_receive_queue.pop();
+        return block;
+    }
+
+    shared_ptr<ChannelData> CreateData()
+    {
+        return make_shared<DumbChannelData>();
+    }
+
+    shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence )
+    {
+        if ( m_send_queue.empty() )
+            return nullptr;
+        auto data = make_shared<DumbChannelData>();
+        data->block = m_send_queue.front();
+        m_send_queue.pop();
+        return data;
+    }
+
+    void ProcessDataFromPacket( shared_ptr<ChannelData> data_ptr )
+    {
+        assert( data_ptr );
+        auto data = reinterpret_cast<DumbChannelData&>( *data_ptr );
+        assert( data.block );
+        m_receive_queue.push( data.block );
+    }
+
+    void ProcessAck( uint16_t ack )
+    {
+        // ...
+    }
+
+private:
+
+    queue<shared_ptr<Block>> m_send_queue;
+    queue<shared_ptr<Block>> m_receive_queue;
+};
+
+void test_channel()
+{
+    cout << "test_channel" << endl;
 
     Connection::Config config;
 
     config.packetType = PACKET_Connection;
     config.maxPacketSize = 4 * 1024;
-    config.numChannels = 4;
 
     Connection connection( config );
 
-    // todo: iterate until all events are received
+    auto channel = make_shared<DumbChannel>();
+
+    connection.AddChannel( channel );
+
+    int numBlocksReceived = 0;
 
     for ( int i = 0; i < 10; ++i )
     {
-        auto event = make_shared<TestEvent>();
+        auto block = make_shared<Block>( 256, i );
+           
+        channel->SendBlock( block );
 
-        connection.SendEvent( 0, event );
-        cout << "sent event to channel 0" << endl;
+        auto write_packet = connection.WritePacket();
 
-        auto packet = connection.WritePacket();
+        Stream stream( STREAM_Write );
+        write_packet->Serialize( stream );
 
-        connection.ReadPacket( packet );
+        stream.SetMode( STREAM_Read );
+        auto read_packet = make_shared<ConnectionPacket>( PACKET_Connection );
+        read_packet->Serialize( stream );
+
+        connection.ReadPacket( read_packet );
 
         while ( true )
         {
-            int channel = 0;
-            auto event = connection.ReceiveEvent( channel );
-            if ( !event )
+            auto block = channel->RecieveBlock();
+            if ( !block )
                 break;
-            cout << "received event on channel " << channel << endl;
+            ++numBlocksReceived;
         }
+
+        // todo: stop after 10 blocks recieved
     }
 }
 
@@ -1675,7 +1749,7 @@ int main()
         test_connection();
         */
 
-        test_events();
+        test_channel();
     }
     catch ( runtime_error & e )
     {

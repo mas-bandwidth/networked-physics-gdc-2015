@@ -1,0 +1,83 @@
+NOTES
+
+------------------------------------------------------------------------------------------------------------
+
+What do I want my library to achieve?
+
+    0. It should provide platform independent UDP abstraction over IPv4 and IPv6 (done)
+
+    1. It should be suitable for both ad-hoc unreliable UDP messages and connection
+       oriented protocol over UDP between client and server (done)
+
+    2. It should operate over UDP and have reliability built in with ack bits (done)
+
+    4. It should support bit-packing *at minimum* or better (eg. range encoding)
+
+    5. It should (optionally) support encryption and signatures for messages so it is platform independent.
+
+    6. It should be possible to efficiently encode game data, eg. bulk of delta encoded
+       game data, snapshots and so on -- eg. traditional FPS network model
+
+    7. It should provide a way to send and receive reliable-ordered non-time critical messages, 
+       which may be small *or* larger than natural packet size, and support fragmentation and
+       re-assembly of these messages.
+
+    8. It should do all significant processing off the main thread (eg. send/receive packets
+       as well as all serialization heavy lifting, etc...)
+
+Things I don't want to do:
+
+    0. Support P2P topology. Client/server or ad-hoc UDP packets *only*.
+
+    1. Define my own RPC serialization protocol or reflection layer (in-game entity sync excluded!!!)
+
+    2. Really efficient bit-packed level of reliable ordered messages for game synchronization (eg. God of War: Ascension)
+
+    3. Pack towards a small max packet size, eg. try to always fit into 256 bytes and never go over. 
+       Packet size should be variable, eg. average packet size is what I care about, *not* efficiently 
+       packing always to max packet size -- a few larger than usual packets are totally OK.
+
+    4. Reliable ordered events that must be delivered ASAP, reliable ordered events are not time critical.
+
+------------------------------------------------------------------------------------------------------------
+
+I think the simplest thing to do then is:
+
+    1. Channels serialize in order (eg. channel 0 gets a go, then 1 then 2 etc...)
+
+    2. If a channel sees a message that is larger than the maximum size for that channel
+       it needs to handle that (fragmentation/re-assembly).
+
+    3. Should be easy to define new channel types. Base channel class with serialization
+       support, ack support etc.
+
+    4. Channels should be able to throw exceptions during serialize read to discard packet
+
+    5. Assume that the # of channels are small, eg. use skip bits when no data exists
+
+    6. A typical use would be channel 0 unreliable, channel 1 reliable-ordered (control messages)
+
+    7. Channel should perform serialize if its skip bit is 1, and be entirely self contained, 
+       eg. can decode whatever is in that block of data into a temporary format.
+
+    9. Unreliable channel does not support packet fragmentation and reassembly. It must be less than packet max size
+
+    10. There could be a channel type for cap'n proto messages
+
+    11. There could be a channel type for my custom serialized events (eg. bit-level packing for multiple events)
+
+    12. Do I really care about #11? Not really. Events are non-bandwidth critical, non-time critical.
+
+------------------------------------------------------------------------------------------------------------
+
+Once the system above is working, I can implement serializers for each channel *HOWEVER I LIKE*
+
+These serializers will then work with the reliability layer and be extendable.
+
+I avoid wasting time on integrated serialize in one step as per-last protocol (eg. in-place serialize events)
+
+I avoid silliness like the level state machine / token system because the channel has unified
+reliable-ordered events no matter what the size of the individual events, eg. chunk would come in
+and then finish, and then events after that come in.
+
+------------------------------------------------------------------------------------------------------------

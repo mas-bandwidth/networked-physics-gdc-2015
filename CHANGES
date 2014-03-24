@@ -1,3 +1,72 @@
+Monday March 24th, 2014:
+------------------------
+
+    Added channel interface.
+
+    Seeing as we don't actually serialize the data *at all* inside the connection
+    we cannot directly serialize channel data from inside connection processing.
+
+    Added new object "ChannelData" derives from "Object" so it has serialize.
+
+    Then added new interface to channel to drive this data:
+
+        virtual shared_ptr<ChannelData> CreateData() = 0;
+
+        virtual shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence ) = 0;
+
+        virtual void ProcessDataFromPacket( shared_ptr<ChannelData> data ) = 0;
+
+        virtual void ProcessAck( uint16_t ack ) = 0;
+
+    This should provide enough information to implement any channel strategy.
+
+        1. You can get a data object to include in a packet with sequence
+        2. If there is no data available right now, return nullptr. (drives skip bits)
+        3. On read, create data then serialize in -- once serialize has completed
+           call process data.
+        4. Process ack should provide enough to implement reliability
+
+    For the channel to abort packet send or packet read, it should throw an exception.
+
+    This exception will abort the entire packet read and discard the packet.
+
+
+Sunday March 23rd, 2014:
+------------------------
+
+    Work out how the user adds channels and works with them?
+
+    User creates the channels and adds them to the connection via shared ptr.
+
+    User can then directly work with the channel specific interface,
+    while the connection works with the base channel interface to 
+    serialize read/write packets.
+
+    This keeps the connection functionality separate from the channel
+    specific functionality.
+
+    I could have lots of different channel types, eg. JSON channel,
+    CaptainProtoChannel, ProtocolBuffersChannel, RawChannel, EventChannel
+    etc.
+
+    The key is that the connection works with data blocks, and 
+    aggregates them into a single packet with reliability.
+
+    This is different to, and less efficient that past techniques
+    I've done where the serialization is done entirely in-place.
+
+    But it makes more sense and is easier to integrate different
+    channel types into it, at the cost of only a small amount
+    of inefficiency.
+
+    Implement a simple channel serializer that just sends blocks of data
+    eg. UnrelaibleBlockChannel -- stupid serialize sends bytes per-block, then
+    block data. Only one block per-packet.
+
+    This is a tracer bullet... what does the connection need from each
+    channel in order to work properly?
+
+
 Sunday March 16th, 2014:
 ------------------------
 

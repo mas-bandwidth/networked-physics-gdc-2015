@@ -1,40 +1,61 @@
 DONE:
 
+    Try to implement basic dumb channel.
+
+    Serialize write is working. Everything up to including channel data
+    in the packet, and then serializing this channel data with skip bits
+    works fine.
+
+    Got up 
+
 TODO:
 
-    Work out how the user adds channels and works with them?
+    Add interface that lets connection packet:
 
-    My guess is the user owns the channels and gives shared ptr to connection,
-    then the user can continue to work with the channels defined natively
-    eg. talk directly to them so they have their own interfaces.
+        1. Get the number of channels
+        2. Create data for a channel by channel #
 
-    No need to work through the connection class to get to channels!
+    This will let the connection packet implement its serialize read.
 
-    Define channel base class functions
+    Once serialize read is working, the channel structure should be
+    working from end-to-end, and should be able to read blocks from
+    the receive queue.
 
-    It must:
+    --------
 
-        a) process acks
-        b) bool HasData()
-        c) Serialize
-        d) should also have functions that get called on successful serialize read/write and fail (discards etc.)
-        e) It should have the ability to decide the data is crap *post* deserialize and discard packet
+    Implement simple reliable ordered block channel.
 
-    Implement connection packet serialize fn. eg: skip per-channel if it doesnt have data to write.
+    Initially this will just send one block, wait for that blocks
+    ack before allowing the next block to be sent.
 
-    Implement a simple channel serializer that just sends blocks of data
-    eg. BlockChannel -- stupid serialize sends bytes per-block, then
-    block data. Only one block per-packet.
+    eg. block the "has data" until the current block has been
+    acked. Consider resending that same block in a new packet
+    until one packet containing that block has been acked.
 
-    Verify that everything works.
+    Next, should implement block fragmentation and reassembly.
 
-    Channel should have basic stats per-channel, eg. how much data is read/written per-channel.
+    Idea is that small and large blocks can be sent reliably
+    and in-order. These blocks are non-time critical.
+
+    Idea: Although the packet size can vary widely, it would be
+    nice to have a bandwidth rate cap per channel, a channel could
+    artificially say it has no data if it has gone over the bandwidth
+    usage over the past n seconds, this would allow bandwidth throttling
+    even if the actual size of the block being sent is potentially
+    quite a large chunk of the packet size.
+
+    Eg. this is a simpler approach than trying to efficiently pack
+    and throttle the data into a very small, fixed size packet,
+    eg. 256 bytes 30 times per-second (64kbps roughly)
 
 PROTOCOL AND SERVER:
 
-    Install Captain Proto
+    Cap'n Proto looks a bit overengineered (eg. second systems effect)
 
-    Work out how to use it for internet messages between servers
+    MessagePack looks a bit smaller and tight to me, but probably less efficient
+    over the wire and in terms of packing time.
+
+    Are protocol buffers worth integrating?
 
     Google snappy looks like a nice candidate for message compression
 
@@ -51,6 +72,11 @@ PROTOCOL AND SERVER:
 
         recv -> verify signature -> decrypt -> serialize read
 
+    If I have my own reliable ordered block channel, I can then derive
+    specific channels from that, eg. JSONChannel, CapnProtoChannel,
+    MsgPackChannel, ThriftChannel and so on... should be easy to add
+    additional libraries and try them out. Try them all! :D
+
 OPTIMIZATION:
 
     Implement bit packer first.
@@ -62,6 +88,9 @@ OPTIMIZATION:
     Send and receive queues should be lockless threadsafe
 
     Separate send and receive threads for NetworkInterface
+
+    Some ninja must be done to make it easy for the channels to work
+    with serialization being done on a separate thread. Ouch?
 
     Investigate different methods for sending and receiving UDP packets,
     eg. completion ports on Win32, whatever method is fastest on linux etc.
