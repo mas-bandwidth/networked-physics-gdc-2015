@@ -1,25 +1,6 @@
 DONE:
 
-    Try to implement basic dumb channel.
-
-    Serialize write is working. Everything up to including channel data
-    in the packet, and then serializing this channel data with skip bits
-    works fine.
-
-    Got up 
-
 TODO:
-
-    Add interface that lets connection packet:
-
-        1. Get the number of channels
-        2. Create data for a channel by channel #
-
-    This will let the connection packet implement its serialize read.
-
-    Once serialize read is working, the channel structure should be
-    working from end-to-end, and should be able to read blocks from
-    the receive queue.
 
     --------
 

@@ -1255,16 +1255,27 @@ namespace protocol
         virtual void ProcessAck( uint16_t ack ) = 0;
     };
 
+    class ConnectionInterface
+    {
+    public:
+
+        virtual int GetNumChannels() = 0;
+
+        virtual shared_ptr<ChannelData> CreateChannelData( int index ) = 0;
+    };
+
     struct ConnectionPacket : public Packet
     {
         uint16_t sequence;
         uint16_t ack;
         uint32_t ack_bits;
-
+        shared_ptr<ConnectionInterface> interface;
         vector<shared_ptr<ChannelData>> channel_data;
 
-        ConnectionPacket( int type ) : Packet( type )
+        ConnectionPacket( shared_ptr<ConnectionInterface> _interface, int type ) : Packet( type )
         {
+            assert( _interface );
+            interface = _interface;
             sequence = 0;
             ack = 0;
             ack_bits = 0;
@@ -1278,8 +1289,6 @@ namespace protocol
 
             if ( stream.IsWriting() )
             {
-                cout << "serialize write connection packet" << endl;
-
                 for ( auto data : channel_data )
                 {
                     int has_data = data != nullptr;
@@ -1290,11 +1299,24 @@ namespace protocol
             }
             else                
             {
-                cout << "serialize read connection packet" << endl;
+                const int numChannels = interface->GetNumChannels();
 
-                // todo: need to know num channels
+                channel_data.resize( numChannels, nullptr );
 
-                // todo: need the ability to create data corresponding to channel #
+                for ( int i = 0; i < numChannels; ++i )
+                {
+                    int has_data = 0;
+                    serialize_int( stream, has_data, 0, 1 );
+                    if ( has_data )
+                    {
+                        channel_data[i] = interface->CreateChannelData( i );
+                        
+                        if ( !channel_data[i] )
+                            throw runtime_error( format_string( "serialize read failed to create channel data [%d]", i ) );
+
+                        channel_data[i]->Serialize( stream );
+                    }
+                }
             }
         }
 
@@ -1338,25 +1360,52 @@ namespace protocol
             NumCounters
         };
 
+        struct InterfaceImplementation : public ConnectionInterface
+        {
+            vector<shared_ptr<Channel>> channels;
+
+            int GetNumChannels() 
+            { 
+                return channels.size();
+            }
+
+            shared_ptr<ChannelData> CreateChannelData( int index )
+            {
+                assert( index >= 0 );
+                assert( index < channels.size() );
+                if ( index >= 0 || index < channels.size() )
+                    return channels[index]->CreateData();
+                else
+                    return nullptr;
+            }
+        };
+
+        shared_ptr<ConnectionInterface> GetInterface()
+        {
+            assert( m_interface );
+            return m_interface;
+        }
+
         Connection( const Config & config )
             : m_config( config )
         {
             m_sent_packets = make_shared<SentPackets>( m_config.slidingWindowSize );
             m_received_packets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
             m_counters.resize( NumCounters, 0 );
+            m_interface = make_shared<InterfaceImplementation>();
             Reset();
         }
 
         void AddChannel( shared_ptr<Channel> channel )
         {
             assert( channel );
-            m_channels.push_back( channel );
+            m_interface->channels.push_back( channel );
         }
 
         shared_ptr<Channel> GetChannel( int index )
         {
-            if ( index >= 0 && index < m_channels.size() )
-                return m_channels[index];
+            if ( index >= 0 && index < m_interface->channels.size() )
+                return m_interface->channels[index];
             else
                 return nullptr;
         }
@@ -1369,13 +1418,13 @@ namespace protocol
 
         shared_ptr<ConnectionPacket> WritePacket()
         {
-            auto packet = make_shared<ConnectionPacket>( m_config.packetType );
+            auto packet = make_shared<ConnectionPacket>( GetInterface(), m_config.packetType );
             packet->sequence = m_sent_packets->GetSequence() + 1;
             GenerateAckBits( *m_received_packets, packet->ack, packet->ack_bits );
 
-            packet->channel_data.resize( m_channels.size(), nullptr );
-            for ( int i = 0; i < m_channels.size(); ++i )
-                packet->channel_data[i] = m_channels[i]->GetDataForPacket( packet->sequence );
+            packet->channel_data.resize( m_interface->channels.size(), nullptr );
+            for ( int i = 0; i < m_interface->channels.size(); ++i )
+                packet->channel_data[i] = m_interface->channels[i]->GetDataForPacket( packet->sequence );
 
             SentPacketData packetData;
             packetData.valid = 1;
@@ -1392,8 +1441,13 @@ namespace protocol
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
+            assert( packet->channel_data.size() == m_interface->channels.size() );
 
-            // todo: process packet 
+            for ( int i = 0; i < packet->channel_data.size(); ++i )
+            {
+                if ( packet->channel_data[i] )
+                    m_interface->channels[i]->ProcessDataFromPacket( packet->channel_data[i] );
+            }
 
             ReceivedPacketData packetData;
             packetData.valid = 1;
@@ -1445,7 +1499,7 @@ namespace protocol
         shared_ptr<SentPackets> m_sent_packets;             // sliding window of recently sent packets
         shared_ptr<ReceivedPackets> m_received_packets;     // sliding window of recently received packets
         vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
-        vector<shared_ptr<Channel>> m_channels;             // event channels.
+        shared_ptr<InterfaceImplementation> m_interface;    // connection interface shared with connection packet.
     };
 
 } //------------------------------------------------------
@@ -1475,7 +1529,6 @@ public:
     {
         if ( stream.IsWriting() )
         {  
-            cout << "serialize write block" << endl;
             assert( block );
             int bytes = block->size();
             assert( bytes > 0 );
@@ -1485,7 +1538,6 @@ public:
         }
         else
         {
-            cout << "serialize read block" << endl;
             int bytes = 0;
             serialize_int( stream, bytes, 1, MaxBlockSize );
             block = make_shared<Block>( bytes, 0 );
@@ -1501,7 +1553,6 @@ public:
 
     void SendBlock( shared_ptr<Block> block )
     {
-        cout << "sent block" << endl;
         assert( block->size() > 0 );
         m_send_queue.push( block );
     }
@@ -1549,9 +1600,9 @@ private:
     queue<shared_ptr<Block>> m_receive_queue;
 };
 
-void test_channel()
+void test_dumb_channel()
 {
-    cout << "test_channel" << endl;
+    cout << "test_dumb_channel" << endl;
 
     Connection::Config config;
 
@@ -1566,9 +1617,9 @@ void test_channel()
 
     int numBlocksReceived = 0;
 
-    for ( int i = 0; i < 10; ++i )
+    while ( true )
     {
-        auto block = make_shared<Block>( 256, i );
+        auto block = make_shared<Block>( 256, 0 );
            
         channel->SendBlock( block );
 
@@ -1578,7 +1629,7 @@ void test_channel()
         write_packet->Serialize( stream );
 
         stream.SetMode( STREAM_Read );
-        auto read_packet = make_shared<ConnectionPacket>( PACKET_Connection );
+        auto read_packet = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
         read_packet->Serialize( stream );
 
         connection.ReadPacket( read_packet );
@@ -1591,7 +1642,8 @@ void test_channel()
             ++numBlocksReceived;
         }
 
-        // todo: stop after 10 blocks recieved
+        if ( numBlocksReceived >= 10 )
+            break;
     }
 }
 
@@ -1749,7 +1801,7 @@ int main()
         test_connection();
         */
 
-        test_channel();
+        test_dumb_channel();
     }
     catch ( runtime_error & e )
     {

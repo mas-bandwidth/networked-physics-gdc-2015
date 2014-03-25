@@ -1,3 +1,29 @@
+Tuesday March 25th, 2014:
+-------------------------
+
+    Try to implement basic dumb channel.
+
+    Serialize write is working. Everything up to including channel data
+    in the packet, and then serializing this channel data with skip bits
+    works fine.
+
+    Added interface that lets connection packet:
+
+        1. Get the number of channels
+        2. Create data for a channel by channel #
+
+    Made this a shared_ptr owned by the connection, that way it can be shared
+    with the packets, even if the connection object itself is not a shared ptr.
+
+    Serialize read is working, reading blocks.
+
+    Next, process the data on serialize read.
+
+    Verify send -> serialize write -> serialize read -> receive channel block.
+
+    Clean up logs and adjust unit test to iterate until 10 blocks received.
+
+
 Monday March 24th, 2014:
 ------------------------
 
