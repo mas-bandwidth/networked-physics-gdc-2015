@@ -1515,9 +1515,127 @@ enum PacketType
     PACKET_Disconnect
 };
 
+const int MaxBlockSize = 1024;
+
 typedef vector<uint8_t> Block;
 
-const int MaxBlockSize = 1024;
+struct ReliableBlock
+{
+    uint16_t id;
+    shared_ptr<Block> block;
+};
+
+class ReliableChannelData : public ChannelData
+{
+public:
+
+    uint16_t id;
+    shared_ptr<Block> block;
+
+    void Serialize( Stream & stream )
+    {
+        serialize_int( stream, id, 0, 65535 );
+
+        if ( stream.IsWriting() )
+        {  
+            assert( block );
+            int bytes = block->size();
+            assert( bytes > 0 );
+            serialize_int( stream, bytes, 1, MaxBlockSize );
+            for ( int i = 0; i < bytes; ++i )
+                serialize_int( stream, block->at(i), 0, 255 );
+        }
+        else
+        {
+            int bytes = 0;
+            serialize_int( stream, bytes, 1, MaxBlockSize );
+            block = make_shared<Block>( bytes, 0 );
+            for ( int i = 0; i < bytes; ++i )
+                serialize_int( stream, block->at(i), 0, 255 );
+        }
+    }
+};
+
+class ReliableChannel : public Channel
+{
+public:
+
+    ReliableChannel()
+    {
+        m_block_id = 0;
+    }
+
+    void SendBlock( shared_ptr<Block> block )
+    {
+        assert( block->size() > 0 );
+        auto reliable_block = make_shared<ReliableBlock>();
+        reliable_block->id = m_block_id++;
+        m_send_queue.push( reliable_block );
+    }
+
+    shared_ptr<Block> RecieveBlock()
+    {
+        if ( m_receive_queue.empty() )
+            return nullptr;
+        auto reliable_block = m_receive_queue.front();
+        m_receive_queue.pop();
+        return reliable_block->block;
+    }
+
+    shared_ptr<ChannelData> CreateData()
+    {
+        return make_shared<ReliableChannelData>();
+    }
+
+    shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence )
+    {
+        if ( m_send_queue.empty() )
+            return nullptr;
+        auto reliable_block = m_send_queue.front();
+        auto data = make_shared<ReliableChannelData>();
+        data->id = reliable_block->id;
+        data->block = reliable_block->block;
+        m_send_queue.pop();
+        return data;
+    }
+
+    void ProcessDataFromPacket( shared_ptr<ChannelData> data_ptr )
+    {
+        assert( data_ptr );
+        auto data = reinterpret_cast<ReliableChannelData&>( *data_ptr );
+        assert( data.block );
+
+        // todo: received should be a sliding window -- in case of out-of-order deliveries
+        // if the received block is outside the sliding window, throw exception, which *must*
+        // discard the packet, eg. cancel its ack (otherwise it may not be resent)
+        auto reliable_block = make_shared<ReliableBlock>();
+        reliable_block->id = data.id;
+        reliable_block->block = data.block;
+        m_receive_queue.push( reliable_block );
+    }
+
+    void ProcessAck( uint16_t ack )
+    {
+        // ...
+    }
+
+private:
+
+    uint16_t m_block_id;
+    queue<shared_ptr<ReliableBlock>> m_send_queue;
+
+    // todo: instead of being a queue this should be a sliding window
+    queue<shared_ptr<ReliableBlock>> m_receive_queue;
+};
+
+void test_reliable_channel()
+{
+    cout << "test_reliable_channel" << endl;
+
+    // ...
+}
+
+// -------------------------------------------------------
 
 class DumbChannelData : public ChannelData
 {
@@ -1647,124 +1765,6 @@ void test_dumb_channel()
     }
 }
 
-void test_connection()
-{
-    cout << "test_connection" << endl;
-
-    Connection::Config config;
-
-    config.packetType = PACKET_Connection;
-    config.maxPacketSize = 4 * 1024;
-
-    Connection connection( config );
-
-    const int NumAcks = 100;
-
-    while ( true )
-    {
-        auto packet = connection.WritePacket();
-
-        connection.ReadPacket( packet );
-
-        if ( connection.GetCounter( Connection::PacketsAcked ) == NumAcks )
-            break;
-    }
-
-    assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
-    assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-}
-
-void test_sequence()
-{
-    cout << "test_sequence" << endl;
-
-    assert( sequence_greater_than( 0, 0 ) == false );
-    assert( sequence_greater_than( 1, 0 ) == true );
-    assert( sequence_greater_than( 0, -1 ) == true );
-
-    assert( sequence_less_than( 0, 0 ) == false );
-    assert( sequence_less_than( 0, 1 ) == true );
-    assert( sequence_less_than( -1, 0 ) == true );
-}
-
-void test_sliding_window()
-{
-    cout << "test_sliding_window" << endl;
-
-    const int size = 256;
-
-    SlidingWindow<SentPacketData> slidingWindow( size );
-
-    for ( int i = 0; i < size; ++i )
-        assert( slidingWindow.Find(i) == nullptr );
-
-    for ( int i = 0; i <= size*4; ++i )
-    {
-        SentPacketData data;
-        data.valid = true;
-        data.sequence = i;
-        bool insertOk = slidingWindow.Insert( data );
-        assert( insertOk );
-        assert( slidingWindow.GetSequence() == i );
-    }
-
-    for ( int i = 0; i <= size; ++i )
-    {
-        SentPacketData data;
-        data.valid = true;
-        data.sequence = i;
-        bool insertOk = slidingWindow.Insert( data );
-        assert( !insertOk );
-    }    
-
-    int index = size*4;
-    for ( int i = 0; i < size; ++i )
-    {
-        auto entry = slidingWindow.Find( index );
-        assert( entry );
-        assert( entry->valid );
-        assert( entry->sequence == index );
-        index--;
-    }
-
-    slidingWindow.Reset();
-
-    assert( slidingWindow.GetSequence() == 0 );
-
-    for ( int i = 0; i < size; ++i )
-        assert( slidingWindow.Find(i) == nullptr );
-}
-
-void test_generate_ack_bits()
-{
-    cout << "test_generate_ack_bits" << endl;
-
-    const int size = 256;
-
-    SlidingWindow<ReceivedPacketData> received_packets( size );
-
-    uint16_t ack = -1;
-    uint32_t ack_bits = -1;
-    GenerateAckBits( received_packets, ack, ack_bits );
-    assert( ack == 0 );
-    assert( ack_bits == 0 );
-
-    for ( int i = 0; i <= size; ++i )
-    {
-        ReceivedPacketData data;
-        data.valid = true;
-        data.sequence = i;
-        bool insertOk = received_packets.Insert( data );
-        assert( insertOk );
-    }    
-
-    GenerateAckBits( received_packets, ack, ack_bits );
-    assert( ack == size );
-    assert( ack_bits == 0xFFFFFFFF );
-}
-
 void test_serialize_object();
 void test_interface();
 void test_factory();
@@ -1776,6 +1776,10 @@ void test_network_interface_send_to_hostname();
 void test_network_interface_send_to_hostname_failure();
 void test_network_interface_send_and_receive_ipv4();
 void test_network_interface_send_and_receive_ipv6();
+void test_sequence();
+void test_sliding_window();
+void test_generate_ack_bits();
+void test_connection();
 
 int main()
 {
@@ -1799,9 +1803,10 @@ int main()
         test_sliding_window();
         test_generate_ack_bits();
         test_connection();
+        test_dumb_channel();
         */
 
-        test_dumb_channel();
+        test_reliable_channel();
     }
     catch ( runtime_error & e )
     {
@@ -2641,4 +2646,122 @@ void test_network_interface_send_and_receive_ipv6()
         if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
             break;
     }
+}
+
+void test_connection()
+{
+    cout << "test_connection" << endl;
+
+    Connection::Config config;
+
+    config.packetType = PACKET_Connection;
+    config.maxPacketSize = 4 * 1024;
+
+    Connection connection( config );
+
+    const int NumAcks = 100;
+
+    while ( true )
+    {
+        auto packet = connection.WritePacket();
+
+        connection.ReadPacket( packet );
+
+        if ( connection.GetCounter( Connection::PacketsAcked ) == NumAcks )
+            break;
+    }
+
+    assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
+    assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
+    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
+    assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
+}
+
+void test_sequence()
+{
+    cout << "test_sequence" << endl;
+
+    assert( sequence_greater_than( 0, 0 ) == false );
+    assert( sequence_greater_than( 1, 0 ) == true );
+    assert( sequence_greater_than( 0, -1 ) == true );
+
+    assert( sequence_less_than( 0, 0 ) == false );
+    assert( sequence_less_than( 0, 1 ) == true );
+    assert( sequence_less_than( -1, 0 ) == true );
+}
+
+void test_sliding_window()
+{
+    cout << "test_sliding_window" << endl;
+
+    const int size = 256;
+
+    SlidingWindow<SentPacketData> slidingWindow( size );
+
+    for ( int i = 0; i < size; ++i )
+        assert( slidingWindow.Find(i) == nullptr );
+
+    for ( int i = 0; i <= size*4; ++i )
+    {
+        SentPacketData data;
+        data.valid = true;
+        data.sequence = i;
+        bool insertOk = slidingWindow.Insert( data );
+        assert( insertOk );
+        assert( slidingWindow.GetSequence() == i );
+    }
+
+    for ( int i = 0; i <= size; ++i )
+    {
+        SentPacketData data;
+        data.valid = true;
+        data.sequence = i;
+        bool insertOk = slidingWindow.Insert( data );
+        assert( !insertOk );
+    }    
+
+    int index = size*4;
+    for ( int i = 0; i < size; ++i )
+    {
+        auto entry = slidingWindow.Find( index );
+        assert( entry );
+        assert( entry->valid );
+        assert( entry->sequence == index );
+        index--;
+    }
+
+    slidingWindow.Reset();
+
+    assert( slidingWindow.GetSequence() == 0 );
+
+    for ( int i = 0; i < size; ++i )
+        assert( slidingWindow.Find(i) == nullptr );
+}
+
+void test_generate_ack_bits()
+{
+    cout << "test_generate_ack_bits" << endl;
+
+    const int size = 256;
+
+    SlidingWindow<ReceivedPacketData> received_packets( size );
+
+    uint16_t ack = -1;
+    uint32_t ack_bits = -1;
+    GenerateAckBits( received_packets, ack, ack_bits );
+    assert( ack == 0 );
+    assert( ack_bits == 0 );
+
+    for ( int i = 0; i <= size; ++i )
+    {
+        ReceivedPacketData data;
+        data.valid = true;
+        data.sequence = i;
+        bool insertOk = received_packets.Insert( data );
+        assert( insertOk );
+    }    
+
+    GenerateAckBits( received_packets, ack, ack_bits );
+    assert( ack == size );
+    assert( ack_bits == 0xFFFFFFFF );
 }

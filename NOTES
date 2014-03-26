@@ -2,6 +2,19 @@ NOTES
 
 ------------------------------------------------------------------------------------------------------------
 
+Idea: Although the packet size can vary widely, it would be
+nice to have a bandwidth rate cap per channel, a channel could
+artificially say it has no data if it has gone over the bandwidth
+usage over the past n seconds, this would allow bandwidth throttling
+even if the actual size of the block being sent is potentially
+quite a large chunk of the packet size.
+
+Eg. this is a simpler approach than trying to efficiently pack
+and throttle the data into a very small, fixed size packet,
+eg. 256 bytes 30 times per-second (64kbps roughly)
+
+------------------------------------------------------------------------------------------------------------
+
 What do I want my library to achieve?
 
     0. It should provide platform independent UDP abstraction over IPv4 and IPv6 (done)

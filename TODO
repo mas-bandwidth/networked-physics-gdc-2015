@@ -1,33 +1,68 @@
 DONE:
 
-TODO:
-
-    --------
-
     Implement simple reliable ordered block channel.
 
-    Initially this will just send one block, wait for that blocks
-    ack before allowing the next block to be sent.
+    Sketched out new reliable channel, channel data classes.
 
-    eg. block the "has data" until the current block has been
-    acked. Consider resending that same block in a new packet
-    until one packet containing that block has been acked.
+    Reliable channel will initially only send only one block at a time.
 
-    Next, should implement block fragmentation and reassembly.
+TODO:
 
-    Idea is that small and large blocks can be sent reliably
-    and in-order. These blocks are non-time critical.
+    On the send side the same block should be sent each time
+    until it is acked. We only need a single entry for the current
+    block being sent, and a sliding window containing the packets
+    it has been sent in -- so we can map acks back to the block.
 
-    Idea: Although the packet size can vary widely, it would be
-    nice to have a bandwidth rate cap per channel, a channel could
-    artificially say it has no data if it has gone over the bandwidth
-    usage over the past n seconds, this would allow bandwidth throttling
-    even if the actual size of the block being sent is potentially
-    quite a large chunk of the packet size.
+    On the receive side, if the block is not the id we are expecting
+    then the process packet should throw an exception when processing
 
-    Eg. this is a simpler approach than trying to efficiently pack
-    and throttle the data into a very small, fixed size packet,
-    eg. 256 bytes 30 times per-second (64kbps roughly)
+    This exception should discard that packet so it does not get acked.
+
+    If the recieve side has the block id it expects, then it should
+    simply queue up that block and id into the receive queue.
+
+    Implement unit test with simulated packet loss.
+
+    Verify blocks get through reliably, and in-order.
+
+    ---------------------
+
+    Next implement multiple blocks being included in the same packet.
+
+    Add some basic configuration, eg. maximum bytes to write per-packet
+    for the reliable channel, resend rate per-block, eg. 4 times a second
+
+    The idea here is that if multiple blocks are queued up, and they
+    can both fit into the stashed data then they should both be
+    included in the packet.
+
+    Now we need a send queue sliding window with time last sent
+    per-block, not just a simple send queue.
+
+    ---------------------
+
+    Next implement fragmentation and reassembly for large blocks.
+
+    Important: Think about large packets with fragmentation
+    If a large packet is coming up ahead, make sure previous
+    non-fragmented packets before it have all been sent, eg.
+    only commit to sending a large fragmented block once 
+    the previous blocks have been sent.
+
+    Next: After a fragmented block. Basically, assume the fragmented
+    block will take a long time. There is probably not a lot of benefit
+    sending blocks *after* the fragmented block in anticipation of the
+    block being sent. Unless the fragmented block is small (eg. only
+    a few fragments). If it is a large, large chunk -- then it's
+    best to stop and wait for that chunk to finish serializing through
+    in slices.
+
+    Important: Don't have a fixed slice size, instead send fragments
+    with offsets and size in bytes + data, this way if sending a large
+    fragment, the majority of the bandwidth can go to sending that fragment,
+    vs. trying to slice it with other fragments before/after.
+
+    ---------------------
 
 PROTOCOL AND SERVER:
 
