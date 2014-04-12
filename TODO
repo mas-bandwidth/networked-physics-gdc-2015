@@ -1,31 +1,18 @@
 DONE:
 
-    Implement simple reliable ordered block channel.
-
-    Sketched out new reliable channel, channel data classes.
-
-    Reliable channel will initially only send only one block at a time.
-
 TODO:
 
-    On the send side the same block should be sent each time
-    until it is acked. We only need a single entry for the current
-    block being sent, and a sliding window containing the packets
-    it has been sent in -- so we can map acks back to the block.
+    ------------------
 
-    On the receive side, if the block is not the id we are expecting
-    then the process packet should throw an exception when processing
+    code cleanup!
 
-    This exception should discard that packet so it does not get acked.
+    Convert to camelcase uniformly. using_this_in_places_is_annoying.
 
-    If the recieve side has the block id it expects, then it should
-    simply queue up that block and id into the receive queue.
+    I'm starting to dislike adding logs and then commenting them out. 
 
-    Implement unit test with simulated packet loss.
+    Is there a good logging solution I can use? Like deja but open source?
 
-    Verify blocks get through reliably, and in-order.
-
-    ---------------------
+    ------------------
 
     Next implement multiple blocks being included in the same packet.
 

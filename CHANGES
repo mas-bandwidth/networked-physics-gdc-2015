@@ -1,3 +1,71 @@
+Saturday April 12th, 2014:
+--------------------------
+
+    Hook up the "resend rate", eg. don't send the block down the channel continuously
+    resend it at some fixed rate, eg. 10 times per-second.
+
+    This requires current id for block and a time since last send of that id.
+    Set this block id initially to 0xFFFF and if it is different to current
+    block, update block id and immediately send block, set time to 0.0
+
+    Added simple network timebase. Used doubles to keep it simple.
+
+    There seem to be some problems with ack processing for reliable blocks.
+
+    Debug it with logs. Is the ack processing to blame, or the reliable block channel?
+
+    Error appears to be in the ack system. It's off by one somewhere, eg. acking packet 10
+    but packet 10 was not received (packet 10 was).
+
+    Yes, there was an error in the generate ack bits function.
+
+
+Thursday April 4th, 2014:
+-------------------------
+
+    Make sure an exception thrown while processing channel data discards the packet
+    (ensures that packet does not get marked as acked).
+
+    Added counter for packet process fail.
+
+    Add a unit test to verify this is the case, eg. create a test channel that has
+    this behavior, and verify that no packets are acked while sent through with
+    the exception being thrown.
+
+
+Sunday March 30th, 2014:
+------------------------
+
+    Sketched out new reliable channel, channel data classes.
+
+    Reliable channel will initially only send only one block at a time.
+
+    Initially just resend the most recent block until it is acked.
+
+    Added sliding windor for sent packets. This provides constant time
+    lookup from the acked sequence to the block id.
+
+    Added code to pop the block from the send queue if the acked
+    block id matches the front block id in the send queue.
+
+    On the receive side, if the block is not the id we are expecting
+    then the process packet should throw an exception when processing
+
+    This exception should discard that packet so it does not get acked.
+
+    If the recieve side has the block id it expects, then it should
+    simply queue up that block and id into the receive queue.
+
+    Implement unit test with simulated packet loss.
+
+    Verify blocks get through reliably, and in-order, eg. block contents
+    should be i, where i is the i'th packet sent.
+
+    Extend unit test to verify generate ack bits is working correctly.
+
+    Found a bug in sliding window. Was not clearing entries on reset properly.
+
+
 Tuesday March 25th, 2014:
 -------------------------
 
