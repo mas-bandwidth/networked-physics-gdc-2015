@@ -2,15 +2,20 @@ DONE:
 
 TODO:
 
-    ------------------
+    Consider renaming channel data to packet data
 
-    code cleanup!
+    eg. ReliableBlockPacketData
 
-    Convert to camelcase uniformly. using_this_in_places_is_annoying.
+    Generalize the reliable block packet data such that it can
+    contain multiple reliable blocks, eg. split back out into
+    ReliableBlockData
 
-    I'm starting to dislike adding logs and then commenting them out. 
+    Reliable block packet data should also know the maximum
+    bytes per-block that can be serialized per-packet, before
+    they get split up into fragments.
 
-    Is there a good logging solution I can use? Like deja but open source?
+    This should basically be the block fragment size, which should
+    be the channel configured # of bytes minus any overhead.
 
     ------------------
 
@@ -44,10 +49,12 @@ TODO:
     best to stop and wait for that chunk to finish serializing through
     in slices.
 
-    Important: Don't have a fixed slice size, instead send fragments
-    with offsets and size in bytes + data, this way if sending a large
-    fragment, the majority of the bandwidth can go to sending that fragment,
-    vs. trying to slice it with other fragments before/after.
+    Important: Slice size should be fixed, and basically be as much
+    data as you can fit in the channel configuration. Don't send #
+    of bytes with each slice. You know the size from config.
+
+    At end, make sure not to trash extra data, but do send extra 0's
+    in the packet, to avoid special cases.
 
     ---------------------
 

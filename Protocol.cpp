@@ -1209,7 +1209,7 @@ namespace protocol
             : valid(0), acked(0), sequence(0) {}
 
         SentPacketData( uint16_t _sequence )
-            : valid(1), sequence( _sequence ) {}
+            : valid(1), acked(0), sequence( _sequence ) {}
 
         uint32_t valid : 1;                     // is this packet entry valid?
         uint32_t acked : 1;                     // has packet been acked?
@@ -1285,7 +1285,7 @@ namespace protocol
         uint16_t ack;
         uint32_t ack_bits;
         shared_ptr<ConnectionInterface> interface;
-        vector<shared_ptr<ChannelData>> channel_data;
+        vector<shared_ptr<ChannelData>> channelData;
 
         ConnectionPacket( shared_ptr<ConnectionInterface> _interface, int type ) : Packet( type )
         {
@@ -1294,6 +1294,7 @@ namespace protocol
             sequence = 0;
             ack = 0;
             ack_bits = 0;
+            channelData.resize( interface->GetNumChannels() );
         }
 
         void Serialize( Stream & stream )
@@ -1304,7 +1305,7 @@ namespace protocol
 
             if ( stream.IsWriting() )
             {
-                for ( auto data : channel_data )
+                for ( auto data : channelData )
                 {
                     int has_data = data != nullptr;
                     serialize_int( stream, has_data, 0, 1 );
@@ -1314,22 +1315,18 @@ namespace protocol
             }
             else                
             {
-                const int numChannels = interface->GetNumChannels();
-
-                channel_data.resize( numChannels, nullptr );
-
-                for ( int i = 0; i < numChannels; ++i )
+                for ( int i = 0; i < channelData.size(); ++i )
                 {
                     int has_data = 0;
                     serialize_int( stream, has_data, 0, 1 );
                     if ( has_data )
                     {
-                        channel_data[i] = interface->CreateChannelData( i );
+                        channelData[i] = interface->CreateChannelData( i );
                         
-                        if ( !channel_data[i] )
+                        if ( !channelData[i] )
                             throw runtime_error( format_string( "serialize read failed to create channel data [%d]", i ) );
 
-                        channel_data[i]->Serialize( stream );
+                        channelData[i]->Serialize( stream );
                     }
                 }
             }
@@ -1366,15 +1363,7 @@ namespace protocol
             int slidingWindowSize;
         };
 
-        enum Counters
-        {
-            PacketsRead,                            // number of packets read
-            PacketsWritten,                         // number of packets written
-            PacketsDiscarded,                       // number of packets discarded
-            PacketsAcked,                           // number of packets acked
-            ProcessPacketFailures,                  // number of process packet failures
-            NumCounters
-        };
+    private:
 
         struct InterfaceImplementation : public ConnectionInterface
         {
@@ -1396,6 +1385,25 @@ namespace protocol
             }
         };
 
+        const Config m_config;                              // const configuration data
+        TimeBase m_timeBase;                                // network time base
+        shared_ptr<SentPackets> m_sentPackets;              // sliding window of recently sent packets
+        shared_ptr<ReceivedPackets> m_receivedPackets;      // sliding window of recently received packets
+        vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
+        shared_ptr<InterfaceImplementation> m_interface;    // connection interface shared with connection packet.
+
+    public:
+
+        enum Counters
+        {
+            PacketsRead,                            // number of packets read
+            PacketsWritten,                         // number of packets written
+            PacketsDiscarded,                       // number of packets discarded
+            PacketsAcked,                           // number of packets acked
+            ReadPacketFailures,                     // number of read packet failures
+            NumCounters
+        };
+
         shared_ptr<ConnectionInterface> GetInterface()
         {
             assert( m_interface );
@@ -1405,8 +1413,8 @@ namespace protocol
         Connection( const Config & config )
             : m_config( config )
         {
-            m_sent_packets = make_shared<SentPackets>( m_config.slidingWindowSize );
-            m_received_packets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
+            m_sentPackets = make_shared<SentPackets>( m_config.slidingWindowSize );
+            m_receivedPackets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
             m_counters.resize( NumCounters, 0 );
             m_interface = make_shared<InterfaceImplementation>();
             Reset();
@@ -1428,8 +1436,8 @@ namespace protocol
 
         void Reset()
         {
-            m_sent_packets->Reset();
-            m_received_packets->Reset();
+            m_sentPackets->Reset();
+            m_receivedPackets->Reset();
         }
 
         void Update( const TimeBase & timeBase )
@@ -1447,14 +1455,15 @@ namespace protocol
         shared_ptr<ConnectionPacket> WritePacket()
         {
             auto packet = make_shared<ConnectionPacket>( GetInterface(), m_config.packetType );
-            packet->sequence = m_sent_packets->GetSequence() + 1;
-            GenerateAckBits( *m_received_packets, packet->ack, packet->ack_bits );
 
-            packet->channel_data.resize( m_interface->channels.size(), nullptr );
+            packet->sequence = m_sentPackets->GetSequence() + 1;
+
+            GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
+
             for ( int i = 0; i < m_interface->channels.size(); ++i )
-                packet->channel_data[i] = m_interface->channels[i]->GetDataForPacket( packet->sequence );
+                packet->channelData[i] = m_interface->channels[i]->GetDataForPacket( packet->sequence );
 
-            m_sent_packets->Insert( packet->sequence );
+            m_sentPackets->Insert( packet->sequence );
 
             m_counters[PacketsWritten]++;
 
@@ -1465,7 +1474,7 @@ namespace protocol
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
-            assert( packet->channel_data.size() == m_interface->channels.size() );
+            assert( packet->channelData.size() == m_interface->channels.size() );
 
 //            cout << "read packet " << packet->sequence << endl;
 
@@ -1473,22 +1482,19 @@ namespace protocol
 
             try
             {
-                for ( int i = 0; i < packet->channel_data.size(); ++i )
+                for ( int i = 0; i < packet->channelData.size(); ++i )
                 {
-                    if ( packet->channel_data[i] )
-                        m_interface->channels[i]->ProcessDataFromPacket( packet->channel_data[i] );
+                    if ( packet->channelData[i] )
+                        m_interface->channels[i]->ProcessDataFromPacket( packet->channelData[i] );
                 }
             }
             catch ( runtime_error & e )
             {
-                m_counters[ProcessPacketFailures]++;
+                m_counters[ReadPacketFailures]++;
                 return;                
             }
 
-            ReceivedPacketData packetData;
-            packetData.valid = 1;
-            packetData.sequence = packet->sequence;
-            if ( !m_received_packets->Insert( packetData ) )
+            if ( !m_receivedPackets->Insert( packet->sequence ) )
             {
                 m_counters[PacketsDiscarded]++;
                 return;
@@ -1513,11 +1519,11 @@ namespace protocol
                 if ( ack_bits & 1 )
                 {                    
                     const uint16_t sequence = ack - i;
-                    SentPacketData * sent_packet = m_sent_packets->Find( sequence );
-                    if ( sent_packet && !sent_packet->acked )
+                    SentPacketData * packetData = m_sentPackets->Find( sequence );
+                    if ( packetData && !packetData->acked )
                     {
                         PacketAcked( sequence );
-                        sent_packet->acked = 1;
+                        packetData->acked = 1;
                     }
                 }
                 ack_bits >>= 1;
@@ -1526,17 +1532,12 @@ namespace protocol
 
         void PacketAcked( uint16_t sequence )
         {
+//            cout << "packet " << sequence << " acked" << endl;
+
             m_counters[PacketsAcked]++;
             for ( auto channel : m_interface->channels )
                 channel->ProcessAck( sequence );
         }
-
-        const Config m_config;                              // const configuration data
-        TimeBase m_timeBase;                                // network time base
-        shared_ptr<SentPackets> m_sent_packets;             // sliding window of recently sent packets
-        shared_ptr<ReceivedPackets> m_received_packets;     // sliding window of recently received packets
-        vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
-        shared_ptr<InterfaceImplementation> m_interface;    // connection interface shared with connection packet.
     };
 
 } //------------------------------------------------------
@@ -1554,113 +1555,21 @@ enum PacketType
 
 // -------------------------------------------------------
 
-class ProcessPacketFailData : public ChannelData
-{
-public:
-
-    int x;
-
-    ProcessPacketFailData()
-    {
-        x = rand() % 100;
-    }
-
-    void Serialize( Stream & stream )
-    {
-        serialize_int( stream, x, 0, 99 );
-    }
-};
-
-class ProcessPacketFailureChannel : public Channel
-{
-public:
-
-    ProcessPacketFailureChannel()
-    {
-    }
-
-    shared_ptr<ChannelData> CreateData()
-    {
-        return make_shared<ProcessPacketFailData>();
-    }
-
-    shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence )
-    {
-        return CreateData();
-    }
-
-    void ProcessDataFromPacket( shared_ptr<ChannelData> data_ptr )
-    {
-        throw runtime_error( "simulate process packet failure" );
-    }
-
-    void ProcessAck( uint16_t ack )
-    {
-        // ...
-    }
-
-    void Update( const TimeBase & timeBase )
-    {
-        // ...
-    }
-};
-
-void test_process_packet_failure()
-{
-    cout << "test_process_packet_failure" << endl;
-
-    Connection::Config config;
-    config.packetType = PACKET_Connection;
-    config.maxPacketSize = 4 * 1024;
-    Connection connection( config );
-
-    auto channel = make_shared<ProcessPacketFailureChannel>();
-
-    connection.AddChannel( channel );
-
-    for ( int i = 0; i < 100; ++i )
-    {  
-        auto write_packet = connection.WritePacket();
-
-        Stream stream( STREAM_Write );
-        write_packet->Serialize( stream );
-
-        stream.SetMode( STREAM_Read );
-        auto read_packet = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
-        read_packet->Serialize( stream );
-
-        connection.ReadPacket( read_packet );
-
-        assert( connection.GetCounter( Connection::PacketsRead ) == i+1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
-        assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) == 0 );
-        assert( connection.GetCounter( Connection::ProcessPacketFailures ) == i+1 );
-    }
-}
-
-// -------------------------------------------------------
-
 const int MaxBlockSize = 1024;
 
 typedef vector<uint8_t> Block;
 
-struct ReliableBlock
+struct ReliableBlock : public ChannelData
 {
-    uint16_t id;
-    shared_ptr<Block> block;
-};
+    ReliableBlock( shared_ptr<Block> _block, uint16_t _blockId )
+        : blockId( _blockId ), block( _block ) {}
 
-class ReliableChannelData : public ChannelData
-{
-public:
-
-    uint16_t block_id;
+    uint16_t blockId;
     shared_ptr<Block> block;
 
     void Serialize( Stream & stream )
     {
-        serialize_int( stream, block_id, 0, 65535 );
+        serialize_int( stream, blockId, 0, 65535 );
 
         if ( stream.IsWriting() )
         {  
@@ -1685,20 +1594,19 @@ public:
 struct SentBlockData
 {
     SentBlockData()
-    {
-        valid = 0;
-        sequence = 0;
-        block_id = 0;
-    }
+        : valid(0), sequence(0), blockId(0) {}
+
+    SentBlockData( uint16_t _sequence, uint16_t _blockId )
+        : valid(1), sequence( _sequence ), blockId( _blockId ) {}
 
     uint32_t valid : 1;
     uint32_t sequence : 16;
-    uint32_t block_id : 16;
+    uint32_t blockId : 16;
 };
 
 typedef SlidingWindow<SentBlockData> SentBlocks;
 
-class ReliableChannel : public Channel
+class ReliableBlockChannel : public Channel
 {
 public:
 
@@ -1718,124 +1626,110 @@ private:
     
     Config m_config;                                            // configuration data for channel
     
-    uint16_t m_send_block_id;                                   // block id for next block sent
-    uint16_t m_receive_block_id;                                // block id we expect to receive next
-    uint16_t m_current_send_block_id;                           // current block id we are resending until acked
+    uint16_t m_sendBlockId;                                     // block id for next block sent
+    uint16_t m_receiveBlockId;                                  // block id we expect to receive next
+    uint16_t m_currentSendBlockId;                              // current block id we are sending until acked
 
-    double m_last_send_time;                                    // time that we last sent a block (to enforce maximum send rate)
+    double m_lastSendTime;                                      // time that we last sent a block (to enforce maximum send rate)
 
-    queue<shared_ptr<ReliableBlock>> m_send_queue;              // send queue of blocks
-    queue<shared_ptr<ReliableBlock>> m_receive_queue;           // receive queue of blocks
+    queue<shared_ptr<ReliableBlock>> m_sendQueue;               // block send queue
+    queue<shared_ptr<ReliableBlock>> m_receiveQueue;            // block receive queue
 
-    shared_ptr<SentBlocks> m_sent_blocks;                       // sliding window used to map packet acks to blocks
+    shared_ptr<SentBlocks> m_sentBlocks;                        // sliding window used to map packet acks to blocks
 
     TimeBase m_timeBase;                                        // time base from last update
 
 public:
 
-    ReliableChannel( const Config & config = Config() )
+    ReliableBlockChannel( const Config & config = Config() )
     {
         m_config = config;
-
-        m_send_block_id = 0;
-        m_receive_block_id = 0;
-        m_current_send_block_id = 0xFFFF;
-
-        m_sent_blocks = make_shared<SentBlocks>( m_config.slidingWindowSize );
+        m_sendBlockId = 0;
+        m_receiveBlockId = 0;
+        m_currentSendBlockId = 0xFFFF;
+        m_sentBlocks = make_shared<SentBlocks>( m_config.slidingWindowSize );
     }
 
     void SendBlock( shared_ptr<Block> block )
     {
 //        cout << "queue block for send: " << m_send_block_id << endl;
         assert( block->size() > 0 );
-        auto reliable_block = make_shared<ReliableBlock>();
-        reliable_block->id = m_send_block_id++;
-        reliable_block->block = block;
-        m_send_queue.push( reliable_block );
+        m_sendQueue.push( make_shared<ReliableBlock>( block, m_sendBlockId++ ) );
     }
 
     shared_ptr<Block> ReceiveBlock()
     {
-        if ( m_receive_queue.empty() )
+        if ( m_receiveQueue.empty() )
             return nullptr;
-        auto reliable_block = m_receive_queue.front();
-        m_receive_queue.pop();
-        return reliable_block->block;
+        auto reliableBlock = m_receiveQueue.front();
+        m_receiveQueue.pop();
+        return reliableBlock->block;
     }
 
     shared_ptr<ChannelData> CreateData()
     {
-        return make_shared<ReliableChannelData>();
+        return make_shared<ReliableBlock>( nullptr, 0 );
     }
 
     shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence )
     {
-        if ( m_send_queue.empty() )
+        if ( m_sendQueue.empty() )
             return nullptr;
 
-        auto reliable_block = m_send_queue.front();
+        auto reliableBlock = m_sendQueue.front();
 
-        if ( m_current_send_block_id == reliable_block->id && m_timeBase.time - m_last_send_time <= m_config.resendRate )
+        if ( m_currentSendBlockId == reliableBlock->blockId && m_timeBase.time - m_lastSendTime <= m_config.resendRate )
             return nullptr;
 
-        m_current_send_block_id = reliable_block->id;
-        m_last_send_time = m_timeBase.time;
+        m_currentSendBlockId = reliableBlock->blockId;
+        m_lastSendTime = m_timeBase.time;
 
-        AddSentBlockData( sequence, reliable_block->id );
+        AddSentBlockData( sequence, reliableBlock->blockId );
 
 //        cout << format_string( "block %d sent in packet %d", reliable_block->id, sequence ) << endl;
 
-        auto channel_data = make_shared<ReliableChannelData>();
-        channel_data->block = reliable_block->block;
-        channel_data->block_id = reliable_block->id;
-
-        return channel_data;
+        return reliableBlock;
     }
 
-    void AddSentBlockData( uint16_t sequence, uint16_t block_id )
+    void AddSentBlockData( uint16_t sequence, uint16_t blockId )
     {
-        SentBlockData data;
-        data.valid = 1;
-        data.sequence = sequence;
-        data.block_id = block_id;
-        m_sent_blocks->Insert( data );
+        m_sentBlocks->Insert( SentBlockData( sequence, blockId ) );
     }
 
-    void ProcessDataFromPacket( shared_ptr<ChannelData> data_ptr )
+    void ProcessDataFromPacket( shared_ptr<ChannelData> channelData )
     {
-        assert( data_ptr );
-        auto data = reinterpret_cast<ReliableChannelData&>( *data_ptr );
-        assert( data.block );
+        assert( channelData );
 
+        auto reliableBlock = reinterpret_cast<ReliableBlock&>( *channelData );
+        
 //        cout << "process data: block id = " << data.block_id << endl;
 
-        if ( sequence_less_than( data.block_id, m_receive_block_id ) )
+        if ( sequence_less_than( reliableBlock.blockId, m_receiveBlockId ) )
             return;
 
-        if ( sequence_greater_than( data.block_id, m_receive_block_id ) )
+        if ( sequence_greater_than( reliableBlock.blockId, m_receiveBlockId ) )
             throw runtime_error( "received future block. discarding packet" );
 
-        assert( data.block_id == m_receive_block_id );
+        assert( reliableBlock.blockId == m_receiveBlockId );
 
-        auto reliable_block = make_shared<ReliableBlock>();
-        reliable_block->id = data.block_id;
-        reliable_block->block = data.block;
-        m_receive_queue.push( reliable_block );
-        m_receive_block_id++;
+        m_receiveQueue.push( make_shared<ReliableBlock>( reliableBlock ) );
+
+        m_receiveBlockId++;
     }
 
     void ProcessAck( uint16_t ack )
     {
 //        cout << "process ack: " << ack << endl;
 
-        if ( m_send_queue.empty() )
+        if ( m_sendQueue.empty() )
             return;
 
-        auto data = m_sent_blocks->Find( ack );
-        if ( data && data->block_id == m_send_queue.front()->id )
+        auto sentBlock = m_sentBlocks->Find( ack );        
+        if ( sentBlock )
         {
 //            cout << " -> block " << data->block_id << " sent in packet " << ack << endl;
-            m_send_queue.pop();
+            if ( sentBlock->blockId == m_sendQueue.front()->blockId )
+                m_sendQueue.pop();
         }
         else
         {
@@ -1849,9 +1743,9 @@ public:
     }
 };
 
-void test_reliable_channel()
+void test_reliable_block_channel()
 {
-    cout << "test_reliable_channel" << endl;
+    cout << "test_reliable_block_channel" << endl;
 
     const int NumBlocksToSend = 10;
     const int BlockSize = 256;
@@ -1863,7 +1757,7 @@ void test_reliable_channel()
 
     Connection connection( config );
 
-    auto channel = make_shared<ReliableChannel>();
+    auto channel = make_shared<ReliableBlockChannel>();
 
     connection.AddChannel( channel );
 
@@ -1880,17 +1774,17 @@ void test_reliable_channel()
 
     for ( int i = 0; i < 10000; ++i )
     {  
-        auto write_packet = connection.WritePacket();
+        auto writePacket = connection.WritePacket();
 
         Stream stream( STREAM_Write );
-        write_packet->Serialize( stream );
+        writePacket->Serialize( stream );
 
         stream.SetMode( STREAM_Read );
-        auto read_packet = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
-        read_packet->Serialize( stream );
+        auto readPacket = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
+        readPacket->Serialize( stream );
 
         if ( ( rand() % 10 ) == 0 )
-            connection.ReadPacket( read_packet );
+            connection.ReadPacket( readPacket );
         
         while ( true )
         {
@@ -1901,7 +1795,7 @@ void test_reliable_channel()
             for ( int i = 0; i < BlockSize; ++i )
                 assert( block->at(i) == numBlocksReceived );
 
-//            cout << "block recieved" << endl;
+//            cout << "block received" << endl;
 
             ++numBlocksReceived;
         }
@@ -1910,7 +1804,7 @@ void test_reliable_channel()
         assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
         assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
         assert( connection.GetCounter( Connection::PacketsAcked ) <= i+1 );
-        assert( connection.GetCounter( Connection::ProcessPacketFailures ) == 0 );
+        assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 
         if ( numBlocksReceived == NumBlocksToSend )
             break;
@@ -1924,148 +1818,6 @@ void test_reliable_channel()
 }
 
 // -------------------------------------------------------
-
-class DumbChannelData : public ChannelData
-{
-public:
-
-    shared_ptr<Block> block;
-
-    void Serialize( Stream & stream )
-    {
-        if ( stream.IsWriting() )
-        {  
-            assert( block );
-            int bytes = block->size();
-            assert( bytes > 0 );
-            serialize_int( stream, bytes, 1, MaxBlockSize );
-            for ( int i = 0; i < bytes; ++i )
-                serialize_int( stream, block->at(i), 0, 255 );
-        }
-        else
-        {
-            int bytes = 0;
-            serialize_int( stream, bytes, 1, MaxBlockSize );
-            block = make_shared<Block>( bytes, 0 );
-            for ( int i = 0; i < bytes; ++i )
-                serialize_int( stream, block->at(i), 0, 255 );
-        }
-    }
-};
-
-class DumbChannel : public Channel
-{
-public:
-
-    void SendBlock( shared_ptr<Block> block )
-    {
-        assert( block->size() > 0 );
-        m_send_queue.push( block );
-    }
-
-    shared_ptr<Block> ReceiveBlock()
-    {
-        if ( m_receive_queue.empty() )
-            return nullptr;
-        auto block = m_receive_queue.front();
-        m_receive_queue.pop();
-        return block;
-    }
-
-    shared_ptr<ChannelData> CreateData()
-    {
-        return make_shared<DumbChannelData>();
-    }
-
-    shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence )
-    {
-        if ( m_send_queue.empty() )
-            return nullptr;
-        auto data = make_shared<DumbChannelData>();
-        data->block = m_send_queue.front();
-        m_send_queue.pop();
-        return data;
-    }
-
-    void ProcessDataFromPacket( shared_ptr<ChannelData> data_ptr )
-    {
-        assert( data_ptr );
-        auto data = reinterpret_cast<DumbChannelData&>( *data_ptr );
-        assert( data.block );
-        m_receive_queue.push( data.block );
-    }
-
-    void ProcessAck( uint16_t ack )
-    {
-        // ...
-    }
-
-    void Update( const TimeBase & timeBase )
-    {
-        m_timeBase = timeBase;
-    }
-
-private:
-
-    TimeBase m_timeBase;
-    queue<shared_ptr<Block>> m_send_queue;
-    queue<shared_ptr<Block>> m_receive_queue;
-};
-
-void test_dumb_channel()
-{
-    cout << "test_dumb_channel" << endl;
-
-    Connection::Config config;
-
-    config.packetType = PACKET_Connection;
-    config.maxPacketSize = 4 * 1024;
-
-    Connection connection( config );
-
-    auto channel = make_shared<DumbChannel>();
-
-    connection.AddChannel( channel );
-
-    int numBlocksReceived = 0;
-
-    for ( int i = 0; i < 100; ++i )
-    {
-        auto block = make_shared<Block>( 256, 0 );
-           
-        channel->SendBlock( block );
-
-        auto write_packet = connection.WritePacket();
-
-        Stream stream( STREAM_Write );
-        write_packet->Serialize( stream );
-
-        stream.SetMode( STREAM_Read );
-        auto read_packet = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
-        read_packet->Serialize( stream );
-
-        connection.ReadPacket( read_packet );
-
-        while ( true )
-        {
-            auto block = channel->ReceiveBlock();
-            if ( !block )
-                break;
-            ++numBlocksReceived;
-        }
-
-        assert( connection.GetCounter( Connection::PacketsRead ) == i+1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
-        assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) == i );
-        assert( connection.GetCounter( Connection::ProcessPacketFailures ) == 0 );
-
-        if ( numBlocksReceived >= 10 )
-            break;
-    }
-
-    assert( numBlocksReceived >= 10 );
-}
 
 void test_serialize_object();
 void test_interface();
@@ -2104,9 +1856,7 @@ int main()
         test_sliding_window();
         test_generate_ack_bits();
         test_connection();
-        test_dumb_channel();
-        test_reliable_channel();
-        test_process_packet_failure();
+        test_reliable_block_channel();
     }
     catch ( runtime_error & e )
     {
@@ -2961,7 +2711,7 @@ void test_connection()
 
     const int NumAcks = 100;
 
-    while ( true )
+    for ( int i = 0; i < NumAcks*2; ++i )
     {
         auto packet = connection.WritePacket();
 
@@ -2971,10 +2721,11 @@ void test_connection()
             break;
     }
 
+    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
     assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
     assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
     assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
+    assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 }
 
 void test_sequence()
