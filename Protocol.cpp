@@ -1,5 +1,5 @@
 /*
-    Sketching out ideas for protocol library in C++11
+    Sketching out ideas for a network protocol library
     Author: Glenn Fiedler <glenn.fiedler@gmail.com>
 */
 
@@ -190,6 +190,7 @@ namespace protocol
     class Object
     {  
     public:
+        virtual ~Object() {}
         virtual void Serialize( Stream & stream ) = 0;
     };
 
@@ -719,7 +720,7 @@ namespace protocol
         NetworkInterface( const Config & config = Config() )
             : m_config( config )
         {
-            assert( m_config.factory );
+            assert( m_config.factory );             // IMPORTANT: You must supply a packet factory!
             assert( m_config.maxPacketSize > 0 );
 
             m_receiveBuffer.resize( m_config.maxPacketSize );
@@ -1261,9 +1262,9 @@ namespace protocol
 
         virtual shared_ptr<ChannelData> CreateData() = 0;
 
-        virtual shared_ptr<ChannelData> GetDataForPacket( uint16_t sequence ) = 0;
+        virtual shared_ptr<ChannelData> GetData( uint16_t sequence ) = 0;
 
-        virtual void ProcessDataFromPacket( shared_ptr<ChannelData> data ) = 0;
+        virtual void ProcessData( shared_ptr<ChannelData> data ) = 0;
 
         virtual void ProcessAck( uint16_t ack ) = 0;
 
@@ -1417,6 +1418,7 @@ namespace protocol
             m_receivedPackets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
             m_counters.resize( NumCounters, 0 );
             m_interface = make_shared<InterfaceImplementation>();
+
             Reset();
         }
 
@@ -1461,7 +1463,7 @@ namespace protocol
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
 
             for ( int i = 0; i < m_interface->channels.size(); ++i )
-                packet->channelData[i] = m_interface->channels[i]->GetDataForPacket( packet->sequence );
+                packet->channelData[i] = m_interface->channels[i]->GetData( packet->sequence );
 
             m_sentPackets->Insert( packet->sequence );
 
@@ -1485,7 +1487,7 @@ namespace protocol
                 for ( int i = 0; i < packet->channelData.size(); ++i )
                 {
                     if ( packet->channelData[i] )
-                        m_interface->channels[i]->ProcessDataFromPacket( packet->channelData[i] );
+                        m_interface->channels[i]->ProcessData( packet->channelData[i] );
                 }
             }
             catch ( runtime_error & e )
@@ -1540,6 +1542,178 @@ namespace protocol
         }
     };
 
+    class Message : public Object
+    {
+    public:
+
+        Message( int type ) : m_type(type)
+        {
+            // ...
+        }
+
+        int GetType() const { return m_type; }
+
+    private:
+        
+        int m_type;       
+    };
+
+    typedef vector<uint8_t> Block;
+
+    class BlockMessage : public Message
+    {
+    public:
+
+        BlockMessage() : Message(0) {}
+
+        BlockMessage( shared_ptr<Block> block ) : Message(0) { m_block = block; }
+
+        virtual void Serialize( Stream & stream ) { assert(false); }
+
+        shared_ptr<Block> GetBlock() { return m_block; }
+
+    private:
+
+        shared_ptr<Block> m_block;
+    };
+
+    class MessageChannelData : public ChannelData
+    {
+        // ...
+    };
+
+    class MessageChannel : public Channel
+    {
+    public:
+
+        struct Config
+        {
+            Config()
+            {
+                factory = nullptr;
+                resendRate = 0.1f;
+                slidingWindowSize = 256;
+            }
+
+            shared_ptr<Factory<Message>> factory;
+            float resendRate;
+            int slidingWindowSize;
+        };
+
+        MessageChannel( const Config & config ) : m_config( config )
+        {
+            assert( config.factory );       // IMPORTANT: You must supply a message factory!
+        }
+
+        void SendMessage( shared_ptr<Message> message )
+        {
+//          cout << "queue message for send: " << m_send_block_id << endl;
+            /*
+            assert( block->size() > 0 );
+            m_sendQueue.push( make_shared<ReliableBlock>( block, m_sendBlockId++ ) );
+            */
+        }
+
+        shared_ptr<Message> ReceiveMessage()
+        {
+            return nullptr;
+            /*
+            if ( m_receiveQueue.empty() )
+                return nullptr;
+            auto reliableBlock = m_receiveQueue.front();
+            m_receiveQueue.pop();
+            return reliableBlock->block;
+            */
+        }
+
+        shared_ptr<ChannelData> CreateData()
+        {
+            // todo
+            return nullptr;
+        }
+
+        shared_ptr<ChannelData> GetData( uint16_t sequence )
+        {
+            // todo
+            return nullptr;
+
+            /*
+            if ( m_sendQueue.empty() )
+                return nullptr;
+
+            auto reliableBlock = m_sendQueue.front();
+
+            if ( m_currentSendBlockId == reliableBlock->blockId && m_timeBase.time - m_lastSendTime <= m_config.resendRate )
+                return nullptr;
+
+            m_currentSendBlockId = reliableBlock->blockId;
+            m_lastSendTime = m_timeBase.time;
+
+            AddSentBlockData( sequence, reliableBlock->blockId );
+
+    //        cout << format_string( "block %d sent in packet %d", reliable_block->id, sequence ) << endl;
+
+            return reliableBlock;
+            */
+        }
+
+        void ProcessData( shared_ptr<ChannelData> channelData )
+        {
+            assert( channelData );
+
+            /*
+
+            auto reliableBlock = reinterpret_cast<ReliableBlock&>( *channelData );
+            
+    //        cout << "process data: block id = " << data.block_id << endl;
+
+            if ( sequence_less_than( reliableBlock.blockId, m_receiveBlockId ) )
+                return;
+
+            if ( sequence_greater_than( reliableBlock.blockId, m_receiveBlockId ) )
+                throw runtime_error( "received future block. discarding packet" );
+
+            assert( reliableBlock.blockId == m_receiveBlockId );
+
+            m_receiveQueue.push( make_shared<ReliableBlock>( reliableBlock ) );
+
+            m_receiveBlockId++;
+            */
+        }
+
+        void ProcessAck( uint16_t ack )
+        {
+    //        cout << "process ack: " << ack << endl;
+
+            /*
+            if ( m_sendQueue.empty() )
+                return;
+
+            auto sentBlock = m_sentBlocks->Find( ack );        
+            if ( sentBlock )
+            {
+    //            cout << " -> block " << data->block_id << " sent in packet " << ack << endl;
+                if ( sentBlock->blockId == m_sendQueue.front()->blockId )
+                    m_sendQueue.pop();
+            }
+            else
+            {
+    //            cout << " -> no block sent in packet " << ack << endl;
+            }
+            */
+        }
+
+        void Update( const TimeBase & timeBase )
+        {
+            m_timeBase = timeBase;
+        }
+
+    private:
+
+        Config m_config;
+        TimeBase m_timeBase;
+    };
+
 } //------------------------------------------------------
 
 using namespace std;
@@ -1553,7 +1727,102 @@ enum PacketType
     PACKET_Disconnect
 };
 
+enum MessageType
+{
+    MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
+    MESSAGE_Test
+};
+
+struct TestMessage : public Message
+{
+    TestMessage() : Message( MESSAGE_Test )
+    {
+        sequence = 0;
+    }
+
+    void Serialize( Stream & stream )
+    {
+        serialize_int( stream, sequence, 0, 65535 );
+    }
+
+    uint16_t sequence;
+};
+
+class MessageFactory : public Factory<Message>
+{
+public:
+    MessageFactory()
+    {
+        Register( MESSAGE_Block, [] { return make_shared<BlockMessage>(); } );
+        Register( MESSAGE_Test, [] { return make_shared<TestMessage>(); } );
+    }
+};
+
+void test_message_channel()
+{
+    cout << "test_message_channel" << endl;
+
+    Connection::Config connectionConfig;
+    connectionConfig.packetType = PACKET_Connection;
+    connectionConfig.maxPacketSize = 4 * 1024;
+    Connection connection( connectionConfig );
+
+    MessageChannel::Config channelConfig;
+    channelConfig.factory = static_pointer_cast<Factory<Message>>( make_shared<MessageFactory>() );
+    auto channel = make_shared<MessageChannel>( channelConfig );
+    connection.AddChannel( channel );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    for ( int i = 0; i < 100; ++i )
+    {  
+        auto writePacket = connection.WritePacket();
+
+        Stream stream( STREAM_Write );
+        writePacket->Serialize( stream );
+
+        stream.SetMode( STREAM_Read );
+        auto readPacket = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
+        readPacket->Serialize( stream );
+
+        if ( ( rand() % 10 ) == 0 )
+            connection.ReadPacket( readPacket );
+
+        assert( connection.GetCounter( Connection::PacketsRead ) <= i+1 );
+        assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
+        assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
+        assert( connection.GetCounter( Connection::PacketsAcked ) <= i+1 );
+        assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
+
+        /*
+        while ( true )
+        {
+            auto block = channel->ReceiveBlock();
+            if ( !block )
+                break;
+            assert( block->size() == BlockSize );
+            for ( int i = 0; i < BlockSize; ++i )
+                assert( block->at(i) == numBlocksReceived );
+
+//            cout << "block received" << endl;
+
+            ++numBlocksReceived;
+        }
+
+        if ( numBlocksReceived == NumBlocksToSend )
+            break;
+            */
+
+        connection.Update( timeBase );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+}
+
 // -------------------------------------------------------
+
+#if 0
 
 const int MaxBlockSize = 1024;
 
@@ -1817,6 +2086,8 @@ void test_reliable_block_channel()
     assert( numBlocksReceived == NumBlocksToSend );
 }
 
+#endif
+
 // -------------------------------------------------------
 
 void test_serialize_object();
@@ -1841,6 +2112,7 @@ int main()
 
     try
     {
+        /*
         test_serialize_object();
         test_interface();
         test_factory();
@@ -1856,7 +2128,11 @@ int main()
         test_sliding_window();
         test_generate_ack_bits();
         test_connection();
+        */
+        test_message_channel();
+        #if 0
         test_reliable_block_channel();
+        #endif
     }
     catch ( runtime_error & e )
     {
@@ -2004,10 +2280,10 @@ struct DisconnectPacket : public Packet
     }
 };
 
-class TestPacketFactory : public Factory<Packet>
+class PacketFactory : public Factory<Packet>
 {
 public:
-    TestPacketFactory()
+    PacketFactory()
     {
         Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
         Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
@@ -2079,7 +2355,7 @@ void test_factory()
 {
     cout << "test_factory" << endl;
 
-    TestPacketFactory factory;
+    PacketFactory factory;
 
     auto connectPacket = factory.Create( PACKET_Connect );
     auto updatePacket = factory.Create( PACKET_Update );
@@ -2413,7 +2689,7 @@ void test_network_interface_send_to_hostname()
 
     NetworkInterface::Config config;
 
-    auto factory = make_shared<TestPacketFactory>();
+    auto factory = make_shared<PacketFactory>();
 
     config.port = 10000;
     config.maxPacketSize = 1024;
@@ -2462,7 +2738,7 @@ void test_network_interface_send_to_hostname_failure()
 
     NetworkInterface::Config config;
 
-    auto factory = make_shared<TestPacketFactory>();
+    auto factory = make_shared<PacketFactory>();
 
     config.port = 10000;
     config.maxPacketSize = 1024;
@@ -2511,7 +2787,7 @@ void test_network_interface_send_and_receive_ipv4()
 
     NetworkInterface::Config config;
 
-    auto factory = make_shared<TestPacketFactory>();
+    auto factory = make_shared<PacketFactory>();
 
     config.port = 10000;
     config.maxPacketSize = 1024;
@@ -2606,7 +2882,7 @@ void test_network_interface_send_and_receive_ipv6()
 
     NetworkInterface::Config config;
 
-    auto factory = make_shared<TestPacketFactory>();
+    auto factory = make_shared<PacketFactory>();
 
     config.port = 10000;
     config.family = AF_INET6;
