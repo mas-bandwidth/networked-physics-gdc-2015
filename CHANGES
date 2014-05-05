@@ -1,3 +1,27 @@
+Sunday May 4th, 2014:
+---------------------
+
+    Sketched out new "MessageChannel" class and supporting structures.
+
+    Added new "Message" base with "BlockMessage" being hard-coded to type 0 (saves extra virtual for "IsBlock")
+
+    Added new "TestMessage" with sequence #
+
+    This should provide all I need to test the message channel is working.
+
+    Added simple config for message channel.
+
+    Add the message factory to the config.
+
+    Sketched out test harness for message channel.
+
+    Now implement "SendMessage", "ReceiveMessage" interface on channel and have failing test.
+
+    Send queue needs to be adjusted to a sliding window.
+
+    Added new function "HasSlotAvailable" to send queue to detect if we have overflowed it.
+
+
 Saturday April 12th, 2014:
 --------------------------
 

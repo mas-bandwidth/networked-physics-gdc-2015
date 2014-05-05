@@ -1,30 +1,45 @@
 DONE:
 
-    Sketched out new "MessageChannel" class and supporting structures.
-
-    Added new "Message" base with "BlockMessage" being hard-coded to type 0 (saves extra virtual for "IsBlock")
-
-    Added new "TestMessage" with sequence #
-
-    This should provide all I need to test the message channel is working.
-
-    Added simple config for message channel.
-
-    Add the message factory to the config.
-
-    Sketched out test harness for message channel.
-
 TODO:
-    
-    Now implement "SendMessage", "ReceiveMessage" interface on channel and have failing test.
 
-    Next, start working on send queue and get data -- eg. write side. Make sure we can
-    take a message and serialize it, count its bits and include as many messages into
-    the packet (with overhead) as we can fit. Assume bitpacker.
+    Add code to gather n messages to include in packet serialize write
 
-    Make sure we only serialize a message *once*. Make sure this is NOT done at the 
-    point that the message is queued for send (main thread).
+    Add code to ignore messages that have already been sent within "send rate" of current time.
+
+    Don't send messages that are > send queue size / 2 ahead of oldest message in send queue.
+
+    Ignore message packing. Assume that max # of messages in packet will not exceed max packet size.
+
+    Add sliding window for packets "m_sentPackets" with a vector of size max messages per packet.
+
+    Add code to process acks and walk the m_sentPackets, if not already acked, mark that packet acked, 
+    and then walk over all messages in send queue and remove them from the send queue.
+
+    Add logs to verify this is working properly on the send side.
     
+    --------------
+
+    Now implement the receive side.
+
+    When a packet comes in add the messages in it to the receive queue.
+
+    If any message cannot be inserted into the receive queue, discard the packet.
+
+    Implement the code to walk the receive queue and receive most recent message,
+    eg. if the message at sequence m_receiveId is valid then pop it, and allow
+    repeat until you hit a message entry that is invalid.
+
+    Logic should be pretty easy.
+
+    --------------
+    
+    Now implement code to measure events and determine if they can fit into packet.
+
+    Should this measurement be done at the point of constructing the packet data? (probably)
+
+    How to ensure that this measurement is done only once?
+
+    Don't just append one stream to another, as it throws off the journal check.
 
     ------------------
 

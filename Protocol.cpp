@@ -1170,6 +1170,14 @@ namespace protocol
             return true;
         }
 
+        bool HasSlotAvailable( uint16_t sequence ) const
+        {
+            const int index = sequence % m_entries.size();
+            assert( index >= 0 );
+            assert( index < m_entries.size() );
+            return !m_entries[index].valid;
+        }
+
         const T * Find( uint16_t sequence ) const
         {
             const int index = sequence % m_entries.size();
@@ -1546,10 +1554,7 @@ namespace protocol
     {
     public:
 
-        Message( int type ) : m_type(type)
-        {
-            // ...
-        }
+        Message( int type ) : m_type(type) {}
 
         int GetType() const { return m_type; }
 
@@ -1579,11 +1584,30 @@ namespace protocol
 
     class MessageChannelData : public ChannelData
     {
-        // ...
+    public:
+
+        vector<shared_ptr<Message>> messages;
+
+        void Serialize( Stream & stream )
+        {
+            // ...
+        }
     };
 
     class MessageChannel : public Channel
     {
+        struct SendQueueEntry
+        {
+            shared_ptr<Message> message;
+            uint32_t sequence : 16;                      // this is actually the message id      
+            uint32_t valid : 1;
+            double timeLastSent;
+            SendQueueEntry()
+                : valid(0) {}
+            SendQueueEntry( shared_ptr<Message> _message, uint16_t _sequence )
+                : message( _message ), sequence( _sequence ), valid(1), timeLastSent(0) {}
+        };
+
     public:
 
         struct Config
@@ -1592,31 +1616,45 @@ namespace protocol
             {
                 factory = nullptr;
                 resendRate = 0.1f;
-                slidingWindowSize = 256;
+                sendQueueSize = 1024;
+                receiveQueueSize = 1024;
             }
 
             shared_ptr<Factory<Message>> factory;
             float resendRate;
-            int slidingWindowSize;
+            int sendQueueSize;
+            int receiveQueueSize;
         };
 
         MessageChannel( const Config & config ) : m_config( config )
         {
             assert( config.factory );       // IMPORTANT: You must supply a message factory!
+            m_sendMessageId = 0;
+            m_sendQueue = make_shared<SlidingWindow<SendQueueEntry>>( m_config.sendQueueSize );
+        }
+
+        bool CanSendMessage() const
+        {
+            return m_sendQueue->HasSlotAvailable( m_sendMessageId );
         }
 
         void SendMessage( shared_ptr<Message> message )
         {
-//          cout << "queue message for send: " << m_send_block_id << endl;
-            /*
-            assert( block->size() > 0 );
-            m_sendQueue.push( make_shared<ReliableBlock>( block, m_sendBlockId++ ) );
-            */
+            cout << "queue message for send: " << m_sendMessageId << endl;
+
+            if ( !m_sendQueue->HasSlotAvailable( m_sendMessageId ) )
+                throw runtime_error( "message send queue overflow" );
+
+            m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
+
+            m_sendMessageId++;
         }
 
         shared_ptr<Message> ReceiveMessage()
         {
+            // todo
             return nullptr;
+
             /*
             if ( m_receiveQueue.empty() )
                 return nullptr;
@@ -1628,8 +1666,7 @@ namespace protocol
 
         shared_ptr<ChannelData> CreateData()
         {
-            // todo
-            return nullptr;
+            return make_shared<MessageChannelData>();
         }
 
         shared_ptr<ChannelData> GetData( uint16_t sequence )
@@ -1641,19 +1678,21 @@ namespace protocol
             if ( m_sendQueue.empty() )
                 return nullptr;
 
-            auto reliableBlock = m_sendQueue.front();
+            auto data = make_shared<MessageChannelData>();
 
-            if ( m_currentSendBlockId == reliableBlock->blockId && m_timeBase.time - m_lastSendTime <= m_config.resendRate )
-                return nullptr;
+            for ( int i = 0; i < m_config.maxEventsPerPacket; ++i )
+            {
+                assert( !m_sendQueue.empty() );
 
-            m_currentSendBlockId = reliableBlock->blockId;
-            m_lastSendTime = m_timeBase.time;
+                auto message = m_sendQueue.front();
 
-            AddSentBlockData( sequence, reliableBlock->blockId );
+                // 
 
-    //        cout << format_string( "block %d sent in packet %d", reliable_block->id, sequence ) << endl;
+                if ( m_sendQueue.empty() )
+                    break;
+            }
 
-            return reliableBlock;
+            return data;
             */
         }
 
@@ -1710,8 +1749,10 @@ namespace protocol
 
     private:
 
-        Config m_config;
-        TimeBase m_timeBase;
+        Config m_config;                                            // static configuration data
+        TimeBase m_timeBase;                                        // current time base from last update
+        uint16_t m_sendMessageId;                                   // id for next message added to send queue
+        shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;      // message send queue
     };
 
 } //------------------------------------------------------
@@ -1767,13 +1808,25 @@ void test_message_channel()
     connectionConfig.maxPacketSize = 4 * 1024;
     Connection connection( connectionConfig );
 
+    auto messageFactory = make_shared<MessageFactory>();
     MessageChannel::Config channelConfig;
-    channelConfig.factory = static_pointer_cast<Factory<Message>>( make_shared<MessageFactory>() );
+    channelConfig.factory = static_pointer_cast<Factory<Message>>( messageFactory );
     auto channel = make_shared<MessageChannel>( channelConfig );
     connection.AddChannel( channel );
 
+    const int NumMessagesSent = 32;
+
+    for ( int i = 0; i < NumMessagesSent; ++i )
+    {
+        auto message = make_shared<TestMessage>();
+        message->sequence = i;
+        channel->SendMessage( message );
+    }
+
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
+
+    int numMessagesReceived = 0;
 
     for ( int i = 0; i < 100; ++i )
     {  
@@ -1795,24 +1848,26 @@ void test_message_channel()
         assert( connection.GetCounter( Connection::PacketsAcked ) <= i+1 );
         assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 
-        /*
         while ( true )
         {
-            auto block = channel->ReceiveBlock();
-            if ( !block )
+            auto message = channel->ReceiveMessage();
+
+            if ( !message )
                 break;
-            assert( block->size() == BlockSize );
-            for ( int i = 0; i < BlockSize; ++i )
-                assert( block->at(i) == numBlocksReceived );
 
-//            cout << "block received" << endl;
+            assert( message->GetType() == MESSAGE_Test );
 
-            ++numBlocksReceived;
+            auto testMessage = static_pointer_cast<TestMessage>( message );
+
+            assert( testMessage->sequence == numMessagesReceived );
+
+            cout << "message " << numMessagesReceived << " received" << endl;
+
+            ++numMessagesReceived;
         }
 
-        if ( numBlocksReceived == NumBlocksToSend )
+        if ( numMessagesReceived == NumMessagesSent )
             break;
-            */
 
         connection.Update( timeBase );
 
