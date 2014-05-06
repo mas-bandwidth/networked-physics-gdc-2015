@@ -2,15 +2,6 @@ DONE:
 
 TODO:
 
-    Add sliding window for packets "m_sentPackets" with a vector of size max messages per packet (uint16_t ids)
-
-    Add code to process acks and walk the m_sentPackets, if not already acked, mark that packet acked, 
-    and then walk over all messages in send queue and remove them from the send queue.
-
-    Add logs to verify this is working properly on the send side.
-    
-    --------------
-
     Now implement the receive side.
 
     When a packet comes in add the messages in it to the receive queue.

@@ -1150,6 +1150,7 @@ namespace protocol
         bool Insert( const T & entry )
         {
             assert( entry.valid );
+
             if ( m_first_entry )
             {
                 m_sequence = entry.sequence;
@@ -1163,11 +1164,38 @@ namespace protocol
             {
                 return false;
             }
+
             const int index = entry.sequence % m_entries.size();
             assert( index >= 0 );
             assert( index < m_entries.size() );
             m_entries[index] = entry;
+
             return true;
+        }
+
+        T * InsertFast( uint16_t sequence )
+        {
+            if ( m_first_entry )
+            {
+                m_sequence = sequence;
+                m_first_entry = false;
+            }
+            else if ( sequence_greater_than( sequence, m_sequence ) )
+            {
+                m_sequence = sequence;
+            }
+            else if ( sequence_less_than( sequence, ( m_sequence - ( m_entries.size() - 1 ) ) ) )
+            {
+                return nullptr;
+            }
+
+            const int index = sequence % m_entries.size();
+            assert( index >= 0 );
+            assert( index < m_entries.size() );
+            auto entry = &m_entries[index];
+            entry->valid = 1;
+            entry->sequence = sequence;
+            return entry;
         }
 
         bool HasSlotAvailable( uint16_t sequence ) const
@@ -1614,6 +1642,16 @@ namespace protocol
                 : message( _message ), sequence( _sequence ), valid(1), timeLastSent(0) {}
         };
 
+        struct SentPacketEntry
+        {
+            uint32_t sequence : 16;                      // this is the packet sequence #
+            uint32_t acked : 1;
+            uint32_t valid : 1;
+            double timeSent;
+            vector<uint16_t> messageIds;
+            SentPacketEntry() : valid(0) {}
+        };
+
     public:
 
         struct Config
@@ -1624,6 +1662,7 @@ namespace protocol
                 resendRate = 0.1f;
                 sendQueueSize = 1024;
                 receiveQueueSize = 1024;
+                sentPacketsSize = 256;
                 maxMessagesPerPacket = 32;
             }
 
@@ -1632,6 +1671,7 @@ namespace protocol
             int sendQueueSize;
             int receiveQueueSize;
             int maxMessagesPerPacket;
+            int sentPacketsSize;
         };
 
         MessageChannel( const Config & config ) : m_config( config )
@@ -1639,6 +1679,7 @@ namespace protocol
             assert( config.factory );       // IMPORTANT: You must supply a message factory!
             m_sendMessageId = 0;
             m_sendQueue = make_shared<SlidingWindow<SendQueueEntry>>( m_config.sendQueueSize );
+            m_sentPackets = make_shared<SlidingWindow<SentPacketEntry>>( m_config.sentPacketsSize );
         }
 
         bool CanSendMessage() const
@@ -1706,6 +1747,16 @@ namespace protocol
             if ( numMessageIds == 0 )
                 return nullptr;
 
+            // add sent packet data containing message ids included in this packet
+
+            auto sentPacketData = m_sentPackets->InsertFast( sequence );
+            assert( sentPacketData );
+            sentPacketData->acked = 0;
+            sentPacketData->timeSent = m_timeBase.time;
+            sentPacketData->messageIds.resize( numMessageIds );
+            for ( int i = 0; i < numMessageIds; ++i )
+                sentPacketData->messageIds[i] = messageIds[i];
+
             // construct channel data for packet
 
             auto data = make_shared<MessageChannelData>();
@@ -1748,24 +1799,21 @@ namespace protocol
 
         void ProcessAck( uint16_t ack )
         {
-    //        cout << "process ack: " << ack << endl;
+            cout << "process ack: " << ack << endl;
 
-            /*
-            if ( m_sendQueue.empty() )
+            auto sentPacket = m_sentPackets->Find( ack );
+            if ( !sentPacket || sentPacket->acked )
                 return;
 
-            auto sentBlock = m_sentBlocks->Find( ack );        
-            if ( sentBlock )
+            for ( auto messageId : sentPacket->messageIds )
             {
-    //            cout << " -> block " << data->block_id << " sent in packet " << ack << endl;
-                if ( sentBlock->blockId == m_sendQueue.front()->blockId )
-                    m_sendQueue.pop();
+                auto sendQueueEntry = m_sendQueue->Find( messageId );
+                if ( sendQueueEntry )
+                {
+                    cout << "acked message " << sendQueueEntry->message->GetId() << endl;
+                    sendQueueEntry->valid = 0;
+                }
             }
-            else
-            {
-    //            cout << " -> no block sent in packet " << ack << endl;
-            }
-            */
         }
 
         void Update( const TimeBase & timeBase )
@@ -1779,6 +1827,7 @@ namespace protocol
         TimeBase m_timeBase;                                        // current time base from last update
         uint16_t m_sendMessageId;                                   // id for next message added to send queue
         shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;      // message send queue
+        shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;   // sent packets (for acks)
     };
 
 } //------------------------------------------------------
