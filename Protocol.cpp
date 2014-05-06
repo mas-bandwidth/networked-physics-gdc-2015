@@ -1556,11 +1556,15 @@ namespace protocol
 
         Message( int type ) : m_type(type) {}
 
+        int GetId() const {  return m_id; }
         int GetType() const { return m_type; }
 
+        void SetId( uint16_t id ) { m_id = id; }
+
     private:
-        
-        int m_type;       
+      
+        uint16_t m_id;  
+        uint16_t m_type;       
     };
 
     typedef vector<uint8_t> Block;
@@ -1590,7 +1594,9 @@ namespace protocol
 
         void Serialize( Stream & stream )
         {
-            // ...
+            // todo: num messages
+
+            // todo: message 1,2,...n
         }
     };
 
@@ -1618,12 +1624,14 @@ namespace protocol
                 resendRate = 0.1f;
                 sendQueueSize = 1024;
                 receiveQueueSize = 1024;
+                maxMessagesPerPacket = 32;
             }
 
             shared_ptr<Factory<Message>> factory;
             float resendRate;
             int sendQueueSize;
             int receiveQueueSize;
+            int maxMessagesPerPacket;
         };
 
         MessageChannel( const Config & config ) : m_config( config )
@@ -1644,6 +1652,8 @@ namespace protocol
 
             if ( !m_sendQueue->HasSlotAvailable( m_sendMessageId ) )
                 throw runtime_error( "message send queue overflow" );
+
+            message->SetId( m_sendMessageId );
 
             m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
 
@@ -1671,29 +1681,45 @@ namespace protocol
 
         shared_ptr<ChannelData> GetData( uint16_t sequence )
         {
-            // todo
-            return nullptr;
+            // first gather messages to include in the packet
 
-            /*
-            if ( m_sendQueue.empty() )
+            int numMessageIds = 0;
+            uint16_t messageIds[m_config.maxMessagesPerPacket];
+            const uint16_t baseId = m_sendMessageId - m_config.sendQueueSize + 1;
+            for ( int i = 0; i < m_config.sendQueueSize; ++i )
+            {
+                uint16_t id = ( baseId + i ) % m_config.sendQueueSize;
+                SendQueueEntry * entry = m_sendQueue->Find( id );
+                if ( entry && entry->timeLastSent + m_config.resendRate < m_timeBase.time )
+                {
+                    messageIds[numMessageIds++] = id;
+                    entry->timeLastSent = m_timeBase.time;
+                }
+                if ( numMessageIds == m_config.maxMessagesPerPacket )
+                    break;
+            }
+            assert( numMessageIds >= 0 );
+            assert( numMessageIds <= m_config.maxMessagesPerPacket );
+
+            // if there are no messages then we don't have any data to send
+
+            if ( numMessageIds == 0 )
                 return nullptr;
+
+            // construct channel data for packet
 
             auto data = make_shared<MessageChannelData>();
 
-            for ( int i = 0; i < m_config.maxEventsPerPacket; ++i )
+            data->messages.resize( numMessageIds );
+            for ( int i = 0; i < numMessageIds; ++i )
             {
-                assert( !m_sendQueue.empty() );
-
-                auto message = m_sendQueue.front();
-
-                // 
-
-                if ( m_sendQueue.empty() )
-                    break;
+                auto entry = m_sendQueue->Find( messageIds[i] );
+                assert( entry );
+                assert( entry->message );
+                data->messages[i] = entry->message;
             }
 
             return data;
-            */
         }
 
         void ProcessData( shared_ptr<ChannelData> channelData )

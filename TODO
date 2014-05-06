@@ -2,15 +2,7 @@ DONE:
 
 TODO:
 
-    Add code to gather n messages to include in packet serialize write
-
-    Add code to ignore messages that have already been sent within "send rate" of current time.
-
-    Don't send messages that are > send queue size / 2 ahead of oldest message in send queue.
-
-    Ignore message packing. Assume that max # of messages in packet will not exceed max packet size.
-
-    Add sliding window for packets "m_sentPackets" with a vector of size max messages per packet.
+    Add sliding window for packets "m_sentPackets" with a vector of size max messages per packet (uint16_t ids)
 
     Add code to process acks and walk the m_sentPackets, if not already acked, mark that packet acked, 
     and then walk over all messages in send queue and remove them from the send queue.

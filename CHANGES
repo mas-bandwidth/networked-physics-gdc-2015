@@ -1,3 +1,26 @@
+Monday May 5th, 2014:
+---------------------
+
+    Add code to gather n messages to include in packet serialize write
+
+    Add code to ignore messages that have already been sent within "send rate" of current time.
+
+    Don't send messages that are > send queue size / 2 ahead of oldest message in send queue.
+
+    Ignore message packing. Assume that max # of messages in packet will not exceed max packet size.
+
+    Added id to message. Makes a lot of other stuff easier vs. maintaining separate data structure
+    to have the id and message ptr everywhere.
+
+    Set the message id when it is queued for send.
+
+    Implement the message channel data class.
+
+    Add vector of messages to message channel data.
+
+    Verify messages are correctly setup via prints.
+
+
 Sunday May 4th, 2014:
 ---------------------
 
