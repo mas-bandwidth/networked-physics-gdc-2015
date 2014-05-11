@@ -1300,7 +1300,7 @@ namespace protocol
 
         virtual shared_ptr<ChannelData> GetData( uint16_t sequence ) = 0;
 
-        virtual void ProcessData( shared_ptr<ChannelData> data ) = 0;
+        virtual void ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) = 0;
 
         virtual void ProcessAck( uint16_t ack ) = 0;
 
@@ -1523,7 +1523,7 @@ namespace protocol
                 for ( int i = 0; i < packet->channelData.size(); ++i )
                 {
                     if ( packet->channelData[i] )
-                        m_interface->channels[i]->ProcessData( packet->channelData[i] );
+                        m_interface->channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
                 }
             }
             catch ( runtime_error & e )
@@ -1614,17 +1614,51 @@ namespace protocol
         shared_ptr<Block> m_block;
     };
 
+    struct MessageChannelConfig
+    {
+        MessageChannelConfig()
+        {
+            factory = nullptr;
+            resendRate = 0.1f;
+            sendQueueSize = 1024;
+            receiveQueueSize = 1024;
+            sentPacketsSize = 256;
+            maxMessagesPerPacket = 32;
+        }
+
+        shared_ptr<Factory<Message>> factory;
+        float resendRate;
+        int sendQueueSize;
+        int receiveQueueSize;
+        int maxMessagesPerPacket;
+        int sentPacketsSize;
+    };
+
     class MessageChannelData : public ChannelData
     {
+        const MessageChannelConfig * config;
+
     public:
+
+        MessageChannelData( const MessageChannelConfig & _config ) : config( &_config ) {}
 
         vector<shared_ptr<Message>> messages;
 
         void Serialize( Stream & stream )
         {
-            // todo: num messages
+            assert( config );
 
-            // todo: message 1,2,...n
+            int numMessages = stream.IsWriting() ? messages.size() : 0;
+            serialize_int( stream, numMessages, 0, config->maxMessagesPerPacket );
+            if ( stream.IsReading() )
+                messages.resize( numMessages );
+
+            for ( int i = 0; i < numMessages; ++i )
+            {
+                // todo: on read we need a way to create messages from message id
+                // we need access to the message factory which is contained inside
+                // the config for the message channel
+            }
         }
     };
 
@@ -1652,34 +1686,43 @@ namespace protocol
             SentPacketEntry() : valid(0) {}
         };
 
-    public:
-
-        struct Config
+        struct ReceiveQueueEntry
         {
-            Config()
-            {
-                factory = nullptr;
-                resendRate = 0.1f;
-                sendQueueSize = 1024;
-                receiveQueueSize = 1024;
-                sentPacketsSize = 256;
-                maxMessagesPerPacket = 32;
-            }
-
-            shared_ptr<Factory<Message>> factory;
-            float resendRate;
-            int sendQueueSize;
-            int receiveQueueSize;
-            int maxMessagesPerPacket;
-            int sentPacketsSize;
+            shared_ptr<Message> message;
+            uint32_t sequence : 16;                      // this is actually the message id      
+            uint32_t valid : 1;
+            double timeReceived;
+            ReceiveQueueEntry()
+                : valid(0) {}
+            ReceiveQueueEntry( shared_ptr<Message> _message, uint16_t _sequence, double _timeReceived )
+                : message( _message ), sequence( _sequence ), valid(1), timeReceived( _timeReceived ) {}
         };
 
-        MessageChannel( const Config & config ) : m_config( config )
+    public:
+
+        enum Counters
+        {
+            MessagesSent,
+            MessagesWritten,
+            MessagesRead,
+            MessagesReceived,
+            MessagesDiscardedLate,
+            MessagesDiscardedEarly,
+            NumCounters
+        };
+
+        MessageChannel( const MessageChannelConfig & config ) : m_config( config )
         {
             assert( config.factory );       // IMPORTANT: You must supply a message factory!
+
             m_sendMessageId = 0;
+            m_receiveMessageId = 0;
+
             m_sendQueue = make_shared<SlidingWindow<SendQueueEntry>>( m_config.sendQueueSize );
             m_sentPackets = make_shared<SlidingWindow<SentPacketEntry>>( m_config.sentPacketsSize );
+            m_receiveQueue = make_shared<SlidingWindow<ReceiveQueueEntry>>( m_config.receiveQueueSize );
+
+            m_counters.resize( NumCounters, 0 );
         }
 
         bool CanSendMessage() const
@@ -1698,26 +1741,25 @@ namespace protocol
 
             m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
 
+            m_counters[MessagesSent]++;
+
             m_sendMessageId++;
         }
 
         shared_ptr<Message> ReceiveMessage()
         {
-            // todo
-            return nullptr;
-
-            /*
-            if ( m_receiveQueue.empty() )
+            auto entry = m_receiveQueue->Find( m_receiveMessageId );
+            if ( !entry )
                 return nullptr;
-            auto reliableBlock = m_receiveQueue.front();
-            m_receiveQueue.pop();
-            return reliableBlock->block;
-            */
+            m_counters[MessagesReceived]++;
+            m_receiveMessageId++;
+            entry->valid = 0;
+            return entry->message;
         }
 
         shared_ptr<ChannelData> CreateData()
         {
-            return make_shared<MessageChannelData>();
+            return make_shared<MessageChannelData>( m_config );
         }
 
         shared_ptr<ChannelData> GetData( uint16_t sequence )
@@ -1757,9 +1799,13 @@ namespace protocol
             for ( int i = 0; i < numMessageIds; ++i )
                 sentPacketData->messageIds[i] = messageIds[i];
 
+            // update counter: nem messages written
+
+            m_counters[MessagesWritten] += numMessageIds;
+
             // construct channel data for packet
 
-            auto data = make_shared<MessageChannelData>();
+            auto data = make_shared<MessageChannelData>( m_config );
 
             data->messages.resize( numMessageIds );
             for ( int i = 0; i < numMessageIds; ++i )
@@ -1773,28 +1819,56 @@ namespace protocol
             return data;
         }
 
-        void ProcessData( shared_ptr<ChannelData> channelData )
+        void ProcessData( uint16_t sequence, shared_ptr<ChannelData> channelData )
         {
             assert( channelData );
 
-            /*
+            auto data = reinterpret_cast<MessageChannelData&>( *channelData );
 
-            auto reliableBlock = reinterpret_cast<ReliableBlock&>( *channelData );
-            
-    //        cout << "process data: block id = " << data.block_id << endl;
+            cout << "process message channel data: " << sequence << endl;
 
-            if ( sequence_less_than( reliableBlock.blockId, m_receiveBlockId ) )
-                return;
+            bool earlyMessage = false;
 
-            if ( sequence_greater_than( reliableBlock.blockId, m_receiveBlockId ) )
-                throw runtime_error( "received future block. discarding packet" );
+            const uint16_t minMessageId = m_receiveMessageId;
+            const uint16_t maxMessageId = m_receiveMessageId + m_config.receiveQueueSize - 1;
 
-            assert( reliableBlock.blockId == m_receiveBlockId );
+            // process messages included in this packet data
 
-            m_receiveQueue.push( make_shared<ReliableBlock>( reliableBlock ) );
+            for ( auto message : data.messages )
+            {
+                assert( message );
 
-            m_receiveBlockId++;
-            */
+                const uint16_t messageId = message->GetId();
+
+                if ( sequence_less_than( messageId, minMessageId ) )
+                {
+                    // If messages are older than the last received message id we can
+                    // ignore them. They have already been queued up and delivered to
+                    // the application included via some previously processed packet.
+
+                    m_counters[MessagesDiscardedLate]++;
+                }
+                else if ( sequence_greater_than( messageId, maxMessageId ) )
+                {
+                    // If a message arrives that is *newer* than what the receive queue 
+                    // can buffer we must discard this packet. Otherwise, early messages
+                    // that we cannot buffer will be false acked and never resent.
+
+                    earlyMessage = true;
+
+                    m_counters[MessagesDiscardedEarly]++;
+                }
+                else
+                {
+                    bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId, m_timeBase.time ) );
+                    assert( result );
+                }
+
+                m_counters[MessagesRead]++;
+            }
+
+            if ( earlyMessage )
+                throw runtime_error( "received early message" );
         }
 
         void ProcessAck( uint16_t ack )
@@ -1823,11 +1897,14 @@ namespace protocol
 
     private:
 
-        Config m_config;                                            // static configuration data
-        TimeBase m_timeBase;                                        // current time base from last update
-        uint16_t m_sendMessageId;                                   // id for next message added to send queue
-        shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;      // message send queue
-        shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;   // sent packets (for acks)
+        MessageChannelConfig m_config;                                      // constant configuration data
+        TimeBase m_timeBase;                                                // current time base from last update
+        uint16_t m_sendMessageId;                                           // id for next message added to send queue
+        uint16_t m_receiveMessageId;                                        // id for next message to be received
+        shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;              // message send queue
+        shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;           // sent packets (for acks)
+        shared_ptr<SlidingWindow<ReceiveQueueEntry>> m_receiveQueue;        // message receive queue
+        vector<uint64_t> m_counters;                                        // counters
     };
 
 } //------------------------------------------------------
@@ -1884,7 +1961,7 @@ void test_message_channel()
     Connection connection( connectionConfig );
 
     auto messageFactory = make_shared<MessageFactory>();
-    MessageChannel::Config channelConfig;
+    MessageChannelConfig channelConfig;
     channelConfig.factory = static_pointer_cast<Factory<Message>>( messageFactory );
     auto channel = make_shared<MessageChannel>( channelConfig );
     connection.AddChannel( channel );
