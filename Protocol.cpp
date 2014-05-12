@@ -1647,6 +1647,7 @@ namespace protocol
         void Serialize( Stream & stream )
         {
             assert( config );
+            assert( config->factory );
 
             int numMessages = stream.IsWriting() ? messages.size() : 0;
             serialize_int( stream, numMessages, 0, config->maxMessagesPerPacket );
@@ -1655,9 +1656,29 @@ namespace protocol
 
             for ( int i = 0; i < numMessages; ++i )
             {
-                // todo: on read we need a way to create messages from message id
-                // we need access to the message factory which is contained inside
-                // the config for the message channel
+                #ifdef _DEBUG
+                if ( stream.IsWriting() )
+                    assert( messages[i] );
+                #endif
+
+                int messageType = stream.IsWriting() ? messages[i]->GetType() : 0;
+                serialize_int( stream, messageType, 0, config->factory->GetMaxType() );
+                if ( stream.IsReading() )
+                {
+                    messages[i] = config->factory->Create( messageType );
+                    assert( messages[i] );
+                    assert( messages[i]->GetType() == messageType );
+                }
+
+                uint16_t messageId = stream.IsReading() ? messages[i]->GetId() : 0;
+                serialize_int( stream, messageId, 0, 65535 );
+                if ( stream.IsReading() )
+                {
+                    messages[i]->SetId( messageId );
+                    assert( messages[i]->GetId() == messageId );
+                }
+
+                messages[i]->Serialize( stream );
             }
         }
     };
@@ -1739,7 +1760,18 @@ namespace protocol
 
             message->SetId( m_sendMessageId );
 
+            cout << "message id is " << message->GetId() << endl;
+
             m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
+
+            #ifdef _DEBUG
+            auto entry = m_sendQueue->Find( m_sendMessageId );
+            assert( entry );
+            assert( entry->valid );
+            assert( entry->sequence == m_sendMessageId );
+            assert( entry->message );
+            assert( entry->message->GetId() == m_sendMessageId );
+            #endif
 
             m_counters[MessagesSent]++;
 
@@ -1751,10 +1783,23 @@ namespace protocol
             auto entry = m_receiveQueue->Find( m_receiveMessageId );
             if ( !entry )
                 return nullptr;
+
             m_counters[MessagesReceived]++;
             m_receiveMessageId++;
+            
+            auto message = entry->message;
+
+            #ifdef _DEBUG
+            assert( message );
+            assert( message->GetId() == m_receiveMessageId );
+            #endif
+
+            cout << "dequeue for receive: " << message->GetId() << endl;
+
             entry->valid = 0;
-            return entry->message;
+            entry->message = nullptr;
+            
+            return message;
         }
 
         shared_ptr<ChannelData> CreateData()
@@ -1884,10 +1929,17 @@ namespace protocol
                 auto sendQueueEntry = m_sendQueue->Find( messageId );
                 if ( sendQueueEntry )
                 {
-                    cout << "acked message " << sendQueueEntry->message->GetId() << endl;
+                    assert( sendQueueEntry->message );
+                    assert( sendQueueEntry->message->GetId() == messageId );
+
+                    cout << "acked message " << messageId << endl;
+
                     sendQueueEntry->valid = 0;
+                    sendQueueEntry->message = nullptr;
                 }
             }
+
+            sentPacket->acked = 1;
         }
 
         void Update( const TimeBase & timeBase )
@@ -1934,7 +1986,7 @@ struct TestMessage : public Message
     }
 
     void Serialize( Stream & stream )
-    {
+    {        
         serialize_int( stream, sequence, 0, 65535 );
     }
 
@@ -2007,13 +2059,14 @@ void test_message_channel()
             if ( !message )
                 break;
 
+            assert( message->GetId() == numMessagesReceived );
             assert( message->GetType() == MESSAGE_Test );
 
             auto testMessage = static_pointer_cast<TestMessage>( message );
 
-            assert( testMessage->sequence == numMessagesReceived );
+            cout << "received message " << testMessage->sequence << endl;
 
-            cout << "message " << numMessagesReceived << " received" << endl;
+            assert( testMessage->sequence == numMessagesReceived );
 
             ++numMessagesReceived;
         }

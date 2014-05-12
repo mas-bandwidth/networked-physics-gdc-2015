@@ -1,43 +1,23 @@
 DONE:
 
-    Added receive queue data and added receive queue to message channel
-
-    There is now a receive message id starting at zero. Will try to receive
-    this message id from receive queue, will block other messages until
-    it is available.
-
-    Added code to receive messages from queue.
-
-    When a message channel data comes in add the messages in it to the receive queue.
-
-    If any message in the packet data is newer than the current recieve message id,
-    discard the packet before doing any work (otherwise, messages will be acked
-    potentially, and never resent).
-
-    If a message is older than the last receive message id, ignore it.
-
-    Implement the counters so that the unit test can detect correct operation
-    (eg. messages sent/received/read/written/discarded-too-new)
-
-    Implement the code to serialize the message channel data on write, and receive.
-
-    Need some way to pass the max messages per-packet, and other config data
-    in to the message channel on serialize. How do to this? Allow the channel
-    to pass it's data in via some opaque ptr in on serialize?
-
-    Would be nice to have a *general* mechanism to do this, as you are going 
-    to always want to access the config data while doing work for that channel.
-
-    Settled on simply passing a pointer to the channel config in to the 
-    channel data on creation. This makes the most sense in my opinion.
-
-TODO:
-
     Implement the code that serializes the message types, and uses the 
     factory on the reading side to create the message by type, and then
     serializes the message.
 
-    At this point the message channel should be ready for stress testing!
+    Does the message really need to include the id? Yep. It does.
+
+    Was clobbering the message id to 0 inside serialize write.
+
+TODO:
+
+    Seems to be something wrong with serialization or test harness.
+
+    Message coming in with "sequence" (inside TestMessage) that is
+    the last message sent, but it is in receive queue as 0 (and message id 0). 
+    Almost like the message ptr is being reused, or flipped incorrectly at 
+    some point. 
+
+    What is going on?!
 
     --------------
     
