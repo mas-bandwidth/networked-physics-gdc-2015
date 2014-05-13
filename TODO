@@ -1,20 +1,54 @@
 DONE:
 
-TODO:
+    Restructure code into various headers so I can have multiple programs.
+
+        Common.h
+        Stream.h
+        Network.h
+        Connection.h
+        MessageChannel.h
+
+    Split up unit tests into separate cpp per-aspect, eg. TestMessageChannel.cpp
+
+    Split up the code so that each section has minimum dependencies.
+
+    Problem. I would really like packet to be independent of network.
+
+    Solution: Move address out of network.h
+
+    Moved Packet.h out of Network.h
+
+    Moved Channel.h out of Connection.h
+
+    Moved Message.h out of MessageChannel.h
 
     Move various X::Configs out into their own XConfig structs. More flexible.
 
-    Restructure code into various headers so I can have multiple programs.
+    Create test harnesses for each module:
 
-    Network.h
-    Channel.h
-    Connection.h
-    MessageChannel.h
+    eg: 
 
-    Add UnitTest.cpp
+        TestCommon.cpp
+        TestStream.cpp
+        TestNetwork.cpp
+        TestConnection.cpp
 
-    Add StressTest.cpp
-    
+TODO:
+
+    Need to simplify test_factory so it doesn't depend on packet types.
+
+    It would be really nice if I could build any .h and it would actually build
+    tests for that particular header, and test that it includes everything etc.
+
+    Need an easy way to clean everything before I check in.
+
+    It's probably a good idea to keep Resolver class separate from DNS resolver impl,
+    interface class separate from network interface implementation
+
+    And so on.
+
+    --------------
+
     Implement stress test for message channel.
 
     --------------
