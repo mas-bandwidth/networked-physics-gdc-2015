@@ -1,3 +1,29 @@
+Monday May 13th, 2014:
+----------------------
+
+    Implement the code that serializes the message types, and uses the 
+    factory on the reading side to create the message by type, and then
+    serializes the message.
+
+    Does the message really need to include the id? Yep. It does.
+
+    Was clobbering the message id to 0 inside serialize write.
+
+    Seems to be something wrong with serialization or test harness.
+
+    Message coming in with "sequence" (inside TestMessage) that is
+    the last message sent, but it is in receive queue as 0 (and message id 0). 
+    Almost like the message ptr is being reused, or flipped incorrectly at 
+    some point. 
+
+    What is going on?!
+
+    Was just an inversion of the serialize for messageId. Was writing 0
+    instead of the correct message id.
+
+    Now the test harness works fine!
+
+
 Sunday May 12th, 2014:
 ----------------------
 

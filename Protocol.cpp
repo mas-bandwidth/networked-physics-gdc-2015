@@ -1670,7 +1670,7 @@ namespace protocol
                     assert( messages[i]->GetType() == messageType );
                 }
 
-                uint16_t messageId = stream.IsReading() ? messages[i]->GetId() : 0;
+                uint16_t messageId = stream.IsWriting() ? messages[i]->GetId() : 0;
                 serialize_int( stream, messageId, 0, 65535 );
                 if ( stream.IsReading() )
                 {
@@ -1753,14 +1753,14 @@ namespace protocol
 
         void SendMessage( shared_ptr<Message> message )
         {
-            cout << "queue message for send: " << m_sendMessageId << endl;
+//            cout << "queue message for send: " << m_sendMessageId << endl;
 
             if ( !m_sendQueue->HasSlotAvailable( m_sendMessageId ) )
                 throw runtime_error( "message send queue overflow" );
 
             message->SetId( m_sendMessageId );
 
-            cout << "message id is " << message->GetId() << endl;
+//            cout << "message id is " << message->GetId() << endl;
 
             m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
 
@@ -1794,7 +1794,7 @@ namespace protocol
             assert( message->GetId() == m_receiveMessageId );
             #endif
 
-            cout << "dequeue for receive: " << message->GetId() << endl;
+//            cout << "dequeue for receive: " << message->GetId() << endl;
 
             entry->valid = 0;
             entry->message = nullptr;
@@ -1870,7 +1870,7 @@ namespace protocol
 
             auto data = reinterpret_cast<MessageChannelData&>( *channelData );
 
-            cout << "process message channel data: " << sequence << endl;
+//            cout << "process message channel data: " << sequence << endl;
 
             bool earlyMessage = false;
 
@@ -1879,11 +1879,17 @@ namespace protocol
 
             // process messages included in this packet data
 
+//            cout << data.messages.size() << " messages in packet" << endl;
+
             for ( auto message : data.messages )
             {
                 assert( message );
 
                 const uint16_t messageId = message->GetId();
+
+                // todo: likely the message id is wrong here somehow --- yes, it is zero when it should be valid.
+
+//                cout << "add message to receive queue: " << messageId << endl;
 
                 if ( sequence_less_than( messageId, minMessageId ) )
                 {
@@ -1918,7 +1924,7 @@ namespace protocol
 
         void ProcessAck( uint16_t ack )
         {
-            cout << "process ack: " << ack << endl;
+//            cout << "process ack: " << ack << endl;
 
             auto sentPacket = m_sentPackets->Find( ack );
             if ( !sentPacket || sentPacket->acked )
@@ -1932,7 +1938,7 @@ namespace protocol
                     assert( sendQueueEntry->message );
                     assert( sendQueueEntry->message->GetId() == messageId );
 
-                    cout << "acked message " << messageId << endl;
+//                    cout << "acked message " << messageId << endl;
 
                     sendQueueEntry->valid = 0;
                     sendQueueEntry->message = nullptr;
@@ -2064,8 +2070,6 @@ void test_message_channel()
 
             auto testMessage = static_pointer_cast<TestMessage>( message );
 
-            cout << "received message " << testMessage->sequence << endl;
-
             assert( testMessage->sequence == numMessagesReceived );
 
             ++numMessagesReceived;
@@ -2075,6 +2079,8 @@ void test_message_channel()
             break;
 
         connection.Update( timeBase );
+
+        // todo: test counters in message channel
 
         timeBase.time += timeBase.deltaTime;
     }

@@ -1,23 +1,25 @@
 DONE:
 
-    Implement the code that serializes the message types, and uses the 
-    factory on the reading side to create the message by type, and then
-    serializes the message.
-
-    Does the message really need to include the id? Yep. It does.
-
-    Was clobbering the message id to 0 inside serialize write.
-
 TODO:
 
-    Seems to be something wrong with serialization or test harness.
+    Move various X::Configs out into their own XConfig structs. More flexible.
 
-    Message coming in with "sequence" (inside TestMessage) that is
-    the last message sent, but it is in receive queue as 0 (and message id 0). 
-    Almost like the message ptr is being reused, or flipped incorrectly at 
-    some point. 
+    Restructure code into various headers so I can have multiple programs.
 
-    What is going on?!
+    Network.h
+    Channel.h
+    Connection.h
+    MessageChannel.h
+
+    Add UnitTest.cpp
+
+    Add StressTest.cpp
+    
+    Implement stress test for message channel.
+
+    --------------
+
+    Extend message channel unit test to verify counters.    
 
     --------------
     
@@ -31,76 +33,41 @@ TODO:
 
     ------------------
 
-    Next implement fragmentation and reassembly for large blocks.
+    Implement special serialization for block messages.
 
-    Important: Think about large packets with fragmentation
-    If a large packet is coming up ahead, make sure previous
-    non-fragmented packets before it have all been sent, eg.
-    only commit to sending a large fragmented block once 
-    the previous blocks have been sent.
+    First, assume small blocks and write a specific serialization for small blocks
+    that treats them like messages, eg. with serialize.
 
-    Next: After a fragmented block. Basically, assume the fragmented
-    block will take a long time. There is probably not a lot of benefit
-    sending blocks *after* the fragmented block in anticipation of the
-    block being sent. Unless the fragmented block is small (eg. only
-    a few fragments). If it is a large, large chunk -- then it's
-    best to stop and wait for that chunk to finish serializing through
-    in slices.
+    However, for large blocks focus packet data exclusively on that block
+    until all fragments of that block have been sent across.
 
-    Important: Slice size should be fixed, and basically be as much
-    data as you can fit in the channel configuration. Don't send #
-    of bytes with each slice. You know the size from config.
+    This way I can unify ordered delivery of messages, small blocks and large blocks.
 
-    At end, make sure not to trash extra data, but do send extra 0's
-    in the packet, to avoid special cases.
+    This is a very flexible system.
 
     ---------------------
 
-PROTOCOL AND SERVER:
+    After the block serialization is implemented inside the message channel
+    I have a very flexible protocol system.
 
-    Cap'n Proto looks a bit overengineered (eg. second systems effect)
+    What is next?
 
-    MessagePack looks a bit smaller and tight to me, but probably less efficient
-    over the wire and in terms of packing time.
+    1) Implement the bit packer
 
-    Are protocol buffers worth integrating?
+    2) Start doing performance analysis (CPU, memory etc.)
 
-    Google snappy looks like a nice candidate for message compression
+    3) Investigate using a custom allocator. Potentially ditch STL usage at this point.
 
-    Is there a nice library for message encryption between servers over UDP?
-    (eg. a shared secret is fine, server code is not distributed)
+    4) Consider cost of shared_ptr. Apparently it is very slow. Come up with a replacement.
 
-    Nettle library looks OK. Does google have a library that they use?
+    5) Implement compression of large blocks before sending, decompress on receive.
 
-    On write:
+    6) Implement encryption via key, plus hash to detect tampering (unified). Optional at 
+       network interface layer.
 
-        serialize write -> compress -> encrypt -> sign -> send
+    7) Implement an unreliable channel (messages), 
+       eg. queue up unreliable messages to send and discard any that don't fit in the packet.
 
-    On read:
-
-        recv -> verify signature -> decrypt -> serialize read
-
-    If I have my own reliable ordered block channel, I can then derive
-    specific channels from that, eg. JSONChannel, CapnProtoChannel,
-    MsgPackChannel, ThriftChannel and so on... should be easy to add
-    additional libraries and try them out. Try them all! :D
-
-OPTIMIZATION:
-
-    Implement bit packer first.
-
-    Next try to implement range encoder.
-
-    Study range encoder. How does it work? Can the decryption be done in place as per bitpacker?
-
-    Send and receive queues should be lockless threadsafe
-
-    Separate send and receive threads for NetworkInterface
-
-    Some ninja must be done to make it easy for the channels to work
-    with serialization being done on a separate thread. Ouch?
-
-    Investigate different methods for sending and receiving UDP packets,
-    eg. completion ports on Win32, whatever method is fastest on linux etc.
-
-    Run throughput tests with linux hosts. Test CPU usage etc.
+    8) Implement an atomic queue for message send and receive. Interface should be uniform,
+       eg. an atomic queue for messages received (whether reliable or not), and an atomic
+       queue for messages to send.

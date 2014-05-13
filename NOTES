@@ -2,6 +2,37 @@ NOTES
 
 -------------------------------------------------------------------------------------------------------------
 
+Analysis of existing protocol serialization layers.
+
+Cap'n Proto looks a bit overengineered (eg. second systems effect)
+
+MessagePack looks a bit smaller and tight to me, but probably less efficient
+over the wire and in terms of packing time.
+
+Are protocol buffers worth integrating?
+
+Google snappy looks like a nice candidate for message compression
+
+Is there a nice library for message encryption between servers over UDP?
+(eg. a shared secret is fine, server code is not distributed)
+
+Nettle library looks OK. Does google have a library that they use?
+
+On write:
+
+    serialize write -> compress -> encrypt -> sign -> send
+
+On read:
+
+    recv -> verify signature -> decrypt -> serialize read
+
+If I have my own reliable ordered block channel, I can then derive
+specific channels from that, eg. JSONChannel, CapnProtoChannel,
+MsgPackChannel, ThriftChannel and so on... should be easy to add
+additional libraries and try them out. Try them all! :D
+
+-------------------------------------------------------------------------------------------------------------
+
 Is it necessary to include multiple blocks per-packet?
 
 I think once you drop to blocks you are basically saying, this is no longer
@@ -24,6 +55,8 @@ If you really want a fast block, stick it inside a message, for real.
 
 It might be possible to treat small blocks like messages, eg. fake the serialize
 and then just not worry about it -- only drop to the block mode for big blocks.
+
+Yes. This needs to be done.
 
 -------------------------------------------------------------------------------------------------------------
 
