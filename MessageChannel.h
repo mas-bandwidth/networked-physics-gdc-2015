@@ -16,7 +16,6 @@ namespace protocol
     {
         MessageChannelConfig()
         {
-            factory = nullptr;
             resendRate = 0.1f;
             sendQueueSize = 1024;
             receiveQueueSize = 1024;
@@ -24,12 +23,12 @@ namespace protocol
             maxMessagesPerPacket = 32;
         }
 
-        shared_ptr<Factory<Message>> factory;
         float resendRate;
         int sendQueueSize;
         int receiveQueueSize;
         int maxMessagesPerPacket;
         int sentPacketsSize;
+        shared_ptr<Factory<Message>> messageFactory;
     };
 
     class MessageChannelData : public ChannelData
@@ -45,7 +44,7 @@ namespace protocol
         void Serialize( Stream & stream )
         {
             assert( config );
-            assert( config->factory );
+            assert( config->messageFactory );           // IMPORTANT: You must supply a message factory!
 
             int numMessages = stream.IsWriting() ? messages.size() : 0;
             serialize_int( stream, numMessages, 0, config->maxMessagesPerPacket );
@@ -60,10 +59,10 @@ namespace protocol
                 #endif
 
                 int messageType = stream.IsWriting() ? messages[i]->GetType() : 0;
-                serialize_int( stream, messageType, 0, config->factory->GetMaxType() );
+                serialize_int( stream, messageType, 0, config->messageFactory->GetMaxType() );
                 if ( stream.IsReading() )
                 {
-                    messages[i] = config->factory->Create( messageType );
+                    messages[i] = config->messageFactory->Create( messageType );
                     assert( messages[i] );
                     assert( messages[i]->GetType() == messageType );
                 }
@@ -132,7 +131,7 @@ namespace protocol
 
         MessageChannel( const MessageChannelConfig & config ) : m_config( config )
         {
-            assert( config.factory );       // IMPORTANT: You must supply a message factory!
+            assert( config.messageFactory );       // IMPORTANT: You must supply a message factory!
 
             m_sendMessageId = 0;
             m_receiveMessageId = 0;

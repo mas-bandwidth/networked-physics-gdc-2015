@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "Packet.h"
 
 using namespace std;
 using namespace protocol;
@@ -104,93 +105,29 @@ void test_generate_ack_bits()
     assert( ack_bits == ( 1 | (1<<(11-9)) | (1<<(11-5)) | (1<<(11-1)) ) );
 }
 
-// todo: simplify this down. don't need this much to test factory
-/*
+enum PacketType
+{
+    PACKET_Connect,
+    PACKET_Update,
+    PACKET_Disconnect
+};
+
 struct ConnectPacket : public Packet
 {
-    int a,b,c;
-
-    ConnectPacket() : Packet( PACKET_Connect )
-    {
-        a = 1;
-        b = 2;
-        c = 3;        
-    }
-
-    void Serialize( Stream & stream )
-    {
-        serialize_int( stream, a, -10, 10 );
-        serialize_int( stream, b, -10, 10 );
-        serialize_int( stream, c, -10, 10 );
-    }
-
-    bool operator ==( const ConnectPacket & other ) const
-    {
-        return a == other.a && b == other.b && c == other.c;
-    }
-
-    bool operator !=( const ConnectPacket & other ) const
-    {
-        return !( *this == other );
-    }
+    ConnectPacket() : Packet( PACKET_Connect ) {}
+    void Serialize( Stream & stream ) {}
 };
 
 struct UpdatePacket : public Packet
 {
-    uint16_t timestamp;
-
-    UpdatePacket() : Packet( PACKET_Update )
-    {
-        timestamp = 0;
-    }
-
-    void Serialize( Stream & stream )
-    {
-        serialize_int( stream, timestamp, 0, 65535 );
-    }
-
-    bool operator ==( const UpdatePacket & other ) const
-    {
-        return timestamp == other.timestamp;
-    }
-
-    bool operator !=( const UpdatePacket & other ) const
-    {
-        return !( *this == other );
-    }
+    UpdatePacket() : Packet( PACKET_Update ) {}
+    void Serialize( Stream & stream ) {}
 };
 
 struct DisconnectPacket : public Packet
 {
-    int x;
-
-    DisconnectPacket() : Packet( PACKET_Disconnect ) 
-    {
-        x = 2;
-    }
-
-    void Serialize( Stream & stream )
-    {
-        serialize_int( stream, x, -100, +100 );
-    }
-
-    bool operator ==( const DisconnectPacket & other ) const
-    {
-        return x == other.x;
-    }
-
-    bool operator !=( const DisconnectPacket & other ) const
-    {
-        return !( *this == other );
-    }
-};
-
-enum PacketType
-{
-    PACKET_Connection,           // for connection class
-    PACKET_Connect,
-    PACKET_Update,
-    PACKET_Disconnect
+    DisconnectPacket() : Packet( PACKET_Disconnect ) {}
+    void Serialize( Stream & stream ) {}
 };
 
 class PacketFactory : public Factory<Packet>
@@ -203,23 +140,20 @@ public:
         Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
     }
 };
-*/
 
 void test_factory()
 {
     cout << "test_factory" << endl;
 
-    /*
-    PacketFactory factory;
+    PacketFactory packetFactory;
 
-    auto connectPacket = factory.Create( PACKET_Connect );
-    auto updatePacket = factory.Create( PACKET_Update );
-    auto disconnectPacket = factory.Create( PACKET_Disconnect );
+    auto connectPacket = packetFactory.Create( PACKET_Connect );
+    auto updatePacket = packetFactory.Create( PACKET_Update );
+    auto disconnectPacket = packetFactory.Create( PACKET_Disconnect );
 
     assert( connectPacket->GetType() == PACKET_Connect );
     assert( updatePacket->GetType() == PACKET_Update );
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
-    */
 }
 
 int main()

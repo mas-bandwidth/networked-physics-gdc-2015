@@ -1,17 +1,43 @@
-// todo: Implement test connection
+#include "Connection.h"
 
-#if 0
+using namespace std;
+using namespace protocol;
+
+enum { PACKET_Connection = 0 };
+
+class PacketFactory : public Factory<Packet>
+{
+public:
+
+    PacketFactory()
+    {
+        Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
+    }
+
+    void SetInterface( shared_ptr<ConnectionInterface> interface )
+    {
+        m_interface = interface;
+    }
+
+private:
+
+    shared_ptr<ConnectionInterface> m_interface;
+};
 
 void test_connection()
 {
     cout << "test_connection" << endl;
 
-    Connection::Config config;
+    auto packetFactory = make_shared<PacketFactory>();
 
-    config.packetType = PACKET_Connection;
-    config.maxPacketSize = 4 * 1024;
+    ConnectionConfig connectionConfig;
+    connectionConfig.packetType = PACKET_Connection;
+    connectionConfig.maxPacketSize = 4 * 1024;
+    connectionConfig.packetFactory = packetFactory;
 
-    Connection connection( config );
+    Connection connection( connectionConfig );
+
+    packetFactory->SetInterface( connection.GetInterface() );
 
     const int NumAcks = 100;
 
@@ -21,7 +47,7 @@ void test_connection()
 
         connection.ReadPacket( packet );
 
-        if ( connection.GetCounter( Connection::PacketsAcked ) == NumAcks )
+        if ( connection.GetCounter( Connection::PacketsAcked ) >= NumAcks )
             break;
     }
 
@@ -32,4 +58,16 @@ void test_connection()
     assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 }
 
-#endif
+int main()
+{
+    try
+    {
+        test_connection();
+    }
+    catch ( runtime_error & e )
+    {
+        cerr << string( "error: " ) + e.what() << endl;
+    }
+
+    return 0;
+}

@@ -6,10 +6,26 @@ using namespace protocol;
 
 enum PacketType
 {
-    PACKET_Connection,           // for connection class
-    PACKET_Connect,
-    PACKET_Update,
-    PACKET_Disconnect
+    PACKET_Connection
+};
+
+class PacketFactory : public Factory<Packet>
+{
+public:
+
+    PacketFactory()
+    {
+        Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
+    }
+
+    void SetInterface( shared_ptr<ConnectionInterface> interface )
+    {
+        m_interface = interface;
+    }
+
+private:
+
+    shared_ptr<ConnectionInterface> m_interface;
 };
 
 enum MessageType
@@ -47,16 +63,20 @@ void test_message_channel()
 {
     cout << "test_message_channel" << endl;
 
+    auto packetFactory = make_shared<PacketFactory>();
+    auto messageFactory = make_shared<MessageFactory>();
+
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = 4 * 1024;
+    connectionConfig.packetFactory = packetFactory;
 
     Connection connection( connectionConfig );
 
-    auto messageFactory = make_shared<MessageFactory>();
+    packetFactory->SetInterface( connection.GetInterface() );
 
     MessageChannelConfig channelConfig;
-    channelConfig.factory = static_pointer_cast<Factory<Message>>( messageFactory );
+    channelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
     
     auto channel = make_shared<MessageChannel>( channelConfig );
     
@@ -84,7 +104,7 @@ void test_message_channel()
         writePacket->Serialize( stream );
 
         stream.SetMode( STREAM_Read );
-        auto readPacket = make_shared<ConnectionPacket>( connection.GetInterface(), PACKET_Connection );
+        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
         readPacket->Serialize( stream );
 
         if ( ( rand() % 10 ) == 0 )

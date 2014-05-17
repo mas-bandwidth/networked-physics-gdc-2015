@@ -1,4 +1,94 @@
-Monday May 13th, 2014:
+Saturday May 17th, 2014:
+------------------------
+
+    Sketched out soak test.
+
+    For some reason packets aren't being received from the interface
+
+    Fixed. I was not passing in a resolver and the update was returning
+    early if resolver was null (not running send packets)
+
+    Split out resolver update into "UpdateResolver" so the other 
+    update part is not accidentally being skipped with null resolver.
+
+    When connection packet is deserialized it asserts because it doesn't
+    get registered with its connection interface.
+
+    I think I should return the connection packet to require a connection
+    interface being passed in, and a custom type vs. hardcoded to some
+    value, this way the factory is responsible for its creation!
+
+    Solution is probably to have a custom factory that does this registration.
+
+    Rename "factory" in configs to "packetFactory" or "messageFactory"
+    to make it clear. There will not always be one factory in context.
+
+
+Thursday May 15th, 2014:
+------------------------
+
+    Fixed up connection packet so it conforms to standard factory interface.
+
+    Now the connection packet is standardized to be type 0.
+
+    This is necessary to conform to the factory interface for creating packets,
+    this allows the network connection to create a 
+
+    Fixed TestConnection.cpp so it works again.
+
+
+Tuesday May 13th, 2014:
+-----------------------
+
+    Restructure code into various headers so I can have multiple programs.
+
+        Common.h
+        Stream.h
+        Network.h
+        Connection.h
+        MessageChannel.h
+
+    Split up unit tests into separate cpp per-aspect, eg. TestMessageChannel.cpp
+
+    Split up the code so that each section has minimum dependencies.
+
+    Problem. I would really like packet to be independent of network.
+
+    Solution: Move address out of network.h
+
+    Moved Packet.h out of Network.h
+
+    Moved Channel.h out of Connection.h
+
+    Moved Message.h out of MessageChannel.h
+
+    Move various X::Configs out into their own XConfig structs. More flexible.
+
+    Create test harnesses for each module:
+
+    eg: 
+
+        TestCommon.cpp
+        TestStream.cpp
+        TestNetwork.cpp
+        TestConnection.cpp
+
+    Fixed up test factory to be less verbose. Cut down packet types.
+
+    Fix TestNetworkInterface.cpp
+
+    Separate DNS resolver implementation from resolver base class
+
+    Move resolver tests into TestDNSResolver.cpp
+
+    Separate BSD socket implementation from network interface base class.
+
+    Keep 'test_network_interface' into TestNetworkInterface.cpp
+
+    Move other tests into TestBSDSocketsInterface.cpp
+
+
+Monday May 12th, 2014:
 ----------------------
 
     Implement the code that serializes the message types, and uses the 
@@ -24,7 +114,7 @@ Monday May 13th, 2014:
     Now the test harness works fine!
 
 
-Sunday May 12th, 2014:
+Sunday May 11th, 2014:
 ----------------------
 
     Added receive queue data and added receive queue to message channel

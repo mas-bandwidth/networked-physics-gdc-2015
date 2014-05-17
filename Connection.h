@@ -58,18 +58,20 @@ namespace protocol
         shared_ptr<ConnectionInterface> interface;
         vector<shared_ptr<ChannelData>> channelData;
 
-        ConnectionPacket( shared_ptr<ConnectionInterface> _interface, int type ) : Packet( type )
+        ConnectionPacket( int type, shared_ptr<ConnectionInterface> _interface ) : Packet( type )
         {
             assert( _interface );
-            interface = _interface;
             sequence = 0;
             ack = 0;
             ack_bits = 0;
+            interface = _interface;
             channelData.resize( interface->GetNumChannels() );
         }
 
         void Serialize( Stream & stream )
         {
+            assert( interface );
+
             serialize_int( stream, sequence, 0, 65535 );
             serialize_int( stream, ack, 0, 65535 );
             serialize_int( stream, ack_bits, 0, 0xFFFFFFFF );
@@ -128,6 +130,7 @@ namespace protocol
         int packetType;
         int maxPacketSize;
         int slidingWindowSize;
+        shared_ptr<Factory<Packet>> packetFactory;
     };
 
     class Connection
@@ -180,10 +183,13 @@ namespace protocol
         Connection( const ConnectionConfig & config )
             : m_config( config )
         {
+            assert( config.packetFactory );         // IMPORTANT: You must supply a packet factory!
+
             m_sentPackets = make_shared<SentPackets>( m_config.slidingWindowSize );
             m_receivedPackets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
             m_counters.resize( NumCounters, 0 );
             m_interface = make_shared<InterfaceImplementation>();
+
             Reset();
         }
 
@@ -221,8 +227,7 @@ namespace protocol
 
         shared_ptr<ConnectionPacket> WritePacket()
         {
-            auto packet = make_shared<ConnectionPacket>( GetInterface(), m_config.packetType );
-
+            auto packet = static_pointer_cast<ConnectionPacket>( m_config.packetFactory->Create( m_config.packetType ) );
             packet->sequence = m_sentPackets->GetSequence() + 1;
 
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );

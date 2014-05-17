@@ -1,4 +1,4 @@
-#include "Resolver.h"
+#include "DNSResolver.h"
 
 using namespace std;
 using namespace protocol;
@@ -123,7 +123,6 @@ void test_dns_resolve_failure()
     assert( entry->status == ResolveStatus::Failed );
     assert( entry->result == nullptr );
 }
-
 
 int main()
 {
