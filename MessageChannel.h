@@ -206,16 +206,43 @@ namespace protocol
 
         shared_ptr<ChannelData> GetData( uint16_t sequence )
         {
-            // first gather messages to include in the packet
+            // todo: it would be nice if tracked the oldest unacked message
+            // vs. doing an O(N) search to find the oldest message id each
+            // time we are asked to compose a packet to send
 
-            int numMessageIds = 0;
-            uint16_t messageIds[m_config.maxMessagesPerPacket];
-            const uint16_t baseId = m_sendMessageId - m_config.sendQueueSize + 1;
+            // find oldest message id in send queue
+
+            bool foundMessage = false;
+            uint16_t oldestMessageId = 0;
+            const uint16_t baseId = m_sendMessageId - m_config.sendQueueSize;
             for ( int i = 0; i < m_config.sendQueueSize; ++i )
             {
                 const uint16_t messageId = baseId + i;
                 SendQueueEntry * entry = m_sendQueue->Find( messageId );
-                if ( entry && entry->timeLastSent + m_config.resendRate < m_timeBase.time )
+                if ( entry )
+                {
+                    if ( !foundMessage || sequence_less_than( messageId, oldestMessageId ) )
+                    {
+                        oldestMessageId = messageId;
+                        foundMessage = true;
+                    }
+                }
+            }
+
+            // if we didn't find any messages, there is no data to send
+
+            if ( !foundMessage )
+                return nullptr;
+
+            // gather messages to include in the packet
+
+            int numMessageIds = 0;
+            uint16_t messageIds[m_config.maxMessagesPerPacket];
+            for ( int i = 0; i < m_config.receiveQueueSize; ++i )
+            {
+                const uint16_t messageId = oldestMessageId + i;
+                SendQueueEntry * entry = m_sendQueue->Find( messageId );
+                if ( entry && entry->timeLastSent + m_config.resendRate <= m_timeBase.time )
                 {
                     messageIds[numMessageIds++] = messageId;
                     entry->timeLastSent = m_timeBase.time;

@@ -94,7 +94,7 @@ void soak_test()
     connection.AddChannel( messageChannel );
 
     double dt = 1.0 / 100;
-    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    chrono::milliseconds ms( 1 );
 
     uint16_t sendMessageId = 0;
 
@@ -113,11 +113,13 @@ void soak_test()
             auto message = make_shared<TestMessage>();
             message->sequence = sendMessageId;
             messageChannel->SendMessage( message );
-            cout << format_string( "%09.2f - send message %d", timeBase.time, message->GetId() ) << endl;
+//            cout << format_string( "%09.2f - sent message %d", timeBase.time, message->GetId() ) << endl;
             sendMessageId++;
         }
 
         auto packet = connection.WritePacket();
+
+//        cout << format_string( "%09.2f - sent packet %d", timeBase.time, packet->sequence ) << endl;
 
         interface.Update();
 
@@ -133,13 +135,15 @@ void soak_test()
             if ( !packet )
                 break;
 
-            if ( rand() % 10 )
+            if ( rand() % 2 )
                 continue;
 
             assert( packet->GetAddress() == address );
             assert( packet->GetType() == PACKET_Connection );
 
             auto connectionPacket = static_pointer_cast<ConnectionPacket>( packet );
+
+//            cout << format_string( "%09.2f - received packet %d", timeBase.time, connectionPacket->sequence ) << endl;
 
             connection.ReadPacket( connectionPacket );
         }

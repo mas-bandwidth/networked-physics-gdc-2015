@@ -1,51 +1,10 @@
 DONE:
 
-    Extend soak test to send and receive messages
-
-    Remove logs except send and receive message n. 
-
-    Make sure all asserts were being checked. #ifndef NDEBUG
-
-    Fixed bug with adding messages to packet. Message id had modulus
-    applied so after sliding window size, no messages from send queue
-    where being put in packet data.
-
-    Some work to ensure that send -> receive messages is the minimal
-    number of frames, ideally messages should be received at the end
-    of the same frame they were sent, for loopback.
-
 TODO:
 
-    Works fine without packet loss, but with packet loss it stalls out
-
-    Need to work out if broken on ack side, send side or receive side.
-
-    Initial guess would be a message is not resent that needs to be
-    and the whole receive side of the message channel stalls out.
-
-    --------------
-
-    Extend message channel test to write enough messages 
-    that the sliding windows wrap around a bit!!!
+    Structure source code, eg. include / source / tests
 
     Extend message channel unit test to verify counters
-
-    --------------
-
-    Would be nice to have a message channel base, and then derive 
-    ReliableMessageChannel and UnreliableMessageChannel from this.
-
-    This way multiple message channel implementations could share
-    the same basic interface, eg. send and receive messages
-
-    This is an excellent idea, and will unify message treatment
-    for the client/server wrapper on top of the connection.
-
-    Also, the 
-
-    --------------
-
-    Structure source code, eg. include / source / tests
 
     Split project into .cpp and .h
 
@@ -89,10 +48,7 @@ TODO:
 
     This is a very flexible system.
 
-    ---------------------
-
-    After the block serialization is implemented inside the message channel
-    I have a very flexible protocol system.
+    ----------------------
 
     Now soak test that this is working correctly.
 
@@ -101,6 +57,17 @@ TODO:
     is continually being exercised and make the test smart enough to fill the send
     queue up massively, as much as can be done without overflowing it, stress the
     system as hard as possible!
+
+    ---------------------
+
+    Would be nice to have a message channel base, and then derive 
+    ReliableMessageChannel and UnreliableMessageChannel from this.
+
+    This way multiple message channel implementations could share
+    the same basic interface, eg. send and receive messages
+
+    This is an excellent idea, and will unify message treatment
+    for the client/server wrapper on top of the connection.
 
     --------------
 

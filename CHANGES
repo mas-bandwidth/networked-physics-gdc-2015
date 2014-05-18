@@ -1,3 +1,39 @@
+Sunday May 18th, 2014:
+----------------------
+
+    Extend soak test to send and receive messages
+
+    Remove logs except send and receive message n. 
+
+    Make sure all asserts were being checked. #ifndef NDEBUG
+
+    Fixed bug with adding messages to packet. Message id had modulus
+    applied so after sliding window size, no messages from send queue
+    where being put in packet data.
+
+    Some work to ensure that send -> receive messages is the minimal
+    number of frames, ideally messages should be received at the end
+    of the same frame they were sent, for loopback.
+
+    Works fine without packet loss, but with packet loss it stalls out
+
+    If I disable the last send time check for resending a message,
+    it works again. It seems there is something wrong with resend
+    logic?
+
+    There was an off by one when the send queue was full,
+    such that message 0 was never being resent, once the send
+    queue filled up.
+
+    Also, in the case where the receive queue is smaller than
+    the send queue (common), the send side was sending early
+    events to the receiver, which is counterproductive.
+
+    Fixed by only sending events up to the size of the receive
+    queue from the oldest message in send queue, nothing more
+    recent than this is ever sent.
+
+
 Saturday May 17th, 2014:
 ------------------------
 
