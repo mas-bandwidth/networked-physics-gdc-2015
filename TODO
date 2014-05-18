@@ -1,39 +1,69 @@
 DONE:
 
+    Extend soak test to send and receive messages
+
+    Remove logs except send and receive message n. 
+
+    Make sure all asserts were being checked. #ifndef NDEBUG
+
+    Fixed bug with adding messages to packet. Message id had modulus
+    applied so after sliding window size, no messages from send queue
+    where being put in packet data.
+
+    Some work to ensure that send -> receive messages is the minimal
+    number of frames, ideally messages should be received at the end
+    of the same frame they were sent, for loopback.
+
 TODO:
 
-    ----------------
+    Works fine without packet loss, but with packet loss it stalls out
 
-    Implement client and server interface.
+    Need to work out if broken on ack side, send side or receive side.
 
-    These should allow you to pass in a network interface, and then manage
-    the set of connections on the server, one-per client', and on the client
-    just have a single connection to the server.
-
-    Note that there probably needs to be a state machine on the server
-    and on the client to negotiate connection. Once connection is established
-    the connection stabilizes mostly to the "Connection" packet type.
+    Initial guess would be a message is not resent that needs to be
+    and the whole receive side of the message channel stalls out.
 
     --------------
 
-    Should not blanket put "using namespace std" inside protocol namespace.
+    Extend message channel test to write enough messages 
+    that the sliding windows wrap around a bit!!!
 
-    ^--- doing this will make it easier to replace stl usage at some point.
+    Extend message channel unit test to verify counters
 
-    Work out if I want to use premake again. Split project into .cpp and .h
+    --------------
+
+    Would be nice to have a message channel base, and then derive 
+    ReliableMessageChannel and UnreliableMessageChannel from this.
+
+    This way multiple message channel implementations could share
+    the same basic interface, eg. send and receive messages
+
+    This is an excellent idea, and will unify message treatment
+    for the client/server wrapper on top of the connection.
+
+    Also, the 
+
+    --------------
 
     Structure source code, eg. include / source / tests
 
-    Move the socket and system programming includes out of Common.h and into Address.cpp
-    and BSDSocketsInterface.cpp etc.
+    Split project into .cpp and .h
+
+    Setup premake.
+
+    Setup basic lib structure: libprotocol
+
+    I can still build and run individual files via C++11 build rule.
+    This is good to get quick feedback for compilation and fixing.
+
+    Move the socket and system programming includes out of Common.h 
+    and into Address.cpp and BSDSocketsInterface.cpp as required
 
     Need a way to build all tests and check they pass easily
 
-    Need an easy way to clean everything before I check in.
+    Need an easy way to clean everything before I check in
 
-    --------------
-
-    Extend message channel unit test to verify counters.    
+    To run soak tests I need to be able to build and run from console
 
     --------------
     
@@ -64,17 +94,46 @@ TODO:
     After the block serialization is implemented inside the message channel
     I have a very flexible protocol system.
 
+    Now soak test that this is working correctly.
+
+    Setup a large variety of different message types, eg. small blocks, large blocks
+    large messages, small messages and so on. Make the packet size quite small so it
+    is continually being exercised and make the test smart enough to fill the send
+    queue up massively, as much as can be done without overflowing it, stress the
+    system as hard as possible!
+
+    --------------
+
+    Implement client and server interface.
+
+    These should allow you to pass in a network interface, and then manage
+    the set of connections on the server, one-per client', and on the client
+    just have a single connection to the server.
+
+    Note that there probably needs to be a state machine on the server
+    and on the client to negotiate connection. Once connection is established
+    the connection stabilizes mostly to the "Connection" packet type.
+
+    Should also implement a reservation system at this point, with a reservation
+    token, eg. reserve 4 slots for token X. Timeout or succeed the reservation
+    and so on.
+
+    ---------------------
+
     What is next?
 
-    1) Implement the bit packer
+    1) Implement the bit packer. This is quite important to actually be taken seriously.
 
     2) Start doing performance analysis (CPU, memory etc.)
 
     3) Investigate using a custom allocator. Potentially ditch STL usage at this point.
 
-    4) Consider cost of shared_ptr. Apparently it is very slow. Come up with a replacement.
+    4) Consider cost of shared_ptr. Is it slow? Where should I use it? Where should I not?
 
-    5) Implement compression of large blocks before sending, decompress on receive.
+    5) Itegrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
+       for compression. Try it out in the stress test and see how it generates dictionaries
+       and how much compression it gets post-dictionary and so on. Do not check in the oodle
+       libs, but do check in the interface and source code that uses it.
 
     6) Implement encryption via key, plus hash to detect tampering (unified). Optional at 
        network interface layer.

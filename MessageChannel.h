@@ -53,7 +53,7 @@ namespace protocol
 
             for ( int i = 0; i < numMessages; ++i )
             {
-                #ifdef _DEBUG
+                #ifndef NDEBUG
                 if ( stream.IsWriting() )
                     assert( messages[i] );
                 #endif
@@ -91,7 +91,7 @@ namespace protocol
             SendQueueEntry()
                 : valid(0) {}
             SendQueueEntry( shared_ptr<Message> _message, uint16_t _sequence )
-                : message( _message ), sequence( _sequence ), valid(1), timeLastSent(0) {}
+                : message( _message ), sequence( _sequence ), valid(1), timeLastSent(-1) {}
         };
 
         struct SentPacketEntry
@@ -157,11 +157,10 @@ namespace protocol
 
             message->SetId( m_sendMessageId );
 
-//            cout << "message id is " << message->GetId() << endl;
+            bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
+            assert( result );
 
-            m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
-
-            #ifdef _DEBUG
+            #ifndef NDEBUG
             auto entry = m_sendQueue->Find( m_sendMessageId );
             assert( entry );
             assert( entry->valid );
@@ -181,12 +180,9 @@ namespace protocol
             if ( !entry )
                 return nullptr;
 
-            m_counters[MessagesReceived]++;
-            m_receiveMessageId++;
-            
             auto message = entry->message;
 
-            #ifdef _DEBUG
+            #ifndef NDEBUG
             assert( message );
             assert( message->GetId() == m_receiveMessageId );
             #endif
@@ -196,6 +192,10 @@ namespace protocol
             entry->valid = 0;
             entry->message = nullptr;
             
+            m_counters[MessagesReceived]++;
+
+            m_receiveMessageId++;
+
             return message;
         }
 
@@ -213,11 +213,11 @@ namespace protocol
             const uint16_t baseId = m_sendMessageId - m_config.sendQueueSize + 1;
             for ( int i = 0; i < m_config.sendQueueSize; ++i )
             {
-                uint16_t id = ( baseId + i ) % m_config.sendQueueSize;
-                SendQueueEntry * entry = m_sendQueue->Find( id );
+                const uint16_t messageId = baseId + i;
+                SendQueueEntry * entry = m_sendQueue->Find( messageId );
                 if ( entry && entry->timeLastSent + m_config.resendRate < m_timeBase.time )
                 {
-                    messageIds[numMessageIds++] = id;
+                    messageIds[numMessageIds++] = messageId;
                     entry->timeLastSent = m_timeBase.time;
                 }
                 if ( numMessageIds == m_config.maxMessagesPerPacket )
@@ -241,7 +241,7 @@ namespace protocol
             for ( int i = 0; i < numMessageIds; ++i )
                 sentPacketData->messageIds[i] = messageIds[i];
 
-            // update counter: nem messages written
+            // update counter: num messages written
 
             m_counters[MessagesWritten] += numMessageIds;
 
@@ -284,8 +284,6 @@ namespace protocol
 
                 const uint16_t messageId = message->GetId();
 
-                // todo: likely the message id is wrong here somehow --- yes, it is zero when it should be valid.
-
 //                cout << "add message to receive queue: " << messageId << endl;
 
                 if ( sequence_less_than( messageId, minMessageId ) )
@@ -293,6 +291,8 @@ namespace protocol
                     // If messages are older than the last received message id we can
                     // ignore them. They have already been queued up and delivered to
                     // the application included via some previously processed packet.
+
+//                    cout << "old message " << messageId << endl;
 
                     m_counters[MessagesDiscardedLate]++;
                 }
@@ -302,6 +302,8 @@ namespace protocol
                     // can buffer we must discard this packet. Otherwise, early messages
                     // that we cannot buffer will be false acked and never resent.
 
+//                    cout << "early message " << messageId << endl;
+
                     earlyMessage = true;
 
                     m_counters[MessagesDiscardedEarly]++;
@@ -309,6 +311,7 @@ namespace protocol
                 else
                 {
                     bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId, m_timeBase.time ) );
+
                     assert( result );
                 }
 

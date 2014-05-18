@@ -1,4 +1,5 @@
 #include "Connection.h"
+#include "MessageChannel.h"
 #include "BSDSocketsInterface.h"
 
 using namespace std;
@@ -25,11 +26,43 @@ private:
     shared_ptr<ConnectionInterface> m_interface;
 };
 
+enum MessageType
+{
+    MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
+    MESSAGE_Test
+};
+
+struct TestMessage : public Message
+{
+    TestMessage() : Message( MESSAGE_Test )
+    {
+        sequence = 0;
+    }
+
+    void Serialize( Stream & stream )
+    {        
+        serialize_int( stream, sequence, 0, 65535 );
+    }
+
+    uint16_t sequence;
+};
+
+class MessageFactory : public Factory<Message>
+{
+public:
+    MessageFactory()
+    {
+        Register( MESSAGE_Block, [] { return make_shared<BlockMessage>(); } );
+        Register( MESSAGE_Test, [] { return make_shared<TestMessage>(); } );
+    }
+};
+
 void soak_test()
 {
     cout << "[soak test]" << endl;
 
     auto packetFactory = make_shared<PacketFactory>();
+    auto messageFactory = make_shared<MessageFactory>();
 
     BSDSocketsInterfaceConfig interfaceConfig;
     interfaceConfig.port = 10000;
@@ -51,22 +84,46 @@ void soak_test()
 
     packetFactory->SetInterface( connection.GetInterface() );
 
+    MessageChannelConfig messageChannelConfig;
+    messageChannelConfig.sendQueueSize = 256;
+    messageChannelConfig.receiveQueueSize = 64;
+    messageChannelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
+    
+    auto messageChannel = make_shared<MessageChannel>( messageChannelConfig );
+    
+    connection.AddChannel( messageChannel );
+
     double dt = 1.0 / 100;
     chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
-    int iterations = 0;
+    uint16_t sendMessageId = 0;
 
-    while ( ++iterations < 200 )
+    TimeBase timeBase;
+    timeBase.time = 0.0;
+    timeBase.deltaTime = dt;
+
+    while ( true )
     {
+        const int maxMessagesToSend = 1 + rand() % 32;
+
+        for ( int i = 0; i < maxMessagesToSend; ++i )
+        {
+            if ( !messageChannel->CanSendMessage() )
+                break;
+            auto message = make_shared<TestMessage>();
+            message->sequence = sendMessageId;
+            messageChannel->SendMessage( message );
+            cout << format_string( "%09.2f - send message %d", timeBase.time, message->GetId() ) << endl;
+            sendMessageId++;
+        }
+
         auto packet = connection.WritePacket();
 
-        // todo: actually send messages and so on
+        interface.Update();
 
         interface.SendPacket( address, packet );
 
-        cout << "sent packet to address " << address.ToString() << endl;
-
-        interface.Update();
+        connection.Update( timeBase );
 
         this_thread::sleep_for( ms );
 
@@ -77,21 +134,27 @@ void soak_test()
                 break;
 
             if ( rand() % 10 )
-            {
-                cout << "random drop packet" << endl;
                 continue;
-            }
 
             assert( packet->GetAddress() == address );
             assert( packet->GetType() == PACKET_Connection );
 
-            cout << "received packet from address " << packet->GetAddress().ToString() << endl;
-
             auto connectionPacket = static_pointer_cast<ConnectionPacket>( packet );
+
             connection.ReadPacket( connectionPacket );
         }
 
-        // todo: receive messages and print out the ones received
+        while ( true )
+        {
+            auto message = messageChannel->ReceiveMessage();
+
+            if ( !message )
+                break;
+
+            cout << format_string( "%09.2f - received message %d", timeBase.time, message->GetId() ) << endl;
+        }
+
+        timeBase.time += dt;
     }
 }
 
