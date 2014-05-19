@@ -33,6 +33,10 @@ Sunday May 18th, 2014:
     queue from the oldest message in send queue, nothing more
     recent than this is ever sent.
 
+    Structure source code, eg. include / src / tests
+
+    Update C++11 build system to look up for ../includes
+
 
 Saturday May 17th, 2014:
 ------------------------

@@ -2,31 +2,22 @@ DONE:
 
 TODO:
 
-    Structure source code, eg. include / source / tests
+    --------------
 
-    Extend message channel unit test to verify counters
+    Extend message channel to support *small* block messages
 
-    Split project into .cpp and .h
+    Assert if message is too large to include (add small block # of bytes in config)
 
-    Setup premake.
+    This can be implemented just by checking the block size, and implementing a serialize
+    that just serializes the bytes to the stream via the bitpacker.
 
-    Setup basic lib structure: libprotocol
+    Extend the soak test to include block messages of random # of bytes
 
-    I can still build and run individual files via C++11 build rule.
-    This is good to get quick feedback for compilation and fixing.
-
-    Move the socket and system programming includes out of Common.h 
-    and into Address.cpp and BSDSocketsInterface.cpp as required
-
-    Need a way to build all tests and check they pass easily
-
-    Need an easy way to clean everything before I check in
-
-    To run soak tests I need to be able to build and run from console
+    Extend soak test to include non-block messages with random # of bits
 
     --------------
     
-    Now implement code to measure events and determine if they can fit into packet.
+    Now implement code to measure messages and determine if they can fit into packet.
 
     Should this measurement be done at the point of constructing the packet data? (probably)
 
@@ -58,18 +49,24 @@ TODO:
     queue up massively, as much as can be done without overflowing it, stress the
     system as hard as possible!
 
-    ---------------------
-
-    Would be nice to have a message channel base, and then derive 
-    ReliableMessageChannel and UnreliableMessageChannel from this.
-
-    This way multiple message channel implementations could share
-    the same basic interface, eg. send and receive messages
-
-    This is an excellent idea, and will unify message treatment
-    for the client/server wrapper on top of the connection.
-
     --------------
+
+    Split project into .cpp and .h
+
+    Setup premake.
+
+    Setup basic lib structure: libprotocol
+
+    Move the socket and system programming includes out of Common.h 
+    and into Address.cpp and BSDSocketsInterface.cpp as required
+
+    Need a way to build all tests and check they pass easily,
+    eg. probably need some way for "TEST( test_... )" to register
+    the set of tests with a static vector of test functors.
+
+    Add UnitTest.cpp
+
+    ------------------------
 
     Implement client and server interface.
 
@@ -97,7 +94,7 @@ TODO:
 
     4) Consider cost of shared_ptr. Is it slow? Where should I use it? Where should I not?
 
-    5) Itegrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
+    5) Integrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
        for compression. Try it out in the stress test and see how it generates dictionaries
        and how much compression it gets post-dictionary and so on. Do not check in the oodle
        libs, but do check in the interface and source code that uses it.
@@ -107,6 +104,7 @@ TODO:
 
     7) Implement an unreliable channel (messages), 
        eg. queue up unreliable messages to send and discard any that don't fit in the packet.
+       Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
 
     8) Implement an atomic queue for message send and receive. Interface should be uniform,
        eg. an atomic queue for messages received (whether reliable or not), and an atomic
