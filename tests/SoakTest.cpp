@@ -32,6 +32,15 @@ enum MessageType
     MESSAGE_Test
 };
 
+static int messageBitsArray[] = { 1, 32, 12, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8 };
+
+int GetNumBitsForMessage( uint16_t sequence )
+{
+    const int modulus = sizeof( messageBitsArray ) / sizeof( int );
+    const int index = sequence % modulus;
+    return messageBitsArray[index];
+}
+
 struct TestMessage : public Message
 {
     TestMessage() : Message( MESSAGE_Test )
@@ -42,6 +51,16 @@ struct TestMessage : public Message
     void Serialize( Stream & stream )
     {        
         serialize_int( stream, sequence, 0, 65535 );
+        int numBits = GetNumBitsForMessage( sequence );
+        int numWords = numBits / 32;
+        for ( int i = 0; i < numWords; ++i )
+        {
+            int dummy = 0;
+            serialize_int( stream, dummy, 0, 0xFFFFFFFF );
+        }
+        int numRemainderBits = numBits - numWords * 32;
+        int dummy = 0;
+        serialize_int( stream, dummy, 0, (1<<numRemainderBits) - 1 );
     }
 
     uint16_t sequence;
@@ -64,10 +83,12 @@ void soak_test()
     auto packetFactory = make_shared<PacketFactory>();
     auto messageFactory = make_shared<MessageFactory>();
 
+    const int MaxPacketSize = 4 * 1024;                     // todo: reduce this once bitpacker is working and message packing is working
+
     BSDSocketsInterfaceConfig interfaceConfig;
     interfaceConfig.port = 10000;
     interfaceConfig.family = AF_INET6;
-    interfaceConfig.maxPacketSize = 4096;
+    interfaceConfig.maxPacketSize = MaxPacketSize;
     interfaceConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
     
     BSDSocketsInterface interface( interfaceConfig );
@@ -77,7 +98,7 @@ void soak_test()
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = 4 * 1024;
+    connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
 
     Connection connection( connectionConfig );
@@ -85,6 +106,7 @@ void soak_test()
     packetFactory->SetInterface( connection.GetInterface() );
 
     ReliableMessageChannelConfig messageChannelConfig;
+    messageChannelConfig.maxMessagesPerPacket = 16;         // todo: increase this to 32 once packing is working properly
     messageChannelConfig.sendQueueSize = 256;
     messageChannelConfig.receiveQueueSize = 64;
     messageChannelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
@@ -112,10 +134,37 @@ void soak_test()
         {
             if ( !messageChannel->CanSendMessage() )
                 break;
-            auto message = make_shared<TestMessage>();
-            message->sequence = sendMessageId;
-            messageChannel->SendMessage( message );
-//            cout << format_string( "%09.2f - sent message %d", timeBase.time, message->GetId() ) << endl;
+
+            switch ( rand() % 2 )
+            {
+                case 0:
+                {
+                    // standard message (bitpacked)
+
+//                  cout << format_string( "%09.2f - sent message %d", timeBase.time, message->GetId() ) << endl;
+    
+                    auto message = make_shared<TestMessage>();
+                    message->sequence = sendMessageId;
+                    messageChannel->SendMessage( message );
+                }
+                break;
+
+                case 1:
+                {
+                    // small block
+
+//                  cout << format_string( "%09.2f - sent small block %d", timeBase.time, message->GetId() ) << endl;
+
+                    int index = sendMessageId % 32;
+                    auto block = make_shared<Block>( index + 1, index );
+                    messageChannel->SendBlock( block );
+                }
+                break;
+
+                default:
+                    assert( false );
+            }
+
             sendMessageId++;
             numMessagesSent++;
         }
@@ -158,7 +207,24 @@ void soak_test()
             if ( !message )
                 break;
 
-            cout << format_string( "%09.2f - received message %d", timeBase.time, message->GetId() ) << endl;
+            assert( message->GetId() == numMessagesReceived % 65535 );
+            assert( message->GetType() == MESSAGE_Block || message->GetType() == MESSAGE_Test );
+
+            if ( message->GetType() == MESSAGE_Test )
+            {
+                cout << format_string( "%09.2f - received message %d - test message", timeBase.time, message->GetId() ) << endl;
+            }
+            else
+            {
+                auto blockMessage = static_pointer_cast<BlockMessage>( message );
+                auto block = blockMessage->GetBlock();
+                assert( block );
+                const int index = numMessagesReceived % 32;
+                assert( block->size() == index + 1 );
+                for ( auto c : *block )
+                    assert( c == index );
+                cout << format_string( "%09.2f - received message %d - small block", timeBase.time, message->GetId() ) << endl;
+            }
 
             numMessagesReceived++;
         }

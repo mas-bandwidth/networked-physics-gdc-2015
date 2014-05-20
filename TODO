@@ -1,47 +1,59 @@
 DONE:
 
+    Implement the bitpacker.
+
+    Keep bitpacker separate from the stream class for maximum flexbility.
+
+    Bitpacker should work with raw pointers, not vectors.
+
+    Bitpacker should not use or throw exceptions. Leave this to stream layer.
+
+    Split into separate reader and writers. I don't want unified read/write.
+
+    Implemented bit writer.
+
+    Added unit test to make sure # of bits are written, bits available correct etc.
+
+    Using htonl for endian conversion. Later on my want to use my own routine,
+    otherwise this will require me to include headers just to get htonl.
+
+    Added some code that will let me detect endian at runtime, without
+    needing to pass in #define BIG_ENDIAN or LITTLE_ENDIAN.
+
+    Is there a better way to do this? eg. at compile time vs. runtime?
+
+    Apparently there is not.
+
 TODO:
 
-    --------------
+    Implement bit reader.
 
-    Extend message channel to support *small* block messages
-
-    Assert if message is too large to include (add small block # of bytes in config)
-
-    This can be implemented just by checking the block size, and implementing a serialize
-    that just serializes the bytes to the stream via the bitpacker.
-
-    Extend the soak test to include block messages of random # of bytes
-
-    Extend soak test to include non-block messages with random # of bits
-
-    --------------
+    Hook it up to the net stream, replace that crap workaround code I did earlier.
     
-    Now implement code to measure messages and determine if they can fit into packet.
-
-    Should this measurement be done at the point of constructing the packet data? (probably)
-
-    How to ensure that this measurement is done only once?
-
-    Don't just append one stream to another, as it throws off the journal check.
-
     ------------------
 
-    Implement special serialization for block messages.
+    Implement code to measure messages and determine if they can fit into packet.
 
-    First, assume small blocks and write a specific serialization for small blocks
-    that treats them like messages, eg. with serialize.
+    Ensure that this measurement is done only once
 
-    However, for large blocks focus packet data exclusively on that block
-    until all fragments of that block have been sent across.
+    Once this is working, shrink the size of the packet in soak test so that
+    this code is stressed appropriately.
 
-    This way I can unify ordered delivery of messages, small blocks and large blocks.
+    Make sure we never go over max packet size in soak test
 
-    This is a very flexible system.
+    --------------------
+
+    Implement large block serialization.
+
+    User should be able to specify a block fragment size in config.
+
+    Blocks should be split up into this maximum size
+
+    We need to know maximum # of fragments per-block. I'm thinking 65535
+
+    Might be nice to add a validate step to the config for connection/channels
 
     ----------------------
-
-    Now soak test that this is working correctly.
 
     Setup a large variety of different message types, eg. small blocks, large blocks
     large messages, small messages and so on. Make the packet size quite small so it

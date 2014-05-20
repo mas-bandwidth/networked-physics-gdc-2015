@@ -122,6 +122,63 @@ namespace protocol
         stream.SerializeValue( int64_value, min, max );
         value = (T) int64_value;
     }
+
+    void serialize_block( Stream & stream, shared_ptr<Block> & block_ptr, int maxBytes )
+    { 
+        int numBytesMinusOne;
+
+        if ( stream.IsWriting() )
+        {
+            assert( block_ptr );
+            numBytesMinusOne = int( block_ptr->size() ) - 1;
+            assert( numBytesMinusOne >= 0 );
+            assert( numBytesMinusOne <= maxBytes - 1 );
+        }
+
+        serialize_int( stream, numBytesMinusOne, 0, maxBytes - 1 );
+        
+        const int numBytes = numBytesMinusOne + 1;
+
+        if ( stream.IsReading() )
+            block_ptr = make_shared<Block>( numBytes );
+        
+        Block & block = *block_ptr;
+
+        const int numWords = numBytes / 4;
+
+        if ( stream.IsWriting() )
+        {
+            for ( int i = 0; i < numWords; ++i )
+            {
+                uint32_t value =             block[i*4]               |
+                                 ( uint32_t( block[i*4+1] ) << 8 )    |
+                                 ( uint32_t( block[i*4+2] ) << 16 )   |
+                                 ( uint32_t( block[i*4+3] ) << 24 );
+
+                serialize_int( stream, value, 0, 0xFFFFFFFF );
+            }
+        }
+        else
+        {
+            for ( int i = 0; i < numWords; ++i )
+            {
+                uint32_t value;
+
+                serialize_int( stream, value, 0, 0xFFFFFFFF );
+
+                block[i*4] = value & 0xFF;
+                block[i*4+1] = ( value >> 8 ) & 0xFF;
+                block[i*4+2] = ( value >> 16 ) & 0xFF;
+                block[i*4+3] = ( value >> 24 ) & 0xFF;
+            }
+        }
+
+        const int tailIndex = numWords * 4;
+        const int tailBytes = numBytes - numWords * 4;
+
+        for ( int i = 0; i < tailBytes; ++i )
+            serialize_int( stream, block[tailIndex+i], 0, 255 );
+    }
 }   //
 
 #endif

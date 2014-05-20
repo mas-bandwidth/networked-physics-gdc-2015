@@ -274,6 +274,20 @@ namespace protocol
                 ack_bits |= ( 1 << i );
         }
     }
+
+    typedef vector<uint8_t> Block;
+
+    enum
+    {
+        PROTOCOL_LITTLE_ENDIAN = 0x03020100,
+        PROTOCOL_BIG_ENDIAN = 0x00010203
+    };
+
+    static const union { uint8_t bytes[4]; uint32_t value; } protocol_host_order = { { 0, 1, 2, 3 } };
+
+    #define PROTOCOL_HOST_ORDER protocol_host_order.value
+
+    
 }
 
 #endif

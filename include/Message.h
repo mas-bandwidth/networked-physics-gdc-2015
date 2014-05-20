@@ -28,17 +28,22 @@ namespace protocol
         uint16_t m_type;       
     };
 
-    typedef vector<uint8_t> Block;
+    const int BlockMessageType = 0;
+
+    const int MaxSmallBlockSize = 256;
 
     class BlockMessage : public Message
     {
     public:
 
-        BlockMessage() : Message(0) {}
+        BlockMessage() : Message( BlockMessageType ) {}
 
-        BlockMessage( shared_ptr<Block> block ) : Message(0) { m_block = block; }
+        BlockMessage( shared_ptr<Block> block ) : Message( BlockMessageType ) { m_block = block; }
 
-        virtual void Serialize( Stream & stream ) { assert(false); }
+        virtual void Serialize( Stream & stream )
+        { 
+            serialize_block( stream, m_block, MaxSmallBlockSize );
+        }
 
         shared_ptr<Block> GetBlock() { return m_block; }
 

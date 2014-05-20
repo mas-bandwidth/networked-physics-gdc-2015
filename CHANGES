@@ -1,3 +1,29 @@
+Monday May 19th, 2014:
+----------------------
+
+    Extend message channel to support *small* block messages
+
+    This can be implemented just by checking the block size, and implementing a serialize
+    that just serializes the bytes to the stream via the bitpacker.
+
+    Extend MessageChannel interface to support sending a block (vector ...) directly.
+
+    Assert if message is too large to include (add small block # of bytes in config)
+
+    Extend soak test to include non-block messages with random # of bits
+
+    Optimize block serialization to serialize by words (4 bytes at a time)
+    with tail serialized one byte at a time. Less calls to serialize,
+    and more efficient journalling (although, journalling should be,
+    if implemented, coded to be aware of the block, eg. serialized block
+    n bytes long, should be the journal entry...)
+
+    Write a generic method, serialize_block to provide block serialization
+    outside of the block message. This is generally useful functionality.
+
+    Extend the soak test to include block messages of random # of bytes
+
+
 Sunday May 18th, 2014:
 ----------------------
 

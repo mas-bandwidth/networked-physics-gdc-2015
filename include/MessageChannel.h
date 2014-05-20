@@ -20,6 +20,8 @@ namespace protocol
 
         virtual void SendMessage( shared_ptr<Message> message ) = 0;
 
+        virtual void SendBlock( shared_ptr<Block> block ) = 0;
+
         virtual shared_ptr<Message> ReceiveMessage() = 0;
     };
 }

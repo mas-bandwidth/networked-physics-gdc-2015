@@ -19,13 +19,15 @@ namespace protocol
             receiveQueueSize = 256;
             sentPacketsSize = 256;
             maxMessagesPerPacket = 32;
+            maxSmallBlockSize = 64;
         }
 
         float resendRate;
         int sendQueueSize;
         int receiveQueueSize;
-        int maxMessagesPerPacket;
         int sentPacketsSize;
+        int maxMessagesPerPacket;
+        int maxSmallBlockSize;
         shared_ptr<Factory<Message>> messageFactory;
     };
 
@@ -129,7 +131,8 @@ namespace protocol
 
         ReliableMessageChannel( const ReliableMessageChannelConfig & config ) : m_config( config )
         {
-            assert( config.messageFactory );       // IMPORTANT: You must supply a message factory!
+            assert( config.messageFactory );
+            assert( config.maxSmallBlockSize <= MaxSmallBlockSize );
 
             m_sendMessageId = 0;
             m_receiveMessageId = 0;
@@ -171,6 +174,20 @@ namespace protocol
 
             m_sendMessageId++;
         }
+
+        void SendBlock( shared_ptr<Block> block )
+        {
+//            cout << "send block: " << block->size() << " bytes" << endl;
+
+            // IMPORTANT: We only support small blocks at this time
+            // In the future we will extend to support large blocks
+            // with fragmentation and reassembly.
+            assert( block->size() <= m_config.maxSmallBlockSize );
+
+            auto blockMessage = make_shared<BlockMessage>( block );
+
+            SendMessage( blockMessage );
+        }        
 
         shared_ptr<Message> ReceiveMessage()
         {
