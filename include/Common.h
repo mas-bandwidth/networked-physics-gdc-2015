@@ -60,14 +60,6 @@ namespace protocol
 {
     using namespace std;
 
-    struct TimeBase
-    {
-        TimeBase() : time(0), deltaTime(0) {}
-
-        double time;                    // frame time. 0.0 is start of process
-        double deltaTime;               // delta time this frame in seconds.
-    };
-
     string format_string( const char * fmt_str, ... ) 
     {
         int final_n, n = 256;
@@ -88,6 +80,98 @@ namespace protocol
         }
         return string(formatted.get());
     }
+
+    template <uint32_t x> struct PopCount
+    {
+        enum {   a = x - ( ( x >> 1 )       & 0x55555555 ),
+                 b =   ( ( ( a >> 2 )       & 0x33333333 ) + ( a & 0x33333333 ) ),
+                 c =   ( ( ( b >> 4 ) + b ) & 0x0f0f0f0f ),
+                 d =   c + ( c >> 8 ),
+                 e =   d + ( d >> 16 ),
+
+            result = e & 0x0000003f 
+        };
+    };
+
+    template <uint32_t x> struct Log2
+    {
+        enum {   a = x | ( x >> 1 ),
+                 b = a | ( a >> 2 ),
+                 c = b | ( b >> 4 ),
+                 d = c | ( c >> 8 ),
+                 e = d | ( d >> 16 ),
+                 f = e >> 1,
+
+            result = PopCount<f>::result
+        };
+    };
+
+    template <int64_t min, int64_t max> struct BitsRequired
+    {
+        static const uint32_t result = ( min == max ) ? 0 : Log2<uint32_t(max-min)>::result + 1;
+    };
+    
+    inline uint32_t popcount( uint32_t x )
+    {
+        const uint32_t a = x - ( ( x >> 1 )       & 0x55555555 );
+        const uint32_t b =   ( ( ( a >> 2 )       & 0x33333333 ) + ( a & 0x33333333 ) );
+        const uint32_t c =   ( ( ( b >> 4 ) + b ) & 0x0f0f0f0f );
+        const uint32_t d =   c + ( c >> 8 );
+        const uint32_t e =   d + ( d >> 16 );
+        const uint32_t result = e & 0x0000003f;
+        return result;
+    }
+
+#ifdef __GNUC__
+
+    inline int bits_required( uint32_t min, uint32_t max )
+    {
+        return 32 - __builtin_clz( max - min );
+    }
+
+#else
+
+    inline uint32_t log2( uint32_t x )
+    {
+        const uint32_t a = x | ( x >> 1 );
+        const uint32_t b = a | ( a >> 2 );
+        const uint32_t c = b | ( b >> 4 );
+        const uint32_t d = c | ( c >> 8 );
+        const uint32_t e = d | ( d >> 16 );
+        const uint32_t f = e >> 1;
+        return popcount( f );
+    }
+
+    inline int bits_required( uint32_t min, uint32_t max )
+    {
+        return ( min == max ) ? 0 : log2( max-min ) + 1;
+    }
+
+#endif
+
+    inline bool is_power_of_two( uint32_t x )
+    {
+        return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
+    }
+
+    bool sequence_greater_than( uint16_t s1, uint16_t s2 )
+    {
+        return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
+               ( ( s1 < s2 ) && ( s2 - s1  > 32768 ) );
+    }
+
+    bool sequence_less_than( uint16_t s1, uint16_t s2 )
+    {
+        return sequence_greater_than( s2, s1 );
+    }
+
+    struct TimeBase
+    {
+        TimeBase() : time(0), deltaTime(0) {}
+
+        double time;                    // frame time. 0.0 is start of process
+        double deltaTime;               // delta time this frame in seconds.
+    };
 
     class Object
     {  
@@ -134,17 +218,6 @@ namespace protocol
         int max_type;
         map<int,create_function> create_map;
     };
-
-    bool sequence_greater_than( uint16_t s1, uint16_t s2 )
-    {
-        return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
-               ( ( s1 < s2 ) && ( s2 - s1  > 32768 ) );
-    }
-
-    bool sequence_less_than( uint16_t s1, uint16_t s2 )
-    {
-        return sequence_greater_than( s2, s1 );
-    }
 
     template <typename T> class SlidingWindow
     {

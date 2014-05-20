@@ -5,7 +5,11 @@
 using namespace std;
 using namespace protocol;
 
-enum { PACKET_Connection = 0 };
+enum 
+{ 
+    PACKET_Connection = 0,
+    PACKET_Dummy
+};
 
 class PacketFactory : public Factory<Packet>
 {
@@ -13,6 +17,7 @@ public:
     PacketFactory()
     {
         Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
+        Register( PACKET_Dummy, [this] { return nullptr; } );
     }
 
     void SetInterface( shared_ptr<ConnectionInterface> interface )
@@ -50,18 +55,24 @@ struct TestMessage : public Message
 
     void Serialize( Stream & stream )
     {        
-        serialize_int( stream, sequence, 0, 65535 );
+        serialize_bits( stream, sequence, 16 );
         int numBits = GetNumBitsForMessage( sequence );
         int numWords = numBits / 32;
         for ( int i = 0; i < numWords; ++i )
         {
             int dummy = 0;
-            serialize_int( stream, dummy, 0, 0xFFFFFFFF );
+            serialize_bits( stream, dummy, 32 );
         }
         int numRemainderBits = numBits - numWords * 32;
-        int dummy = 0;
-        serialize_int( stream, dummy, 0, (1<<numRemainderBits) - 1 );
+        if ( numRemainderBits > 0 )
+        {
+            int dummy = 0;
+            serialize_bits( stream, dummy, numRemainderBits );
+        }
     }
+
+    // todo: add some pattern for the bits, eg. 0,1,0,1 etc. so i can verify
+    // connect contents read back on the receive side of message
 
     uint16_t sequence;
 };
@@ -207,7 +218,7 @@ void soak_test()
             if ( !message )
                 break;
 
-            assert( message->GetId() == numMessagesReceived % 65535 );
+            assert( message->GetId() == numMessagesReceived % 65536 );
             assert( message->GetType() == MESSAGE_Block || message->GetType() == MESSAGE_Test );
 
             if ( message->GetType() == MESSAGE_Test )

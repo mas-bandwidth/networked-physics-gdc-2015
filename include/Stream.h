@@ -7,21 +7,10 @@
 #define PROTOCOL_STREAM_H
 
 #include "Common.h"
+#include "BitPacker.h"
 
 namespace protocol
 {
-    struct StreamValue
-    {
-        StreamValue( int64_t _value, int64_t _min, int64_t _max )
-            : value( _value ),
-              min( _min ),
-              max( _max ) {}
-
-        int64_t value;         // the actual value to be serialized
-        int64_t min;           // the minimum value
-        int64_t max;           // the maximum value
-    };
-
     enum StreamMode
     {
         STREAM_Read,
@@ -32,15 +21,13 @@ namespace protocol
     {
     public:
 
-        Stream( StreamMode mode )
+        Stream( StreamMode mode, uint8_t * buffer, int bytes )
+            : m_mode( mode ),
+              m_writer( buffer, bytes ), 
+              m_reader( buffer, bytes )
+              
         {
-            SetMode( mode );
-        }
-
-        void SetMode( StreamMode mode )
-        {
-            m_mode = mode;
-            m_readIndex = 0;
+            // ...
         }
 
         bool IsReading() const 
@@ -53,62 +40,63 @@ namespace protocol
             return m_mode == STREAM_Write;
         }
 
-        void SerializeValue( int64_t & value, int64_t min, int64_t max )
+        void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
-            // note: this is a dummy stream implementation to be replaced with a bitpacker, range encoder or arithmetic encoder in future
+            assert( min < max );
 
-            if ( m_mode == STREAM_Write )
+            const int bits = bits_required( min, max );
+
+            if ( IsWriting() )
             {
-                assert( value >= min );
-                assert( value <= max );
-                m_values.push_back( StreamValue( value, min, max ) );
+                uint32_t unsigned_value = value - min;
+                m_writer.WriteBits( unsigned_value, bits );
             }
             else
             {
-                if ( m_readIndex >= m_values.size() )
-                    throw runtime_error( "read past end of stream" );
+                // todo: on read, see if we are going past the end of the buffer.
+                // if this is the case, throw exception -- this should never happen
+                // except for malformed data
 
-                StreamValue & streamValue = m_values[m_readIndex++];
-
-                if ( streamValue.min != min || streamValue.max != max )
-                    throw runtime_error( format_string( "min/max stream mismatch: [%lld,%lld] vs. [%lld,%lld]", streamValue.min, streamValue.max, min, max ) );
-
-                if ( streamValue.value < min || streamValue.value > max )
-                    throw runtime_error( format_string( "value %lld read from stream is outside min/max range [%lld,%lld]", streamValue.value, min, max ) );
-
-                value = streamValue.value;
+                uint32_t unsigned_value = m_reader.ReadBits( bits );
+                value = (int32_t) unsigned_value + min;
             }
         }
 
-        const uint8_t * GetWriteBuffer( size_t & bufferSize )
+        void SerializeBits( uint32_t & value, int bits )
         {
-            bufferSize = sizeof( StreamValue ) * m_values.size();
-            return reinterpret_cast<uint8_t*>( &m_values[0] );
+            assert( bits > 0 );
+            assert( bits <= 32 );
+
+            if ( IsWriting() )
+                m_writer.WriteBits( value, bits );
+            else
+                value = m_reader.ReadBits( bits );          // todo: on read throw exception if we read past end of buffer
         }
 
-        void SetReadBuffer( uint8_t * readBuffer, size_t bufferSize )
+        void Flush()
         {
-            int numValues = bufferSize / sizeof( StreamValue );
-//            cout << "numValues = " << numValues << endl;
-            StreamValue * streamValues = reinterpret_cast<StreamValue*>( readBuffer );
-            m_values = vector<StreamValue>( streamValues, streamValues + numValues );
-            m_readIndex = 0;
-            /*
-            cout << "-----------------------------" << endl;
-            cout << "read values:" << endl;
-            for ( int i = 0; i < m_values.size(); ++i )
-            {
-                cout << " + value = " << m_values[i].value << " min = " << m_values[i].min << " max = " << m_values[i].max << endl;
-            }
-            cout << "-----------------------------" << endl;
-            */
+            if ( IsWriting() )
+                m_writer.FlushBits();
+        }
+
+        const uint8_t * GetData() const
+        {
+            return m_writer.GetData();          // note: same data shared between reader and writer
+        }
+
+        int GetBytes() const
+        {
+            if ( IsWriting() )
+                return m_writer.GetBytes();
+            else
+                return 0;
         }
 
     private:
 
         StreamMode m_mode;
-        size_t m_readIndex;
-        vector<StreamValue> m_values;
+        BitWriter m_writer;
+        BitReader m_reader;
     };
 
     void serialize_object( Stream & stream, Object & object )
@@ -116,16 +104,30 @@ namespace protocol
         object.Serialize( stream );
     }
 
-    template<typename T> void serialize_int( Stream & stream, T & value, int64_t min, int64_t max )
-    {                        
-        int64_t int64_value = (int64_t) value;
-        stream.SerializeValue( int64_value, min, max );
-        value = (T) int64_value;
+    #define serialize_int( stream, value, min, max )            \
+        do                                                      \
+        {                                                       \
+            int32_t int32_value = (int32_t) value;              \
+            stream.SerializeInteger( int32_value, min, max );   \
+            value = (decltype(value)) int32_value;              \
+        } while (0)
+
+    #define serialize_bits( stream, value, bits )               \
+        do                                                      \
+        {                                                       \
+            uint32_t uint32_value = (uint32_t) value;           \
+            stream.SerializeBits( uint32_value, bits );         \
+            value = (decltype(value)) uint32_value;             \
+        } while (0)
+
+    void serialize_bool( Stream & stream, bool & value )
+    {
+        serialize_bits( stream, value, 1 );
     }
 
     void serialize_block( Stream & stream, shared_ptr<Block> & block_ptr, int maxBytes )
     { 
-        int numBytesMinusOne;
+        int numBytesMinusOne = 0;
 
         if ( stream.IsWriting() )
         {
@@ -155,16 +157,16 @@ namespace protocol
                                  ( uint32_t( block[i*4+2] ) << 16 )   |
                                  ( uint32_t( block[i*4+3] ) << 24 );
 
-                serialize_int( stream, value, 0, 0xFFFFFFFF );
+                serialize_bits( stream, value, 32 );
             }
         }
         else
         {
             for ( int i = 0; i < numWords; ++i )
             {
-                uint32_t value;
+                uint32_t value = 0;
 
-                serialize_int( stream, value, 0, 0xFFFFFFFF );
+                serialize_bits( stream, value, 32 );
 
                 block[i*4] = value & 0xFF;
                 block[i*4+1] = ( value >> 8 ) & 0xFF;
@@ -177,8 +179,8 @@ namespace protocol
         const int tailBytes = numBytes - numWords * 4;
 
         for ( int i = 0; i < tailBytes; ++i )
-            serialize_int( stream, block[tailIndex+i], 0, 255 );
+            serialize_bits( stream, block[tailIndex+i], 8 );
     }
-}   //
+}  //
 
 #endif

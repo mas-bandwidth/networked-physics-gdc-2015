@@ -51,7 +51,7 @@ struct UpdatePacket : public Packet
 
     void Serialize( Stream & stream )
     {
-        serialize_int( stream, timestamp, 0, 65535 );
+        serialize_bits( stream, timestamp, 16 );
     }
 
     bool operator ==( const UpdatePacket & other ) const

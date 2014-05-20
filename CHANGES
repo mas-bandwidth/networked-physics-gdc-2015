@@ -61,6 +61,41 @@ Monday May 19th, 2014:
 
     Dumbass. It was just endian flip.
 
+    Hook bitpacker up to the net stream.
+
+    Make sure stream tests pass.
+
+    Make sure reliable message channel test passes.
+
+    Make sure soak test still works.
+
+    Implement serialize_bits( stream, int, num_bits ) -- this is very useful
+
+    Converted serialize_bits and serialize_int to macros so they work with 
+    bitfields. Can't pass a bitfield in by reference. Macros work.
+
+    Pass over existing serialize_int and switch over to serialize bits where appropriate
+
+    Add serialize_bool
+
+    Passed over code using serialize_int and switched to bool where in range [0,1]
+
+    Added optimization to ack_bits. If it is perfect (0xFFFFFFFF), serialize one bit.
+
+    There is a problem with TestReliableMessageChannel, seems that some data is messed up (message id?)
+
+    Fixed. Write stream was missing a flush.
+
+    BSDSocketsInterface.h needs conversion (it uses serialization internally)
+
+    Verified BSD sockets test passes
+
+    Convert the SoakTest.cpp over
+
+    Verify it still runs.
+
+    Time for bed!
+
 
 Sunday May 18th, 2014:
 ----------------------

@@ -2,19 +2,7 @@ DONE:
 
 TODO:
 
-    Hook bitpacker up to the net stream.
-
-    Make sure stream tests pass.
-
-    Make sure reliable message channel test passes.
-
-    Make sure soak test still works.
-
-    Implement serialize_bits( stream, int, num_bits ) -- this is very useful
-
-    Pass over existing serialize_int and switch over to serialize bits where appropriate
-
-    ------------------
+    ----------------
 
     Implement code to measure messages and determine if they can fit into packet.
 

@@ -72,16 +72,22 @@ namespace protocol
         {
             assert( interface );
 
-            serialize_int( stream, sequence, 0, 65535 );
-            serialize_int( stream, ack, 0, 65535 );
-            serialize_int( stream, ack_bits, 0, 0xFFFFFFFF );
+            serialize_bits( stream, sequence, 16 );
+            serialize_bits( stream, ack, 16 );
+
+            bool perfect = ack_bits == 0xFFFFFFFF;
+            serialize_bool( stream, perfect );
+            if ( !perfect )
+                serialize_bits( stream, ack_bits, 32 );
+            else
+                ack_bits = 0xFFFFFFFF;
 
             if ( stream.IsWriting() )
             {
                 for ( auto data : channelData )
                 {
-                    int has_data = data != nullptr;
-                    serialize_int( stream, has_data, 0, 1 );
+                    bool has_data = data != nullptr;
+                    serialize_bool( stream, has_data );
                     if ( data )
                         data->Serialize( stream );
                 }
@@ -90,8 +96,8 @@ namespace protocol
             {
                 for ( int i = 0; i < channelData.size(); ++i )
                 {
-                    int has_data = 0;
-                    serialize_int( stream, has_data, 0, 1 );
+                    bool has_data = 0;
+                    serialize_bool( stream, has_data );
                     if ( has_data )
                     {
                         channelData[i] = interface->CreateChannelData( i );

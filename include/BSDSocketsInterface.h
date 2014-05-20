@@ -300,20 +300,24 @@ namespace protocol
 
                 try
                 {
-                    Stream stream( STREAM_Write );
+                    uint8_t buffer[m_config.maxPacketSize];
+
+                    Stream stream( STREAM_Write, buffer, m_config.maxPacketSize );
 
                     const int maxPacketType = m_config.packetFactory->GetMaxType();
                     int packetType = packet->GetType();
                     serialize_int( stream, packetType, 0, maxPacketType );
                     packet->Serialize( stream );                
 
-                    size_t bufferSize = 0;
-                    const uint8_t * writeBuffer = stream.GetWriteBuffer( bufferSize );
+                    stream.Flush();
 
-                    if ( bufferSize > m_config.maxPacketSize )
+                    const int bytes = stream.GetBytes();
+                    const uint8_t * data = stream.GetData();
+
+                    if ( bytes > m_config.maxPacketSize )
                         throw runtime_error( format_string( "packet is larger than max size %llu", m_config.maxPacketSize ) );
 
-                    if ( !SendPacketInternal( packet->GetAddress(), writeBuffer, bufferSize ) )
+                    if ( !SendPacketInternal( packet->GetAddress(), data, bytes ) )
                         cout << "failed to send packet" << endl;
                 }
                 catch ( runtime_error & error )
@@ -336,9 +340,7 @@ namespace protocol
 
                 try
                 {
-                    Stream stream( STREAM_Read );
-
-                    stream.SetReadBuffer( &m_receiveBuffer[0], received_bytes );
+                    Stream stream( STREAM_Read, &m_receiveBuffer[0], m_receiveBuffer.size() );
 
                     const int maxPacketType = m_config.packetFactory->GetMaxType();
                     int packetType = 0;

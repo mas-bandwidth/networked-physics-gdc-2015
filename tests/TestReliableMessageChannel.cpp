@@ -43,9 +43,7 @@ struct TestMessage : public Message
 
     void Serialize( Stream & stream )
     {        
-        serialize_int( stream, sequence, 0, 65535 );
-
-        // todo: serialize random bits as a function of sequence #
+        serialize_bits( stream, sequence, 16 );
     }
 
     uint16_t sequence;
@@ -68,9 +66,11 @@ void test_reliable_message_channel()
     auto packetFactory = make_shared<PacketFactory>();
     auto messageFactory = make_shared<MessageFactory>();
 
+    const int MaxPacketSize = 4 * 1024;
+
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = 4 * 1024;
+    connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
 
     Connection connection( connectionConfig );
@@ -102,12 +102,15 @@ void test_reliable_message_channel()
     {  
         auto writePacket = connection.WritePacket();
 
-        Stream stream( STREAM_Write );
-        writePacket->Serialize( stream );
+        uint8_t buffer[MaxPacketSize];
 
-        stream.SetMode( STREAM_Read );
+        Stream writeStream( STREAM_Write, buffer, MaxPacketSize );
+        writePacket->Serialize( writeStream );
+        writeStream.Flush();
+
+        Stream readStream( STREAM_Read, buffer, MaxPacketSize );
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
-        readPacket->Serialize( stream );
+        readPacket->Serialize( readStream );
 
         if ( ( rand() % 10 ) == 0 )
             connection.ReadPacket( readPacket );
@@ -155,9 +158,11 @@ void test_reliable_message_channel_small_blocks()
     auto packetFactory = make_shared<PacketFactory>();
     auto messageFactory = make_shared<MessageFactory>();
 
+    const int MaxPacketSize = 4 * 1024;
+
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = 4 * 1024;
+    connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
 
     Connection connection( connectionConfig );
@@ -188,12 +193,15 @@ void test_reliable_message_channel_small_blocks()
     {  
         auto writePacket = connection.WritePacket();
 
-        Stream stream( STREAM_Write );
-        writePacket->Serialize( stream );
+        uint8_t buffer[MaxPacketSize];
 
-        stream.SetMode( STREAM_Read );
+        Stream writeStream( STREAM_Write, buffer, MaxPacketSize );
+        writePacket->Serialize( writeStream );
+        writeStream.Flush();
+
+        Stream readStream( STREAM_Read, buffer, MaxPacketSize );
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
-        readPacket->Serialize( stream );
+        readPacket->Serialize( readStream );
 
         if ( ( rand() % 10 ) == 0 )
             connection.ReadPacket( readPacket );

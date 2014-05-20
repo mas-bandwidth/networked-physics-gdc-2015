@@ -68,7 +68,7 @@ namespace protocol
                 }
 
                 uint16_t messageId = stream.IsWriting() ? messages[i]->GetId() : 0;
-                serialize_int( stream, messageId, 0, 65535 );
+                serialize_bits( stream, messageId, 16 );
                 if ( stream.IsReading() )
                 {
                     messages[i]->SetId( messageId );
