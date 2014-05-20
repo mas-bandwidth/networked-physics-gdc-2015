@@ -9,11 +9,11 @@ void test_bitpacker()
 
     const int BufferSize = 256;
 
-    uint8_t writeBuffer[256];
+    uint8_t buffer[256];
 
-    BitWriter writer( writeBuffer, BufferSize );
+    BitWriter writer( buffer, BufferSize );
 
-    assert( writer.GetData() == writeBuffer );
+    assert( writer.GetData() == buffer );
     assert( writer.GetBytes() == 0 );
     assert( writer.GetBitsWritten() == 0 );
     assert( writer.GetBitsAvailable() == BufferSize * 8 );
@@ -33,9 +33,29 @@ void test_bitpacker()
     assert( writer.GetBitsWritten() == bitsWritten );
     assert( writer.GetBitsAvailable() == BufferSize * 8 - bitsWritten );
 
-    // todo: bit reader... etc.
+    BitReader reader( buffer, BufferSize );
 
-    //uint8_t readBuffer[BufferSize];
+    assert( reader.GetBitsRead() == 0 );
+    assert( reader.GetBitsRemaining() == BufferSize * 8 );
+
+    uint32_t a = reader.ReadBits( 1 );
+    uint32_t b = reader.ReadBits( 1 );
+    uint32_t c = reader.ReadBits( 8 );
+    uint32_t d = reader.ReadBits( 8 );
+    uint32_t e = reader.ReadBits( 10 );
+    uint32_t f = reader.ReadBits( 16 );
+    uint32_t g = reader.ReadBits( 32 );
+
+    assert( a == 0 );
+    assert( b == 1 );
+    assert( c == 10 );
+    assert( d == 255 );
+    assert( e == 1000 );
+    assert( f == 50000 );
+    assert( g == 9999999 );
+
+    assert( reader.GetBitsRead() == bitsWritten );
+    assert( reader.GetBitsRemaining() == BufferSize * 8 - bitsWritten );
 }
 
 int main()

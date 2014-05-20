@@ -23,6 +23,44 @@ Monday May 19th, 2014:
 
     Extend the soak test to include block messages of random # of bytes
 
+    Implement the bitpacker.
+
+    Keep bitpacker separate from the stream class for maximum flexbility.
+
+    Bitpacker should work with raw pointers, not vectors.
+
+    Bitpacker should not use or throw exceptions. Leave this to stream layer.
+
+    Split into separate reader and writers. I don't want unified read/write.
+
+    Implemented bit writer.
+
+    Added unit test to make sure # of bits are written, bits available correct etc.
+
+    Using htonl for endian conversion. Later on my want to use my own routine,
+    otherwise this will require me to include headers just to get htonl.
+
+    Added some code that will let me detect endian at runtime, without
+    needing to pass in #define BIG_ENDIAN or LITTLE_ENDIAN.
+
+    Is there a better way to do this? eg. at compile time vs. runtime?
+
+    Apparently there is not.
+
+    Implement bit reader.
+
+    Fixed bug on write that set all bits to 1. Was incorrectly trying
+    to clear high bits on write bits, ended up setting all bits to 1.
+
+    Got it apparently working but I'm getting some puzzling logs.
+
+    The read and write words are not matching.
+
+    This is puzzling. How can these logs be wrong, when the values
+    being read back from the bit reader are correct?!
+
+    Dumbass. It was just endian flip.
+
 
 Sunday May 18th, 2014:
 ----------------------

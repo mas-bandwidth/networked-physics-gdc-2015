@@ -1,35 +1,19 @@
 DONE:
 
-    Implement the bitpacker.
-
-    Keep bitpacker separate from the stream class for maximum flexbility.
-
-    Bitpacker should work with raw pointers, not vectors.
-
-    Bitpacker should not use or throw exceptions. Leave this to stream layer.
-
-    Split into separate reader and writers. I don't want unified read/write.
-
-    Implemented bit writer.
-
-    Added unit test to make sure # of bits are written, bits available correct etc.
-
-    Using htonl for endian conversion. Later on my want to use my own routine,
-    otherwise this will require me to include headers just to get htonl.
-
-    Added some code that will let me detect endian at runtime, without
-    needing to pass in #define BIG_ENDIAN or LITTLE_ENDIAN.
-
-    Is there a better way to do this? eg. at compile time vs. runtime?
-
-    Apparently there is not.
-
 TODO:
 
-    Implement bit reader.
+    Hook bitpacker up to the net stream.
 
-    Hook it up to the net stream, replace that crap workaround code I did earlier.
-    
+    Make sure stream tests pass.
+
+    Make sure reliable message channel test passes.
+
+    Make sure soak test still works.
+
+    Implement serialize_bits( stream, int, num_bits ) -- this is very useful
+
+    Pass over existing serialize_int and switch over to serialize bits where appropriate
+
     ------------------
 
     Implement code to measure messages and determine if they can fit into packet.
