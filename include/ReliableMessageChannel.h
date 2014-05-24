@@ -19,15 +19,24 @@ namespace protocol
             receiveQueueSize = 256;
             sentPacketsSize = 256;
             maxMessagesPerPacket = 32;
+            maxMessageSize = 64;
             maxSmallBlockSize = 64;
+            packetBudget = 128;
+            giveUpBits = 64;
         }
 
-        float resendRate;
-        int sendQueueSize;
-        int receiveQueueSize;
-        int sentPacketsSize;
-        int maxMessagesPerPacket;
-        int maxSmallBlockSize;
+        float resendRate;               // message max resend rate in seconds, until acked.
+        int sendQueueSize;              // send queue size in # of entries
+        int receiveQueueSize;           // receive queue size in # of entries
+        int sentPacketsSize;            // sent packets sliding window size in # of entries
+        int maxMessagesPerPacket;       // maximum number of messages included in a packet
+        int maxMessageSize;             // maximum message size allowed in iserialized bytes, eg. post bitpacker
+        int maxSmallBlockSize;          // maximum small block size allowed. messages above this size are fragmented and reassembled.
+        int packetBudget;               // maximum number of bytes this channel may take per-packet. 
+        int giveUpBits;                 // give up trying to add more messages to packet if we have less than this # of bits available.
+
+        // todo: move packet budget into the controlling owner, and pass it in to "GetData". should be *dynamic*
+
         shared_ptr<Factory<Message>> messageFactory;
     };
 
@@ -87,11 +96,12 @@ namespace protocol
             shared_ptr<Message> message;
             uint32_t sequence : 16;                      // this is actually the message id      
             uint32_t valid : 1;
+            uint32_t measuredBits : 15;
             double timeLastSent;
             SendQueueEntry()
                 : valid(0) {}
             SendQueueEntry( shared_ptr<Message> _message, uint16_t _sequence )
-                : message( _message ), sequence( _sequence ), valid(1), timeLastSent(-1) {}
+                : message( _message ), sequence( _sequence ), valid(1), measuredBits(0), timeLastSent(-1) {}
         };
 
         struct SentPacketEntry
@@ -142,6 +152,14 @@ namespace protocol
             m_receiveQueue = make_shared<SlidingWindow<ReceiveQueueEntry>>( m_config.receiveQueueSize );
 
             m_counters.resize( NumCounters, 0 );
+
+            m_measureBuffer.resize( m_config.maxMessageSize );
+
+            const int messageIdBits = 16;
+            const int messageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
+            m_messageOverheadBits = messageIdBits + messageTypeBits;
+
+//            cout << "message overhead is " << m_messageOverheadBits << " bits" << endl;
         }
 
         bool CanSendMessage() const
@@ -170,6 +188,13 @@ namespace protocol
             assert( entry->message->GetId() == m_sendMessageId );
             #endif
 
+            // todo: would be nice to have a specialized measure stream that doesn't actually do any work
+            // but measure the # of bits required for a specific serialization
+            Stream stream( STREAM_Write, &m_measureBuffer[0], m_measureBuffer.size() );
+            message->Serialize( stream );
+            entry->measuredBits = stream.GetBits() + m_messageOverheadBits;
+//            cout << "message " << m_sendMessageId << " is " << entry->measuredBits << " bits " << endl;
+
             m_counters[MessagesSent]++;
 
             m_sendMessageId++;
@@ -179,9 +204,7 @@ namespace protocol
         {
 //            cout << "send block: " << block->size() << " bytes" << endl;
 
-            // IMPORTANT: We only support small blocks at this time
-            // In the future we will extend to support large blocks
-            // with fragmentation and reassembly.
+            // todo: large block support
             assert( block->size() <= m_config.maxSmallBlockSize );
 
             auto blockMessage = make_shared<BlockMessage>( block );
@@ -247,22 +270,34 @@ namespace protocol
 
             // gather messages to include in the packet
 
+            // todo: really would prefer if budget was passed in as # of bits from connection
+            int availableBits = m_config.packetBudget * 8;
+
             int numMessageIds = 0;
             uint16_t messageIds[m_config.maxMessagesPerPacket];
             for ( int i = 0; i < m_config.receiveQueueSize; ++i )
             {
+                // IMPORTANT: Give up if we don't have a lot of bits available
+                // Otherwise we can search in vain across entire send queue for
+                // a message that cannot possibly fit in the bits we have left.
+                if ( availableBits < m_config.giveUpBits )
+                    break;
+
                 const uint16_t messageId = oldestMessageId + i;
                 SendQueueEntry * entry = m_sendQueue->Find( messageId );
-                if ( entry && entry->timeLastSent + m_config.resendRate <= m_timeBase.time )
+                if ( entry && entry->timeLastSent + m_config.resendRate <= m_timeBase.time && availableBits - entry->measuredBits >= 0 )
                 {
                     messageIds[numMessageIds++] = messageId;
                     entry->timeLastSent = m_timeBase.time;
+                    availableBits -= entry->measuredBits;
                 }
                 if ( numMessageIds == m_config.maxMessagesPerPacket )
                     break;
             }
             assert( numMessageIds >= 0 );
             assert( numMessageIds <= m_config.maxMessagesPerPacket );
+
+//            cout << "wrote " << numMessageIds << " of " << m_config.maxMessagesPerPacket << " maximum messages, using " << m_config.packetBudget * 8 - availableBits << " of " << m_config.packetBudget * 8 << " available bits" << endl;
 
             // if there are no messages then we don't have any data to send
 
@@ -326,20 +361,12 @@ namespace protocol
 
                 if ( sequence_less_than( messageId, minMessageId ) )
                 {
-                    // If messages are older than the last received message id we can
-                    // ignore them. They have already been queued up and delivered to
-                    // the application included via some previously processed packet.
-
 //                    cout << "old message " << messageId << endl;
 
                     m_counters[MessagesDiscardedLate]++;
                 }
                 else if ( sequence_greater_than( messageId, maxMessageId ) )
                 {
-                    // If a message arrives that is *newer* than what the receive queue 
-                    // can buffer we must discard this packet. Otherwise, early messages
-                    // that we cannot buffer will be false acked and never resent.
-
 //                    cout << "early message " << messageId << endl;
 
                     earlyMessage = true;
@@ -407,7 +434,9 @@ namespace protocol
         shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;              // message send queue
         shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;           // sent packets (for acks)
         shared_ptr<SlidingWindow<ReceiveQueueEntry>> m_receiveQueue;        // message receive queue
-        vector<uint64_t> m_counters;                                        // counters
+        vector<uint64_t> m_counters;                                        // counters        
+        vector<uint8_t> m_measureBuffer;                                    // buffer used for measuring message size in bits
+        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
     };
 
 }

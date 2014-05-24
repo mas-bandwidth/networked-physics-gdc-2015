@@ -2,24 +2,21 @@ DONE:
 
 TODO:
 
-    ----------------
+    Add a test to the reliable message unit test that stresses the case where not all
+    messages fit into the packet.
 
-    Implement code to measure messages and determine if they can fit into packet.
+    Move the configuration of channel budget out of the channel config (static)
+    and in to the connection. 
 
-    Ensure that this measurement is done only once
-
-    Once this is working, shrink the size of the packet in soak test so that
-    this code is stressed appropriately.
-
-    Make sure we never go over max packet size in soak test
+    Channel budget should potentially be a dynamic thing, and the user should
+    be able to derive their own connection type and specify channel budgets
+    dynamically based on flow control, for example.
 
     --------------------
 
     Implement large block serialization.
 
     User should be able to specify a block fragment size in config.
-
-    Blocks should be split up into this maximum size
 
     We need to know maximum # of fragments per-block. I'm thinking 65535
 
@@ -66,11 +63,17 @@ TODO:
     token, eg. reserve 4 slots for token X. Timeout or succeed the reservation
     and so on.
 
+    --------------------
+
+    It would be nice to bring back templated serialize functions, and have specialized
+    read, write and measure streams. I think the code generated would be much more
+    amenable to optimization, however before doing this I should definitely profile.
+
     ---------------------
 
     What is next?
 
-    1) Implement the bit packer. This is quite important to actually be taken seriously.
+    1) Implement the bit packer. This is quite important to actually be taken seriously. -- DONE
 
     2) Start doing performance analysis (CPU, memory etc.)
 
@@ -83,13 +86,13 @@ TODO:
        and how much compression it gets post-dictionary and so on. Do not check in the oodle
        libs, but do check in the interface and source code that uses it.
 
-    6) Implement encryption via key, plus hash to detect tampering (unified). Optional at 
-       network interface layer.
+    6) Implement encryption via key, plus hash to detect tampering (unified). Optional feature.
 
     7) Implement an unreliable channel (messages), 
        eg. queue up unreliable messages to send and discard any that don't fit in the packet.
        Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
 
-    8) Implement an atomic queue for message send and receive. Interface should be uniform,
-       eg. an atomic queue for messages received (whether reliable or not), and an atomic
-       queue for messages to send.
+    8) Implement an atomic queue on top of the client and server interface for sending
+       and receiving user packets. This interface should allow running the actual serialization
+       and packet reading entirely on a separate thread. Do it here where it is most natural,
+       to avoid overcomplicating the interface/connection code.

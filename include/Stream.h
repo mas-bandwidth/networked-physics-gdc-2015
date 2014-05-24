@@ -25,7 +25,6 @@ namespace protocol
             : m_mode( mode ),
               m_writer( buffer, bytes ), 
               m_reader( buffer, bytes )
-              
         {
             // ...
         }
@@ -53,11 +52,9 @@ namespace protocol
             }
             else
             {
-                // todo: on read, see if we are going past the end of the buffer.
-                // if this is the case, throw exception -- this should never happen
-                // except for malformed data
-
                 uint32_t unsigned_value = m_reader.ReadBits( bits );
+                if ( m_reader.InOverflow() )
+                    throw runtime_error( "read stream overflow" );
                 value = (int32_t) unsigned_value + min;
             }
         }
@@ -82,6 +79,14 @@ namespace protocol
         const uint8_t * GetData() const
         {
             return m_writer.GetData();          // note: same data shared between reader and writer
+        }
+
+        int GetBits() const
+        {
+            if ( IsWriting() )
+                return m_writer.GetBitsWritten();
+            else
+                return 0;
         }
 
         int GetBytes() const

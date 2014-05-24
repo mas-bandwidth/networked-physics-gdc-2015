@@ -24,6 +24,7 @@ namespace protocol
             m_scratch = 0;
             m_bitIndex = 0;
             m_wordIndex = 0;
+            m_overflow = false;
         }
 
         void WriteBits( uint32_t value, int bits )
@@ -31,6 +32,12 @@ namespace protocol
             assert( bits > 0 );
             assert( bits <= 32 );
             assert( m_bitsWritten + bits <= m_numBits );
+
+            if ( m_bitsWritten + bits > m_numBits )
+            {
+                m_overflow = true;
+                return;
+            }
 
             value &= ( uint64_t( 1 ) << bits ) - 1;
 
@@ -80,6 +87,11 @@ namespace protocol
             return m_wordIndex * 4;
         }
 
+        bool InOverflow() const
+        {
+            return m_overflow;
+        }
+
     private:
 
         uint32_t * m_data;
@@ -89,6 +101,7 @@ namespace protocol
         int m_bitsWritten;
         int m_bitIndex;
         int m_wordIndex;
+        bool m_overflow;
     };
 
     class BitReader
@@ -105,6 +118,7 @@ namespace protocol
             m_bitIndex = 0;
             m_wordIndex = 1;
             m_scratch = ntohl( m_data[0] );
+            m_overflow = false;
 //            cout << "read word = " << m_data[0] << endl;
         }
 
@@ -113,6 +127,12 @@ namespace protocol
             assert( bits > 0 );
             assert( bits <= 32 );
             assert( m_bitsRead + bits <= m_numBits );
+
+            if ( m_bitsRead + bits > m_numBits )
+            {
+                m_overflow = true;
+                return 0;
+            }
 
             m_bitsRead += bits;
 
@@ -150,6 +170,11 @@ namespace protocol
             return m_numBits - m_bitsRead;
         }
 
+        bool InOverflow() const
+        {
+            return m_overflow;
+        }
+
     private:
 
         const uint32_t * m_data;
@@ -159,6 +184,7 @@ namespace protocol
         int m_bitsRead;
         int m_bitIndex;
         int m_wordIndex;
+        bool m_overflow;
     };
 }
 

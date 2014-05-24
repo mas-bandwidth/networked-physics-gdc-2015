@@ -1,3 +1,39 @@
+Saturday May 24, 2014:
+----------------------
+
+    Shrink the message size in soak test now that we have bitpacker
+
+    Add overflow checking for bitpacker read and write.
+
+    Add exception on overflow for serialize read. This is the important one,
+    because this data can be coming in from an untrusted source.
+
+    When writing a packet, it is expected that programmer error will be
+    the only source of writing past the end of the buffer, thus the checking
+    is performed via asserts. No need for exceptions in this case.
+
+    Implement code to measure messages in send queue.
+
+    Ensure that this measurement is done only once as it is expensive.
+
+    Cache the message overhead # of bits in ctor so it doesn't have to be recalculated.
+
+    Shrink the size of the packet in soak test so we can't fit all messages in the packet.
+
+    Also jack up the max # of messages per-packet to 64, so small messages can get packed in.
+
+    Implement code to count the # of bits for messages when searching for messages to include
+    in the send data.
+
+    Make sure there is code that gives up after a small # of bits remaining, so the code
+    doesn't walk through the remaining send queue entries unnecessarily when no message
+    can possibly/reasonably fit.
+
+    Make sure we never go over max packet size in soak test
+
+    Make sure the reliable message test passes
+
+
 Monday May 19th, 2014:
 ----------------------
 

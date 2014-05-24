@@ -94,7 +94,7 @@ void soak_test()
     auto packetFactory = make_shared<PacketFactory>();
     auto messageFactory = make_shared<MessageFactory>();
 
-    const int MaxPacketSize = 4 * 1024;                     // todo: reduce this once bitpacker is working and message packing is working
+    const int MaxPacketSize = 256;
 
     BSDSocketsInterfaceConfig interfaceConfig;
     interfaceConfig.port = 10000;
@@ -117,9 +117,10 @@ void soak_test()
     packetFactory->SetInterface( connection.GetInterface() );
 
     ReliableMessageChannelConfig messageChannelConfig;
-    messageChannelConfig.maxMessagesPerPacket = 16;         // todo: increase this to 32 once packing is working properly
+    messageChannelConfig.maxMessagesPerPacket = 64;
     messageChannelConfig.sendQueueSize = 256;
     messageChannelConfig.receiveQueueSize = 64;
+    messageChannelConfig.packetBudget = 200;           // todo: this should move into the connection. eg. budget per-channel
     messageChannelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
     
     auto messageChannel = make_shared<ReliableMessageChannel>( messageChannelConfig );
@@ -171,6 +172,8 @@ void soak_test()
                     messageChannel->SendBlock( block );
                 }
                 break;
+
+                // todo: large block
 
                 default:
                     assert( false );
