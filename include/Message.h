@@ -11,6 +11,9 @@
 
 namespace protocol
 {
+    const int BlockMessageType = 0;
+    const int MaxSmallBlockSize = 256;
+
     class Message : public Object
     {
     public:
@@ -22,15 +25,13 @@ namespace protocol
 
         void SetId( uint16_t id ) { m_id = id; }
 
+        bool IsBlock() const { return m_type == BlockMessageType; }
+
     private:
       
         uint16_t m_id;  
         uint16_t m_type;       
     };
-
-    const int BlockMessageType = 0;
-
-    const int MaxSmallBlockSize = 256;
 
     class BlockMessage : public Message
     {

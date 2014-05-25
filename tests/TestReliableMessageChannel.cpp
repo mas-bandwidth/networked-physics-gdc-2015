@@ -350,8 +350,8 @@ int main()
 {
     try
     {
-        test_reliable_message_channel_messages();
-        test_reliable_message_channel_small_blocks();
+    //    test_reliable_message_channel_messages();
+    //    test_reliable_message_channel_small_blocks();
         test_reliable_message_channel_large_blocks();
     }
     catch ( runtime_error & e )

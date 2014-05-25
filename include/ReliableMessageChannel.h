@@ -7,6 +7,7 @@
 #define PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 
 #include "MessageChannel.h"    
+#include <math.h>
 
 namespace protocol
 {
@@ -21,6 +22,8 @@ namespace protocol
             maxMessagesPerPacket = 32;
             maxMessageSize = 64;
             maxSmallBlockSize = 64;
+            maxLargeBlockSize = 256 * 1024;
+            blockFragmentSize = 64;
             packetBudget = 128;
             giveUpBits = 64;
         }
@@ -32,6 +35,8 @@ namespace protocol
         int maxMessagesPerPacket;       // maximum number of messages included in a packet
         int maxMessageSize;             // maximum message size allowed in iserialized bytes, eg. post bitpacker
         int maxSmallBlockSize;          // maximum small block size allowed. messages above this size are fragmented and reassembled.
+        int maxLargeBlockSize;          // maximum large block size. these blocks are split up into fragments.
+        int blockFragmentSize;          // fragment size that large blocks are split up to for transmission.
         int packetBudget;               // maximum number of bytes this channel may take per-packet. 
         int giveUpBits;                 // give up trying to add more messages to packet if we have less than this # of bits available.
 
@@ -94,23 +99,26 @@ namespace protocol
         struct SendQueueEntry
         {
             shared_ptr<Message> message;
+            double timeLastSent;
             uint32_t sequence : 16;                      // this is actually the message id      
             uint32_t valid : 1;
+            uint32_t largeBlock : 1;
             uint32_t measuredBits : 15;
-            double timeLastSent;
             SendQueueEntry()
                 : valid(0) {}
-            SendQueueEntry( shared_ptr<Message> _message, uint16_t _sequence )
-                : message( _message ), sequence( _sequence ), valid(1), measuredBits(0), timeLastSent(-1) {}
+            SendQueueEntry( shared_ptr<Message> _message, uint16_t _sequence, bool _largeBlock )
+                : message( _message ), timeLastSent(-1), sequence( _sequence ), valid(1), largeBlock(_largeBlock), measuredBits(0) {}
         };
 
         struct SentPacketEntry
         {
+            vector<uint16_t> messageIds;
+            double timeSent;
             uint32_t sequence : 16;                      // this is the packet sequence #
             uint32_t acked : 1;
             uint32_t valid : 1;
-            double timeSent;
-            vector<uint16_t> messageIds;
+            uint32_t fragment : 1;                       // if 1 then this sent packet contains a large block fragment
+            uint32_t fragmentId : 16;                    // fragment id. valid only if fragment is 1.
             SentPacketEntry() : valid(0) {}
         };
 
@@ -119,11 +127,25 @@ namespace protocol
             shared_ptr<Message> message;
             uint32_t sequence : 16;                      // this is actually the message id      
             uint32_t valid : 1;
-            double timeReceived;
             ReceiveQueueEntry()
                 : valid(0) {}
-            ReceiveQueueEntry( shared_ptr<Message> _message, uint16_t _sequence, double _timeReceived )
-                : message( _message ), sequence( _sequence ), valid(1), timeReceived( _timeReceived ) {}
+            ReceiveQueueEntry( shared_ptr<Message> _message, uint16_t _sequence )
+                : message( _message ), sequence( _sequence ), valid(1) {}
+        };
+
+        struct SendFragmentData
+        {
+            double timeLastSent;
+            uint32_t acked : 1;
+            SendFragmentData()
+                : timeLastSent(-1), acked(0) {}
+        };
+
+        struct ReceiveFragmentData
+        {
+            uint32_t received : 1;
+            ReceiveFragmentData()
+                : received(0) {}
         };
 
     public:
@@ -163,6 +185,13 @@ namespace protocol
             m_messageOverheadBits = MessageIdBits + MessageTypeBits;
 
 //            cout << "message overhead is " << m_messageOverheadBits << " bits" << endl;
+
+            m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / m_config.blockFragmentSize );
+
+            cout << "max block fragments = " << m_maxBlockFragments << endl;
+
+            m_sendFragments.resize( m_maxBlockFragments );
+            m_receiveFragments.resize( m_maxBlockFragments );
         }
 
         bool CanSendMessage() const
@@ -179,7 +208,20 @@ namespace protocol
 
             message->SetId( m_sendMessageId );
 
-            bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId ) );
+            bool largeBlock = false;
+            if ( message->IsBlock() )
+            {
+                BlockMessage & blockMessage = static_cast<BlockMessage&>( *message );
+                auto block = blockMessage.GetBlock();
+                assert( block );
+                if ( block->size() > m_config.maxSmallBlockSize )
+                    largeBlock = true;
+            }
+
+            if ( largeBlock )
+                cout << "sent large block" << endl;
+
+            bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
             assert( result );
 
             #ifndef NDEBUG
@@ -206,9 +248,6 @@ namespace protocol
         void SendBlock( shared_ptr<Block> block )
         {
 //            cout << "send block: " << block->size() << " bytes" << endl;
-
-            // todo: large block support
-            assert( block->size() <= m_config.maxSmallBlockSize );
 
             auto blockMessage = make_shared<BlockMessage>( block );
 
@@ -271,70 +310,97 @@ namespace protocol
             if ( !foundMessage )
                 return nullptr;
 
-            // gather messages to include in the packet
+            // if the oldest unacked message is a large block, go into large block mode
+            // otherwise stay in message and small block mode (up to next large block)
 
-            // todo: really would prefer if budget was passed in as # of bits from connection
-            int availableBits = m_config.packetBudget * 8;
+            bool largeBlockMode = false;        // todo: if oldest unacked message is a large block, go into large block mode
 
-            int numMessageIds = 0;
-            uint16_t messageIds[m_config.maxMessagesPerPacket];
-            for ( int i = 0; i < m_config.receiveQueueSize; ++i )
+            if ( largeBlockMode )
             {
-                // IMPORTANT: Give up if we don't have a lot of bits available
-                // Otherwise we can search in vain across entire send queue for
-                // a message that cannot possibly fit in the bits we have left.
-                if ( availableBits < m_config.giveUpBits )
-                    break;
+                /*
+                    Large block mode. Split large blocks into fragments 
+                    and resend these fragments until they are all acked.
+                */
 
-                const uint16_t messageId = oldestMessageId + i;
-                SendQueueEntry * entry = m_sendQueue->Find( messageId );
-                if ( entry && entry->timeLastSent + m_config.resendRate <= m_timeBase.time && availableBits - entry->measuredBits >= 0 )
-                {
-                    messageIds[numMessageIds++] = messageId;
-                    entry->timeLastSent = m_timeBase.time;
-                    availableBits -= entry->measuredBits;
-                }
-                if ( numMessageIds == m_config.maxMessagesPerPacket )
-                    break;
-            }
-            assert( numMessageIds >= 0 );
-            assert( numMessageIds <= m_config.maxMessagesPerPacket );
+                // todo
 
-//            cout << "wrote " << numMessageIds << " of " << m_config.maxMessagesPerPacket << " maximum messages, using " << m_config.packetBudget * 8 - availableBits << " of " << m_config.packetBudget * 8 << " available bits" << endl;
+                // ...
 
-            // if there are no messages then we don't have any data to send
-
-            if ( numMessageIds == 0 )
                 return nullptr;
-
-            // add sent packet data containing message ids included in this packet
-
-            auto sentPacketData = m_sentPackets->InsertFast( sequence );
-            assert( sentPacketData );
-            sentPacketData->acked = 0;
-            sentPacketData->timeSent = m_timeBase.time;
-            sentPacketData->messageIds.resize( numMessageIds );
-            for ( int i = 0; i < numMessageIds; ++i )
-                sentPacketData->messageIds[i] = messageIds[i];
-
-            // update counter: num messages written
-
-            m_counters[MessagesWritten] += numMessageIds;
-
-            // construct channel data for packet
-
-            auto data = make_shared<ReliableMessageChannelData>( m_config );
-
-            data->messages.resize( numMessageIds );
-            for ( int i = 0; i < numMessageIds; ++i )
+            }
+            else
             {
-                auto entry = m_sendQueue->Find( messageIds[i] );
-                assert( entry );
-                assert( entry->message );
-                data->messages[i] = entry->message;
+                /*
+                    Message and small block mode.
+                    Iterate across send queue and include multiple messages 
+                    per-packet, but stop before the next large block.
+                */
+
+                // gather messages to include in the packet
+
+                int availableBits = m_config.packetBudget * 8;
+                int numMessageIds = 0;
+                uint16_t messageIds[m_config.maxMessagesPerPacket];
+                for ( int i = 0; i < m_config.receiveQueueSize; ++i )
+                {
+                    if ( availableBits < m_config.giveUpBits )
+                        break;
+                    const uint16_t messageId = oldestMessageId + i;
+                    SendQueueEntry * entry = m_sendQueue->Find( messageId );
+                    if ( !entry )
+                        break;
+                    if ( entry->largeBlock )
+                        break;
+                    if ( entry->timeLastSent + m_config.resendRate <= m_timeBase.time && availableBits - entry->measuredBits >= 0 )
+                    {
+                        messageIds[numMessageIds++] = messageId;
+                        entry->timeLastSent = m_timeBase.time;
+                        availableBits -= entry->measuredBits;
+                    }
+                    if ( numMessageIds == m_config.maxMessagesPerPacket )
+                        break;
+                }
+                assert( numMessageIds >= 0 );
+                assert( numMessageIds <= m_config.maxMessagesPerPacket );
+
+    //            cout << "wrote " << numMessageIds << " of " << m_config.maxMessagesPerPacket << " maximum messages, using " << m_config.packetBudget * 8 - availableBits << " of " << m_config.packetBudget * 8 << " available bits" << endl;
+
+                // if there are no messages then we don't have any data to send
+
+                if ( numMessageIds == 0 )
+                    return nullptr;
+
+                // add sent packet data containing message ids included in this packet
+
+                auto sentPacketData = m_sentPackets->InsertFast( sequence );
+                assert( sentPacketData );
+                sentPacketData->fragment = 0;
+                sentPacketData->acked = 0;
+                sentPacketData->timeSent = m_timeBase.time;
+                sentPacketData->messageIds.resize( numMessageIds );
+                for ( int i = 0; i < numMessageIds; ++i )
+                    sentPacketData->messageIds[i] = messageIds[i];
+
+                // update counter: num messages written
+
+                m_counters[MessagesWritten] += numMessageIds;
+
+                // construct channel data for packet
+
+                auto data = make_shared<ReliableMessageChannelData>( m_config );
+
+                data->messages.resize( numMessageIds );
+                for ( int i = 0; i < numMessageIds; ++i )
+                {
+                    auto entry = m_sendQueue->Find( messageIds[i] );
+                    assert( entry );
+                    assert( entry->message );
+                    data->messages[i] = entry->message;
+                }
+
+                return data;
             }
 
-            return data;
         }
 
         void ProcessData( uint16_t sequence, shared_ptr<ChannelData> channelData )
@@ -378,7 +444,7 @@ namespace protocol
                 }
                 else
                 {
-                    bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId, m_timeBase.time ) );
+                    bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
 
                     assert( result );
                 }
@@ -398,19 +464,26 @@ namespace protocol
             if ( !sentPacket || sentPacket->acked )
                 return;
 
-            for ( auto messageId : sentPacket->messageIds )
+            if ( !sentPacket->fragment )
             {
-                auto sendQueueEntry = m_sendQueue->Find( messageId );
-                if ( sendQueueEntry )
+                for ( auto messageId : sentPacket->messageIds )
                 {
-                    assert( sendQueueEntry->message );
-                    assert( sendQueueEntry->message->GetId() == messageId );
+                    auto sendQueueEntry = m_sendQueue->Find( messageId );
+                    if ( sendQueueEntry )
+                    {
+                        assert( sendQueueEntry->message );
+                        assert( sendQueueEntry->message->GetId() == messageId );
 
-//                    cout << "acked message " << messageId << endl;
+    //                    cout << "acked message " << messageId << endl;
 
-                    sendQueueEntry->valid = 0;
-                    sendQueueEntry->message = nullptr;
+                        sendQueueEntry->valid = 0;
+                        sendQueueEntry->message = nullptr;
+                    }
                 }
+            }
+            else
+            {
+                // todo: ack fragment of large block
             }
 
             sentPacket->acked = 1;
@@ -431,15 +504,23 @@ namespace protocol
     private:
 
         ReliableMessageChannelConfig m_config;                              // constant configuration data
+
         TimeBase m_timeBase;                                                // current time base from last update
         uint16_t m_sendMessageId;                                           // id for next message added to send queue
         uint16_t m_receiveMessageId;                                        // id for next message to be received
+        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
+        int m_maxBlockFragments;                                            // maximum number of fragments per-block
+
         shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;              // message send queue
         shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;           // sent packets (for acks)
         shared_ptr<SlidingWindow<ReceiveQueueEntry>> m_receiveQueue;        // message receive queue
-        vector<uint64_t> m_counters;                                        // counters        
+
+        vector<SendFragmentData> m_sendFragments;                           // per-fragment data for current large block being sent
+        vector<ReceiveFragmentData> m_receiveFragments;                     // per-fragment data for current large block being received
+
+        vector<uint64_t> m_counters;                                        // counters used for unit testing and validation
+
         vector<uint8_t> m_measureBuffer;                                    // buffer used for measuring message size in bits
-        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
     };
 
 }

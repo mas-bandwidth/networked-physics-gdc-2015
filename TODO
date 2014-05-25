@@ -1,19 +1,17 @@
 DONE:
 
-TODO:
-
     Implement large block serialization.
 
-    User should be able to specify a block fragment size in config.
+    User should be able to specify large block fragment size in config,
+    and maximum block size (so we can derive the max # of fragments)
 
     I think having up to 16 bits fragment index is plenty. If you want
     large blocks, you'd naturally want larger packets and larger fragments,
     otherwise it's just a silly exercise to think to try to send a gig
-    fire through 32 bytes at a time =p
+    file through 32 bytes at a time =p
 
-    Need to allocate a structure up to the maximum fragment size, and 
-    keep that in the interface where it can be accessed by the channel
-    data.
+    Need to allocate a structure up to the maximum fragment size, one
+    on send and other on receive side, for per-fragment data.
 
     The structure should be extremely well packed to efficiently support
     large blocks, and be cache coherent.
@@ -21,39 +19,40 @@ TODO:
     The actual block data itself should be dynamically allocated
     and passed around via shared_ptr. Blocks are large. No copying!
 
-    Also, the per-sent packet sliding window needs a new entry showing if
+    The per-sent packet sliding window needs a new entry showing if
     this packet had a block fragment, or if it contains messages.
 
-    Do not support packets with both a block fragment *and* regular
-    messages. You have one or the other. Large blocks are large, and
-    are expected to stall out transmission until they are done.
+    Send queue entry needs a "largeBlock" bit for easy processing
+    of the message/small block mode, it needs to go only up to the
+    next large block.
 
-    When searching for messages to add to packet data:
+    Added code to break on nullptr send queue entry, because that should mean
+    STOP, there is no entry for this message id. Need to verify with soak test.
 
-    a) if the first unacked message is *not* a large block
+    Yep. Works fine.
 
-      iterate left to right to include messages, but *stop*
-      at the first large block. don't go past it or send it,
-      but only send non-large block messages before it until
-      they are all acked.
+    Added split for "large block" vs. "message and small block" mode inside
+    get data. Need to implement the large block mode codepath. For the moment
+    it just returns nullptr data (stalls out)
 
-    b) if the first unacked message is a large block
+TODO:
 
-      focus only on sending this large block.
+    Things to do to get the large block codepath working:
 
-      go "inside" it and do the fragment race, eg.  per-fragment have time 
-      last sent, iterate from left to right but since block is large, maintain index 
-      of first unacked block.
+        1. Implement code to include a fragment in packet data
 
-      then go from left to right searching for an unacked fragment that
-      has been not sent within resend time, perhaps limit the search
-      to some reasonable maximum number of fragments ahead, eg. + 256
-      after the first unacked fragment.
+        2. Implement code to fill the sent packet entry
+           for fragments, so they can be acked. Need both
+           message id for block, and fragment id.
 
-    implement code to process acks, basically this means find the fragment id
-    and look up in the send structure for the current block and ack that fragment
+        3. Implement code to serialize read/write fragment data
+           (will need to have access to the current block ptr
+            from inside packet data on write and read, no copying!)
 
-    should be reasonably easy.
+            ^---- a bit tricky?
+
+        4. Implement code to process ack, lookup block by message
+           id and fragment, and mark that fragment as acked.
 
     ----------------------
 
