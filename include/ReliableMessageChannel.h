@@ -153,11 +153,14 @@ namespace protocol
 
             m_counters.resize( NumCounters, 0 );
 
-            m_measureBuffer.resize( m_config.maxMessageSize );
+            const int SmallBlockOverhead = bits_required( 0, MaxSmallBlockSize - 1 );
+            m_measureBuffer.resize( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
 
-            const int messageIdBits = 16;
-            const int messageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
-            m_messageOverheadBits = messageIdBits + messageTypeBits;
+//            cout << "measure buffer is " << m_measureBuffer.size() << " bytes" << endl;
+
+            const int MessageIdBits = 16;
+            const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
+            m_messageOverheadBits = MessageIdBits + MessageTypeBits;
 
 //            cout << "message overhead is " << m_messageOverheadBits << " bits" << endl;
         }

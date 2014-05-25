@@ -2,33 +2,93 @@ DONE:
 
 TODO:
 
-    Add a test to the reliable message unit test that stresses the case where not all
-    messages fit into the packet.
-
-    Move the configuration of channel budget out of the channel config (static)
-    and in to the connection. 
-
-    Channel budget should potentially be a dynamic thing, and the user should
-    be able to derive their own connection type and specify channel budgets
-    dynamically based on flow control, for example.
-
-    --------------------
-
     Implement large block serialization.
 
     User should be able to specify a block fragment size in config.
 
-    We need to know maximum # of fragments per-block. I'm thinking 65535
+    I think having up to 16 bits fragment index is plenty. If you want
+    large blocks, you'd naturally want larger packets and larger fragments,
+    otherwise it's just a silly exercise to think to try to send a gig
+    fire through 32 bytes at a time =p
 
-    Might be nice to add a validate step to the config for connection/channels
+    Need to allocate a structure up to the maximum fragment size, and 
+    keep that in the interface where it can be accessed by the channel
+    data.
+
+    The structure should be extremely well packed to efficiently support
+    large blocks, and be cache coherent.
+
+    The actual block data itself should be dynamically allocated
+    and passed around via shared_ptr. Blocks are large. No copying!
+
+    Also, the per-sent packet sliding window needs a new entry showing if
+    this packet had a block fragment, or if it contains messages.
+
+    Do not support packets with both a block fragment *and* regular
+    messages. You have one or the other. Large blocks are large, and
+    are expected to stall out transmission until they are done.
+
+    When searching for messages to add to packet data:
+
+    a) if the first unacked message is *not* a large block
+
+      iterate left to right to include messages, but *stop*
+      at the first large block. don't go past it or send it,
+      but only send non-large block messages before it until
+      they are all acked.
+
+    b) if the first unacked message is a large block
+
+      focus only on sending this large block.
+
+      go "inside" it and do the fragment race, eg.  per-fragment have time 
+      last sent, iterate from left to right but since block is large, maintain index 
+      of first unacked block.
+
+      then go from left to right searching for an unacked fragment that
+      has been not sent within resend time, perhaps limit the search
+      to some reasonable maximum number of fragments ahead, eg. + 256
+      after the first unacked fragment.
+
+    implement code to process acks, basically this means find the fragment id
+    and look up in the send structure for the current block and ack that fragment
+
+    should be reasonably easy.
 
     ----------------------
 
-    Setup a large variety of different message types, eg. small blocks, large blocks
-    large messages, small messages and so on. Make the packet size quite small so it
-    is continually being exercised and make the test smart enough to fill the send
-    queue up massively, as much as can be done without overflowing it, stress the
-    system as hard as possible!
+    Might be nice to add a validate step to the config for connection/channels
+    because it's possible to specify a config that doesn't work now. eg. 
+    interdependent parameters.
+
+    ----------------------
+
+    Move the channel budget out of the channel config (static)
+    and in to the connection. 
+
+    Channel budget should be dynamic. The user should be able to derive their own 
+    connection type and specify channel budgets dynamically based on flow control, 
+    for example.
+
+    ----------------------
+
+    Implement unreliable message channel.
+
+    Implement something where if you pass in -1 to the channel budget,
+    it gives that last channel access to the remaining bits in the packet.
+
+    This prequires that a channel accurately estimates the bits it is 
+    using in the packet data, eg. via return perhaps?
+
+    We should verify that the estimated bits are >= the actual serialized
+    bits on write. I'm OK if it is not exact, although it can be made so.
+
+    After this is working, get the soak test working such that it 
+    has a second channel of unreliable events with -1 budget.
+
+    Send so many unreliable events that the packet is almost always full.
+
+    Verify soak tests works, unreliable events get through etc.
 
     --------------
 
@@ -73,26 +133,24 @@ TODO:
 
     What is next?
 
-    1) Implement the bit packer. This is quite important to actually be taken seriously. -- DONE
+    1) Start doing performance analysis (CPU, memory etc.)
 
-    2) Start doing performance analysis (CPU, memory etc.)
+    2) Investigate using a custom allocator. Potentially ditch STL usage at this point.
 
-    3) Investigate using a custom allocator. Potentially ditch STL usage at this point.
+    3) Consider cost of shared_ptr. Is it slow? Where should I use it? Where should I not?
 
-    4) Consider cost of shared_ptr. Is it slow? Where should I use it? Where should I not?
-
-    5) Integrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
+    4) Integrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
        for compression. Try it out in the stress test and see how it generates dictionaries
        and how much compression it gets post-dictionary and so on. Do not check in the oodle
        libs, but do check in the interface and source code that uses it.
 
-    6) Implement encryption via key, plus hash to detect tampering (unified). Optional feature.
+    5) Implement encryption via key, plus hash to detect tampering (unified). Optional feature.
 
-    7) Implement an unreliable channel (messages), 
+    6) Implement an unreliable channel (messages), 
        eg. queue up unreliable messages to send and discard any that don't fit in the packet.
        Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
 
-    8) Implement an atomic queue on top of the client and server interface for sending
+    7) Implement an atomic queue on top of the client and server interface for sending
        and receiving user packets. This interface should allow running the actual serialization
        and packet reading entirely on a separate thread. Do it here where it is most natural,
        to avoid overcomplicating the interface/connection code.
