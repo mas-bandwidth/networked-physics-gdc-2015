@@ -65,6 +65,46 @@ Monday May 25th, 2014:
     Seems there is some data corruption on receive. A byte at a weird
     index (1985?) is zero in the second received block. Why is this?!
 
+    Gotta debug why the block is getting corrupted.
+
+    Seems like it is, at least for the first block being sent, off by 64
+
+    eg. 1024 - 960 = 64
+
+    My guess is an off by one on the last fragment?
+
+    Passes now for first block, but second block which is the first
+    one that has a non-even multiple of fragments, has a problem with
+    the last 64 bytes
+
+    eg. 2049 - 1985 = 64
+
+    My guess is that I'm off by one in the case of the block with remainder?
+
+    Yep. Off by one. Was not dividing as float inside ceil.
+
+    Now I'm getting an assert in the large block test, under packet loss:
+
+    Assertion failed: (data.blockId == expectedBlockId), function ProcessData, file ../include/ReliableMessageChannel.h, line 589.
+
+    Is this a valid assertion? It seems to indicate that a block is coming in
+    but with an unexpected message id. But can this possibly happen, legitimately?
+
+    It would seem it could happen if a block goes incorrectly to start sending
+    the next block, before the current block is fully acked. Is this happening?
+
+    It seems that under high packet loss the sender can still be thinking
+    that he is on block 12, when the receiver is ready for block 13.
+
+    I'm guessing this is just a delayed reaction, eg. some acks that don't
+    get through. The sender recovers and works just fine, but exception throwing
+    in packet processing, it's not an exceptional thing -- can totally happen.
+
+    These aren't conditions that are assert worthy. They can happen in the real world.
+
+    Are there other conditions I thought which were imposible, but can actually
+    happen under high packet loss? Probably!
+
 
 Sunday May 25th, 2014:
 ----------------------

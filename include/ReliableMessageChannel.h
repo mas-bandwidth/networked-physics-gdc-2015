@@ -254,7 +254,7 @@ namespace protocol
 
 //            cout << "message overhead is " << m_messageOverheadBits << " bits" << endl;
 
-            m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / m_config.blockFragmentSize );
+            m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
 
 //            cout << "max block fragments = " << m_maxBlockFragments << endl;
 
@@ -286,9 +286,10 @@ namespace protocol
                     largeBlock = true;
             }
 
+/*
             if ( largeBlock )
                 cout << "sent large block " << m_sendMessageId << endl;
-
+*/
             bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
             assert( result );
 
@@ -407,10 +408,10 @@ namespace protocol
                 {
                     m_sendLargeBlock.active = true;
                     m_sendLargeBlock.blockId = firstMessageId;
+                    m_sendLargeBlock.numFragments = (int) ceil( block->size() / (float)m_config.blockFragmentSize );
                     m_sendLargeBlock.numAckedFragments = 0;
-                    m_sendLargeBlock.numFragments = ceil( block->size() / m_config.blockFragmentSize );
 
-                    cout << "sending large block " << firstMessageId << " in " << m_sendLargeBlock.numFragments << " fragments" << endl;
+//                    cout << "sending large block " << firstMessageId << " in " << m_sendLargeBlock.numFragments << " fragments" << endl;
 
                     assert( m_sendLargeBlock.numFragments >= 0 );
                     assert( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
@@ -436,7 +437,7 @@ namespace protocol
                 if ( fragmentId == -1 )
                     return nullptr;
 
-                cout << "sending fragment " << fragmentId << endl;
+//                cout << "sending fragment " << fragmentId << endl;
 
                 auto data = make_shared<ReliableMessageChannelData>( m_config );
                 data->largeBlock = 1;
@@ -446,13 +447,15 @@ namespace protocol
                 data->fragment = make_shared<Block>( m_config.blockFragmentSize, 0 );
 
                 int fragmentBytes = m_config.blockFragmentSize;
-                if ( fragmentId == m_sendLargeBlock.numFragments - 1 )
-                    fragmentBytes = block->size() % m_config.blockFragmentSize;
+                int fragmentRemainder = block->size() % m_config.blockFragmentSize;
+                if ( fragmentRemainder && fragmentId == m_sendLargeBlock.numFragments - 1 )
+                    fragmentBytes = fragmentRemainder;
 
                 assert( fragmentBytes >= 0 );
                 assert( fragmentBytes <= m_config.blockFragmentSize );
-                uint8_t * ptr = &( (*block)[fragmentId*m_config.blockFragmentSize] );
-                memcpy( &((*data->fragment)[0]), ptr, fragmentBytes );
+                uint8_t * src = &( (*block)[fragmentId*m_config.blockFragmentSize] );
+                uint8_t * dst = &( (*data->fragment)[0] );
+                memcpy( dst, src, fragmentBytes );
 
                 auto sentPacketData = m_sentPackets->InsertFast( sequence );
                 assert( sentPacketData );
@@ -564,8 +567,9 @@ namespace protocol
             /*
                 If we are processing a large block, but we receive a packet that
                 contains non-large block data, eg. bitpacked messages or small blocks
-                throw an exception to discard the packet. This shouldn't happen!
+                throw an exception to discard the packet.
             */
+
             if ( !data.largeBlock && m_receiveLargeBlock.active )
                 throw runtime_error( "received unexpected bitpacked message or small block while receiving large block" );
 
@@ -583,12 +587,10 @@ namespace protocol
                 {
                     const uint16_t expectedBlockId = m_receiveQueue->GetSequence();
 
-                    assert( data.blockId == expectedBlockId );
-
                     if ( data.blockId != expectedBlockId )
                         throw runtime_error( "unexpected large block id" );
 
-                    const int numFragments = ceil( data.blockSize / m_config.blockFragmentSize );
+                    const int numFragments = (int) ceil( data.blockSize / (float)m_config.blockFragmentSize );
 
                     assert( numFragments >= 0 );
                     assert( numFragments <= m_maxBlockFragments );
@@ -596,7 +598,7 @@ namespace protocol
                     if ( numFragments < 0 || numFragments > m_maxBlockFragments )
                         throw runtime_error( "large block num fragments outside of range" );
 
-                    cout << "receiving large block " << data.blockId << " (" << data.blockSize << " bytes)" << endl;
+//                    cout << "receiving large block " << data.blockId << " (" << data.blockSize << " bytes)" << endl;
 
                     m_receiveLargeBlock.active = true;
                     m_receiveLargeBlock.numFragments = numFragments;
@@ -628,15 +630,18 @@ namespace protocol
 
                 if ( !fragment.received )
                 {
+//                    cout << "received fragment " << data.fragmentId << endl;
+
                     fragment.received = 1;
 
                     auto block = m_receiveLargeBlock.block;
 
                     int fragmentBytes = m_config.blockFragmentSize;
-                    if ( data.fragmentId == m_sendLargeBlock.numFragments - 1 )
-                        fragmentBytes = block->size() % m_config.blockFragmentSize;
+                    int fragmentRemainder = block->size() % m_config.blockFragmentSize;
+                    if ( fragmentRemainder && data.fragmentId == m_sendLargeBlock.numFragments - 1 )
+                        fragmentBytes = fragmentRemainder;
 
-                    cout << "fragment bytes " << fragmentBytes << endl;
+//                    cout << "fragment bytes " << fragmentBytes << endl;
 
                     assert( fragmentBytes >= 0 );
                     assert( fragmentBytes <= m_config.blockFragmentSize );
@@ -648,7 +653,7 @@ namespace protocol
 
                     if ( m_receiveLargeBlock.numReceivedFragments == m_receiveLargeBlock.numFragments )
                     {
-                        cout << "received block " << m_receiveLargeBlock.blockId << endl;
+//                        cout << "received block " << m_receiveLargeBlock.blockId << endl;
 
                         auto blockMessage = make_shared<BlockMessage>( m_receiveLargeBlock.block );
 
@@ -752,7 +757,7 @@ namespace protocol
 
                 if ( !fragment.acked )
                 {
-                    cout << "acked fragment " << sentPacket->fragmentId << endl;
+//                    cout << "acked fragment " << sentPacket->fragmentId << endl;
 
                     fragment.acked = true;
                     
@@ -760,7 +765,7 @@ namespace protocol
 
                     if ( m_sendLargeBlock.numAckedFragments == m_sendLargeBlock.numFragments )
                     {
-                        cout << "large block " << m_sendLargeBlock.blockId << " acked" << endl;
+//                        cout << "large block " << m_sendLargeBlock.blockId << " acked" << endl;
 
                         m_sendLargeBlock.active = false;
 

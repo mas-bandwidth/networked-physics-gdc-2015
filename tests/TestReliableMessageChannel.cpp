@@ -297,7 +297,7 @@ void test_reliable_message_channel_large_blocks()
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto block = make_shared<Block>( ( i + 1 ) * 1024 + i, i );
+        auto block = make_shared<Block>( ( i + 1 ) * 1024 + i, i + 1 );
         messageChannel->SendBlock( block );
     }
 
@@ -306,7 +306,9 @@ void test_reliable_message_channel_large_blocks()
 
     uint64_t numMessagesReceived = 0;
 
-    for ( int i = 0; i < 1000; ++i )
+    int iteration = 0;
+
+    while ( true )
     {  
         auto writePacket = connection.WritePacket();
 
@@ -320,15 +322,18 @@ void test_reliable_message_channel_large_blocks()
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
         readPacket->Serialize( readStream );
 
-        // todo: bring this back once finished
-        //if ( ( rand() % 10 ) == 0 )
+        if ( ( rand() % 10 ) == 0 )
             connection.ReadPacket( readPacket );
 
-        assert( connection.GetCounter( Connection::PacketsRead ) <= i+1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
+        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= i+1 );
-        assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
+        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+
+        // todo: i really dislike this counter name. it sounds like a bad #
+        // but in fact it is going to naturally be non-zero under high latency.
+
+        //assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 
         while ( true )
         {
@@ -344,18 +349,11 @@ void test_reliable_message_channel_large_blocks()
 
             auto block = blockMessage->GetBlock();
 
-            cout << "block size is " << block->size() << " bytes" << endl;
+            cout << "received block " << blockMessage->GetId() << " (" << block->size() << " bytes)" << endl;
 
             assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
-
-            int index = 0;
             for ( auto c : *block )
-            {
-                if ( c != numMessagesReceived )
-                    cout << "bad byte: " << int(c) << " at index " << index << endl;
-                assert( c == numMessagesReceived );
-                index++;
-            }
+                assert( c == numMessagesReceived + 1 );
 
             // todo: must verify actual contents of block, eg. in such a way that
             // the byte of each block is unique, not always the same value. too easy
@@ -374,6 +372,8 @@ void test_reliable_message_channel_large_blocks()
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesDiscardedEarly ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
+
+        iteration++;
     }
 
     assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );

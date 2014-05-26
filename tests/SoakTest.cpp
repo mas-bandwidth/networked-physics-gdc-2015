@@ -37,7 +37,7 @@ enum MessageType
     MESSAGE_Test
 };
 
-static int messageBitsArray[] = { 1, 32, 12, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8 };
+static int messageBitsArray[] = { 1, 320, 120, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8, 512, 1000, 5000, 5, 3, 7, 800 };
 
 int GetNumBitsForMessage( uint16_t sequence )
 {
@@ -94,7 +94,7 @@ void soak_test()
     auto packetFactory = make_shared<PacketFactory>();
     auto messageFactory = make_shared<MessageFactory>();
 
-    const int MaxPacketSize = 256;
+    const int MaxPacketSize = 4096;
 
     BSDSocketsInterfaceConfig interfaceConfig;
     interfaceConfig.port = 10000;
@@ -117,10 +117,13 @@ void soak_test()
     packetFactory->SetInterface( connection.GetInterface() );
 
     ReliableMessageChannelConfig messageChannelConfig;
-    messageChannelConfig.maxMessagesPerPacket = 64;
-    messageChannelConfig.sendQueueSize = 256;
-    messageChannelConfig.receiveQueueSize = 64;
-    messageChannelConfig.packetBudget = 200;           // todo: this should move into the connection. eg. budget per-channel
+    messageChannelConfig.maxMessagesPerPacket = 256;
+    messageChannelConfig.sendQueueSize = 2048;
+    messageChannelConfig.receiveQueueSize = 512;
+    messageChannelConfig.packetBudget = 4000;
+    messageChannelConfig.maxMessageSize = 1024;
+    messageChannelConfig.blockFragmentSize = 3900;
+    messageChannelConfig.maxLargeBlockSize = 32 * 1024 * 1024;
     messageChannelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
     
     auto messageChannel = make_shared<ReliableMessageChannel>( messageChannelConfig );
@@ -147,36 +150,37 @@ void soak_test()
             if ( !messageChannel->CanSendMessage() )
                 break;
 
-            switch ( rand() % 2 )
+            int value = rand() % 10000;
+
+            if ( value < 5000 )
             {
-                case 0:
-                {
-                    // standard message (bitpacked)
+                // bitpacked message
 
-//                  cout << format_string( "%09.2f - sent message %d", timeBase.time, message->GetId() ) << endl;
-    
-                    auto message = make_shared<TestMessage>();
-                    message->sequence = sendMessageId;
-                    messageChannel->SendMessage( message );
-                }
-                break;
+//              cout << format_string( "%09.2f - sent message %d", timeBase.time, message->GetId() ) << endl;
 
-                case 1:
-                {
-                    // small block
+                auto message = make_shared<TestMessage>();
+                message->sequence = sendMessageId;
+                messageChannel->SendMessage( message );
+            }
+            else if ( value < 9999 )
+            {
+                // small block
 
-//                  cout << format_string( "%09.2f - sent small block %d", timeBase.time, message->GetId() ) << endl;
+//                cout << format_string( "%09.2f - sent small block %d", timeBase.time, message->GetId() ) << endl;
 
-                    int index = sendMessageId % 32;
-                    auto block = make_shared<Block>( index + 1, index );
+                int index = sendMessageId % 32;
+                auto block = make_shared<Block>( index + 1, index );
+                messageChannel->SendBlock( block );
+            }
+            else
+            {
+                // large block
+
+//                  cout << format_string( "%09.2f - sent large block %d", timeBase.time, message->GetId() ) << endl;
+
+                    int index = sendMessageId % 4;
+                    auto block = make_shared<Block>( (index+1) * 1024 * 1000 + index, index );
                     messageChannel->SendBlock( block );
-                }
-                break;
-
-                // todo: large block
-
-                default:
-                    assert( false );
             }
 
             sendMessageId++;
@@ -201,7 +205,7 @@ void soak_test()
             if ( !packet )
                 break;
 
-            if ( rand() % 2 )
+            if ( ( rand() % 20 ) == 0 )
                 continue;
 
             assert( packet->GetAddress() == address );
@@ -233,11 +237,23 @@ void soak_test()
                 auto blockMessage = static_pointer_cast<BlockMessage>( message );
                 auto block = blockMessage->GetBlock();
                 assert( block );
-                const int index = numMessagesReceived % 32;
-                assert( block->size() == index + 1 );
-                for ( auto c : *block )
-                    assert( c == index );
-                cout << format_string( "%09.2f - received message %d - small block", timeBase.time, message->GetId() ) << endl;
+                
+                if ( block->size() <= messageChannelConfig.maxSmallBlockSize )
+                {
+                    const int index = numMessagesReceived % 32;
+                    assert( block->size() == index + 1 );
+                    for ( auto c : *block )
+                        assert( c == index );
+                    cout << format_string( "%09.2f - received message %d - small block", timeBase.time, message->GetId() ) << endl;
+                }
+                else
+                {
+                    const int index = numMessagesReceived % 4;
+                    assert( block->size() == (index + 1 ) * 1024 * 1000 + index );
+                    for ( auto c : *block )
+                        assert( c == index );
+                    cout << format_string( "%09.2f - received message %d - large block", timeBase.time, message->GetId() ) << endl;
+                }
             }
 
             numMessagesReceived++;

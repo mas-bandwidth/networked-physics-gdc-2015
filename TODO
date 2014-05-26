@@ -1,8 +1,25 @@
 DONE:
 
+    Add some rare large blocks to the soak test. Make sure everything is rockin'
+
+    Seems to be working fine.
+
+    Bumped up soak test so it's really going to be pushing the limits of CPU
+
 TODO:
 
-    Gotta debug why the block is getting corrupted.
+    During soak test it would be nice to see received x/y fragments of large block.
+    This way there is continuous logging and it is a nice steady stream, vs. the current
+    large hitch on each block which is occuring.
+
+    Extend soak test to actually validate contents of blocks properly,
+    eg. make each byte a modulus of byte index in block.
+
+    Soak test should have some actual latency! Holy shit this is important.
+
+    -------------
+
+    Reliable channel tests should also have some actual latency in them.
 
     Make the small and large block data more distinct, eg. each byte
     a unique modulus of byte index and sequence, and verify each byte
@@ -12,11 +29,24 @@ TODO:
     shuffled, and since all bytes ar the same value the test would
     not notice a thing!
 
+    Add a test that mixes messages, small blocks and occasional large blocks.
+
     -----------
 
     Add counters for all the different things inside the large blocks,
     eg. # of large blocks sent, received, read/written, also # of
     fragments read/written.
+
+    -----------
+
+    I don't like the exception throw on packet receive. This is sloppy!
+
+    These are not exceptional conditions. These *can* and do happen under
+    real usage, all it requires is some latency or out of order packets.
+
+    Using an exception (slow path) for such things is *WRONG*
+
+    return false from process data to indicate the packet should be discarded instead!
 
     ----------------------
 
