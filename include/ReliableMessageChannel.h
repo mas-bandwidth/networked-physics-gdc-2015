@@ -52,13 +52,14 @@ namespace protocol
     public:
 
         ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
-            : config( _config ), largeBlock(0), blockId(0), fragmentId(0) {}
+            : config( _config ), largeBlock(0), blockSize(0), blockId(0), fragmentId(0) {}
 
         vector<shared_ptr<Message>> messages;           // array of messages. valid if *not* sending large block.
         uint64_t largeBlock : 1;                        // true if currently sending a large block.
-        uint64_t blockId : 16;                          // block id. valid only if sending large block.
-        uint64_t fragmentId : 16;                       // fragment id. valid only if sending large block.
-        shared_ptr<Block> fragment;                     // the actual fragment data. vector of "config.fragmentSize" bytes.
+        uint64_t blockSize : 32;                        // block size in bytes. valid if sending large block.
+        uint64_t blockId : 16;                          // block id. valid if sending large block.
+        uint64_t fragmentId : 16;                       // fragment id. valid if sending large block.
+        shared_ptr<Block> fragment;                     // the actual fragment data. valid if sending large block.
 
         void Serialize( Stream & stream )
         {
@@ -78,6 +79,7 @@ namespace protocol
 
                 serialize_bits( stream, blockId, 16 );
                 serialize_bits( stream, fragmentId, 16 );
+                serialize_bits( stream, blockSize, 32 );
 
                 Block & data = *fragment;
                 for ( int i = 0; i < config.blockFragmentSize; ++i )
@@ -128,10 +130,10 @@ namespace protocol
         {
             shared_ptr<Message> message;
             double timeLastSent;
-            uint32_t sequence : 16;                      // this is the message id      
-            uint32_t valid : 1;
-            uint32_t largeBlock : 1;
-            uint32_t measuredBits : 15;
+            uint64_t sequence : 16;                      // this is the message id      
+            uint64_t valid : 1;
+            uint64_t largeBlock : 1;
+            uint64_t measuredBits : 15;
             SendQueueEntry()
                 : valid(0) {}
             SendQueueEntry( shared_ptr<Message> _message, uint16_t _sequence, bool _largeBlock )
@@ -142,12 +144,12 @@ namespace protocol
         {
             vector<uint16_t> messageIds;
             double timeSent;
-            uint32_t sequence : 16;                      // this is the packet sequence #
-            uint32_t acked : 1;
-            uint32_t valid : 1;
-            uint32_t largeBlock : 1;                     // if 1 then this sent packet contains a large block fragment
-            uint32_t blockId : 16;                       // block id. valid only when sending large block.
-            uint32_t fragmentId : 16;                    // fragment id. valid only when sending large block.
+            uint64_t sequence : 16;                      // this is the packet sequence #
+            uint64_t acked : 1;
+            uint64_t valid : 1;
+            uint64_t largeBlock : 1;                     // if 1 then this sent packet contains a large block fragment
+            uint64_t blockId : 16;                       // block id. valid only when sending large block.
+            uint64_t fragmentId : 16;                    // fragment id. valid only when sending large block.
             SentPacketEntry() : valid(0) {}
         };
 
@@ -198,12 +200,20 @@ namespace protocol
         {
             ReceiveLargeBlockData()
             {
-                // ...
+                active = false;
+                numFragments = 0;
+                numReceivedFragments = 0;
+                blockId = 0;
+                blockSize = 0;
             }
 
             bool active;                                // true if we are currently receiving a large block
             int numFragments;                           // number of fragments in this block
+            int numReceivedFragments;                   // number of fragments received.
+            uint16_t blockId;                           // block id being currently received.
+            uint32_t blockSize;                         // block size in bytes.
             vector<ReceiveFragmentData> fragments;      // per-fragment data for receive
+            shared_ptr<Block> block;                    // the actual block being received!!!
         };
 
     public:
@@ -430,6 +440,7 @@ namespace protocol
 
                 auto data = make_shared<ReliableMessageChannelData>( m_config );
                 data->largeBlock = 1;
+                data->blockSize = block->size();
                 data->blockId = firstMessageId;
                 data->fragmentId = fragmentId;
                 data->fragment = make_shared<Block>( m_config.blockFragmentSize, 0 );
@@ -440,17 +451,15 @@ namespace protocol
 
                 assert( fragmentBytes >= 0 );
                 assert( fragmentBytes <= m_config.blockFragmentSize );
-
                 uint8_t * ptr = &( (*block)[fragmentId*m_config.blockFragmentSize] );
-                for ( int i = 0; i < fragmentBytes; ++i )
-                    (*data->fragment)[i] = *( ptr + i );
+                memcpy( &((*data->fragment)[0]), ptr, fragmentBytes );
 
                 auto sentPacketData = m_sentPackets->InsertFast( sequence );
                 assert( sentPacketData );
+                sentPacketData->acked = 0;
                 sentPacketData->largeBlock = 1;
                 sentPacketData->blockId = firstMessageId;
                 sentPacketData->fragmentId = fragmentId;
-                sentPacketData->acked = 0;
                 sentPacketData->timeSent = m_timeBase.time;
 
                 // optimization #1: cache oldest unacked fragment id. start the search
@@ -552,49 +561,162 @@ namespace protocol
 
 //            cout << "process message channel data: " << sequence << endl;
 
-            bool earlyMessage = false;
+            /*
+                If we are processing a large block, but we receive a packet that
+                contains non-large block data, eg. bitpacked messages or small blocks
+                throw an exception to discard the packet. This shouldn't happen!
+            */
+            if ( !data.largeBlock && m_receiveLargeBlock.active )
+                throw runtime_error( "received unexpected bitpacked message or small block while receiving large block" );
 
-            const uint16_t minMessageId = m_receiveMessageId;
-            const uint16_t maxMessageId = m_receiveMessageId + m_config.receiveQueueSize - 1;
+            // now process the packet data according to its contents...
 
-            // process messages included in this packet data
-
-//            cout << data.messages.size() << " messages in packet" << endl;
-
-            for ( auto message : data.messages )
+            if ( data.largeBlock )
             {
-                assert( message );
+                /*
+                    Large block mode.
+                    This packet includes a fragment for the large block currently 
+                    being received. Only one large block is sent at a time.
+                */
 
-                const uint16_t messageId = message->GetId();
-
-//                cout << "add message to receive queue: " << messageId << endl;
-
-                if ( sequence_less_than( messageId, minMessageId ) )
+                if ( !m_receiveLargeBlock.active )
                 {
-//                    cout << "old message " << messageId << endl;
+                    const uint16_t expectedBlockId = m_receiveQueue->GetSequence();
 
-                    m_counters[MessagesDiscardedLate]++;
+                    assert( data.blockId == expectedBlockId );
+
+                    if ( data.blockId != expectedBlockId )
+                        throw runtime_error( "unexpected large block id" );
+
+                    const int numFragments = ceil( data.blockSize / m_config.blockFragmentSize );
+
+                    assert( numFragments >= 0 );
+                    assert( numFragments <= m_maxBlockFragments );
+
+                    if ( numFragments < 0 || numFragments > m_maxBlockFragments )
+                        throw runtime_error( "large block num fragments outside of range" );
+
+                    cout << "receiving large block " << data.blockId << " (" << data.blockSize << " bytes)" << endl;
+
+                    m_receiveLargeBlock.active = true;
+                    m_receiveLargeBlock.numFragments = numFragments;
+                    m_receiveLargeBlock.numReceivedFragments = 0;
+                    m_receiveLargeBlock.blockId = data.blockId;
+                    m_receiveLargeBlock.blockSize = data.blockSize;
+                    m_receiveLargeBlock.block = make_shared<Block>( m_receiveLargeBlock.blockSize );
+                    
+                    for ( int i = 0; i < numFragments; ++i )
+                        m_receiveLargeBlock.fragments[i] = ReceiveFragmentData();
                 }
-                else if ( sequence_greater_than( messageId, maxMessageId ) )
+
+                assert( m_receiveLargeBlock.active );
+
+                assert( data.blockId == m_receiveLargeBlock.blockId );
+                assert( data.blockSize == m_receiveLargeBlock.blockSize );
+                assert( data.fragmentId < m_receiveLargeBlock.numFragments );
+
+                if ( data.blockId != m_receiveLargeBlock.blockId )
+                    throw runtime_error( "receive large block id mismatch" );
+
+                if ( data.blockSize != m_receiveLargeBlock.blockSize )
+                    throw runtime_error( "receive large block size mismatch" );
+
+                if ( data.fragmentId >= m_receiveLargeBlock.numFragments )
+                    throw runtime_error( "receive large block fragment id out of bounds" );
+
+                auto & fragment = m_receiveLargeBlock.fragments[data.fragmentId];
+
+                if ( !fragment.received )
                 {
-//                    cout << "early message " << messageId << endl;
+                    fragment.received = 1;
 
-                    earlyMessage = true;
+                    auto block = m_receiveLargeBlock.block;
 
-                    m_counters[MessagesDiscardedEarly]++;
+                    int fragmentBytes = m_config.blockFragmentSize;
+                    if ( data.fragmentId == m_sendLargeBlock.numFragments - 1 )
+                        fragmentBytes = block->size() % m_config.blockFragmentSize;
+
+                    cout << "fragment bytes " << fragmentBytes << endl;
+
+                    assert( fragmentBytes >= 0 );
+                    assert( fragmentBytes <= m_config.blockFragmentSize );
+                    uint8_t * src = &( (*data.fragment)[0] );
+                    uint8_t * dst = &( (*block)[data.fragmentId*m_config.blockFragmentSize] );
+                    memcpy( dst, src, fragmentBytes );
+
+                    m_receiveLargeBlock.numReceivedFragments++;
+
+                    if ( m_receiveLargeBlock.numReceivedFragments == m_receiveLargeBlock.numFragments )
+                    {
+                        cout << "received block " << m_receiveLargeBlock.blockId << endl;
+
+                        auto blockMessage = make_shared<BlockMessage>( m_receiveLargeBlock.block );
+
+                        blockMessage->SetId( m_receiveLargeBlock.blockId );
+
+                        m_receiveQueue->Insert( ReceiveQueueEntry( blockMessage, m_receiveLargeBlock.blockId ) );
+
+                        m_receiveLargeBlock.active = false;
+                    }
                 }
-                else
-                {
-                    bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
 
-                    assert( result );
-                }
-
-                m_counters[MessagesRead]++;
+                // todo: optimization. we don't really need anything except one bit per
+                // received fragment. it would be a memory optimization (32x) to get it
+                // down to a bit array vs. the 32bit per struct in vector.
             }
+            else
+            {
+                /*
+                    Bit-packed message and small block mode.
+                    Multiple messages and small blocks are included
+                    in each packet and each needs to be be processed
+                    in a sliding window and dequeued reliably and in-order.
+                */
 
-            if ( earlyMessage )
-                throw runtime_error( "received early message" );
+                bool earlyMessage = false;
+
+                const uint16_t minMessageId = m_receiveMessageId;
+                const uint16_t maxMessageId = m_receiveMessageId + m_config.receiveQueueSize - 1;
+
+                // process messages included in this packet data
+
+    //            cout << data.messages.size() << " messages in packet" << endl;
+
+                for ( auto message : data.messages )
+                {
+                    assert( message );
+
+                    const uint16_t messageId = message->GetId();
+
+    //                cout << "add message to receive queue: " << messageId << endl;
+
+                    if ( sequence_less_than( messageId, minMessageId ) )
+                    {
+    //                    cout << "old message " << messageId << endl;
+
+                        m_counters[MessagesDiscardedLate]++;
+                    }
+                    else if ( sequence_greater_than( messageId, maxMessageId ) )
+                    {
+    //                    cout << "early message " << messageId << endl;
+
+                        earlyMessage = true;
+
+                        m_counters[MessagesDiscardedEarly]++;
+                    }
+                    else
+                    {
+                        bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
+
+                        assert( result );
+                    }
+
+                    m_counters[MessagesRead]++;
+                }
+
+                if ( earlyMessage )
+                    throw runtime_error( "received early message" );
+            }
         }
 
         void ProcessAck( uint16_t ack )

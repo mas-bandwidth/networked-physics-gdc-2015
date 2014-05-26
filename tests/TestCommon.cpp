@@ -43,7 +43,7 @@ void test_sliding_window()
     for ( int i = 0; i <= size*4; ++i )
     {
         slidingWindow.Insert( i );
-        assert( slidingWindow.GetSequence() == i );
+        assert( slidingWindow.GetSequence() == i + 1 );
     }
 
     for ( int i = 0; i <= size; ++i )
@@ -83,7 +83,7 @@ void test_generate_ack_bits()
     uint32_t ack_bits = -1;
 
     GenerateAckBits( received_packets, ack, ack_bits );
-    assert( ack == 0 );
+    assert( ack == 0xFFFF );
     assert( ack_bits == 0 );
 
     for ( int i = 0; i <= size; ++i )

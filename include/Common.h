@@ -247,14 +247,14 @@ namespace protocol
 
             if ( m_first_entry )
             {
-                m_sequence = entry.sequence;
+                m_sequence = entry.sequence + 1;
                 m_first_entry = false;
             }
-            else if ( sequence_greater_than( entry.sequence, m_sequence ) )
+            else if ( sequence_greater_than( entry.sequence + 1, m_sequence ) )
             {
-                m_sequence = entry.sequence;
+                m_sequence = entry.sequence + 1;
             }
-            else if ( sequence_less_than( entry.sequence, ( m_sequence - ( m_entries.size() - 1 ) ) ) )
+            else if ( sequence_less_than( entry.sequence, m_sequence - m_entries.size() ) )
             {
                 return false;
             }
@@ -271,14 +271,14 @@ namespace protocol
         {
             if ( m_first_entry )
             {
-                m_sequence = sequence;
+                m_sequence = sequence + 1;
                 m_first_entry = false;
             }
-            else if ( sequence_greater_than( sequence, m_sequence ) )
+            else if ( sequence_greater_than( sequence + 1, m_sequence ) )
             {
-                m_sequence = sequence;
+                m_sequence = sequence + 1;
             }
-            else if ( sequence_less_than( sequence, ( m_sequence - ( m_entries.size() - 1 ) ) ) )
+            else if ( sequence_less_than( sequence, m_sequence - m_entries.size() ) )
             {
                 return nullptr;
             }
@@ -338,7 +338,7 @@ namespace protocol
                                                 uint16_t & ack,
                                                 uint32_t & ack_bits )
     {
-        ack = packets.GetSequence();
+        ack = packets.GetSequence() - 1;
         ack_bits = 0;
         for ( int i = 0; i < 32; ++i )
         {

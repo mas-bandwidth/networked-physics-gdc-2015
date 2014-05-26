@@ -1,41 +1,35 @@
 DONE:
 
-    Things to do to get the large block codepath working:
-
-        1. Implement code to include a fragment in packet data     <-- DONE
-
-        2. Implement code to fill the sent packet entry            <-- DONE
-           for fragments, so they can be acked. Need both
-           message id for block, and fragment id.
-
-        3. Implement code to process ack, lookup block by id       <--- DONE
-           id and fragment, and mark that fragment as acked,
-           and once all fragments are acked, go to next msg
-           in send queue.
-
-        4. Implement code to serialize read/write fragment data.
-           It's OK to copy the fragment data from the packet to/from
-           the actual block itself, this is no problem given small
-           fragment sizes, and it makes the code implementation
-           much easier (actual block remains private to the channel)
-
 TODO:
 
-        5. Implement code to take that serialize fragment data
-           and copy it in to the block itself on receive,
-           track received vs. not received fragments, and
-           queue the actual block up in receive queue once
-           all fragments have been received.
+    Gotta debug why the block is getting corrupted.
 
-    Hey, I have to store the actual block size inside the block itself,
-    *OR* tag it along with every packet. I think i'll just tag it along
-    for now, to avoid extra complexity.
-    
+    Make the small and large block data more distinct, eg. each byte
+    a unique modulus of byte index and sequence, and verify each byte
+    is correct on receive.
+
+    Current test is too permissive. The block could be completely
+    shuffled, and since all bytes ar the same value the test would
+    not notice a thing!
+
+    -----------
+
+    Add counters for all the different things inside the large blocks,
+    eg. # of large blocks sent, received, read/written, also # of
+    fragments read/written.
+
     ----------------------
 
     Might be nice to add a validate step to the config for connection/channels
     because it's possible to specify a config that doesn't work now. eg. 
     interdependent parameters.
+
+    Would be nice if the reliable message channel could report the minimal functional
+    budget that would work for it, given its configuration. This would be great
+    for the connection to budget for the channel.
+
+    This should be in the base class for channel interface, so we can generically
+    work with and budget channels decently without knowing exactly what they are.
 
     ----------------------
 

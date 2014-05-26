@@ -244,6 +244,9 @@ void test_reliable_message_channel_small_blocks()
             for ( auto c : *block )
                 assert( c == numMessagesReceived );
 
+            // todo: must verify actual contents of block, eg. make it a modulus 
+            // of sequence # and current byte index in the block or something
+
             ++numMessagesReceived;
         }
 
@@ -341,9 +344,22 @@ void test_reliable_message_channel_large_blocks()
 
             auto block = blockMessage->GetBlock();
 
-            assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + i );
+            cout << "block size is " << block->size() << " bytes" << endl;
+
+            assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
+
+            int index = 0;
             for ( auto c : *block )
+            {
+                if ( c != numMessagesReceived )
+                    cout << "bad byte: " << int(c) << " at index " << index << endl;
                 assert( c == numMessagesReceived );
+                index++;
+            }
+
+            // todo: must verify actual contents of block, eg. in such a way that
+            // the byte of each block is unique, not always the same value. too easy
+            // to have a broken implementation slip through otherwise!
 
             ++numMessagesReceived;
         }

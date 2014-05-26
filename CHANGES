@@ -1,3 +1,71 @@
+Monday May 25th, 2014:
+----------------------
+
+    Things to do to get the large block codepath working:
+
+        1. Implement code to include a fragment in packet data          <-- DONE
+
+        2. Implement code to fill the sent packet entry                 <-- DONE
+           for fragments, so they can be acked. Need both
+           message id for block, and fragment id.
+
+        3. Implement code to process ack, lookup block by id            <-- DONE
+           id and fragment, and mark that fragment as acked,
+           and once all fragments are acked, go to next msg
+           in send queue.
+
+        4. Implement code to serialize read/write fragment data.        <-- DONE
+           It's OK to copy the fragment data from the packet to/from
+           the actual block itself, this is no problem given small
+           fragment sizes, and it makes the code implementation
+           much easier (actual block remains private to the channel)
+
+    Hey, I have to store the actual block size inside the serialize data
+    otherwise the receiver has no idea of the actual size. I think just
+    sent a 32bit block size with each fragment, that way any fragment
+    arriving first will prime it up. Done.
+
+        5. Implement code to take that serialize fragment data
+           and copy it in to the block itself on receive,
+           track received vs. not received fragments, and
+           queue the actual block up in receive queue once
+           all fragments have been received.
+
+    On receive side of block I need:
+
+        - active true/false whether we are receiving a block right now
+        - blockId that is currently being received
+        - size of the block that is being received
+        - number of fragments in block that is being received
+        - number of received fragments in block so far
+
+    When a fragment comes in for a block, first check if we are already
+    receiving that block.
+
+    If not receiving, check that we have received all messages ids 
+    prior to the block message id, if not, then discard packet
+    and bump a counter. This should "never happen".
+
+    If already receiving, verify the fragment id is in bounds, 
+    and then check that the block size still matches.
+
+    If we are receiving a block, discard any packet that arrives
+    containing a different block, or non-block messages. This should
+    be an exception and raise a counter because it should "never happen".
+
+    Had to adjust the sliding window so that "GetSequence" returns
+    the next expected sequence to insert, vs. the current one -- which
+    was undefined and not giving me the result I wanted for my "is this
+    large block id the expected next mesasge to be received" check.
+
+    Had to adjust various tests, as well as GenerateAckBits to work
+    with this new scheme. But it makes more sense and the code is
+    clearer post this adjustment.
+
+    Seems there is some data corruption on receive. A byte at a weird
+    index (1985?) is zero in the second received block. Why is this?!
+
+
 Sunday May 25th, 2014:
 ----------------------
 
