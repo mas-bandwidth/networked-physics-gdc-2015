@@ -1,5 +1,42 @@
-Saturday May 24, 2014:
+Sunday May 25th, 2014:
 ----------------------
+
+    User should be able to specify large block fragment size in config,
+    and maximum block size (so we can derive the max # of fragments)
+
+    I think having up to 16 bits fragment index is plenty. If you want
+    large blocks, you'd naturally want larger packets and larger fragments,
+    otherwise it's just a silly exercise to think to try to send a gig
+    file through 32 bytes at a time =p
+
+    Need to allocate a structure up to the maximum fragment size, one
+    on send and other on receive side, for per-fragment data.
+
+    The structure should be extremely well packed to efficiently support
+    large blocks, and be cache coherent.
+
+    The actual block data itself should be dynamically allocated
+    and passed around via shared_ptr. Blocks are large. No copying!
+
+    The per-sent packet sliding window needs a new entry showing if
+    this packet had a block fragment, or if it contains messages.
+
+    Send queue entry needs a "largeBlock" bit for easy processing
+    of the message/small block mode, it needs to go only up to the
+    next large block.
+
+    Added code to break on nullptr send queue entry, because that should mean
+    STOP, there is no entry for this message id. Need to verify with soak test.
+
+    Yep. Works fine.
+
+    Added split for "large block" vs. "message and small block" mode inside
+    get data. Need to implement the large block mode codepath. For the moment
+    it just returns nullptr data (stalls out)
+
+
+Saturday May 24th, 2014:
+------------------------
 
     Shrink the message size in soak test now that we have bitpacker
 

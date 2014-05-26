@@ -1,59 +1,36 @@
 DONE:
 
-    Implement large block serialization.
-
-    User should be able to specify large block fragment size in config,
-    and maximum block size (so we can derive the max # of fragments)
-
-    I think having up to 16 bits fragment index is plenty. If you want
-    large blocks, you'd naturally want larger packets and larger fragments,
-    otherwise it's just a silly exercise to think to try to send a gig
-    file through 32 bytes at a time =p
-
-    Need to allocate a structure up to the maximum fragment size, one
-    on send and other on receive side, for per-fragment data.
-
-    The structure should be extremely well packed to efficiently support
-    large blocks, and be cache coherent.
-
-    The actual block data itself should be dynamically allocated
-    and passed around via shared_ptr. Blocks are large. No copying!
-
-    The per-sent packet sliding window needs a new entry showing if
-    this packet had a block fragment, or if it contains messages.
-
-    Send queue entry needs a "largeBlock" bit for easy processing
-    of the message/small block mode, it needs to go only up to the
-    next large block.
-
-    Added code to break on nullptr send queue entry, because that should mean
-    STOP, there is no entry for this message id. Need to verify with soak test.
-
-    Yep. Works fine.
-
-    Added split for "large block" vs. "message and small block" mode inside
-    get data. Need to implement the large block mode codepath. For the moment
-    it just returns nullptr data (stalls out)
-
-TODO:
-
     Things to do to get the large block codepath working:
 
-        1. Implement code to include a fragment in packet data
+        1. Implement code to include a fragment in packet data     <-- DONE
 
-        2. Implement code to fill the sent packet entry
+        2. Implement code to fill the sent packet entry            <-- DONE
            for fragments, so they can be acked. Need both
            message id for block, and fragment id.
 
-        3. Implement code to serialize read/write fragment data
-           (will need to have access to the current block ptr
-            from inside packet data on write and read, no copying!)
+        3. Implement code to process ack, lookup block by id       <--- DONE
+           id and fragment, and mark that fragment as acked,
+           and once all fragments are acked, go to next msg
+           in send queue.
 
-            ^---- a bit tricky?
+        4. Implement code to serialize read/write fragment data.
+           It's OK to copy the fragment data from the packet to/from
+           the actual block itself, this is no problem given small
+           fragment sizes, and it makes the code implementation
+           much easier (actual block remains private to the channel)
 
-        4. Implement code to process ack, lookup block by message
-           id and fragment, and mark that fragment as acked.
+TODO:
 
+        5. Implement code to take that serialize fragment data
+           and copy it in to the block itself on receive,
+           track received vs. not received fragments, and
+           queue the actual block up in receive queue once
+           all fragments have been received.
+
+    Hey, I have to store the actual block size inside the block itself,
+    *OR* tag it along with every packet. I think i'll just tag it along
+    for now, to avoid extra complexity.
+    
     ----------------------
 
     Might be nice to add a validate step to the config for connection/channels

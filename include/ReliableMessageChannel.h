@@ -47,49 +47,77 @@ namespace protocol
 
     class ReliableMessageChannelData : public ChannelData
     {
-        const ReliableMessageChannelConfig * config;
+        const ReliableMessageChannelConfig & config;
 
     public:
 
-        ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) : config( &_config ) {}
+        ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
+            : config( _config ), largeBlock(0), blockId(0), fragmentId(0) {}
 
-        vector<shared_ptr<Message>> messages;
+        vector<shared_ptr<Message>> messages;           // array of messages. valid if *not* sending large block.
+        uint64_t largeBlock : 1;                        // true if currently sending a large block.
+        uint64_t blockId : 16;                          // block id. valid only if sending large block.
+        uint64_t fragmentId : 16;                       // fragment id. valid only if sending large block.
+        shared_ptr<Block> fragment;                     // the actual fragment data. vector of "config.fragmentSize" bytes.
 
         void Serialize( Stream & stream )
         {
-            assert( config );
-            assert( config->messageFactory );           // IMPORTANT: You must supply a message factory!
+            serialize_bits( stream, largeBlock, 1 );
 
-            int numMessages = stream.IsWriting() ? messages.size() : 0;
-            serialize_int( stream, numMessages, 0, config->maxMessagesPerPacket );
-            if ( stream.IsReading() )
-                messages.resize( numMessages );
-
-            for ( int i = 0; i < numMessages; ++i )
+            if ( largeBlock )
             {
-                #ifndef NDEBUG
                 if ( stream.IsWriting() )
-                    assert( messages[i] );
-                #endif
-
-                int messageType = stream.IsWriting() ? messages[i]->GetType() : 0;
-                serialize_int( stream, messageType, 0, config->messageFactory->GetMaxType() );
-                if ( stream.IsReading() )
                 {
-                    messages[i] = config->messageFactory->Create( messageType );
-                    assert( messages[i] );
-                    assert( messages[i]->GetType() == messageType );
+                    assert( fragment );
+                    assert( fragment->size() == config.blockFragmentSize );
+                }
+                else
+                {
+                    fragment = make_shared<Block>( config.blockFragmentSize );
                 }
 
-                uint16_t messageId = stream.IsWriting() ? messages[i]->GetId() : 0;
-                serialize_bits( stream, messageId, 16 );
-                if ( stream.IsReading() )
-                {
-                    messages[i]->SetId( messageId );
-                    assert( messages[i]->GetId() == messageId );
-                }
+                serialize_bits( stream, blockId, 16 );
+                serialize_bits( stream, fragmentId, 16 );
 
-                messages[i]->Serialize( stream );
+                Block & data = *fragment;
+                for ( int i = 0; i < config.blockFragmentSize; ++i )
+                    serialize_bits( stream, data[i], 8 );
+            }
+            else
+            {
+                assert( config.messageFactory );
+
+                int numMessages = stream.IsWriting() ? messages.size() : 0;
+                serialize_int( stream, numMessages, 0, config.maxMessagesPerPacket );
+                if ( stream.IsReading() )
+                    messages.resize( numMessages );
+
+                for ( int i = 0; i < numMessages; ++i )
+                {
+                    #ifndef NDEBUG
+                    if ( stream.IsWriting() )
+                        assert( messages[i] );
+                    #endif
+
+                    int messageType = stream.IsWriting() ? messages[i]->GetType() : 0;
+                    serialize_int( stream, messageType, 0, config.messageFactory->GetMaxType() );
+                    if ( stream.IsReading() )
+                    {
+                        messages[i] = config.messageFactory->Create( messageType );
+                        assert( messages[i] );
+                        assert( messages[i]->GetType() == messageType );
+                    }
+
+                    uint16_t messageId = stream.IsWriting() ? messages[i]->GetId() : 0;
+                    serialize_bits( stream, messageId, 16 );
+                    if ( stream.IsReading() )
+                    {
+                        messages[i]->SetId( messageId );
+                        assert( messages[i]->GetId() == messageId );
+                    }
+
+                    messages[i]->Serialize( stream );
+                }
             }
         }
     };
@@ -100,7 +128,7 @@ namespace protocol
         {
             shared_ptr<Message> message;
             double timeLastSent;
-            uint32_t sequence : 16;                      // this is actually the message id      
+            uint32_t sequence : 16;                      // this is the message id      
             uint32_t valid : 1;
             uint32_t largeBlock : 1;
             uint32_t measuredBits : 15;
@@ -117,15 +145,16 @@ namespace protocol
             uint32_t sequence : 16;                      // this is the packet sequence #
             uint32_t acked : 1;
             uint32_t valid : 1;
-            uint32_t fragment : 1;                       // if 1 then this sent packet contains a large block fragment
-            uint32_t fragmentId : 16;                    // fragment id. valid only if fragment is 1.
+            uint32_t largeBlock : 1;                     // if 1 then this sent packet contains a large block fragment
+            uint32_t blockId : 16;                       // block id. valid only when sending large block.
+            uint32_t fragmentId : 16;                    // fragment id. valid only when sending large block.
             SentPacketEntry() : valid(0) {}
         };
 
         struct ReceiveQueueEntry
         {
             shared_ptr<Message> message;
-            uint32_t sequence : 16;                      // this is actually the message id      
+            uint32_t sequence : 16;                      // this is the message id      
             uint32_t valid : 1;
             ReceiveQueueEntry()
                 : valid(0) {}
@@ -146,6 +175,35 @@ namespace protocol
             uint32_t received : 1;
             ReceiveFragmentData()
                 : received(0) {}
+        };
+
+        struct SendLargeBlockData
+        {
+            SendLargeBlockData()
+            {
+                active = false;
+                numFragments = 0;
+                numAckedFragments = 0;
+                blockId = 0;
+            }
+
+            bool active;                                // true if we are currently sending a large block
+            int numFragments;                           // number of fragments in the current large block being sent
+            int numAckedFragments;                      // number of acked fragments in current block being sent
+            uint16_t blockId;                           // the message id for the current large block being sent
+            vector<SendFragmentData> fragments;         // per-fragment data for send
+        };
+
+        struct ReceiveLargeBlockData
+        {
+            ReceiveLargeBlockData()
+            {
+                // ...
+            }
+
+            bool active;                                // true if we are currently receiving a large block
+            int numFragments;                           // number of fragments in this block
+            vector<ReceiveFragmentData> fragments;      // per-fragment data for receive
         };
 
     public:
@@ -188,10 +246,10 @@ namespace protocol
 
             m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / m_config.blockFragmentSize );
 
-            cout << "max block fragments = " << m_maxBlockFragments << endl;
+//            cout << "max block fragments = " << m_maxBlockFragments << endl;
 
-            m_sendFragments.resize( m_maxBlockFragments );
-            m_receiveFragments.resize( m_maxBlockFragments );
+            m_sendLargeBlock.fragments.resize( m_maxBlockFragments );
+            m_receiveLargeBlock.fragments.resize( m_maxBlockFragments );
         }
 
         bool CanSendMessage() const
@@ -219,7 +277,7 @@ namespace protocol
             }
 
             if ( largeBlock )
-                cout << "sent large block" << endl;
+                cout << "sent large block " << m_sendMessageId << endl;
 
             bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
             assert( result );
@@ -233,12 +291,16 @@ namespace protocol
             assert( entry->message->GetId() == m_sendMessageId );
             #endif
 
-            // todo: would be nice to have a specialized measure stream that doesn't actually do any work
-            // but measure the # of bits required for a specific serialization
-            Stream stream( STREAM_Write, &m_measureBuffer[0], m_measureBuffer.size() );
-            message->Serialize( stream );
-            entry->measuredBits = stream.GetBits() + m_messageOverheadBits;
-//            cout << "message " << m_sendMessageId << " is " << entry->measuredBits << " bits " << endl;
+            if ( !largeBlock )
+            {
+                // todo: would be nice to have a specialized measure stream that doesn't actually do any work
+                // but measure the # of bits required for a specific serialization
+                Stream stream( STREAM_Write, &m_measureBuffer[0], m_measureBuffer.size() );
+                message->Serialize( stream );
+                entry->measuredBits = stream.GetBits() + m_messageOverheadBits;
+
+//              cout << "message " << m_sendMessageId << " is " << entry->measuredBits << " bits " << endl;
+            }
 
             m_counters[MessagesSent]++;
 
@@ -286,10 +348,13 @@ namespace protocol
 
         shared_ptr<ChannelData> GetData( uint16_t sequence )
         {
-            // find oldest message id in send queue
+            // todo: would be nice to cache the oldest message id in send queue
+            // so we don't have to keep calculating it on every packet sent
+
+            // find first message id in send queue
 
             bool foundMessage = false;
-            uint16_t oldestMessageId = 0;
+            uint16_t firstMessageId = 0;
             const uint16_t baseId = m_sendMessageId - m_config.sendQueueSize;
             for ( int i = 0; i < m_config.sendQueueSize; ++i )
             {
@@ -297,36 +362,110 @@ namespace protocol
                 SendQueueEntry * entry = m_sendQueue->Find( messageId );
                 if ( entry )
                 {
-                    if ( !foundMessage || sequence_less_than( messageId, oldestMessageId ) )
+                    if ( !foundMessage || sequence_less_than( messageId, firstMessageId ) )
                     {
-                        oldestMessageId = messageId;
+                        firstMessageId = messageId;
                         foundMessage = true;
                     }
                 }
             }
 
-            // if we didn't find any messages, there is no data to send
-
             if ( !foundMessage )
                 return nullptr;
 
-            // if the oldest unacked message is a large block, go into large block mode
-            // otherwise stay in message and small block mode (up to next large block)
+            SendQueueEntry * firstEntry = m_sendQueue->Find( firstMessageId );
 
-            bool largeBlockMode = false;        // todo: if oldest unacked message is a large block, go into large block mode
+            assert( firstEntry );
 
-            if ( largeBlockMode )
+            if ( firstEntry->largeBlock )
             {
                 /*
                     Large block mode. Split large blocks into fragments 
-                    and resend these fragments until they are all acked.
+                    and send these fragments until they are all acked.
                 */
 
-                // todo
+                assert( firstEntry->message->GetType() == BlockMessageType );
 
-                // ...
+                BlockMessage & blockMessage = static_cast<BlockMessage&>( *firstEntry->message );
 
-                return nullptr;
+                auto block = blockMessage.GetBlock();
+
+                assert( block );
+                assert( block->size() > m_config.maxSmallBlockSize );
+
+                if ( !m_sendLargeBlock.active )
+                {
+                    m_sendLargeBlock.active = true;
+                    m_sendLargeBlock.blockId = firstMessageId;
+                    m_sendLargeBlock.numAckedFragments = 0;
+                    m_sendLargeBlock.numFragments = ceil( block->size() / m_config.blockFragmentSize );
+
+                    cout << "sending large block " << firstMessageId << " in " << m_sendLargeBlock.numFragments << " fragments" << endl;
+
+                    assert( m_sendLargeBlock.numFragments >= 0 );
+                    assert( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
+
+                    for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
+                        m_sendLargeBlock.fragments[i] = SendFragmentData();
+                }
+
+                assert( m_sendLargeBlock.active );
+
+                int fragmentId = -1;
+                for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
+                {
+                    auto & fragment = m_sendLargeBlock.fragments[i];
+                    if ( !fragment.acked && fragment.timeLastSent + m_config.resendRate < m_timeBase.time )
+                    {
+                        fragmentId = i;
+                        fragment.timeLastSent = m_timeBase.time;
+                        break;
+                    }
+                }
+
+                if ( fragmentId == -1 )
+                    return nullptr;
+
+                cout << "sending fragment " << fragmentId << endl;
+
+                auto data = make_shared<ReliableMessageChannelData>( m_config );
+                data->largeBlock = 1;
+                data->blockId = firstMessageId;
+                data->fragmentId = fragmentId;
+                data->fragment = make_shared<Block>( m_config.blockFragmentSize, 0 );
+
+                int fragmentBytes = m_config.blockFragmentSize;
+                if ( fragmentId == m_sendLargeBlock.numFragments - 1 )
+                    fragmentBytes = block->size() % m_config.blockFragmentSize;
+
+                assert( fragmentBytes >= 0 );
+                assert( fragmentBytes <= m_config.blockFragmentSize );
+
+                uint8_t * ptr = &( (*block)[fragmentId*m_config.blockFragmentSize] );
+                for ( int i = 0; i < fragmentBytes; ++i )
+                    (*data->fragment)[i] = *( ptr + i );
+
+                auto sentPacketData = m_sentPackets->InsertFast( sequence );
+                assert( sentPacketData );
+                sentPacketData->largeBlock = 1;
+                sentPacketData->blockId = firstMessageId;
+                sentPacketData->fragmentId = fragmentId;
+                sentPacketData->acked = 0;
+                sentPacketData->timeSent = m_timeBase.time;
+
+                // optimization #1: cache oldest unacked fragment id. start the search
+                // from there, instead of walking the entire block left to right.
+
+                // optimization #2: only walk across some window size across the fragments
+                // eg. up to 256 (configurable) past the first unacked block. potentially
+                // a significant optimization for large block sizes (eg. megabytes)
+                // call this "fragmentWindowSize"
+
+                // optimization #3: it would be really nice not to have to actually copy
+                // the data on write *at all*. instead use a pointer to the actual block
+                // data and serialize direct from that.
+
+                return data;
             }
             else
             {
@@ -335,6 +474,8 @@ namespace protocol
                     Iterate across send queue and include multiple messages 
                     per-packet, but stop before the next large block.
                 */
+
+                assert( !m_sendLargeBlock.active );
 
                 // gather messages to include in the packet
 
@@ -345,7 +486,7 @@ namespace protocol
                 {
                     if ( availableBits < m_config.giveUpBits )
                         break;
-                    const uint16_t messageId = oldestMessageId + i;
+                    const uint16_t messageId = firstMessageId + i;
                     SendQueueEntry * entry = m_sendQueue->Find( messageId );
                     if ( !entry )
                         break;
@@ -374,7 +515,7 @@ namespace protocol
 
                 auto sentPacketData = m_sentPackets->InsertFast( sequence );
                 assert( sentPacketData );
-                sentPacketData->fragment = 0;
+                sentPacketData->largeBlock = 0;
                 sentPacketData->acked = 0;
                 sentPacketData->timeSent = m_timeBase.time;
                 sentPacketData->messageIds.resize( numMessageIds );
@@ -464,7 +605,7 @@ namespace protocol
             if ( !sentPacket || sentPacket->acked )
                 return;
 
-            if ( !sentPacket->fragment )
+            if ( !sentPacket->largeBlock )
             {
                 for ( auto messageId : sentPacket->messageIds )
                 {
@@ -474,18 +615,40 @@ namespace protocol
                         assert( sendQueueEntry->message );
                         assert( sendQueueEntry->message->GetId() == messageId );
 
-    //                    cout << "acked message " << messageId << endl;
+//                      cout << "acked message " << messageId << endl;
 
                         sendQueueEntry->valid = 0;
                         sendQueueEntry->message = nullptr;
                     }
                 }
             }
-            else
+            else if ( m_sendLargeBlock.active && m_sendLargeBlock.blockId == sentPacket->blockId )
             {
-                // todo: ack fragment of large block
-            }
+                assert( sentPacket->fragmentId < m_sendLargeBlock.numFragments );
 
+                auto & fragment = m_sendLargeBlock.fragments[sentPacket->fragmentId];
+
+                if ( !fragment.acked )
+                {
+                    cout << "acked fragment " << sentPacket->fragmentId << endl;
+
+                    fragment.acked = true;
+                    
+                    m_sendLargeBlock.numAckedFragments++;
+
+                    if ( m_sendLargeBlock.numAckedFragments == m_sendLargeBlock.numFragments )
+                    {
+                        cout << "large block " << m_sendLargeBlock.blockId << " acked" << endl;
+
+                        m_sendLargeBlock.active = false;
+
+                        auto sendQueueEntry = m_sendQueue->Find( sentPacket->blockId );
+                        assert( sendQueueEntry );
+                        sendQueueEntry->valid = 0;
+                    }
+                }
+            }
+            
             sentPacket->acked = 1;
         }
 
@@ -505,24 +668,23 @@ namespace protocol
 
         ReliableMessageChannelConfig m_config;                              // constant configuration data
 
+        int m_maxBlockFragments;                                            // maximum number of fragments per-block
+        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
+
         TimeBase m_timeBase;                                                // current time base from last update
         uint16_t m_sendMessageId;                                           // id for next message added to send queue
         uint16_t m_receiveMessageId;                                        // id for next message to be received
-        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
-        int m_maxBlockFragments;                                            // maximum number of fragments per-block
 
         shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;              // message send queue
         shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;           // sent packets (for acks)
         shared_ptr<SlidingWindow<ReceiveQueueEntry>> m_receiveQueue;        // message receive queue
 
-        vector<SendFragmentData> m_sendFragments;                           // per-fragment data for current large block being sent
-        vector<ReceiveFragmentData> m_receiveFragments;                     // per-fragment data for current large block being received
-
         vector<uint64_t> m_counters;                                        // counters used for unit testing and validation
-
         vector<uint8_t> m_measureBuffer;                                    // buffer used for measuring message size in bits
-    };
 
+        SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
+        ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received
+    };
 }
 
 #endif

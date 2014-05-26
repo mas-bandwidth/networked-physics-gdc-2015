@@ -99,11 +99,13 @@ void test_reliable_message_channel_messages()
     }
 
     TimeBase timeBase;
-    timeBase.deltaTime = 0.1f;
+    timeBase.deltaTime = 0.01f;
 
     uint64_t numMessagesReceived = 0;
 
-    for ( int i = 0; i < 100; ++i )
+    int iteration = 0;
+
+    while ( true )
     {  
         auto writePacket = connection.WritePacket();
 
@@ -120,10 +122,10 @@ void test_reliable_message_channel_messages()
         if ( ( rand() % 10 ) == 0 )
             connection.ReadPacket( readPacket );
 
-        assert( connection.GetCounter( Connection::PacketsRead ) <= i+1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
+        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= i+1 );
+        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 
         while ( true )
@@ -153,6 +155,11 @@ void test_reliable_message_channel_messages()
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesDiscardedEarly ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
+
+        if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
+            break;
+
+        iteration++;
     }
 }
 
@@ -190,11 +197,13 @@ void test_reliable_message_channel_small_blocks()
     }
 
     TimeBase timeBase;
-    timeBase.deltaTime = 0.1f;
+    timeBase.deltaTime = 0.01f;
 
     uint64_t numMessagesReceived = 0;
 
-    for ( int i = 0; i < 100; ++i )
+    int iteration = 0;
+
+    while ( true )
     {  
         auto writePacket = connection.WritePacket();
 
@@ -211,10 +220,10 @@ void test_reliable_message_channel_small_blocks()
         if ( ( rand() % 10 ) == 0 )
             connection.ReadPacket( readPacket );
 
-        assert( connection.GetCounter( Connection::PacketsRead ) <= i+1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == i+1 );
+        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= i+1 );
+        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 
         while ( true )
@@ -248,6 +257,11 @@ void test_reliable_message_channel_small_blocks()
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesDiscardedEarly ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
+
+        if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
+            break;
+
+        iteration++;
     }
 }
 
@@ -280,16 +294,16 @@ void test_reliable_message_channel_large_blocks()
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto block = make_shared<Block>( ( i + 1 ) * 1024, i );
+        auto block = make_shared<Block>( ( i + 1 ) * 1024 + i, i );
         messageChannel->SendBlock( block );
     }
 
     TimeBase timeBase;
-    timeBase.deltaTime = 0.1f;
+    timeBase.deltaTime = 0.01f;
 
     uint64_t numMessagesReceived = 0;
 
-    for ( int i = 0; i < 100; ++i )
+    for ( int i = 0; i < 1000; ++i )
     {  
         auto writePacket = connection.WritePacket();
 
@@ -303,7 +317,8 @@ void test_reliable_message_channel_large_blocks()
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
         readPacket->Serialize( readStream );
 
-        if ( ( rand() % 10 ) == 0 )
+        // todo: bring this back once finished
+        //if ( ( rand() % 10 ) == 0 )
             connection.ReadPacket( readPacket );
 
         assert( connection.GetCounter( Connection::PacketsRead ) <= i+1 );
@@ -326,7 +341,7 @@ void test_reliable_message_channel_large_blocks()
 
             auto block = blockMessage->GetBlock();
 
-            assert( block->size() == ( numMessagesReceived + 1 ) * 1024 );
+            assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + i );
             for ( auto c : *block )
                 assert( c == numMessagesReceived );
 
@@ -344,14 +359,16 @@ void test_reliable_message_channel_large_blocks()
 
         timeBase.time += timeBase.deltaTime;
     }
+
+    assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
 }
 
 int main()
 {
     try
     {
-    //    test_reliable_message_channel_messages();
-    //    test_reliable_message_channel_small_blocks();
+        test_reliable_message_channel_messages();
+        test_reliable_message_channel_small_blocks();
         test_reliable_message_channel_large_blocks();
     }
     catch ( runtime_error & e )
