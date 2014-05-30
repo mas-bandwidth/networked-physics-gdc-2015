@@ -360,7 +360,21 @@ namespace protocol
 
     #define PROTOCOL_HOST_ORDER protocol_host_order.value
 
-    
+    inline int random_int( int min, int max )
+    {
+        assert( max > min );
+        int result = min + rand() % ( max - min + 1 );
+        assert( result >= min );
+        assert( result <= max );
+        return result;
+    }
+
+    inline float random_float( float min, float max )
+    {
+        const int res = 10000000;
+        double scale = ( rand() % res ) / double( res - 1 );
+        return (float) ( min + (double) ( max - min ) * scale );
+    }
 }
 
 #endif

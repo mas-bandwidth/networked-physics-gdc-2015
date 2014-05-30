@@ -65,9 +65,16 @@ namespace protocol
             assert( bits <= 32 );
 
             if ( IsWriting() )
+            {
                 m_writer.WriteBits( value, bits );
+            }
             else
-                value = m_reader.ReadBits( bits );          // todo: on read throw exception if we read past end of buffer
+            {
+                uint32_t read_value = m_reader.ReadBits( bits );
+                if ( m_reader.InOverflow() )
+                    throw runtime_error( "read stream overflow" );
+                value = read_value;
+            }
         }
 
         void Flush()

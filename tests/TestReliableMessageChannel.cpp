@@ -1,4 +1,5 @@
 #include "Connection.h"
+#include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
 
 using namespace std;
@@ -49,9 +50,18 @@ struct TestMessage : public Message
             int value = 0;
             serialize_bits( stream, value, 32 );
         }
+
+
+        if ( stream.IsWriting() )
+            magic = 0xDEADBEEF;
+
+        serialize_bits( stream, magic, 32 );
+
+        assert( magic == 0xDEADBEEF );
     }
 
     uint16_t sequence;
+    uint32_t magic;
 };
 
 class MessageFactory : public Factory<Message>
@@ -103,6 +113,11 @@ void test_reliable_message_channel_messages()
 
     uint64_t numMessagesReceived = 0;
 
+    Address address( "::1" );
+
+    NetworkSimulator simulator;
+    simulator.AddState( { 1.0f, 1.0f, 90 } );
+
     int iteration = 0;
 
     while ( true )
@@ -119,8 +134,14 @@ void test_reliable_message_channel_messages()
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
         readPacket->Serialize( readStream );
 
-        if ( ( rand() % 10 ) == 0 )
-            connection.ReadPacket( readPacket );
+        simulator.SendPacket( address, readPacket );
+
+        simulator.Update( timeBase );
+
+        auto packet = simulator.ReceivePacket();
+
+        if ( packet )
+            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
 
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
@@ -193,6 +214,8 @@ void test_reliable_message_channel_small_blocks()
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
         auto block = make_shared<Block>( i + 1, i );
+        for ( int j = 0; j < block->size(); ++j )
+            (*block)[j] = ( i + j ) % 256;
         messageChannel->SendBlock( block );
     }
 
@@ -202,6 +225,11 @@ void test_reliable_message_channel_small_blocks()
     uint64_t numMessagesReceived = 0;
 
     int iteration = 0;
+
+    Address address( "::1" );
+
+    NetworkSimulator simulator;
+    simulator.AddState( { 1.0f, 1.0f, 90 } );
 
     while ( true )
     {  
@@ -217,8 +245,14 @@ void test_reliable_message_channel_small_blocks()
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
         readPacket->Serialize( readStream );
 
-        if ( ( rand() % 10 ) == 0 )
-            connection.ReadPacket( readPacket );
+        simulator.SendPacket( address, readPacket );
+
+        simulator.Update( timeBase );
+
+        auto packet = simulator.ReceivePacket();
+
+        if ( packet )
+            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
 
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
@@ -241,11 +275,8 @@ void test_reliable_message_channel_small_blocks()
             auto block = blockMessage->GetBlock();
 
             assert( block->size() == numMessagesReceived + 1 );
-            for ( auto c : *block )
-                assert( c == numMessagesReceived );
-
-            // todo: must verify actual contents of block, eg. make it a modulus 
-            // of sequence # and current byte index in the block or something
+            for ( int i = 0; i < block->size(); ++i )
+                assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
 
             ++numMessagesReceived;
         }
@@ -293,11 +324,13 @@ void test_reliable_message_channel_large_blocks()
     
     connection.AddChannel( messageChannel );
 
-    const int NumMessagesSent = 64;
+    const int NumMessagesSent = 16;
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto block = make_shared<Block>( ( i + 1 ) * 1024 + i, i + 1 );
+        auto block = make_shared<Block>( ( i + 1 ) * 1024 + i, 0 );
+        for ( int j = 0; j < block->size(); ++j )
+            (*block)[j] = ( i + j ) % 256;
         messageChannel->SendBlock( block );
     }
 
@@ -307,6 +340,11 @@ void test_reliable_message_channel_large_blocks()
     uint64_t numMessagesReceived = 0;
 
     int iteration = 0;
+
+    Address address( "::1" );
+
+    NetworkSimulator simulator;
+    simulator.AddState( { 1.0f, 1.0f, 90 } );
 
     while ( true )
     {  
@@ -322,17 +360,19 @@ void test_reliable_message_channel_large_blocks()
         auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
         readPacket->Serialize( readStream );
 
-        if ( ( rand() % 10 ) == 0 )
-            connection.ReadPacket( readPacket );
+        simulator.SendPacket( address, readPacket );
+
+        simulator.Update( timeBase );
+
+        auto packet = simulator.ReceivePacket();
+
+        if ( packet )
+            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
 
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
         assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
-
-        // todo: i really dislike this counter name. it sounds like a bad #
-        // but in fact it is going to naturally be non-zero under high latency.
-
         //assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 
         while ( true )
@@ -352,12 +392,8 @@ void test_reliable_message_channel_large_blocks()
             cout << "received block " << blockMessage->GetId() << " (" << block->size() << " bytes)" << endl;
 
             assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
-            for ( auto c : *block )
-                assert( c == numMessagesReceived + 1 );
-
-            // todo: must verify actual contents of block, eg. in such a way that
-            // the byte of each block is unique, not always the same value. too easy
-            // to have a broken implementation slip through otherwise!
+            for ( int i = 0; i < block->size(); ++i )
+                assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
 
             ++numMessagesReceived;
         }

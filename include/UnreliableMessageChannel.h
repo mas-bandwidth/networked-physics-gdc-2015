@@ -10,9 +10,7 @@
 
 namespace protocol
 {
-    // todo: once reliable channel is finished -- port over here and create an unreliable
-    // message channel which can be placed at the end of the channels, and serializes as many
-    // messages into the packet that can fit, and discards the rest.
+    // ...
 }
 
 #endif

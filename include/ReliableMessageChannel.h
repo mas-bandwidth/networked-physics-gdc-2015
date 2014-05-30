@@ -40,8 +40,6 @@ namespace protocol
         int packetBudget;               // maximum number of bytes this channel may take per-packet. 
         int giveUpBits;                 // give up trying to add more messages to packet if we have less than this # of bits available.
 
-        // todo: move packet budget into the controlling owner, and pass it in to "GetData". should be *dynamic*
-
         shared_ptr<Factory<Message>> messageFactory;
     };
 
@@ -187,11 +185,13 @@ namespace protocol
                 numFragments = 0;
                 numAckedFragments = 0;
                 blockId = 0;
+                blockSize = 0;
             }
 
             bool active;                                // true if we are currently sending a large block
             int numFragments;                           // number of fragments in the current large block being sent
             int numAckedFragments;                      // number of acked fragments in current block being sent
+            int blockSize;                              // send block size in bytes
             uint16_t blockId;                           // the message id for the current large block being sent
             vector<SendFragmentData> fragments;         // per-fragment data for send
         };
@@ -227,6 +227,24 @@ namespace protocol
             MessagesDiscardedLate,
             MessagesDiscardedEarly,
             NumCounters
+        };
+
+        struct SendLargeBlockStatus
+        {
+            bool sending;
+            int blockId;
+            int blockSize;
+            int numFragments;
+            int numAckedFragments;
+        };
+
+        struct ReceiveLargeBlockStatus
+        {
+            bool receiving;
+            int blockId;
+            int blockSize;
+            int numFragments;
+            int numReceivedFragments;
         };
 
         ReliableMessageChannel( const ReliableMessageChannelConfig & config ) : m_config( config )
@@ -304,8 +322,6 @@ namespace protocol
 
             if ( !largeBlock )
             {
-                // todo: would be nice to have a specialized measure stream that doesn't actually do any work
-                // but measure the # of bits required for a specific serialization
                 Stream stream( STREAM_Write, &m_measureBuffer[0], m_measureBuffer.size() );
                 message->Serialize( stream );
                 entry->measuredBits = stream.GetBits() + m_messageOverheadBits;
@@ -359,9 +375,6 @@ namespace protocol
 
         shared_ptr<ChannelData> GetData( uint16_t sequence )
         {
-            // todo: would be nice to cache the oldest message id in send queue
-            // so we don't have to keep calculating it on every packet sent
-
             // find first message id in send queue
 
             bool foundMessage = false;
@@ -408,10 +421,11 @@ namespace protocol
                 {
                     m_sendLargeBlock.active = true;
                     m_sendLargeBlock.blockId = firstMessageId;
+                    m_sendLargeBlock.blockSize = block->size();
                     m_sendLargeBlock.numFragments = (int) ceil( block->size() / (float)m_config.blockFragmentSize );
                     m_sendLargeBlock.numAckedFragments = 0;
 
-//                    cout << "sending large block " << firstMessageId << " in " << m_sendLargeBlock.numFragments << " fragments" << endl;
+//                    cout << "sending block " << firstMessageId << " in " << m_sendLargeBlock.numFragments << " fragments" << endl;
 
                     assert( m_sendLargeBlock.numFragments >= 0 );
                     assert( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
@@ -464,18 +478,6 @@ namespace protocol
                 sentPacketData->blockId = firstMessageId;
                 sentPacketData->fragmentId = fragmentId;
                 sentPacketData->timeSent = m_timeBase.time;
-
-                // optimization #1: cache oldest unacked fragment id. start the search
-                // from there, instead of walking the entire block left to right.
-
-                // optimization #2: only walk across some window size across the fragments
-                // eg. up to 256 (configurable) past the first unacked block. potentially
-                // a significant optimization for large block sizes (eg. megabytes)
-                // call this "fragmentWindowSize"
-
-                // optimization #3: it would be really nice not to have to actually copy
-                // the data on write *at all*. instead use a pointer to the actual block
-                // data and serialize direct from that.
 
                 return data;
             }
@@ -565,15 +567,35 @@ namespace protocol
 //            cout << "process message channel data: " << sequence << endl;
 
             /*
-                If we are processing a large block, but we receive a packet that
-                contains non-large block data, eg. bitpacked messages or small blocks
-                throw an exception to discard the packet.
+                IMPORTANT: If this is a large block but the message id is *older*
+                than the message id we are expecting, the sender has missed some acks
+                for packets we have actually received, due to extreme packet loss.
+                As a result the sender hasn't realized that we have fully received 
+                the large block, and they are still trying to send it to us.
+
+                To resolve this situation, do nothing! The ack system will inform 
+                the sender that these fragments sent to us have been received, and 
+                once all fragments are acked the sender moves on to the next block
+                or message.
+            */
+
+            if ( data.largeBlock && sequence_less_than( data.blockId, m_receiveQueue->GetSequence() ) )
+                return;
+
+            /*
+                If we are currently receiving a large block, discard any packets
+                that contain bitpacked messages or small blocks. It is necessary
+                to discard the packet so the sender doesn't think these messages
+                are acked, when in fact we were not able to process them 
+                (otherwise the sender may never resend them, and stall out)
             */
 
             if ( !data.largeBlock && m_receiveLargeBlock.active )
+            {
                 throw runtime_error( "received unexpected bitpacked message or small block while receiving large block" );
+            }
 
-            // now process the packet data according to its contents...
+            // process the packet data according to its contents
 
             if ( data.largeBlock )
             {
@@ -613,24 +635,46 @@ namespace protocol
 
                 assert( m_receiveLargeBlock.active );
 
+                if ( data.blockId != m_receiveLargeBlock.blockId )
+                {
+//                    cout << "unexpected large block id. got " << data.blockId << " but was expecting " << m_receiveLargeBlock.blockId << endl;
+
+                    throw runtime_error( "unexpected large block id" );
+                }
+
                 assert( data.blockId == m_receiveLargeBlock.blockId );
                 assert( data.blockSize == m_receiveLargeBlock.blockSize );
                 assert( data.fragmentId < m_receiveLargeBlock.numFragments );
 
                 if ( data.blockId != m_receiveLargeBlock.blockId )
+                {
+//                    cout << "recieve large block id mismatch. got " << data.blockId << " but was expecting " << m_receiveLargeBlock.blockId << endl;
+
                     throw runtime_error( "receive large block id mismatch" );
+                }
 
                 if ( data.blockSize != m_receiveLargeBlock.blockSize )
+                {
+//                    cout << "large block size mismatch. got " << data.blockSize << " but was expecting " << m_receiveLargeBlock.blockSize << endl;
+
                     throw runtime_error( "receive large block size mismatch" );
+                }
 
                 if ( data.fragmentId >= m_receiveLargeBlock.numFragments )
+                {
+//                    cout << "large block fragment out of bounds. " << data.fragmentId << " >= num fragments of " << m_receiveLargeBlock.numFragments << endl;
+
                     throw runtime_error( "receive large block fragment id out of bounds" );
+                }
 
                 auto & fragment = m_receiveLargeBlock.fragments[data.fragmentId];
 
                 if ( !fragment.received )
                 {
-//                    cout << "received fragment " << data.fragmentId << endl;
+/*
+                    cout << "received fragment " << data.fragmentId << " of large block " << m_receiveLargeBlock.blockId
+                         << " (" << m_receiveLargeBlock.numReceivedFragments+1 << "/" << m_receiveLargeBlock.numFragments << ")" << endl;
+                         */
 
                     fragment.received = 1;
 
@@ -638,7 +682,7 @@ namespace protocol
 
                     int fragmentBytes = m_config.blockFragmentSize;
                     int fragmentRemainder = block->size() % m_config.blockFragmentSize;
-                    if ( fragmentRemainder && data.fragmentId == m_sendLargeBlock.numFragments - 1 )
+                    if ( fragmentRemainder && data.fragmentId == m_receiveLargeBlock.numFragments - 1 )
                         fragmentBytes = fragmentRemainder;
 
 //                    cout << "fragment bytes " << fragmentBytes << endl;
@@ -653,7 +697,7 @@ namespace protocol
 
                     if ( m_receiveLargeBlock.numReceivedFragments == m_receiveLargeBlock.numFragments )
                     {
-//                        cout << "received block " << m_receiveLargeBlock.blockId << endl;
+//                        cout << "received large block " << m_receiveLargeBlock.blockId << " (" << m_receiveLargeBlock.block->size() << " bytes)" << endl;
 
                         auto blockMessage = make_shared<BlockMessage>( m_receiveLargeBlock.block );
 
@@ -664,18 +708,15 @@ namespace protocol
                         m_receiveLargeBlock.active = false;
                     }
                 }
-
-                // todo: optimization. we don't really need anything except one bit per
-                // received fragment. it would be a memory optimization (32x) to get it
-                // down to a bit array vs. the 32bit per struct in vector.
             }
             else
             {
                 /*
                     Bit-packed message and small block mode.
                     Multiple messages and small blocks are included
-                    in each packet and each needs to be be processed
-                    in a sliding window and dequeued reliably and in-order.
+                    in each packet.  Each needs to be be processed
+                    and inserted into a sliding window, so they can 
+                    be dequeued reliably and in-order.
                 */
 
                 bool earlyMessage = false;
@@ -697,13 +738,13 @@ namespace protocol
 
                     if ( sequence_less_than( messageId, minMessageId ) )
                     {
-    //                    cout << "old message " << messageId << endl;
+//                        cout << "old message " << messageId << ", min = " << minMessageId << " max = " << maxMessageId << endl;
 
                         m_counters[MessagesDiscardedLate]++;
                     }
                     else if ( sequence_greater_than( messageId, maxMessageId ) )
                     {
-    //                    cout << "early message " << messageId << endl;
+//                        cout << "early message " << messageId << endl;
 
                         earlyMessage = true;
 
@@ -742,7 +783,7 @@ namespace protocol
                         assert( sendQueueEntry->message );
                         assert( sendQueueEntry->message->GetId() == messageId );
 
-//                      cout << "acked message " << messageId << endl;
+//                        cout << "acked message " << messageId << endl;
 
                         sendQueueEntry->valid = 0;
                         sendQueueEntry->message = nullptr;
@@ -757,7 +798,10 @@ namespace protocol
 
                 if ( !fragment.acked )
                 {
-//                    cout << "acked fragment " << sentPacket->fragmentId << endl;
+                    /*
+                    cout << "acked fragment " << sentPacket->fragmentId << " of large block " << m_sendLargeBlock.blockId 
+                         << " (" << m_sendLargeBlock.numAckedFragments+1 << "/" << m_sendLargeBlock.numFragments << ")" << endl;
+                         */
 
                     fragment.acked = true;
                     
@@ -765,7 +809,7 @@ namespace protocol
 
                     if ( m_sendLargeBlock.numAckedFragments == m_sendLargeBlock.numFragments )
                     {
-//                        cout << "large block " << m_sendLargeBlock.blockId << " acked" << endl;
+//                        cout << "acked large block " << m_sendLargeBlock.blockId << endl;
 
                         m_sendLargeBlock.active = false;
 
@@ -789,6 +833,28 @@ namespace protocol
             assert( index >= 0 );
             assert( index < NumCounters );
             return m_counters[index];
+        }
+
+        SendLargeBlockStatus GetSendLargeBlockStatus() const
+        {
+            SendLargeBlockStatus status;
+            status.sending = m_sendLargeBlock.active;
+            status.blockId = m_sendLargeBlock.blockId;
+            status.blockSize = m_sendLargeBlock.blockSize;
+            status.numFragments = m_sendLargeBlock.numFragments;
+            status.numAckedFragments = m_sendLargeBlock.numAckedFragments;
+            return status;
+        }
+
+        ReceiveLargeBlockStatus GetReceiveLargeBlockStatus() const
+        {
+            ReceiveLargeBlockStatus status;
+            status.receiving = m_receiveLargeBlock.active;
+            status.blockId = m_receiveLargeBlock.blockId;
+            status.blockSize = m_receiveLargeBlock.blockSize;
+            status.numFragments = m_receiveLargeBlock.numFragments;
+            status.numReceivedFragments = m_receiveLargeBlock.numReceivedFragments;
+            return status;
         }
 
     private:

@@ -25,7 +25,7 @@ namespace protocol
 
         virtual shared_ptr<Packet> ReceivePacket() = 0;
 
-        virtual void Update() = 0;
+        virtual void Update( const TimeBase & timeBase ) = 0;
     };
 }
 

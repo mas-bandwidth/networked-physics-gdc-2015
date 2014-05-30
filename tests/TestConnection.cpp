@@ -58,11 +58,24 @@ void test_connection()
     assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 }
 
+void test_acks()
+{
+    cout << "test_acks" << endl;
+
+    // ...
+
+    // todo: create a test for acks, eg. randomly drop some packets and note which ones
+    // were dropped. make sure that no dropped packets show up as acked. make sure that
+    // at least *some* of the acked packets show up as acked (possible not all will be, under
+    // packet loss it's possible to miss acks)
+}
+
 int main()
 {
     try
     {
         test_connection();
+        test_acks();
     }
     catch ( runtime_error & e )
     {

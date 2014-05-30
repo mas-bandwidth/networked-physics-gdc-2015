@@ -1,54 +1,101 @@
 DONE:
 
-    Add some rare large blocks to the soak test. Make sure everything is rockin'
-
-    Seems to be working fine.
-
-    Bumped up soak test so it's really going to be pushing the limits of CPU
-
 TODO:
 
-    During soak test it would be nice to see received x/y fragments of large block.
-    This way there is continuous logging and it is a nice steady stream, vs. the current
-    large hitch on each block which is occuring.
+    Implement ack test. Randomly drop packets and verify that the invariant holds
+    that the acked packets must be recieved by the receiver, and that not received
+    packets are not acked. Note that it's possible for acks to be lost, so some
+    received packets will not be acked, so it's possible for some received packets
+    to not have acks.
 
-    Extend soak test to actually validate contents of blocks properly,
-    eg. make each byte a modulus of byte index in block.
-
-    Soak test should have some actual latency! Holy shit this is important.
-
-    -------------
-
-    Reliable channel tests should also have some actual latency in them.
-
-    Make the small and large block data more distinct, eg. each byte
-    a unique modulus of byte index and sequence, and verify each byte
-    is correct on receive.
-
-    Current test is too permissive. The block could be completely
-    shuffled, and since all bytes ar the same value the test would
-    not notice a thing!
-
-    Add a test that mixes messages, small blocks and occasional large blocks.
-
-    -----------
+    Add a reliable message test that mixes messages, small blocks and large blocks.
 
     Add counters for all the different things inside the large blocks,
     eg. # of large blocks sent, received, read/written, also # of
     fragments read/written.
 
-    -----------
+    Write some basic tests to verify these counters are functional.
 
-    I don't like the exception throw on packet receive. This is sloppy!
+    Convert packet discard inside "ProcessData" to not use exceptions.
 
-    These are not exceptional conditions. These *can* and do happen under
-    real usage, all it requires is some latency or out of order packets.
+    Clean up counter names, remove that bad "PacketReadFailures" counter
+    and replace it with packet discards or something.
 
-    Using an exception (slow path) for such things is *WRONG*
+    Try to clean up the error handling from "ProcessData".
 
-    return false from process data to indicate the packet should be discarded instead!
+    Want three options:
 
-    ----------------------
+    a) data is ok, keep processing rest of channels (common case)
+    b) discard packet (no ack), but keep processing remaining channel data.
+    c) discard packet and stop immediately. data is bad. don't process remaining channels.
+
+    Probably want an enum result to return from process data, eg. ProcessDataResult
+
+    Make sure that counters distinguish between each case, and that serialize read failure
+    which still throws an exception is not counted the same as a packet discard above.
+
+    ------------------------
+
+    Implement client and server interface.
+
+    These should allow you to pass in a network interface, and then manage
+    the set of connections on the server, one-per client, and on the client
+    just have a single connection to the server.
+
+    Note that there needs to be a state machine on the server and on the client 
+    to negotiate connection. Once established stabilizes to "Connection" 
+    packet type.
+
+    Make sure to build in a block of data which gets transferred to the client
+    prior to connection packets being sent down, eg. as part of the client connect
+    state machine.
+
+    This is essential, and it may include something that informs the client of 
+    the data required to actually *process* the connection packets (Eg. send tables) 
+    so it is essential that this data is sent down here *prior* to connection packets 
+    being processed at all (they should be discarded if received prior)
+
+    ------------------------
+
+    Implement a reservation system at this point which allows a group of
+    n players to have a reservation on the server. Don't muddy the water
+    with teams at this point.
+
+    Extend the connection state machine to pass in a token.
+
+    If you have a token, and no reservation exists for that token,
+    deny the connection request.
+
+    Make my reservation system flexible such that new connections
+    can be attempted from a client, *while* retaining connection
+    to a current server, eg. I'd like the reservation to try to
+    move a group of players to a new server, but if it fails,
+    for those players to remain connected to current server.
+
+    ------------------------
+
+    Actually implement a client/server setup and host the server in the cloud.
+
+    Provide build steps using chef/knife or whatever to easily deploy this server.
+
+    ------------------------
+
+    Implement cube demo with this protocol library, but in a client/server manner.
+
+    Use this cube demo for the meeting with rocket hall
+
+    ------------------------
+
+
+
+WOULD BE NICE:
+
+    ----------------
+
+    I'd like a logging system. It's annoying to have to comment out and re-enable
+    logs as I debug things. Would be nice to be able to have logs like Deja.
+
+    ------------------
 
     Might be nice to add a validate step to the config for connection/channels
     because it's possible to specify a config that doesn't work now. eg. 
@@ -70,7 +117,7 @@ TODO:
     connection type and specify channel budgets dynamically based on flow control, 
     for example.
 
-    ----------------------
+    --------------------
 
     Implement unreliable message channel.
 
@@ -92,42 +139,49 @@ TODO:
 
     --------------
 
-    Split project into .cpp and .h
-
-    Setup premake.
-
-    Setup basic lib structure: libprotocol
-
-    Move the socket and system programming includes out of Common.h 
-    and into Address.cpp and BSDSocketsInterface.cpp as required
-
-    Need a way to build all tests and check they pass easily,
-    eg. probably need some way for "TEST( test_... )" to register
-    the set of tests with a static vector of test functors.
-
-    Add UnitTest.cpp
-
-    ------------------------
-
-    Implement client and server interface.
-
-    These should allow you to pass in a network interface, and then manage
-    the set of connections on the server, one-per client', and on the client
-    just have a single connection to the server.
-
-    Note that there probably needs to be a state machine on the server
-    and on the client to negotiate connection. Once connection is established
-    the connection stabilizes mostly to the "Connection" packet type.
-
-    Should also implement a reservation system at this point, with a reservation
-    token, eg. reserve 4 slots for token X. Timeout or succeed the reservation
-    and so on.
-
-    --------------------
-
     It would be nice to bring back templated serialize functions, and have specialized
     read, write and measure streams. I think the code generated would be much more
     amenable to optimization, however before doing this I should definitely profile.
+
+    --------------------
+
+    Instead of walking the send queue to find the oldest message id not acked,
+    cache this value, and on each update, walk left to right to skip past acked
+    messages in the send queue to get the new value.
+
+    --------------------
+
+    Optimization for fragments, track oldest unacked fragment id, and start there
+    and go left to right to search for fragments to send.
+
+    Add a new fragmentSendWindow config, eg. 64 and only look this far past
+    the oldest unacked fragment. Should save unnecessary scans for large block
+    sizes.
+
+    --------------------
+
+    Optimize the block send and receive to not require a data copy or allocation
+    for each fragment data block, use pointers and directly serialize in/out of
+    block data instead.
+
+    --------------------
+
+    Could save a bit of memory by switching the received fragment data to a bitfield
+
+    We only need one bit per-fragment, "has it been received?"
+
+    --------------------
+
+    I don't like the exception throw on packet receive. This is sloppy!
+
+    These are not exceptional conditions. These *can* and do happen under
+    real usage, all it requires is some latency or out of order packets.
+
+    Using an exception (slow path) for such things is *WRONG*
+
+    return false from process data to indicate the packet should be discarded instead!
+
+    eg. ProcessData should return false if it wants a packet discard.
 
     ---------------------
 
@@ -154,3 +208,15 @@ TODO:
        and receiving user packets. This interface should allow running the actual serialization
        and packet reading entirely on a separate thread. Do it here where it is most natural,
        to avoid overcomplicating the interface/connection code.
+
+    ------------------
+
+    I think the DNS lookup integration in the net interface is bad.
+
+    It complicates the net interface, and derived classes (eg. network simulator)
+    now don't fully implement the base class.
+
+    I think DNS resolve actually belongs inside client/server classes
+    as part of the client -> server connect state machine.
+
+    ----------------

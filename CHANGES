@@ -1,5 +1,182 @@
-Monday May 25th, 2014:
-----------------------
+Thursday Night, May 29th, 2014:
+-------------------------------
+
+    Add latency and out of order packets to reliable message channel tests.
+
+    Found a breakage in the large block test!
+
+    Wow. Fixed it to throw an assert, and it seems that it is now stalled out.
+
+    Soak test hangs too if you leave it long enough. Seems to hang right after
+    a long block is received, going back to bitpacked messages / small blocks.
+
+    I have a 100% quick repro with the large block test, so debugging there first.
+
+    First see what it is hanging up on, log the packet discards... Nope.
+
+    It seems to be another ack related issue.
+
+    My theory is that the sender has missed some acks, so although the receiver
+    has definitely received the packet (and has advanced on), the sender does not
+    know that he is finished, and can stop sending this block.
+
+    I think the fix is for the receiver to only discard the packet if it is a large
+    block id that is more recent than the current message id. Older block ids need
+    to get acks back to resolve this situation.
+
+    Yep. That did it!
+
+
+Thursday Morning, May 29th, 2014:
+---------------------------------
+
+    It would be nice if the soak test would cycle in-out of really bad conditions
+
+    eg. cycle between 0 packet loss and 100% packet loss.
+
+    Cycle between no latency and 10 seconds latency.
+
+    Cycle between no jitter and 1 second jitter.
+
+    The goal of the stress test is to test the worst possible conditions.
+
+    This means that the test actually has to exercise these worst case
+    conditions, eg. 10 seconds with no packets getting through, does it
+    recover?
+
+    It would be nice if the simulator itself had the ability to cycle between
+    different states with probabilities, eg. create a bunch of "state" structs
+    with settings for latency, jitter, packet loss -- and assign a probability
+    to each (which gets normalized), then pick a new state randomly with 1 in n
+    chance (n in config) every update.
+
+    It's great to put this in the simulator, vs. having it in the SoakTest,
+    because this same logic can be used anywhere the simulator is used.
+
+    First step, split out the simulator into NetworkSimulatorConfig (create time)
+    and NetworkSimulatorState (dynamic).
+
+    Added "AddState" function. This way you can add states to the sim so that
+    it oscillates between them with equal probability. I don't really think
+    the weighting by priority is worth the effort. This is good enough.
+
+    Verified that the state is adjusting every n frames.
+
+    Soak test works fine.
+
+
+Wednesday Morning, May 28th 2014
+--------------------------------
+
+    Add "NetworkSimulator.h" to delay packets and deliver them
+    after a fixed amount of delay, with +/- jitter in seconds.
+
+    Made network simulator implement the network interface.
+
+    Seems to make the most sense.
+
+    Add latency and out of order packets to soak test.
+
+    Seems mostly fine, but when I increased the amount of packet
+    loss and latency, it seems I have broken it.
+
+    Interestingly, just setting latency to 1 second is enough to break it.
+
+    Also, it still breaks when I only send messages. Large/small blocks not required.
+
+    It breaks *precisely* at 512, which is the receive queue size.
+
+    What is going wrong?
+
+    It seems that all messages are being discarded on receive because they are "old"
+
+    My guess is that somehow the receiver is running ahead, eg. has the sliding
+    window advanced forward, further than will allow the non-received messages
+    to ever be received.
+
+    It seems like "ProcessAck" is not getting called.
+
+    Why is this?
+
+    Acks are also super weird, eg. for a long time:
+
+        65535 - 0
+
+    And then it ends with persistent:
+
+        n - 55555555
+
+    Which is really strange as well. Why 55555555?
+
+    In binary this is 010101010101...
+
+    Why are acks coming through for odd packets?
+
+    Some seriously fucked up stuff here.
+
+    Some clues here:
+
+    ack patterns are consistently 0101010 etc.
+
+    This persists even if:
+
+    a) bsd sockets are removed
+    b) simulator is removed
+
+    This is very strange. Is something wrong with acks or is send sequence getting
+    bumped by two somehow? eg. ++, ++?
+
+    Yes. It looks like sequences are going up by two somewhere.
+
+    This *may* be a separate issue to why the event queue stalls out at 1 sec latency.
+
+    Yes, the sliding window change I made was adjusting the sequence ahead at twice
+    the rate, eg. 1, 3, 5, 7 etc...
+
+    This was also causing the broken acks, eg. the sent packet data did not match
+    the actual packet sequence, thus lookup for acks was broken, acking the wrong
+    messages in the send queue and causing the messages to stall out.
+
+    Fixed!
+
+    Reintroduced mix of bitpacked messages, small blocks and large blocks into
+    soak test. Everything is working fine again.
+
+
+Monday May 25th, 2014 (Memorial Day)
+------------------------------------
+
+    Add some rare large blocks to the soak test. 
+
+    Working fine.
+
+    Bumped up soak test so it's really going to be pushing the limits of CPU,
+    eg. larger packets, large blocks, increased message size etc.
+
+    During soak test it would be nice to see received x/y fragments of large block.
+    This way there is continuous logging and it is a nice steady stream, vs. the current
+    large hitch on each block which is occuring.
+
+    Added GetSendLargeBlockStatus and GetReceiveLargeBlockStatus to return 
+    structs providing information about current send/receive large block.
+
+    Used these to display x/y fragments while receiving a large block.
+
+    Extend soak test to actually validate contents of blocks properly,
+    eg. make each byte a modulus of byte index in block.
+
+    Make the small and large block data more distinct, eg. each byte
+    a unique modulus of byte index and sequence, and verify each byte
+    is correct on receive.
+
+    Unit test should have some bit pattern for message bits,
+    so they can be verified on the way back.
+
+    Solved by adding a magic 32bit value after the bits.
+
+
+Sunday Evening May 24th, 2014:
+------------------------------
 
     Things to do to get the large block codepath working:
 
@@ -130,7 +307,7 @@ Sunday May 25th, 2014:
     this packet had a block fragment, or if it contains messages.
 
     Send queue entry needs a "largeBlock" bit for easy processing
-    of the message/small block mode, it needs to go only up to the
+    of the message /small block mode, it needs to go only up to the
     next large block.
 
     Added code to break on nullptr send queue entry, because that should mean

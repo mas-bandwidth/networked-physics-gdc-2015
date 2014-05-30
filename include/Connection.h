@@ -234,7 +234,7 @@ namespace protocol
         shared_ptr<ConnectionPacket> WritePacket()
         {
             auto packet = static_pointer_cast<ConnectionPacket>( m_config.packetFactory->Create( m_config.packetType ) );
-            packet->sequence = m_sentPackets->GetSequence() + 1;
+            packet->sequence = m_sentPackets->GetSequence();
 
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
 
@@ -268,6 +268,8 @@ namespace protocol
             }
             catch ( runtime_error & e )
             {
+                // todo: rename this counter
+//                cout << "read packet failure" << endl;
                 m_counters[ReadPacketFailures]++;
                 return;                
             }
@@ -292,6 +294,8 @@ namespace protocol
 
         void ProcessAcks( uint16_t ack, uint32_t ack_bits )
         {
+//            cout << format_string( "process acks: %d - %x", (int)ack, ack_bits ) << endl;
+
             for ( int i = 0; i < 32; ++i )
             {
                 if ( ack_bits & 1 )
