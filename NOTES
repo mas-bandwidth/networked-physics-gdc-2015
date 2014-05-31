@@ -1,5 +1,50 @@
 NOTES
 
+-----------------------------------------
+
+IMPORTANT: Make sure client has a guid per-connection, so we can
+distinguish packets from previous connection from the current.
+This was a problem for me in the past with other implementations
+so make sure this is solved off the bat. 32bit guid.
+
+-----------------------------------------
+
+Client and server should have *no* knowledge of the exact
+resolver and network interface implementation.
+
+These should be passed in via config.
+
+This means the client and server can run over any network interface
+implementation and resolver.
+
+-----------------------------------------
+
+Client and server should be designed to be *Extendable*
+
+My guess is that integration into the game will require
+deriving your own client and server classes from the base.
+
+-----------------------------------------
+
+Client and server interface.
+
+These should allow you to pass in a network interface, and then manage
+the set of connections on the server, one-per client, and on the client
+just have a single connection to the server.
+
+Note that there needs to be a state machine on the server and on the client 
+to negotiate connection. Once established stabilizes to "Connection" 
+packet type.
+
+Make sure to build in a block of data which gets transferred to the client
+prior to connection packets being sent down, eg. as part of the client connect
+state machine.
+
+This is essential, as it may include something that informs the client of 
+the data required to actually *process* the connection packets (Eg. send tables) 
+so it is essential that this data is sent down here *prior* to connection packets 
+being processed at all (they should be discarded if received prior)
+
 -------------------------------------------------------------------------------------------------------------
 
 Analysis of existing protocol serialization layers.

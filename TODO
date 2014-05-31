@@ -2,58 +2,45 @@ DONE:
 
 TODO:
 
-    Implement ack test. Randomly drop packets and verify that the invariant holds
-    that the acked packets must be recieved by the receiver, and that not received
-    packets are not acked. Note that it's possible for acks to be lost, so some
-    received packets will not be acked, so it's possible for some received packets
-    to not have acks.
+    Implement sending connection request state, and actually start
+    sending packets over the interface.
 
-    Add a reliable message test that mixes messages, small blocks and large blocks.
+    Add the connection request packet type to ClientServerPackets.h
 
-    Add counters for all the different things inside the large blocks,
-    eg. # of large blocks sent, received, read/written, also # of
-    fragments read/written.
+    Make sure the client generates a guid at the start of connect by address.
 
-    Write some basic tests to verify these counters are functional.
+    This guid should be passed in to the server on connect request,
+    and this guid is carried along from the client all the way to
+    successful connect (to avoid mismatching client packets from
+    a previous connect attempt...)
 
-    Convert packet discard inside "ProcessData" to not use exceptions.
+    -------------------------
 
-    Clean up counter names, remove that bad "PacketReadFailures" counter
-    and replace it with packet discards or something.
+    Decide on the reasons server can deny connect, eg. full etc.
+    might want to stash this data somewhere so it can be debugged.
 
-    Try to clean up the error handling from "ProcessData".
+    Add a unit test to verify the timeout when the server does
+    not reply with the expected connection response in time.
 
-    Want three options:
+    -------------------------
 
-    a) data is ok, keep processing rest of channels (common case)
-    b) discard packet (no ack), but keep processing remaining channel data.
-    c) discard packet and stop immediately. data is bad. don't process remaining channels.
+    Implement the server side
 
-    Probably want an enum result to return from process data, eg. ProcessDataResult
+    Add the server connection response packet as well, eg. enum with type
+    of response, as well as data, eg. denied, allowed, etc.
 
-    Make sure that counters distinguish between each case, and that serialize read failure
-    which still throws an exception is not counted the same as a packet discard above.
+    Add server side code to detect connection request, and transform that
+    into a per-client connection state on the server side.
 
-    ------------------------
+    Add a way to force the server to deny connections.
 
-    Implement client and server interface.
+    Add a unit test to verify the client has the connection denied.
 
-    These should allow you to pass in a network interface, and then manage
-    the set of connections on the server, one-per client, and on the client
-    just have a single connection to the server.
+    -------------------------
 
-    Note that there needs to be a state machine on the server and on the client 
-    to negotiate connection. Once established stabilizes to "Connection" 
-    packet type.
-
-    Make sure to build in a block of data which gets transferred to the client
-    prior to connection packets being sent down, eg. as part of the client connect
-    state machine.
-
-    This is essential, and it may include something that informs the client of 
-    the data required to actually *process* the connection packets (Eg. send tables) 
-    so it is essential that this data is sent down here *prior* to connection packets 
-    being processed at all (they should be discarded if received prior)
+    Add another test to verify that both the client and server
+    go past the connection request and into the challenge state
+    on both the client and server.
 
     ------------------------
 
@@ -89,6 +76,40 @@ TODO:
 
 
 WOULD BE NICE:
+
+    ----------------
+
+    Add an "Align" method to stream.
+
+    Pass in # of bits to align to in stream ctor and default it to 8.
+
+    This would be useful for testing compression with Oodle.
+
+    ----------------
+
+    Add counters for all the different things inside the large blocks,
+    eg. # of large blocks sent, received, read/written, also # of
+    fragments read/written.
+
+    Write some basic tests to verify these counters are functional.
+
+    --------------------
+
+    Try to clean up the error handling from "ProcessData".
+
+    Want three options:
+
+    a) data is ok, keep processing rest of channels (common case)
+    b) discard packet (no ack), but keep processing remaining channel data.
+    c) discard packet and stop immediately. data is bad. don't process remaining channels.
+
+    Probably want an enum result to return from process data, eg. ProcessDataResult
+
+    Make sure that counters distinguish between each case, and that serialize read failure
+    which still throws an exception is not counted the same as a packet discard above.
+
+    Clean up counter names, remove that bad "PacketReadFailures" counter
+    and replace it with something that makes more sense.
 
     ----------------
 

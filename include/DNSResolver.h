@@ -90,7 +90,7 @@ namespace protocol
             in_progress[name] = entry;
         }
 
-        virtual void Update()
+        virtual void Update( const TimeBase & timeBase )
         {
             for ( auto itor = in_progress.begin(); itor != in_progress.end(); )
             {

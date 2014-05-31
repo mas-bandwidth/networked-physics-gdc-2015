@@ -98,8 +98,6 @@ void soak_test()
 {
     cout << "[soak test]" << endl;
 
-    srand( time( NULL ) );
-
     auto packetFactory = make_shared<PacketFactory>();
     auto messageFactory = make_shared<MessageFactory>();
 
@@ -307,6 +305,8 @@ void soak_test()
 
 int main()
 {
+    srand( time( NULL ) );
+
     if ( !InitializeSockets() )
     {
         cerr << "failed to initialize sockets" << endl;

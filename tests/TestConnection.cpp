@@ -58,20 +58,111 @@ void test_connection()
     assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 }
 
+class AckChannel : public Channel
+{
+public:
+
+    vector<bool> & ackedPackets;
+
+    AckChannel( vector<bool> & _ackedPackets )
+        : ackedPackets( _ackedPackets ) {}
+
+    shared_ptr<ChannelData> CreateData()
+    {
+        return nullptr;
+    }
+
+    shared_ptr<ChannelData> GetData( uint16_t sequence )
+    {
+        return nullptr;
+    }
+
+    void ProcessData( uint16_t sequence, shared_ptr<ChannelData> data )
+    {
+        if ( rand() % 10 )
+            throw runtime_error( "jinx!" );
+    }
+
+    void ProcessAck( uint16_t ack )
+    {
+//        cout << "acked " << (int)ack << endl;
+
+        ackedPackets[ack] = true;
+    }
+
+    void Update( const TimeBase & timeBase )
+    {
+        // ...
+    }
+};
+
+
 void test_acks()
 {
     cout << "test_acks" << endl;
 
-    // ...
+    const int NumIterations = 10*1024;
 
-    // todo: create a test for acks, eg. randomly drop some packets and note which ones
-    // were dropped. make sure that no dropped packets show up as acked. make sure that
-    // at least *some* of the acked packets show up as acked (possible not all will be, under
-    // packet loss it's possible to miss acks)
+    vector<bool> receivedPackets;
+    vector<bool> ackedPackets;
+
+    receivedPackets.resize( NumIterations );
+    ackedPackets.resize( NumIterations );
+
+    auto packetFactory = make_shared<PacketFactory>();
+
+    ConnectionConfig connectionConfig;
+    connectionConfig.packetType = PACKET_Connection;
+    connectionConfig.maxPacketSize = 4 * 1024;
+    connectionConfig.packetFactory = packetFactory;
+
+    Connection connection( connectionConfig );
+
+    connection.AddChannel( make_shared<AckChannel>( ackedPackets ) );
+
+    packetFactory->SetInterface( connection.GetInterface() );
+
+    for ( int i = 0; i < NumIterations; ++i )
+    {
+        auto packet = connection.WritePacket();
+
+        if ( rand() % 100 == 0 )
+        {
+            connection.ReadPacket( packet );
+
+            uint16_t sequence = packet->sequence;
+
+//            cout << "received " << (int)sequence << endl;
+
+            receivedPackets[sequence] = true;
+        }
+    }
+
+    int numAckedPackets = 0;
+    int numReceivedPackets = 0;
+    for ( int i = 0; i < NumIterations; ++i )
+    {
+        if ( ackedPackets[i] )
+            numAckedPackets++;
+
+        if ( receivedPackets[i] )
+            numReceivedPackets++;
+
+        // an acked packet *must* have been received
+        if ( ackedPackets[i] && !receivedPackets[i] )
+            assert( false );
+    }
+
+    assert( numAckedPackets > 0 );
+    assert( numReceivedPackets >= numAckedPackets );
+
+//    cout << numReceivedPackets << " packets received, " << numAckedPackets << " packets acked." << endl;
 }
 
 int main()
 {
+    srand( time( NULL ) );
+
     try
     {
         test_connection();

@@ -1,3 +1,78 @@
+Saturday, May 31st, 2014:
+-------------------------
+
+    First, start by defining the client and it's state machine, behavior etc.
+
+    Client will have a single connection, a network interface it uses to
+    send packets across.
+
+    Client/server will have to have their own packet enum, packet factory
+    implementation, as they need a bunch of their own packets for comms.
+
+    Add resolver and interface to client and server configs.
+
+    Add ClientServerPackets.h
+
+    Added tests/TestClientServer.cpp (no point testing in isolation!)
+
+    Sketched out the set of tests I want.
+
+    Designed the client state and the set of errors.
+
+    Started work on basic tests, eg. initial state.
+
+    Added lots of nice accessors, IsConnecting, HasError, IsConnected
+    IsDisconnected and so on. There functions are shorthand, but it makes
+    the code quite a bit clearer vs. checking state/error enums all the time.
+
+    Implemented internal functions for connect/disconnect, and error setter,
+    clear and so on.
+
+    If hostname is an address string, use that and connect by address instead.
+
+    Implemented hostname lookup via resolver. Added per-state data so the
+    state machine remains really clean. Added fn. to clear all state data,
+    and made sure it gets called on disconnect.
+
+    Should now have code that actually performs the resolve, waits for
+    succeed or fail result, as well as having timeout specified in config
+    at which point it gives up (important for every state!)
+
+    Add a unit test to verify the timeout works, trick would be to not
+    update the resolver. No sleep required either.
+
+    Add test to verify the hostname resolve works, eg. use "localhost"
+
+    Added code to transition into "sending connection request" state
+    inside connect by address fn.
+
+    Enough work for today. Time to take a break.
+
+
+Friday Morning, May 30th, 2014:
+-------------------------------
+
+    Implement ack test. Randomly drop packets and verify that the invariant holds
+    that the acked packets must have been received, and that not received packets
+    must not be acked.
+
+    Note that it's possible for acks to be lost, so some received packets will not 
+    be acked.
+
+    Need a way to determine when a sequence has been acked.
+
+    Probably the simplest way is to implement a dummy channel that hooks in
+    to the connection and has "ProcessAck" called on it.
+
+    Added test, works fine.
+
+    Make sure all tests call srand( time( NULL ) ) at the beginning,
+    so they have actual random numbers, vs. the same sequence every
+    time they are run.
+
+    Add a reliable message channel test that mixes messages, large and small blocks.
+
+
 Thursday Night, May 29th, 2014:
 -------------------------------
 

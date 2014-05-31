@@ -60,6 +60,8 @@ void test_bitpacker()
 
 int main()
 {
+    srand( time( NULL ) );
+    
     try
     {
         test_bitpacker();

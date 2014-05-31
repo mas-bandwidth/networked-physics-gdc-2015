@@ -235,6 +235,11 @@ namespace protocol
             ReceivePackets();
         }
 
+        uint32_t GetMaxPacketSize() const
+        {
+            return m_config.maxPacketSize;
+        }
+
         uint64_t GetCounter( int index ) const
         {
             assert( index >= 0 );
@@ -249,7 +254,9 @@ namespace protocol
             if ( !m_config.resolver )
                 return;
 
-            m_config.resolver->Update();
+            // todo: remove this resolver integration directly into the network interface - it's unnecessary!
+
+            m_config.resolver->Update( TimeBase() );
 
             for ( auto itor = m_resolve_send_queues.begin(); itor != m_resolve_send_queues.end(); )
             {

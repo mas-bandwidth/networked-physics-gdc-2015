@@ -404,6 +404,8 @@ void test_bsd_sockets_send_and_receive_ipv6()
 
 int main()
 {
+    srand( time( NULL ) );
+
     if ( !InitializeSockets() )
     {
         cerr << "failed to initialize sockets" << endl;

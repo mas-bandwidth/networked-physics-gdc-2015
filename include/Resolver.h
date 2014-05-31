@@ -39,7 +39,7 @@ namespace protocol
 
         virtual void Resolve( const string & name, ResolveCallback cb = nullptr ) = 0;
 
-        virtual void Update() = 0;
+        virtual void Update( const TimeBase & timeBase ) = 0;
 
         virtual void Clear() = 0;
 

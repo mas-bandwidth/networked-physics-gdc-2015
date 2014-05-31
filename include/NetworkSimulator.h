@@ -133,6 +133,11 @@ namespace protocol
             }
         }
 
+        uint32_t GetMaxPacketSize() const
+        {
+            return 0xFFFFFFFF;
+        }
+
     private:
 
         NetworkSimulatorConfig m_config;

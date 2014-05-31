@@ -201,6 +201,8 @@ void test_address6()
 
 int main()
 {
+    srand( time( NULL ) );
+
     try
     {
         test_address4();

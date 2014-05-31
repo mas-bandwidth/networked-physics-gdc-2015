@@ -27,7 +27,7 @@ public:
         return packet;
     }
 
-    virtual void Update()
+    virtual void Update( const TimeBase & timeBase )
     {
         // ...
     }
@@ -93,6 +93,8 @@ void test_network_interface()
 
 int main()
 {
+    srand( time( NULL ) );
+
     try
     {
         test_network_interface();

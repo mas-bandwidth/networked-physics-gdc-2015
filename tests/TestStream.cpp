@@ -102,6 +102,8 @@ void test_stream()
 
 int main()
 {
+    srand( time( NULL ) );
+
     try
     {
         test_stream();

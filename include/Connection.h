@@ -215,8 +215,11 @@ namespace protocol
 
         void Reset()
         {
+            m_timeBase = TimeBase();
             m_sentPackets->Reset();
             m_receivedPackets->Reset();
+            for ( int i = 0; i < m_counters.size(); ++i )
+                m_counters[i] = 0;
         }
 
         void Update( const TimeBase & timeBase )

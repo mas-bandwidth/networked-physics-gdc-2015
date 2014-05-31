@@ -26,6 +26,8 @@ namespace protocol
         virtual shared_ptr<Packet> ReceivePacket() = 0;
 
         virtual void Update( const TimeBase & timeBase ) = 0;
+
+        virtual uint32_t GetMaxPacketSize() const = 0;
     };
 }
 

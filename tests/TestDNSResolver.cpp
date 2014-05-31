@@ -43,7 +43,7 @@ void test_dns_resolve()
 
     for ( int i = 0; i < 50; ++i )
     {
-        resolver.Update();
+        resolver.Update( TimeBase() );
 
         if ( num_google_success_callbacks == num_google_iterations )
             break;
@@ -102,7 +102,7 @@ void test_dns_resolve_failure()
 
     for ( int i = 0; i < 50; ++i )
     {
-        resolver.Update();
+        resolver.Update( TimeBase() );
 
         if ( resolved )
             break;
@@ -126,6 +126,8 @@ void test_dns_resolve_failure()
 
 int main()
 {
+    srand( time( NULL ) );
+
     try
     {
         test_dns_resolve();

@@ -158,6 +158,8 @@ void test_factory()
 
 int main()
 {
+    srand( time( NULL ) );
+
     try
     {
         test_sequence();
