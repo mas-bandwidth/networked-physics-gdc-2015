@@ -127,6 +127,8 @@ namespace protocol
     #define serialize_bits( stream, value, bits )               \
         do                                                      \
         {                                                       \
+            assert( bits > 0 );                                 \
+            assert( bits <= 32 );                               \
             uint32_t uint32_value = (uint32_t) value;           \
             stream.SerializeBits( uint32_value, bits );         \
             value = (decltype(value)) uint32_value;             \
@@ -135,6 +137,21 @@ namespace protocol
     void serialize_bool( Stream & stream, bool & value )
     {
         serialize_bits( stream, value, 1 );
+    }
+
+    void serialize_uint64( Stream & stream, uint64_t & value )
+    {
+        uint32_t hi = 0;
+        uint32_t lo = 0;
+        if ( stream.IsWriting() )
+        {
+            lo = value & 0xFFFFFFFF;
+            hi = value >> 32;
+        }
+        serialize_bits( stream, lo, 32 );
+        serialize_bits( stream, hi, 32 );
+        if ( stream.IsReading() )
+            value = ( uint64_t(hi) << 32 ) | lo;
     }
 
     void serialize_block( Stream & stream, shared_ptr<Block> & block_ptr, int maxBytes )

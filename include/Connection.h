@@ -52,18 +52,16 @@ namespace protocol
 
     struct ConnectionPacket : public Packet
     {
-        uint16_t sequence;
-        uint16_t ack;
-        uint32_t ack_bits;
+        uint64_t protocolId = 0;
+        uint16_t sequence = 0;
+        uint16_t ack = 0;
+        uint32_t ack_bits = 0;
         shared_ptr<ConnectionInterface> interface;
         vector<shared_ptr<ChannelData>> channelData;
 
         ConnectionPacket( int type, shared_ptr<ConnectionInterface> _interface ) : Packet( type )
         {
             assert( _interface );
-            sequence = 0;
-            ack = 0;
-            ack_bits = 0;
             interface = _interface;
             channelData.resize( interface->GetNumChannels() );
         }
@@ -71,6 +69,8 @@ namespace protocol
         void Serialize( Stream & stream )
         {
             assert( interface );
+
+            serialize_uint64( stream, protocolId );
 
             serialize_bits( stream, sequence, 16 );
             serialize_bits( stream, ack, 16 );
@@ -126,16 +126,10 @@ namespace protocol
 
     struct ConnectionConfig
     {
-        ConnectionConfig()
-        {
-            packetType = 0;
-            maxPacketSize = 1024;
-            slidingWindowSize = 256;
-        }
-
-        int packetType;
-        int maxPacketSize;
-        int slidingWindowSize;
+        uint64_t protocolId = 0;
+        int packetType = 0;
+        int maxPacketSize = 1024;
+        int slidingWindowSize = 256;
         shared_ptr<Factory<Packet>> packetFactory;
     };
 
@@ -237,6 +231,8 @@ namespace protocol
         shared_ptr<ConnectionPacket> WritePacket()
         {
             auto packet = static_pointer_cast<ConnectionPacket>( m_config.packetFactory->Create( m_config.packetType ) );
+
+            packet->protocolId = m_config.protocolId;
             packet->sequence = m_sentPackets->GetSequence();
 
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
@@ -256,6 +252,9 @@ namespace protocol
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
             assert( packet->channelData.size() == m_interface->channels.size() );
+
+            if ( packet->protocolId != m_config.protocolId )
+                return;
 
 //            cout << "read packet " << packet->sequence << endl;
 

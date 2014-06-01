@@ -76,6 +76,8 @@ namespace protocol
 
     struct ClientConfig
     {
+        uint64_t protocolId = 0;                                // the protocol id.
+
         float resolveHostnameTimeout = 5.0f;                    // number of seconds until we give up trying to resolve server hostname into a network address (eg. DNS typically)
         float connectionRequestTimeout = 5.0f;                  // number of seconds in the connection request state until timeout if no challenge packet received from server.
         float connectionChallengeTimeout = 5.0f;                // number of seconds in the challenge response state until timeout if the server does not reply with data block packet.
@@ -111,6 +113,7 @@ namespace protocol
         {
             Address address;
             double startTime = 0.0;
+            uint64_t clientGuid = 0;
         };
 
         ResolveHostnameData m_resolveHostnameData;
@@ -151,6 +154,7 @@ namespace protocol
 
             m_sendingConnectionRequestData.address = address;
             m_sendingConnectionRequestData.startTime = m_timeBase.time;
+            m_sendingConnectionRequestData.clientGuid = GenerateGuid();
         }
 
         void Connect( const string & hostname )
@@ -246,6 +250,10 @@ namespace protocol
                     UpdateResolveHostname();
                     break;
 
+                case CLIENT_STATE_SendingConnectionRequest:
+                    UpdateSendingConnectionRequest();
+                    break;
+
                 default:
                     break;
             }
@@ -283,6 +291,19 @@ namespace protocol
 
                 Connect( addresses[0] );
             }
+        }
+
+        void UpdateSendingConnectionRequest()
+        {
+            assert( m_state == CLIENT_STATE_SendingConnectionRequest );
+
+            if ( m_timeBase.time - m_sendingConnectionRequestData.startTime > m_config.connectionRequestTimeout )
+            {
+                DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestTimedOut );
+                return;
+            }
+
+            // ...
         }
 
         void DisconnectAndSetError( ClientError error )

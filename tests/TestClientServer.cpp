@@ -205,6 +205,59 @@ void test_client_resolve_hostname_success()
     assert( client.GetError() == CLIENT_ERROR_None );
 }
 
+void test_client_connection_request_timeout()
+{
+    cout << "test_client_connection_request_timeout" << endl;
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>();
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    auto resolver = make_shared<DNSResolver>();
+
+    ClientConfig clientConfig;
+    clientConfig.packetFactory = packetFactory;
+    clientConfig.networkInterface = networkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:5000" );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 1.0f;
+
+    for ( int i = 0; i < 60; ++i )
+    {
+        if ( client.HasError() )
+            break;
+
+        client.Update( timeBase );
+
+        networkInterface->Update( timeBase );        
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( !client.IsConnected() );
+    assert( client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Disconnected );
+    assert( client.GetError() == CLIENT_ERROR_ConnectionRequestTimedOut );
+}
+
+
 /*
 
 void test_client_connection_request_timeout()
@@ -286,9 +339,9 @@ int main()
         test_client_resolve_hostname_failure();
         test_client_resolve_hostname_timeout();
         test_client_resolve_hostname_success();
+        test_client_connection_request_timeout();
 
         /*
-        test_client_connection_request_timeout();
         test_client_connection_challenge_timeout();
         test_client_receive_data_timeout();
         test_client_send_data_timeout();

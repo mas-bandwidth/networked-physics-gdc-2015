@@ -14,6 +14,8 @@ namespace protocol
 {
     struct ServerConfig
     {
+        uint64_t protocolId = 0;                                // the protocol id.
+
         shared_ptr<NetworkInterface> networkInterface;
     };
 

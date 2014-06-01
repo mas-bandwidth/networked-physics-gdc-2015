@@ -375,6 +375,12 @@ namespace protocol
         double scale = ( rand() % res ) / double( res - 1 );
         return (float) ( min + (double) ( max - min ) * scale );
     }
+
+    uint64_t GenerateGuid()
+    {
+        // todo: we really want something better than this
+        return ( uint64_t(rand()) << 32 ) | time( NULL );
+    }
 }
 
 #endif
