@@ -33,7 +33,7 @@ namespace protocol
         BSDSocketsConfig()
         {
             port = 10000;
-            family = AF_INET;                       // default to IPv6.
+            family = AF_INET6;                      // default to IPv6.
             maxPacketSize = 10*1024;
         }
 
@@ -79,7 +79,7 @@ namespace protocol
 
             if ( m_socket <= 0 )
             {
-                cout << "socket failed: " << strerror( errno ) << endl;
+                cout << "create socket failed: " << strerror( errno ) << endl;
                 throw runtime_error( "bsd sockets interface failed to create socket" );
             }
 
@@ -102,7 +102,7 @@ namespace protocol
             
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
-                    cout << "bind failed: " << strerror( errno ) << endl;
+                    cout << "bind socket failed: " << strerror( errno ) << endl;
                     throw runtime_error( "bsd sockets interface failed to bind socket (ipv6)" );
                 }
             }
@@ -115,7 +115,7 @@ namespace protocol
             
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
-                    cout << "bind failed: " << strerror( errno ) << endl;
+                    cout << "bind socket failed: " << strerror( errno ) << endl;
                     throw runtime_error( "bsd sockets interface failed to bind socket (ipv4)" );
                 }
             }
@@ -379,11 +379,13 @@ namespace protocol
             assert( bytes > 0 );
             assert( bytes <= m_config.maxPacketSize );
 
+//            cout << "send packet internal: address = " << address.ToString() << ", bytes = " << bytes << endl;
+
             bool result = false;
 
             if ( address.GetType() == AddressType::IPv6 )
             {
-//                cout << "sent ipv6 packet" << endl;
+//                cout << "ipv6 packet" << endl;
                 sockaddr_in6 s_addr;
                 memset( &s_addr, 0, sizeof(s_addr) );
                 s_addr.sin6_family = AF_INET6;

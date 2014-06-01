@@ -77,10 +77,6 @@ void test_client_resolve_hostname_failure()
 
         client.Update( timeBase );
 
-        networkInterface->Update( timeBase );        
-
-        resolver->Update( timeBase );
-
         timeBase.time += timeBase.deltaTime;
 
         this_thread::sleep_for( chrono::milliseconds( 100 ) );
@@ -134,8 +130,6 @@ void test_client_resolve_hostname_timeout()
 
         client.Update( timeBase );
 
-        networkInterface->Update( timeBase );        
-
         timeBase.time += timeBase.deltaTime;
     }
 
@@ -188,10 +182,6 @@ void test_client_resolve_hostname_success()
 
         client.Update( timeBase );
 
-        networkInterface->Update( timeBase );        
-
-        resolver->Update( timeBase );
-
         timeBase.time += timeBase.deltaTime;
 
         this_thread::sleep_for( chrono::milliseconds( 100 ) );
@@ -213,6 +203,7 @@ void test_client_connection_request_timeout()
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
     bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
 
@@ -226,7 +217,7 @@ void test_client_connection_request_timeout()
 
     Client client( clientConfig );
 
-    client.Connect( "[::1]:5000" );
+    client.Connect( "[::1]:10001" );
 
     assert( client.IsConnecting() );
     assert( !client.IsDisconnected() );
@@ -243,8 +234,6 @@ void test_client_connection_request_timeout()
             break;
 
         client.Update( timeBase );
-
-        networkInterface->Update( timeBase );        
 
         timeBase.time += timeBase.deltaTime;
     }

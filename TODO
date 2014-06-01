@@ -1,50 +1,6 @@
 DONE:
 
-    Add the connection request packet type to ClientServerPackets.h
-
-    Added connection challeng, and challenge response packets.
-
-    Each packet has a protocolId uint64_t, as well as a client guid uint64_t
-    and a server guid uint64_t. This should provide enough safety that the
-    packets belong to the same client, with same protocol and that connection
-    can be established.
-
-    Once connection is established, the 64 bit protocolId is passed along
-    with each connection packet. This is overkill if travelling over a
-    transport that already establishes connection, eg. UDPP2P on PSN,
-    but for a raw UDP transport this is appropriate.
-
-    I can repurpose this 64bits to support packet signing data
-    and encryption payload, to avoid man in the middle attacks later.
-
-    Added very rough code to generate 64bit guid. This needs to be revisited.
-
-    Make sure the client generates a guid at the start of connect by address.
-
-    This guid should be passed in to the server on connect request,
-    and this guid is carried along from the client all the way to
-    successful connect (to avoid mismatching client packets from
-    a previous connect attempt...)
-
-    Implemented state update for sending connection request.
-
-    Implemented timeout if in sending connection request too long.
-
-    Added unit test to verify sending connection request timeout.
-
 TODO:
-
-    Actually start sending the connection request packets.
-
-    Add a config for the send rate while in this state. 10 times per-second default.
-
-    Write the client side code to receive incoming packets.
-
-    If in the sending connection request state, and a connection response
-    comes in that matches, then transition to the sending challenge response
-    state.
-
-    ----------------------
 
     Actually implement the server side now, and do whatever is required for the
     server to manage a set of connections, listen for new connection requests

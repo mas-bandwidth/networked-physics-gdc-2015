@@ -48,10 +48,10 @@ namespace protocol
         CLIENT_ERROR_ResolveHostnameFailed,                   // client failed to resolve hostname, eg. DNS said nope.
         CLIENT_ERROR_ResolveHostnameTimedOut,                 // client timed out while trying to resolve hostname.
         CLIENT_ERROR_ConnectionRequestTimedOut,               // client timed out while sending connection requests.
-        CLIENT_ERROR_ConnectionChallengeTimedOut,             // client timed out while sending connection challenge responses.
+        CLIENT_ERROR_ChallengeResponseTimedOut,               // client timed out while sending connection challenge responses.
         CLIENT_ERROR_ReceiveDataBlockTimedOut,                // client timed out while receiving data block from server.
         CLIENT_ERROR_SendDataBlockTimedOut,                   // client timed out while sending data block to server.
-        CLIENT_ERROR_DisconnectedFromServer,                  // client received a disconnect packet from the server.
+        CLIENT_ERROR_DisconnectedFromServer,                  // client was fully connected to the server, then received a disconnect packet.
         CLIENT_ERROR_ConnectionTimedOut,                      // client was fully connected to the server, then the connection timed out.
         CLIENT_ERROR_NumStates
     };
@@ -64,7 +64,7 @@ namespace protocol
             case CLIENT_ERROR_ResolveHostnameFailed:            return "resolve hostname failed";
             case CLIENT_ERROR_ResolveHostnameTimedOut:          return "resolve hostname timed out";
             case CLIENT_ERROR_ConnectionRequestTimedOut:        return "connection request timed out";
-            case CLIENT_ERROR_ConnectionChallengeTimedOut:      return "connection challenge timed out";
+            case CLIENT_ERROR_ChallengeResponseTimedOut:        return "challenge response timed out";
             case CLIENT_ERROR_ReceiveDataBlockTimedOut:         return "receive data block timed out";
             case CLIENT_ERROR_SendDataBlockTimedOut:            return "send data block timed out";
             case CLIENT_ERROR_DisconnectedFromServer:           return "disconnected from server";
@@ -80,10 +80,13 @@ namespace protocol
 
         float resolveHostnameTimeout = 5.0f;                    // number of seconds until we give up trying to resolve server hostname into a network address (eg. DNS typically)
         float connectionRequestTimeout = 5.0f;                  // number of seconds in the connection request state until timeout if no challenge packet received from server.
-        float connectionChallengeTimeout = 5.0f;                // number of seconds in the challenge response state until timeout if the server does not reply with data block packet.
+        float challengeResponseTimeout = 5.0f;                  // number of seconds in the challenge response state until timeout if the server does not reply with data block packet.
         float receiveDataBlockTimeout = 5.0f;                   // number of seconds in the receive data block state if no data block packet received from server.
         float sendDataBlockTimeout = 5.0f;                      // number of seconds in the send data block state if server doesn't send us a response ack, or a connection packet (indicating data block fully received)
         float connectionTimeOut = 10.0f;                        // number of seconds in the connected state before timing out if no connection packet received from server.
+
+        float connectionRequestSendRate = 10.0f;                // number of packets to send per-second while in sending connection request state.
+        float challengeResponseSendRate = 10.0f;                // number of packets to send per-second while in sending challenge response state.
 
         shared_ptr<Resolver> resolver;                          // optional resolver used to to lookup server address by hostname.
 
@@ -114,10 +117,21 @@ namespace protocol
             Address address;
             double startTime = 0.0;
             uint64_t clientGuid = 0;
+            double accumulator = 0.0;
+        };
+
+        struct SendingChallengeResponseData
+        {
+            Address address;
+            double startTime = 0.0;
+            uint64_t clientGuid = 0;
+            uint64_t serverGuid = 0;
+            double accumulator = 0.0;
         };
 
         ResolveHostnameData m_resolveHostnameData;
         SendingConnectionRequestData m_sendingConnectionRequestData;
+        SendingChallengeResponseData m_sendingChallengeResponseData;
 
     public:
 
@@ -244,6 +258,69 @@ namespace protocol
         {
             m_timeBase = timeBase;
 
+            UpdateResolver();
+            
+            UpdateCurrentState();
+            
+            UpdateNetworkInterface();
+            
+            UpdateReceivePackets();
+        }
+
+    protected:
+
+        void UpdateNetworkInterface()
+        {
+            assert( m_config.networkInterface );
+            m_config.networkInterface->Update( m_timeBase );
+        }
+
+        void UpdateResolver()
+        {
+            if ( m_config.resolver )
+                m_config.resolver->Update( m_timeBase );
+        }
+
+        void UpdateReceivePackets()
+        {
+            while ( true )
+            {
+                auto packet = m_config.networkInterface->ReceivePacket();
+                if ( !packet )
+                    break;
+
+                switch ( m_state )
+                {
+                    case CLIENT_STATE_SendingConnectionRequest:
+                    {
+                        if ( packet->GetType() == PACKET_ConnectionChallenge )
+                        {
+                            auto connectionChallengePacket = static_pointer_cast<ConnectionChallengePacket>( packet );
+
+                            if ( connectionChallengePacket->GetAddress() == m_sendingConnectionRequestData.address &&
+                                 connectionChallengePacket->clientGuid == m_sendingConnectionRequestData.clientGuid )
+                            {
+                                cout << "recieved connection challenge packet from server" << endl;
+
+                                m_state = CLIENT_STATE_SendingChallengeResponse;
+
+                                m_sendingChallengeResponseData.startTime = m_timeBase.time;
+                                m_sendingChallengeResponseData.address = m_sendingConnectionRequestData.address;
+                                m_sendingChallengeResponseData.clientGuid = connectionChallengePacket->clientGuid;
+                                m_sendingChallengeResponseData.serverGuid = connectionChallengePacket->serverGuid;
+                            }
+                        }
+                    }
+                    break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+        void UpdateCurrentState()
+        {
             switch ( m_state )
             {
                 case CLIENT_STATE_ResolvingHostname:
@@ -258,8 +335,6 @@ namespace protocol
                     break;
             }
         }
-
-    protected:
 
         void UpdateResolveHostname()
         {
@@ -303,7 +378,47 @@ namespace protocol
                 return;
             }
 
-            // ...
+            m_sendingConnectionRequestData.accumulator += m_timeBase.deltaTime;
+
+            const float timeBetweenPackets = 1.0f / m_config.connectionRequestSendRate;
+
+            if ( m_sendingConnectionRequestData.accumulator >= timeBetweenPackets )
+            {
+                m_sendingConnectionRequestData.accumulator -= timeBetweenPackets;
+
+                auto packet = make_shared<ConnectionRequestPacket>();
+                packet->protocolId = m_config.protocolId;
+                packet->clientGuid = m_sendingConnectionRequestData.clientGuid;
+
+                m_config.networkInterface->SendPacket( m_sendingConnectionRequestData.address, packet );
+            }
+        }
+
+        void UpdateSendingChallengeResponse()
+        {
+            assert( m_state == CLIENT_STATE_SendingChallengeResponse );
+
+            if ( m_timeBase.time - m_sendingChallengeResponseData.startTime > m_config.challengeResponseTimeout )
+            {
+                DisconnectAndSetError( CLIENT_ERROR_ChallengeResponseTimedOut );
+                return;
+            }
+
+            m_sendingChallengeResponseData.accumulator += m_timeBase.deltaTime;
+
+            const float timeBetweenPackets = 1.0f / m_config.challengeResponseSendRate;
+
+            if ( m_sendingChallengeResponseData.accumulator >= timeBetweenPackets )
+            {
+                m_sendingChallengeResponseData.accumulator -= timeBetweenPackets;
+
+                auto packet = make_shared<ChallengeResponsePacket>();
+                packet->protocolId = m_config.protocolId;
+                packet->clientGuid = m_sendingChallengeResponseData.clientGuid;
+                packet->serverGuid = m_sendingChallengeResponseData.serverGuid;
+
+                m_config.networkInterface->SendPacket( m_sendingChallengeResponseData.address, packet );
+            }
         }
 
         void DisconnectAndSetError( ClientError error )
@@ -324,6 +439,7 @@ namespace protocol
         {
             m_resolveHostnameData = ResolveHostnameData();
             m_sendingConnectionRequestData = SendingConnectionRequestData();
+            m_sendingChallengeResponseData = SendingChallengeResponseData();
         }
     };
 }
