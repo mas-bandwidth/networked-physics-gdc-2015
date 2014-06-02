@@ -2,6 +2,17 @@ DONE:
 
 TODO:
 
+    Implement enough server framework copying from client to support
+    updating the interface, receiving packets and so on.
+
+    Add the code that receives packets in the server and if a request connection
+    packet comes in while the server is closed, reply with a "connection denied"
+
+    Implement a unit test to verify that the client handles this properly
+    and goes into the connection denied error state.
+
+    --------------
+
     Actually implement the server side now, and do whatever is required for the
     server to manage a set of connections, listen for new connection requests
     and maintain a state per-client on the server.

@@ -10,25 +10,6 @@ enum PacketType
     PACKET_Connection
 };
 
-class PacketFactory : public Factory<Packet>
-{
-public:
-
-    PacketFactory()
-    {
-        Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
-    }
-
-    void SetInterface( shared_ptr<ConnectionInterface> interface )
-    {
-        m_interface = interface;
-    }
-
-private:
-
-    shared_ptr<ConnectionInterface> m_interface;
-};
-
 enum MessageType
 {
     MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
@@ -74,12 +55,55 @@ public:
     }
 };
 
+class TestChannelStructure : public ChannelStructure
+{
+    ReliableMessageChannelConfig m_config;
+
+public:
+
+    TestChannelStructure()
+    {
+        m_config.messageFactory = make_shared<MessageFactory>();
+
+        AddChannel( "reliable message channel", 
+                    [this] { return CreateReliableMessageChannel(); }, 
+                    [this] { return CreateReliableMessageChannelData(); } );
+
+        Lock();
+    }
+
+    shared_ptr<ReliableMessageChannel> CreateReliableMessageChannel()
+    {
+        return make_shared<ReliableMessageChannel>( m_config );
+    }
+
+    shared_ptr<ReliableMessageChannelData> CreateReliableMessageChannelData()
+    {
+        return make_shared<ReliableMessageChannelData>( m_config );
+    }
+
+    const ReliableMessageChannelConfig & GetConfig() const
+    {
+        return m_config;
+    }
+};
+
+class PacketFactory : public Factory<Packet>
+{
+public:
+
+    PacketFactory( shared_ptr<ChannelStructure> channelStructure )
+    {
+        Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
+    }
+};
+
 void test_reliable_message_channel_messages()
 {
     cout << "test_reliable_message_channel_messages" << endl;
 
-    auto packetFactory = make_shared<PacketFactory>();
-    auto messageFactory = make_shared<MessageFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
 
     const int MaxPacketSize = 256;
 
@@ -87,18 +111,12 @@ void test_reliable_message_channel_messages()
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
 
-    packetFactory->SetInterface( connection.GetInterface() );
-
-    ReliableMessageChannelConfig channelConfig;
-    channelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
+    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
     
-    auto messageChannel = make_shared<ReliableMessageChannel>( channelConfig );
-    
-    connection.AddChannel( messageChannel );
-
     const int NumMessagesSent = 32;
 
     for ( int i = 0; i < NumMessagesSent; ++i )
@@ -131,7 +149,7 @@ void test_reliable_message_channel_messages()
         writeStream.Flush();
 
         Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
+        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
         readPacket->Serialize( readStream );
 
         simulator.SendPacket( address, readPacket );
@@ -188,7 +206,8 @@ void test_reliable_message_channel_small_blocks()
 {
     cout << "test_reliable_message_channel_small_blocks" << endl;
 
-    auto packetFactory = make_shared<PacketFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
     auto messageFactory = make_shared<MessageFactory>();
 
     const int MaxPacketSize = 256;
@@ -197,17 +216,13 @@ void test_reliable_message_channel_small_blocks()
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
 
-    packetFactory->SetInterface( connection.GetInterface() );
+    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
 
-    ReliableMessageChannelConfig channelConfig;
-    channelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
-    
-    auto messageChannel = make_shared<ReliableMessageChannel>( channelConfig );
-    
-    connection.AddChannel( messageChannel );
+    auto channelConfig = channelStructure->GetConfig(); 
 
     const int NumMessagesSent = channelConfig.maxSmallBlockSize;
 
@@ -242,7 +257,7 @@ void test_reliable_message_channel_small_blocks()
         writeStream.Flush();
 
         Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
+        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
         readPacket->Serialize( readStream );
 
         simulator.SendPacket( address, readPacket );
@@ -303,8 +318,8 @@ void test_reliable_message_channel_large_blocks()
 {
     cout << "test_reliable_message_channel_large_blocks" << endl;
 
-    auto packetFactory = make_shared<PacketFactory>();
-    auto messageFactory = make_shared<MessageFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
 
     const int MaxPacketSize = 256;
 
@@ -312,17 +327,13 @@ void test_reliable_message_channel_large_blocks()
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
 
-    packetFactory->SetInterface( connection.GetInterface() );
+    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
 
-    ReliableMessageChannelConfig channelConfig;
-    channelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
-    
-    auto messageChannel = make_shared<ReliableMessageChannel>( channelConfig );
-    
-    connection.AddChannel( messageChannel );
+    auto channelConfig = channelStructure->GetConfig(); 
 
     const int NumMessagesSent = 16;
 
@@ -357,7 +368,7 @@ void test_reliable_message_channel_large_blocks()
         writeStream.Flush();
 
         Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
+        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
         readPacket->Serialize( readStream );
 
         simulator.SendPacket( address, readPacket );
@@ -419,8 +430,8 @@ void test_reliable_message_channel_mixture()
 {
     cout << "test_reliable_message_channel_mixture" << endl;
 
-    auto packetFactory = make_shared<PacketFactory>();
-    auto messageFactory = make_shared<MessageFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
 
     const int MaxPacketSize = 256;
 
@@ -428,17 +439,13 @@ void test_reliable_message_channel_mixture()
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
 
-    packetFactory->SetInterface( connection.GetInterface() );
+    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
 
-    ReliableMessageChannelConfig channelConfig;
-    channelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
-    
-    auto messageChannel = make_shared<ReliableMessageChannel>( channelConfig );
-    
-    connection.AddChannel( messageChannel );
+    auto channelConfig = channelStructure->GetConfig(); 
 
     const int NumMessagesSent = 256;
 
@@ -482,7 +489,7 @@ void test_reliable_message_channel_mixture()
         writeStream.Flush();
 
         Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, connection.GetInterface() );
+        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
         readPacket->Serialize( readStream );
 
         simulator.SendPacket( address, readPacket );

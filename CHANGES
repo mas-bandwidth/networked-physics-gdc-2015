@@ -1,3 +1,123 @@
+Sunday Evening, June 1st, 2014:
+-------------------------------
+
+    Need to solve issue of having multiple connections, each with a shared
+    channel configuration, and needing to share the same packet factory.
+
+    Basically, it seems we need some concept of a channel configuration
+    object, eg. something that can say how many channels we have, and knows
+    how to create channel data on request.
+
+    Ideally, this channel configuration should be passed in to the connection
+    so it can be reused across multiple connections.
+
+    If this channel configuration was the thing passed in to the factory,
+    my problems with the server packet factory would be solved.
+
+    After a lot of work...
+
+    I have created a new class "ChannelStructure". 
+
+    It answers the question, how many channels are there?
+
+    As well as providing a mechanism to create a channel,
+    and a way to create channel data on request.
+
+    On integrating it with unit tests, it becaume clear that it also
+    needs to manage the *configuration* for channels, as these channel
+    must be created knowing their configuration, eg. reliable message
+    channel needs configuration, including a message factory, and
+    reliable message channel data needs config data too.
+
+    It seems to work well, and it's definitely what we need -- a way
+    for the user to specify the exact channel structure, and the connection
+    to not really know or care about it, just to do the work given the channel
+    structure passed in to it.
+
+    It works well.
+
+    Need to pass over remaining reliable message channel tests and convert
+    to use new channel structure.
+
+    Done.
+
+    Build all unit tests and make sure they all compile and pass.
+
+    Client server test needs some work... done.
+
+    Updated server to use the channel structure in config.
+
+    Soak test needs some work. Converted.
+
+    Something is wrong with soak test.
+
+    I get this assertion:
+
+        Assertion failed: (m_bitsWritten + bits <= m_numBits), function WriteBits, file ../include/BitPacker.h, line 34.
+
+    Which is strange, because I should have made no change at all to the behavior of the soak test.
+
+    Basically says I am writing past the end of stream.
+
+    What is going on?!
+
+    The channel config may have changed. I'll bet the channel budget now exceeds the max packet size.
+
+    Yep. That was it! Fixed.
+
+
+Sunday Afternoon, June 1st, 2014:
+---------------------------------
+
+    Add connection deny packet. Inside, have clientGuid as well as 
+    one uint32_t explaining the reason for deny. 
+
+    First reason should be server is closed. 
+
+    Second reason should be server is full.
+
+    User should be able to determine, via OnClientConnectRequest whether
+    the connection should go ahead, and what the reason is for denying.
+
+    Implement the server and add a way to enable/disable the server from
+    accepting connections, eg. open/close. Server should initially be open
+    but if you want it closed, call close before the first update pump.
+
+    Added uint32_t extended error to client. This will be useful for 
+    storing the connection denied reason.
+
+    Implement the code on the client to handle connection denied and
+    transition into "connection denied" error with reason in error ex.
+
+    Seems that we don't really need to pass a packet factory in to the config
+    for client and server.
+
+    In fact, on the server we actually need a factory per-client connection
+    because it links the packets to the connection class they belong to.
+
+    Refactor the client and server configs to not require passing in packet
+    factory. Let the server and client create their own packet factories instead.
+
+    Nope. It's worse!
+
+    I have a real dilemma now.
+
+    The socket interface uses the factory to link up the connection packet
+    to the connection interface, which handles config and so on, but this
+    is specific to each connection.
+
+    It seems that on the server I'm going to need to maintain a separate
+    connection interface used by all clients, vs. one per-connection.
+
+    In hindsight it seems that the connection interface idea per-connection
+    is a mistake.
+
+    It seems that I need to separate the channel configuration from the 
+    connection itself, as the channel configuration would be *identical*
+    across all connections, and in fact, I'd want to know about it
+    *before* any connection has been established.
+
+
 Sunday Morning, June 1st, 2014:
 -------------------------------
 

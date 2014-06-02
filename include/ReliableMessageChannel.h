@@ -280,6 +280,11 @@ namespace protocol
             m_receiveLargeBlock.fragments.resize( m_maxBlockFragments );
         }
 
+        void Reset()
+        {
+            // todo: Implement reliable message channel reset. This is going to get called on each new connection!
+        }
+
         bool CanSendMessage() const
         {
             return m_sendQueue->HasSlotAvailable( m_sendMessageId );

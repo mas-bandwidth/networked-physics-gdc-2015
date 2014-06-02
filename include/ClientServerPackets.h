@@ -9,6 +9,7 @@
 #include "Packet.h"
 #include "Stream.h"
 #include "Connection.h"
+#include "Channel.h"
 
 namespace protocol
 {
@@ -23,6 +24,7 @@ namespace protocol
 
         // server -> client
 
+        PACKET_ConnectionDenied,                                // server denies request for connection. contains reason int, eg. full, closed etc.
         PACKET_ConnectionChallenge,                             // server response to client connection request.
         PACKET_SendServerBlockFragment,                         // server sending a data block fragment down to client.
         PACKET_AckClientBlockFragment,                          // server received a data block fragment from client. ack it.
@@ -47,22 +49,6 @@ namespace protocol
         }
     };
 
-    struct ConnectionChallengePacket : public Packet
-    {
-        uint64_t protocolId = 0;
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
-
-        ConnectionChallengePacket() : Packet( PACKET_ConnectionChallenge ) {}
-
-        void Serialize( Stream & stream )
-        {
-            serialize_uint64( stream, protocolId );
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
-        }
-    };
-
     struct ChallengeResponsePacket : public Packet
     {
         uint64_t protocolId = 0;
@@ -79,25 +65,55 @@ namespace protocol
         }
     };
 
+    struct ConnectionDeniedPacket : public Packet
+    {
+        uint64_t protocolId = 0;
+        uint64_t clientGuid = 0;
+        uint32_t reason = 0;
+
+        ConnectionDeniedPacket() : Packet( PACKET_ConnectionDenied ) {}
+
+        void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, protocolId );
+            serialize_uint64( stream, clientGuid );
+            serialize_uint32( stream, reason );
+        }
+    };
+
+    struct ConnectionChallengePacket : public Packet
+    {
+        uint64_t protocolId = 0;
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+
+        ConnectionChallengePacket() : Packet( PACKET_ConnectionChallenge ) {}
+
+        void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, protocolId );
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
+        }
+    };
+
     class ClientServerPacketFactory : public Factory<Packet>
     {
     public:
 
-        ClientServerPacketFactory()
+        ClientServerPacketFactory( shared_ptr<ChannelStructure> channelStructure )
         {
+            // client -> server messages
             Register( PACKET_ConnectionRequest, [] { return make_shared<ConnectionRequestPacket>(); } );
-            
-            Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
+            Register( PACKET_ChallengeResponse, [] { return make_shared<ChallengeResponsePacket>(); } );
+
+            // server -> client messages
+            Register( PACKET_ConnectionDenied, [] { return make_shared<ConnectionDeniedPacket>(); } );
+            Register( PACKET_ConnectionChallenge, [] { return make_shared<ConnectionChallengePacket>(); } );
+
+            // bidirectional messages
+            Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
         }
-
-        void SetInterface( shared_ptr<ConnectionInterface> interface )
-        {
-            m_interface = interface;
-        }
-
-    private:
-
-        shared_ptr<ConnectionInterface> m_interface;
     };
 }
 

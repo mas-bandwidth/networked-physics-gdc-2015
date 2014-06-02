@@ -32,6 +32,11 @@ public:
         // ...
     }
 
+    virtual uint32_t GetMaxPacketSize() const
+    {
+        return 0xFFFFFFFF;
+    }
+
     PacketQueue packet_queue;
 };
 

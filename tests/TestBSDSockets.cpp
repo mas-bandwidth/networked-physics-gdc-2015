@@ -110,6 +110,7 @@ void test_bsd_sockets_send_to_hostname()
     auto packetFactory = make_shared<PacketFactory>();
 
     config.port = 10000;
+    config.family = AF_INET;
     config.maxPacketSize = 1024;
     config.resolver = make_shared<DNSResolver>();
     config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
@@ -210,6 +211,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
     auto packetFactory = make_shared<PacketFactory>();
 
     config.port = 10000;
+    config.family = AF_INET;
     config.maxPacketSize = 1024;
     config.resolver = make_shared<DNSResolver>( AF_INET );
     config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );

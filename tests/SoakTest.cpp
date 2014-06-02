@@ -6,32 +6,6 @@
 using namespace std;
 using namespace protocol;
 
-enum 
-{ 
-    PACKET_Connection = 0,
-    PACKET_Dummy
-};
-
-class PacketFactory : public Factory<Packet>
-{
-public:
-    PacketFactory()
-    {
-        Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
-        Register( PACKET_Dummy, [this] { return nullptr; } );
-    }
-
-    void SetInterface( shared_ptr<ConnectionInterface> interface )
-    {
-        assert( interface );
-        m_interface = interface;
-    }
-
-private:
-
-    shared_ptr<ConnectionInterface> m_interface;
-};
-
 enum MessageType
 {
     MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
@@ -75,7 +49,7 @@ struct TestMessage : public Message
         if ( stream.IsWriting() )
             magic = 0xDEADBEEF;
 
-        serialize_bits( stream, magic, 32 );
+        serialize_uint32( stream, magic );
 
         assert( magic == 0xDEADBEEF );
     }
@@ -94,12 +68,69 @@ public:
     }
 };
 
+enum 
+{ 
+    PACKET_Connection = 0,
+    PACKET_Dummy
+};
+
+class TestChannelStructure : public ChannelStructure
+{
+    ReliableMessageChannelConfig m_config;
+
+public:
+
+    TestChannelStructure()
+    {
+        m_config.maxMessagesPerPacket = 256;
+        m_config.sendQueueSize = 2048;
+        m_config.receiveQueueSize = 512;
+        m_config.packetBudget = 4000;
+        m_config.maxMessageSize = 1024;
+        m_config.blockFragmentSize = 3900;
+        m_config.maxLargeBlockSize = 32 * 1024 * 1024;
+        m_config.messageFactory = make_shared<MessageFactory>();
+
+        AddChannel( "reliable message channel", 
+                    [this] { return CreateReliableMessageChannel(); }, 
+                    [this] { return CreateReliableMessageChannelData(); } );
+
+        Lock();
+    }
+
+    shared_ptr<ReliableMessageChannel> CreateReliableMessageChannel()
+    {
+        return make_shared<ReliableMessageChannel>( m_config );
+    }
+
+    shared_ptr<ReliableMessageChannelData> CreateReliableMessageChannelData()
+    {
+        return make_shared<ReliableMessageChannelData>( m_config );
+    }
+
+    const ReliableMessageChannelConfig & GetConfig() const
+    {
+        return m_config;
+    }
+};
+
+class PacketFactory : public Factory<Packet>
+{
+public:
+
+    PacketFactory( shared_ptr<ChannelStructure> channelStructure )
+    {
+        Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
+        Register( PACKET_Dummy, [] { return nullptr; } );
+    }
+};
+
 void soak_test()
 {
     cout << "[soak test]" << endl;
 
-    auto packetFactory = make_shared<PacketFactory>();
-    auto messageFactory = make_shared<MessageFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
 
     const int MaxPacketSize = 4096;
 
@@ -130,25 +161,14 @@ void soak_test()
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = packetFactory;
     connectionConfig.slidingWindowSize = 1024;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
 
-    packetFactory->SetInterface( connection.GetInterface() );
+    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
 
-    ReliableMessageChannelConfig messageChannelConfig;
-    messageChannelConfig.maxMessagesPerPacket = 256;
-    messageChannelConfig.sendQueueSize = 2048;
-    messageChannelConfig.receiveQueueSize = 512;
-    messageChannelConfig.packetBudget = 4000;
-    messageChannelConfig.maxMessageSize = 1024;
-    messageChannelConfig.blockFragmentSize = 3900;
-    messageChannelConfig.maxLargeBlockSize = 32 * 1024 * 1024;
-    messageChannelConfig.messageFactory = static_pointer_cast<Factory<Message>>( messageFactory );
+    auto messageChannelConfig = channelStructure->GetConfig(); 
     
-    auto messageChannel = make_shared<ReliableMessageChannel>( messageChannelConfig );
-    
-    connection.AddChannel( messageChannel );
-
     double dt = 0.01f;
     chrono::milliseconds ms( 1 );
 

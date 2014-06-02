@@ -187,7 +187,7 @@ namespace protocol
     public:
 
         typedef function< shared_ptr<T>() > create_function;
-
+        
         Factory()
         {
             max_type = 0;

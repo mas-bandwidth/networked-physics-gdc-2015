@@ -41,34 +41,25 @@ namespace protocol
     typedef SlidingWindow<SentPacketData> SentPackets;
     typedef SlidingWindow<ReceivedPacketData> ReceivedPackets;
 
-    class ConnectionInterface
-    {
-    public:
-
-        virtual int GetNumChannels() = 0;
-
-        virtual shared_ptr<ChannelData> CreateChannelData( int index ) = 0;
-    };
-
     struct ConnectionPacket : public Packet
     {
         uint64_t protocolId = 0;
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
-        shared_ptr<ConnectionInterface> interface;
         vector<shared_ptr<ChannelData>> channelData;
+        shared_ptr<ChannelStructure> channelStructure;
 
-        ConnectionPacket( int type, shared_ptr<ConnectionInterface> _interface ) : Packet( type )
+        ConnectionPacket( int type, shared_ptr<ChannelStructure> _channelStructure ) : Packet( type )
         {
-            assert( _interface );
-            interface = _interface;
-            channelData.resize( interface->GetNumChannels() );
+            assert( _channelStructure );
+            channelStructure = _channelStructure;
+            channelData.resize( channelStructure->GetNumChannels() );
         }
 
         void Serialize( Stream & stream )
         {
-            assert( interface );
+            assert( channelStructure );
 
             serialize_uint64( stream, protocolId );
 
@@ -100,10 +91,13 @@ namespace protocol
                     serialize_bool( stream, has_data );
                     if ( has_data )
                     {
-                        channelData[i] = interface->CreateChannelData( i );
+                        channelData[i] = channelStructure->CreateChannelData( i );
                         
                         if ( !channelData[i] )
+                        {
+                            cout << "failed to create channel data?!" << endl;
                             throw runtime_error( format_string( "serialize read failed to create channel data [%d]", i ) );
+                        }
 
                         channelData[i]->Serialize( stream );
                     }
@@ -131,36 +125,17 @@ namespace protocol
         int maxPacketSize = 1024;
         int slidingWindowSize = 256;
         shared_ptr<Factory<Packet>> packetFactory;
+        shared_ptr<ChannelStructure> channelStructure;
     };
 
     class Connection
     {
-        struct InterfaceImplementation : public ConnectionInterface
-        {
-            vector<shared_ptr<Channel>> channels;
-
-            int GetNumChannels() 
-            { 
-                return channels.size();
-            }
-
-            shared_ptr<ChannelData> CreateChannelData( int index )
-            {
-                assert( index >= 0 );
-                assert( index < channels.size() );
-                if ( index >= 0 || index < channels.size() )
-                    return channels[index]->CreateData();
-                else
-                    return nullptr;
-            }
-        };
-
         const ConnectionConfig m_config;                    // const configuration data
         TimeBase m_timeBase;                                // network time base
         shared_ptr<SentPackets> m_sentPackets;              // sliding window of recently sent packets
         shared_ptr<ReceivedPackets> m_receivedPackets;      // sliding window of recently received packets
+        vector<shared_ptr<Channel>> m_channels;             // array of channels created according to channel structure
         vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
-        shared_ptr<InterfaceImplementation> m_interface;    // connection interface shared with connection packet.
 
     public:
 
@@ -174,35 +149,32 @@ namespace protocol
             NumCounters
         };
 
-        shared_ptr<ConnectionInterface> GetInterface()
+        Connection( const ConnectionConfig & config ) : m_config( config )
         {
-            assert( m_interface );
-            return m_interface;
-        }
-
-        Connection( const ConnectionConfig & config )
-            : m_config( config )
-        {
-            assert( config.packetFactory );         // IMPORTANT: You must supply a packet factory!
+            assert( config.packetFactory );
+            assert( config.channelStructure );
 
             m_sentPackets = make_shared<SentPackets>( m_config.slidingWindowSize );
+ 
             m_receivedPackets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
+
+            const int numChannels = config.channelStructure->GetNumChannels();
+            m_channels.resize( numChannels );
+            for ( int i = 0; i < numChannels; ++i )
+            {
+                m_channels[i] = config.channelStructure->CreateChannel( i );
+                assert( m_channels[i] );
+            }
+
             m_counters.resize( NumCounters, 0 );
-            m_interface = make_shared<InterfaceImplementation>();
 
             Reset();
         }
 
-        void AddChannel( shared_ptr<Channel> channel )
-        {
-            assert( channel );
-            m_interface->channels.push_back( channel );
-        }
-
         shared_ptr<Channel> GetChannel( int index )
         {
-            if ( index >= 0 && index < m_interface->channels.size() )
-                return m_interface->channels[index];
+            if ( index >= 0 && index < m_channels.size() )
+                return m_channels[index];
             else
                 return nullptr;
         }
@@ -212,6 +184,8 @@ namespace protocol
             m_timeBase = TimeBase();
             m_sentPackets->Reset();
             m_receivedPackets->Reset();
+            for ( auto channel : m_channels )
+                channel->Reset();
             for ( int i = 0; i < m_counters.size(); ++i )
                 m_counters[i] = 0;
         }
@@ -219,7 +193,7 @@ namespace protocol
         void Update( const TimeBase & timeBase )
         {
             m_timeBase = timeBase;
-            for ( auto channel : m_interface->channels )
+            for ( auto channel : m_channels )
                 channel->Update( timeBase );
         }
 
@@ -237,8 +211,8 @@ namespace protocol
 
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
 
-            for ( int i = 0; i < m_interface->channels.size(); ++i )
-                packet->channelData[i] = m_interface->channels[i]->GetData( packet->sequence );
+            for ( int i = 0; i < m_channels.size(); ++i )
+                packet->channelData[i] = m_channels[i]->GetData( packet->sequence );
 
             m_sentPackets->Insert( packet->sequence );
 
@@ -251,7 +225,7 @@ namespace protocol
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
-            assert( packet->channelData.size() == m_interface->channels.size() );
+            assert( packet->channelData.size() == m_channels.size() );
 
             if ( packet->protocolId != m_config.protocolId )
                 return;
@@ -265,7 +239,7 @@ namespace protocol
                 for ( int i = 0; i < packet->channelData.size(); ++i )
                 {
                     if ( packet->channelData[i] )
-                        m_interface->channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
+                        m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
                 }
             }
             catch ( runtime_error & e )
@@ -319,7 +293,7 @@ namespace protocol
 //            cout << "packet " << sequence << " acked" << endl;
 
             m_counters[PacketsAcked]++;
-            for ( auto channel : m_interface->channels )
+            for ( auto channel : m_channels )
                 channel->ProcessAck( sequence );
         }
     };

@@ -139,6 +139,11 @@ namespace protocol
         serialize_bits( stream, value, 1 );
     }
 
+    void serialize_uint32( Stream & stream, uint32_t & value )
+    {
+        serialize_bits( stream, value, 32 );
+    }
+
     void serialize_uint64( Stream & stream, uint64_t & value )
     {
         uint32_t hi = 0;

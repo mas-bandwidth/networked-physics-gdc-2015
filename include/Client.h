@@ -47,6 +47,7 @@ namespace protocol
         CLIENT_ERROR_None,                                    // client is not in an error state.
         CLIENT_ERROR_ResolveHostnameFailed,                   // client failed to resolve hostname, eg. DNS said nope.
         CLIENT_ERROR_ResolveHostnameTimedOut,                 // client timed out while trying to resolve hostname.
+        CLIENT_ERROR_ConnectionRequestDenied,                 // client received a connection denied response to their connection request.
         CLIENT_ERROR_ConnectionRequestTimedOut,               // client timed out while sending connection requests.
         CLIENT_ERROR_ChallengeResponseTimedOut,               // client timed out while sending connection challenge responses.
         CLIENT_ERROR_ReceiveDataBlockTimedOut,                // client timed out while receiving data block from server.
@@ -63,6 +64,7 @@ namespace protocol
             case CLIENT_ERROR_None:                             return "no error";
             case CLIENT_ERROR_ResolveHostnameFailed:            return "resolve hostname failed";
             case CLIENT_ERROR_ResolveHostnameTimedOut:          return "resolve hostname timed out";
+            case CLIENT_ERROR_ConnectionRequestDenied:          return "connection request denied";
             case CLIENT_ERROR_ConnectionRequestTimedOut:        return "connection request timed out";
             case CLIENT_ERROR_ChallengeResponseTimedOut:        return "challenge response timed out";
             case CLIENT_ERROR_ReceiveDataBlockTimedOut:         return "receive data block timed out";
@@ -76,7 +78,7 @@ namespace protocol
 
     struct ClientConfig
     {
-        uint64_t protocolId = 0;                                // the protocol id.
+        uint64_t protocolId = 42;                               // the protocol id. must be same on client or server or they cannot talk to each other.
 
         float resolveHostnameTimeout = 5.0f;                    // number of seconds until we give up trying to resolve server hostname into a network address (eg. DNS typically)
         float connectionRequestTimeout = 5.0f;                  // number of seconds in the connection request state until timeout if no challenge packet received from server.
@@ -92,7 +94,7 @@ namespace protocol
 
         shared_ptr<NetworkInterface> networkInterface;          // network interface used to send and receive packets.
 
-        shared_ptr<ClientServerPacketFactory> packetFactory;    // packet factory used to create packets by type.
+        shared_ptr<ChannelStructure> channelStructure;          // channel structure for connections
     };
 
     class Client
@@ -103,6 +105,7 @@ namespace protocol
 
         ClientState m_state = CLIENT_STATE_Disconnected;
         ClientError m_error = CLIENT_ERROR_None;
+        uint32_t m_extendedError = 0;                           // extended error information, eg. if connection is denied will contain the reason why
 
         shared_ptr<Connection> m_connection;
 
@@ -138,22 +141,16 @@ namespace protocol
         Client( const ClientConfig & config )
             : m_config( config )
         {
-            assert( m_config.packetFactory );
             assert( m_config.networkInterface );
+            assert( m_config.channelStructure );
 
             ConnectionConfig connectionConfig;
             connectionConfig.packetType = PACKET_Connection;
             connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
-            connectionConfig.packetFactory = m_config.packetFactory;
+            connectionConfig.channelStructure = m_config.channelStructure;
+            connectionConfig.packetFactory = make_shared<ClientServerPacketFactory>( m_config.channelStructure );
 
             m_connection = make_shared<Connection>( connectionConfig );
-
-            m_config.packetFactory->SetInterface( m_connection->GetInterface() );
-        }
-
-        ~Client()
-        {
-            // ...
         }
 
         void Connect( const Address & address )
@@ -244,6 +241,11 @@ namespace protocol
             return m_error;
         }
 
+        uint32_t GetExtendedError() const
+        {
+            return m_extendedError;
+        }
+
         shared_ptr<Resolver> GetResolver() const
         {
             return m_config.resolver;
@@ -308,6 +310,18 @@ namespace protocol
                                 m_sendingChallengeResponseData.address = m_sendingConnectionRequestData.address;
                                 m_sendingChallengeResponseData.clientGuid = connectionChallengePacket->clientGuid;
                                 m_sendingChallengeResponseData.serverGuid = connectionChallengePacket->serverGuid;
+                            }
+                        }
+                        else if ( packet->GetType() == PACKET_ConnectionDenied )
+                        {
+                            auto connectionDeniedPacket = static_pointer_cast<ConnectionDeniedPacket>( packet );
+
+                            if ( connectionDeniedPacket->GetAddress() == m_sendingConnectionRequestData.address &&
+                                 connectionDeniedPacket->clientGuid == m_sendingConnectionRequestData.clientGuid )
+                            {
+                                cout << "recieved connection denied packet from server" << endl;
+
+                                DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestDenied, connectionDeniedPacket->reason );
                             }
                         }
                     }
@@ -421,18 +435,20 @@ namespace protocol
             }
         }
 
-        void DisconnectAndSetError( ClientError error )
+        void DisconnectAndSetError( ClientError error, uint32_t extendedError = 0 )
         {
 //            cout << "client error: " << GetClientErrorString( error ) << endl;
 
             Disconnect();
             
             m_error = error;
+            m_extendedError = extendedError;
         }
 
         void ClearError()
         {
             m_error = CLIENT_ERROR_None;
+            m_extendedError = 0;
         }
 
         void ClearStateData()

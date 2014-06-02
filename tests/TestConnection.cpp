@@ -5,39 +5,47 @@ using namespace protocol;
 
 enum { PACKET_Connection = 0 };
 
+class TestChannel : public ChannelAdapter 
+{
+public:
+    TestChannel() {}
+};
+
+class TestChannelStructure : public ChannelStructure
+{
+public:
+    TestChannelStructure()
+    {
+        AddChannel( "test channel", [] { return make_shared<TestChannel>(); }, [] { return nullptr; } );
+        Lock();
+    }
+};
+
 class PacketFactory : public Factory<Packet>
 {
 public:
 
-    PacketFactory()
+    PacketFactory( shared_ptr<ChannelStructure> channelStructure )
     {
-        Register( PACKET_Connection, [this] { return make_shared<ConnectionPacket>( PACKET_Connection, m_interface ); } );
+        Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
     }
-
-    void SetInterface( shared_ptr<ConnectionInterface> interface )
-    {
-        m_interface = interface;
-    }
-
-private:
-
-    shared_ptr<ConnectionInterface> m_interface;
 };
 
 void test_connection()
 {
     cout << "test_connection" << endl;
 
-    auto packetFactory = make_shared<PacketFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = 4 * 1024;
     connectionConfig.packetFactory = packetFactory;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
-
-    packetFactory->SetInterface( connection.GetInterface() );
 
     const int NumAcks = 100;
 
@@ -58,24 +66,13 @@ void test_connection()
     assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 }
 
-class AckChannel : public Channel
+class AckChannel : public ChannelAdapter
 {
 public:
-
     vector<bool> & ackedPackets;
 
     AckChannel( vector<bool> & _ackedPackets )
         : ackedPackets( _ackedPackets ) {}
-
-    shared_ptr<ChannelData> CreateData()
-    {
-        return nullptr;
-    }
-
-    shared_ptr<ChannelData> GetData( uint16_t sequence )
-    {
-        return nullptr;
-    }
 
     void ProcessData( uint16_t sequence, shared_ptr<ChannelData> data )
     {
@@ -86,16 +83,19 @@ public:
     void ProcessAck( uint16_t ack )
     {
 //        cout << "acked " << (int)ack << endl;
-
         ackedPackets[ack] = true;
-    }
-
-    void Update( const TimeBase & timeBase )
-    {
-        // ...
     }
 };
 
+class AckChannelStructure : public ChannelStructure
+{
+public:
+    AckChannelStructure( vector<bool> & ackedPackets )
+    {
+        AddChannel( "ack channel", [&ackedPackets] { return make_shared<AckChannel>( ackedPackets ); }, [] { return nullptr; } );
+        Lock();
+    }
+};
 
 void test_acks()
 {
@@ -109,18 +109,17 @@ void test_acks()
     receivedPackets.resize( NumIterations );
     ackedPackets.resize( NumIterations );
 
-    auto packetFactory = make_shared<PacketFactory>();
+    auto channelStructure = make_shared<AckChannelStructure>( ackedPackets );
+
+    auto packetFactory = make_shared<PacketFactory>( channelStructure );
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = 4 * 1024;
     connectionConfig.packetFactory = packetFactory;
+    connectionConfig.channelStructure = channelStructure;
 
     Connection connection( connectionConfig );
-
-    connection.AddChannel( make_shared<AckChannel>( ackedPackets ) );
-
-    packetFactory->SetInterface( connection.GetInterface() );
 
     for ( int i = 0; i < NumIterations; ++i )
     {
