@@ -2,46 +2,60 @@ DONE:
 
 TODO:
 
-    Implement enough server framework copying from client to support
-    updating the interface, receiving packets and so on.
+    The plan (tm):
 
-    Add the code that receives packets in the server and if a request connection
-    packet comes in while the server is closed, reply with a "connection denied"
+    Add function "FindClientIndex" which returns a client index, or -1
+    if no matching client is found.
 
-    Implement a unit test to verify that the client handles this properly
-    and goes into the connection denied error state.
+    Add a new function "FindFreeClientSlot", which returns client index
+    of a free slot, or -1 if no free slot is available (server full).
+
+    Add code to take a client request packet and search for client index
+    matching address and client guid.
+
+    If no matching client slot is found, search for a free slot.
+
+    If a matching client slot is found, don't do anything. Ignore packets.
+
+    If a free slot is available, set up that client slot with the client
+    guid, address, generate a new server guid for the slot.
+
+    If no free slot is available, reply with connection denied server full.
+
+    Add code inside UpdateSendingChallenge to construct a challenge packet
+    and send it out at a specific rate. This should be configurable,
+    default to 10 times per-second.
+
+    Add code inside update sending challenge to timeout the slot if a 
+    certain amount of time has passed, default to 5 seconds.
+
+    Add function to implement the timeout of client slot.
 
     --------------
 
-    Actually implement the server side now, and do whatever is required for the
-    server to manage a set of connections, listen for new connection requests
-    and maintain a state per-client on the server.
+    Otherwise, create the client entry and put that client in a state where
+    it will send connection challenge responses every frame.
 
-    Assume that in order to perform connection with a server that we will have
-    some key based encryption that the client cannot know, eg. we do not need
-    to worry about DOS attacks at our protocol level.
+    Implement code to walk across client state machines and send packets.
 
-    Add a state on the server that can be set to deny all new connections.
+    Implement server config for send rate while in various states.
 
-    In this state, respond to each connection request packet with a connection
-    deny response.
-
-    Add a unit test to verify that the connection request denied error
-
-    Have the server determine the set of connection request denied enums,
-    user can extend this by adding new values (eg. have a virtual fn
-    that is called to determine if a connection should be denied, essential!)
-
-    Have the client stash the extra error information into the uint32_t,
-    in here for connection request denied I will put the deny reason (eg. full)
-
-    --------------------
-
-    Implement the code that does *not* deny the client and creates a new slot
-    for them, generates a server guid, stashes the client guid etc.
+    Implement server side timeout code, eg. 5 seconds timeout for challenge response.
 
     Add a unit test to verify that the server moves into sending challenge state,
     and the client moves into sending challenge response state.
+
+    ----------------------
+
+    Add code to detect that the server is full. Send a connection denied
+    with server full reason in this case.
+
+    Add a unit test case to verify that the server is correctly handling
+    this case. 
+
+    Note, being full doesn't necessarily mean the server has fully connected
+    clients, it only matters that the client slot is taken up by somebody who
+    is trying to connect in that slot.
 
     ------------------------
 

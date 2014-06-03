@@ -99,7 +99,7 @@ namespace protocol
 
     class Client
     {
-        ClientConfig m_config;
+        const ClientConfig m_config;
 
         TimeBase m_timeBase;
 
@@ -273,7 +273,6 @@ namespace protocol
 
         void UpdateNetworkInterface()
         {
-            assert( m_config.networkInterface );
             m_config.networkInterface->Update( m_timeBase );
         }
 
@@ -302,7 +301,7 @@ namespace protocol
                             if ( connectionChallengePacket->GetAddress() == m_sendingConnectionRequestData.address &&
                                  connectionChallengePacket->clientGuid == m_sendingConnectionRequestData.clientGuid )
                             {
-                                cout << "recieved connection challenge packet from server" << endl;
+//                                cout << "received connection challenge packet from server" << endl;
 
                                 m_state = CLIENT_STATE_SendingChallengeResponse;
 
@@ -319,7 +318,7 @@ namespace protocol
                             if ( connectionDeniedPacket->GetAddress() == m_sendingConnectionRequestData.address &&
                                  connectionDeniedPacket->clientGuid == m_sendingConnectionRequestData.clientGuid )
                             {
-                                cout << "recieved connection denied packet from server" << endl;
+//                                cout << "received connection denied packet from server" << endl;
 
                                 DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestDenied, connectionDeniedPacket->reason );
                             }
@@ -388,6 +387,7 @@ namespace protocol
 
             if ( m_timeBase.time - m_sendingConnectionRequestData.startTime > m_config.connectionRequestTimeout )
             {
+//                cout << "connection request timed out" << endl;
                 DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestTimedOut );
                 return;
             }
@@ -403,6 +403,8 @@ namespace protocol
                 auto packet = make_shared<ConnectionRequestPacket>();
                 packet->protocolId = m_config.protocolId;
                 packet->clientGuid = m_sendingConnectionRequestData.clientGuid;
+
+//                cout << "client sent connection request packet" << endl;
 
                 m_config.networkInterface->SendPacket( m_sendingConnectionRequestData.address, packet );
             }

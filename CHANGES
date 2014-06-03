@@ -1,3 +1,48 @@
+Monday Evening, June 2nd, 2014:
+-------------------------------
+
+    Actually implement the server side per-client.
+
+    Each client needs their own connection, their own current state.
+
+    Define the set of server client states.
+
+    Add server full to the list of connection denied reasons.
+
+    Implement the code that takes the client connect request, and if not closed
+    looks for a matching client with address and client guid, if that client
+    is already setup, ignore the packet.
+
+    The number of clients is small. Therefore there is nothing wrong with
+    doing a simple linear search on connection request to find a matching
+    client index.
+
+    Sketching out how to do this, then going to bed.
+
+
+Monday Morning, June 2nd, 2014:
+-------------------------------
+
+    Having some problems with multiple interfaces.
+
+    The packet is sent, but the second interface isn't receiving it.
+
+    Seems strange...
+
+    Moved over to a couple of unit tests.
+
+    I'm seeing the same behavior in IPv4 and IPv6, so it's not something
+    that is specific to my IPv6 usage in the test (::1)
+
+    What is going on? My guess is maybe it's screwing up the port number somehow?
+
+    Fixed it! I was checking errno, even when there was no error, this was
+    picking up the EAGAIN from the other socket, dropping the packet! :)
+
+    Connection denied unit test passes. Server is getting packet, replying
+    with a connection denied and the client is properly handling this.
+
+
 Sunday Evening, June 1st, 2014:
 -------------------------------
 

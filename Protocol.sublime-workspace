@@ -4,6 +4,62 @@
 		"selected_items":
 		[
 			[
+				"CLIENT_ERROR",
+				"CLIENT_ERROR_ConnectionRequestTimedOut"
+			],
+			[
+				"Disconnec",
+				"DisconnectAndSetError"
+			],
+			[
+				"m_conn",
+				"m_sendingConnectionRequestData"
+			],
+			[
+				"CLIENT_STATE",
+				"CLIENT_STATE_SendingConnectionRequest"
+			],
+			[
+				"res",
+				"resolveHostnameTimeout"
+			],
+			[
+				"m_",
+				"m_resolveHostnameData"
+			],
+			[
+				"CLIENT_STATE_",
+				"CLIENT_STATE_ResolvingHostname"
+			],
+			[
+				"channel",
+				"messageChannelConfig"
+			],
+			[
+				"m_receive",
+				"m_receiveLargeBlock"
+			],
+			[
+				"resend",
+				"resendRate"
+			],
+			[
+				"max",
+				"m_maxBlockFragments"
+			],
+			[
+				"fragment",
+				"blockFragmentSize"
+			],
+			[
+				"frag",
+				"largeBlockFragmentSize"
+			],
+			[
+				"m_receiv",
+				"m_receiveMessageId"
+			],
+			[
 				"Pro",
 				"ProcessPacketFailures"
 			],
@@ -18,10 +74,6 @@
 			[
 				"m_rec",
 				"m_receive_queue"
-			],
-			[
-				"max",
-				"maxPacketSize"
 			],
 			[
 				"Receiv",
@@ -221,134 +273,134 @@
 	},
 	"file_history":
 	[
-		"/Users/gaffer/git/virtualgo/VirtualGo.sublime-workspace",
+		"/Users/gaffer/git/protocol/include/BSDSockets.h",
+		"/Users/gaffer/git/protocol/include/Client.h",
+		"/Users/gaffer/git/protocol/include/Server.h",
 		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/NOTES",
-		"/Users/gaffer/git/protocol/Protocol.cpp",
+		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
 		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/GIMPACT/src/gim_trimesh_capsule_collision.cpp",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/CheckMacros.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TimeConstraint.h",
-		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/iterator",
-		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/chrono",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/demos/DeterministicLockstepDemo.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/OPCODE/OPC_LSSTriOverlap.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/build/premake4.lua",
-		"/Users/gaffer/git/protocol/reference/05 - LAN Matchmaking/Beacon.cpp",
-		"/Users/gaffer/git/protocol/reference/08 - Authority Management/ode/objects.h",
-		"/Users/gaffer/git/protocol/reference/08 - Authority Management/ode/ode.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ode/demo/demo_ode.cpp",
-		"/Users/gaffer/git/protocol/reference/01 - Sending and Receiving Packets/vs2005/sendreceive.sln",
-		"/Users/gaffer/git/protocol/reference/01 - Sending and Receiving Packets/addresses.txt",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/AuthorityDemo.h",
+		"/Users/gaffer/git/protocol/include/ClientServerPackets.h",
+		"/Users/gaffer/git/protocol/tests/SoakTest.cpp",
+		"/Users/gaffer/git/protocol/tests/TestBSDSockets.cpp",
+		"/Users/gaffer/git/protocol/tests/TestConnection.cpp",
+		"/Users/gaffer/git/protocol/include/Channel.h",
+		"/Users/gaffer/git/protocol/tests/TestAddress.cpp",
+		"/Users/gaffer/git/protocol/tests/TestStream.cpp",
+		"/Users/gaffer/git/protocol/tests/TestCommon.cpp",
+		"/Users/gaffer/git/protocol/tests/TestDNSResolver.cpp",
+		"/Users/gaffer/git/protocol/tests/TestBitPacker.cpp",
+		"/Users/gaffer/git/protocol/tests/TestNetworkInterface.cpp",
+		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/include/ReliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/include/BitPacker.h",
+		"/Users/gaffer/git/protocol/include/Resolver.h",
+		"/Users/gaffer/git/protocol/Protocol.sublime-project",
+		"/Users/gaffer/git/protocol/include/ClientServerPackets",
+		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel",
+		"/Users/gaffer/git/protocol/tests/TestConnection",
+		"/Users/gaffer/git/protocol/tests/TestClientServer",
+		"/Users/gaffer/git/protocol/include/Common.h",
+		"/Users/gaffer/git/protocol/include/Connection.h",
 		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/memory",
-		"/Users/gaffer/git/protocol/reference/02 - Virtual Connection over UDP/vs2005/VirtualConnectionUDP.sln",
-		"/Users/gaffer/git/protocol/reference/02 - Virtual Connection over UDP/Client.cpp",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/lan/NetConnection.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/Config.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ode/src/collision_trimesh_opcode.cpp",
-		"/Users/gaffer/git/protocol/GOALS",
-		"/Users/gaffer/git/protocol/reference/09 - Drop-In COOP for Open World Games/GameObject.h",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/NetReliability.h",
-		"/Users/gaffer/git/protocol/reference/07 - Reading and Writing Packets/NetStream.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/Network.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/UnitTest.cpp",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ode/src/util.cpp",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/OPCODE/Ice/IceUtils.cpp",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/UnitTest++.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/UnitTest++/src/TimeConstraint.cpp",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/UnitTest++/src/TestList.cpp",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/UnitTest++/src/TestList.h",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/Test.cpp",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/NetTransport.cpp",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/NetPlatform.h",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/Client.cpp",
-		"/Users/gaffer/Documents/sublime text",
-		"/Users/gaffer/Library/Application Support/Sublime Text 3/Packages/User/C++11.sublime-build",
-		"/usr/include/sys/fcntl.h",
-		"/Users/gaffer/git/protocol/reference/01 - Sending and Receiving Packets/Net.h",
-		"/usr/include/assert.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/vectorial/simd4x4f_neon.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/vectorial/simd4f_neon.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/shared/Engine.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/shared/Engine.cpp",
-		"/Users/gaffer/git/protocol/reference/09 - Drop-In COOP for Open World Games/Server",
-		"/Users/gaffer/git/protocol/Signal.cpp",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/OPCODE/OPC_SphereTriOverlap.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/vectorial/simd4f_common.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ode/src/collision_kernel.cpp",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/NetTransport.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/OPCODE/OPC_PlanesTriOverlap.h",
-		"/Users/gaffer/git/protocol/reference/04 - Building a Node Mesh/Test.cpp",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/lan/NetNodeMesh.h",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/Server.cpp",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/CurrentTest.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/UnitTest++/docs/UnitTest++.html",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/UnitTest++/src/UnitTest++.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestSuite.h",
-		"/Users/gaffer/git/protocol/reference/01 - Sending and Receiving Packets/Test.cpp",
-		"/Users/gaffer/git/protocol/reference/02 - Virtual Connection over UDP/Test.cpp",
-		"/Users/gaffer/git/protocol/reference/03 - Reliability and Flow Control/Test.cpp",
-		"/Users/gaffer/git/protocol/reference/07 - Reading and Writing Packets/Test.cpp",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/Test.h",
-		"/Users/gaffer/git/protocol/reference/08 - Authority Management/NetStream.h",
-		"/Users/gaffer/Documents/party and sessions.md",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/CHANGELOG.txt",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/Checks.h",
-		"/Users/gaffer/git/protocol/Serialize.cpp",
-		"/Users/gaffer/git/protocol/.git/MERGE_MSG",
-		"/Users/gaffer/git/protocol/reference/08 - Authority Management/Display.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ou/include/ou/assert.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ltmain.sh",
-		"/Users/gaffer/git/protocol/Serialize",
-		"/Users/gaffer/git/protocol/reference/Serialize.cpp",
-		"/Users/gaffer/git/protocol/reference/Serialize",
-		"/Users/gaffer/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
-		"/Users/gaffer/Library/Application Support/Sublime Text 3/Packages/User/JSON.sublime-settings",
-		"/Users/gaffer/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestReporter.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/StateReplicationDemo.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/Posix/SignalTranslator.h",
-		"/Users/gaffer/git/protocol/README.md",
-		"/Users/gaffer/experiments/durango/durango_achievements.cpp",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolUtil.h",
+		"/Users/gaffer/git/protocol/include/ChannelStructure.h",
+		"/Users/gaffer/git/protocol/include/ChannelStructure",
+		"/Users/gaffer/git/protocol/include/Stream.h",
+		"/Users/gaffer/git/protocol/include/NetworkInterface.h",
+		"/Users/gaffer/git/protocol/NOTES",
+		"/Users/gaffer/git/protocol/include/NetworkSimulator.h",
+		"/Users/gaffer/git/protocol/tests/TestBSDSockets",
+		"/Users/gaffer/git/protocol/include/Address.h",
+		"/Users/gaffer/git/protocol/tests/TestDNSResolver",
+		"/Users/gaffer/git/protocol/include/DNSResolver.h",
+		"/Users/gaffer/git/protocol/tests/TestAddress",
+		"/Users/gaffer/git/protocol/tests/TestNetworkInterface",
+		"/Users/gaffer/git/protocol/include/NetworkSimulator",
+		"/Users/gaffer/git/protocol/output.txt",
+		"/Users/gaffer/git/protocol/include/ReliableMessageChannel",
+		"/Users/gaffer/git/protocol/output.tx",
+		"/Users/gaffer/Dropbox/backup/protocol2/test/TestProtocolConfig.h",
+		"/Users/gaffer/git/protocol/include/Packet.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolAssert.h",
 		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolCommon.h",
-		"/Users/gaffer/Documents/TAX",
-		"/Users/gaffer/experiments/durango/NOTES",
-		"/Users/gaffer/experiments/durango/durango_util.cpp",
-		"/Users/gaffer/experiments/durango/durango_util.h",
-		"/Users/gaffer/experiments/durango/durango_party.cpp",
-		"/Users/gaffer/experiments/durango/durango_telemetry.cpp",
-		"/Users/gaffer/experiments/durango/durango_sessions.cpp",
-		"/Users/gaffer/experiments/durango/durango_matchmaking.cpp",
-		"/Users/gaffer/experiments/durango/durango_sign_in.cpp",
-		"/Users/gaffer/experiments/durango/durango_party.h",
-		"/Users/gaffer/experiments/durango/durango_sessions.h",
-		"/Users/gaffer/experiments/dibs/CHANGES",
-		"/Users/gaffer/experiments/dibs/client/css/app.styl",
-		"/Users/gaffer/experiments/dibs/client/code/app/app.coffee",
-		"/Users/gaffer/experiments/dibs/TODO",
-		"/Users/gaffer/experiments/dibs/server/rpc/dibs.coffee",
-		"/Users/gaffer/experiments/dibs/client/templates/chat/command.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/socketstream/new_project/server/rpc/demo.js",
-		"/Users/gaffer/experiments/dibs/app.js",
-		"/Users/gaffer/experiments/dibs/client/views/app.jade",
-		"/Users/gaffer/experiments/dibs/client/templates/chat/status.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/everyauth/node_modules/connect/lib/public/style.css",
-		"/Users/gaffer/experiments/dibs/node_modules/socketstream/node_modules/connect/lib/public/style.css",
-		"/Users/gaffer/experiments/dibs/node_modules/ss-jade/node_modules/.bin/jade",
-		"/Users/gaffer/experiments/dibs/node_modules/socketstream/test/fixtures/project/client/views/main.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/ss-jade/node_modules/jade/lib/jade.js",
-		"/Users/gaffer/experiments/dibs/node_modules/ss-jade/node_modules/jade/jade.min.js",
-		"/Users/gaffer/experiments/dibs/node_modules/ss-jade/node_modules/jade/bin/jade",
-		"/Users/gaffer/experiments/dibs/node_modules/ss-jade/node_modules/jade/jade.md",
-		"/Users/gaffer/experiments/dibs/node_modules/ss-jade/node_modules/jade/jade.js",
-		"/Users/gaffer/experiments/dibs/client/templates/chat/message.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/everyauth/example/views/home.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/everyauth/example/views/layout.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/everyauth/example/views/login.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/everyauth/example/views/register.jade",
-		"/Users/gaffer/experiments/dibs/node_modules/everyauth/node_modules/openid/expressjs_sample/login.jade"
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolConstants.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolDataTypes.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolConfig.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolEnums.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolForwards.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolInstance.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolReadPackets.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolSerialize.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolLog.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolStream.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolUpdateStats.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolUtil.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolWritePackets.h",
+		"/Users/gaffer/Dropbox/backup/protocol2/test/Profile.cpp",
+		"/Users/gaffer/Dropbox/backup/protocol2/test/SoakTest.cpp",
+		"/Users/gaffer/Dropbox/backup/protocol2/test/StatsTest.cpp",
+		"/Users/gaffer/git/protocol/include/UnreliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/include/Message.h",
+		"/Users/gaffer/git/protocol/tests/SoakTest",
+		"/Users/gaffer/git/protocol/include/MessageChannel.h",
+		"/Users/gaffer/git/protocol/tests/TestBSDSocketsInterface.cpp",
+		"/Users/gaffer/git/protocol/include/BSDSocketsInterface.h",
+		"/Users/gaffer/git/protocol/include/Stream",
+		"/Users/gaffer/Desktop/ProtocolStream.cpp",
+		"/Users/gaffer/git/protocol/include/BitPacker",
+		"/Users/gaffer/git/protocol/tests/TestBitPacker",
+		"/Users/gaffer/Desktop/ProtocolStream.h",
+		"/Users/gaffer/git/protocol/include/MessageChannel",
+		"/Users/gaffer/git/protocol/README.md",
+		"/Users/gaffer/git/protocol/tests/TestMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/MessageChannel.h",
+		"/Users/gaffer/git/protocol/Connection.h",
+		"/Users/gaffer/git/protocol/SoakTest.cpp",
+		"/Users/gaffer/git/protocol/TestMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/TestNetworkInterface.cpp",
+		"/Users/gaffer/git/protocol/Common.h",
+		"/Users/gaffer/git/protocol/BSDSocketsInterface.h",
+		"/Users/gaffer/git/protocol/TestBSDSocketsInterface.cpp",
+		"/Users/gaffer/git/protocol/TestMessageChannel",
+		"/Users/gaffer/git/protocol/MessageChannel",
+		"/Users/gaffer/git/protocol/Message.h",
+		"/Users/gaffer/git/protocol/TestCommon.cpp",
+		"/Users/gaffer/git/protocol/TestConnection.cpp",
+		"/Users/gaffer/git/protocol/TestDNSResolver.cpp",
+		"/Users/gaffer/git/protocol/TestAddress.cpp",
+		"/Users/gaffer/git/protocol/TestStream.cpp",
+		"/Users/gaffer/git/protocol/Stream.h",
+		"/Users/gaffer/git/protocol/BSDSocketsInterface",
+		"/Users/gaffer/git/protocol/Resolver.h",
+		"/Users/gaffer/git/protocol/TestDNSResolver",
+		"/Users/gaffer/git/protocol/TestNetworkInterface",
+		"/Users/gaffer/git/protocol/Packet.h",
+		"/Users/gaffer/git/protocol/NetworkInterface.h",
+		"/Users/gaffer/git/protocol/BSDSockets.h",
+		"/Users/gaffer/git/protocol/DNSResolver.h",
+		"/Users/gaffer/git/protocol/TestResolver.cpp",
+		"/Users/gaffer/git/protocol/UnitTest.cpp",
+		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/NetReliability.h",
+		"/Users/gaffer/git/protocol/Network.h",
+		"/Users/gaffer/git/protocol/TestCommon",
+		"/Users/gaffer/git/protocol/TestStream",
+		"/Users/gaffer/git/protocol/reference/11 - Cubes/tests/TestEngine.cpp",
+		"/Users/gaffer/git/protocol/Protocol.cpp",
+		"/Users/gaffer/git/protocol/Address.h",
+		"/Users/gaffer/git/protocol/Channel.h",
+		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/MemoryOutStream.h",
+		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestReporter.h",
+		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestSuite.h",
+		"/Users/gaffer/git/protocol/reference/08 - Authority Management/NetStream.h",
+		"/Users/gaffer/git/protocol/reference/09 - Drop-In COOP for Open World Games/Scene.rb",
+		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/GIMPACT/GIMPACT-LICENSE-BSD.TXT",
+		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ode/demo/basket_geom.h",
+		"/Users/gaffer/git/protocol/reference/09 - Drop-In COOP for Open World Games/Game.rb",
+		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/joints/slider.cpp",
+		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestList.h",
+		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/collision.cpp",
+		"/Users/gaffer/git/protocol/Connection",
+		"/Users/gaffer/git/protocol/reference/01 - Sending and Receiving Packets/Net.h",
+		"/Users/gaffer/git/protocol/Packet"
 	],
 	"find":
 	{
@@ -386,134 +438,134 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"ReliableChann",
-			"ReliableBlock",
-			"ReliableChannelData",
-			"blockId",
-			"test_connection",
-			"ProcessPacket",
-			"test_",
-			"resize",
-			"ack_bits",
-			"GenerateAckBits",
-			"SentPacketData",
-			"ReceivedPacketData",
-			"Recieve",
-			"todo",
-			"todo:",
-			"read packet",
+			"recie",
+			"sent packet",
+			"m_receiveBuffer",
+			"ReceivePacketInternal",
+			"htons",
+			"Sleep",
+			"PacketFactor",
+			"messageChannel = ",
+			"config.port = ",
+			"ChannelConfig",
+			"SetINterface",
+			"[&",
+			"ChannelStructure",
+			"m_interface->",
+			"m_interface",
+			"interface",
+			"protocolId",
+			"ReceivePackets",
+			"cout <<",
+			"networkInterface->Update",
+			"sendto failed",
+			"accumulator",
+			"SendingConnectionRequest",
+			"SendingConnectio",
+			"packet->",
 			"cout << ",
-			"GenerateAckBits",
-			"ProcessAcks",
-			"ack_bits",
-			"block %d",
-			"ProcessPacketFailure",
-			"process packet failure",
-			"ProcessDataFromPacket",
-			"throw",
-			"_",
-			"ProcessPacketFailure",
+			"ms",
+			"sleep",
+			"Connect",
+			"Disconnect",
+			".Update(",
+			"Configuration",
 			"Channel",
-			"chrono",
-			"ConnectionInterface",
-			"Connection",
-			"chrone",
-			"ms = ",
-			"Clock",
-			"m_current_send_block",
-			"PacketsRead",
-			"class Connection",
-			"FailCh",
-			"ReliableChannel",
-			"catch",
-			"runtime",
-			"class Connection",
-			"class Connect",
-			"add sent",
-			"ReliableBlock",
-			"ReliableChannelData",
-			"class Connection",
-			"ReliableChannelData",
-			"add_sent",
-			"SlidingWindow",
-			"m_sent_blocks",
-			"SlidingWindow",
-			"m_channels",
-			"class Connection",
-			"ProcessDataFromPacket",
-			"class Connection",
-			"make_shared<ConnectionPacket",
-			"ConnectionPacket",
-			"Connection",
-			"serialize write",
-			"ConnectionPacket",
-			"<ConnectionPacket",
-			"Channel",
-			"Event",
-			"class Connection",
-			"NumCounters",
-			"Connection",
-			"Counter",
+			"cout << ",
+			"m_sendLargeBlock",
+			"m_sendLarge",
+			"large block",
+			"AddState",
+			"Address address(",
+			"SendPacket",
+			"Simulator",
+			"m_config",
+			"todo:",
+			"\"read packet failure",
+			".GetSequence",
+			"->GetSequence()",
+			"\"read packet",
+			"\"receive packet",
+			"\"process acks",
+			"cout << ",
+			"->GetSequence",
+			".sequence = ",
+			"sent message",
+			"process ack",
+			"ProcessAck",
+			"cout << ",
+			"random_float",
+			"random_int",
+			"random",
+			"BSD",
+			"_interfac",
+			"Interfac",
+			"Interface",
+			"todo",
+			"todo: ",
+			"todo:",
+			"todo",
+			"% 4",
+			"messagechannel",
+			"block size is",
+			"cout",
+			"ceil",
+			"sending large block",
+			"ceil",
+			"fragmentSize",
 			"GenerateAckBits",
-			"sequence_greater_than",
-			"test_sequence",
-			"todo",
-			"size",
-			"SlidingWindow",
-			"_UNSPEC",
-			"sendto",
-			"_ipv4",
-			"AF_INET6",
-			"SendPacket",
-			"_ipv4",
-			"Internal",
-			"sockaddr_in",
-			"Internal",
-			"ReceivePacket",
-			"_in",
-			"serialize read failure",
-			"read failure",
-			"m_readIndex",
-			"SerializeWrite",
-			"SetReadBuffer",
-			"serialize_ex",
-			"bind",
-			"( port )",
-			"format_string",
-			"Factory",
-			"sendto",
-			"= 1000",
-			"SendPacket",
-			"Factory<Packet",
-			"NetworkInterface(",
-			"NetworkInterface( ",
-			"Packet",
-			"SendPacket",
-			"SendPacket(",
-			"Update(",
-			"NetworkInterface",
-			"make_shared",
-			"make_shared>",
-			"NetworkInterface",
-			"DNSRes",
-			"NEtworkInterafce",
-			"Factory",
-			"runtime_error",
-			"todo",
-			"map;",
-			"_dns()",
-			"> >",
-			"std::",
-			"printf",
-			"ToString",
-			"ipv6 address",
-			"htonl",
-			"honl",
-			"printf",
-			"ipv4 address",
-			"Address",
-			"TestInterface",
-			"GetAddress_"
+			"generate_ack_bits",
+			"blockSize = ",
+			"todo ",
+			"// todo:",
+			"blockSize",
+			"->valid = ",
+			"->fragment = ",
+			"fragment;",
+			"config->",
+			"first entry is large",
+			"todo:",
+			"SendQueueEntry",
+			"m_sentPackets",
+			"SentPacketEntry",
+			"ReceiveQueueEntry",
+			"fragments",
+			"safety",
+			"maxMessageSize",
+			"maxMessageSize * ",
+			"maxMessageSize",
+			"Send",
+			"event",
+			"GetData",
+			"Stream",
+			"STREAM_Write",
+			"serialize_int",
+			"Stream stream",
+			"<Stream>()",
+			"Stream( ",
+			"cout << ",
+			"SerializeBits",
+			"m_buffer",
+			"bufferdata",
+			"CHAR",
+			"SerializeBits",
+			"m_block",
+			"Block",
+			"BlockMessage",
+			"MessageChannel",
+			"Message",
+			"MessageChannel",
+			"cout << ",
+			"add message to receive queue: 0",
+			"timeLastSent",
+			"cout << ",
+			"timeLastSent",
+			"resendRate",
+			"_DEBUG",
+			"DEBUG",
+			"_DEBUG",
+			"cout << ",
+			"ReadPacket"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -544,7 +596,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 25.0
+		"height": 26.0
 	},
 	"input":
 	{
@@ -575,7 +627,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 506.0
+		"height": 463.0
 	},
 	"output.find_results":
 	{
@@ -584,7 +636,7 @@
 	"project": "Protocol.sublime-project",
 	"replace":
 	{
-		"height": 46.0
+		"height": 48.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -593,20 +645,336 @@
 		"selected_items":
 		[
 			[
-				"notes",
-				"NOTES"
+				"changes",
+				"CHANGES"
 			],
 			[
 				"todo",
 				"TODO"
 			],
 			[
-				"protocol.cpp",
-				"Protocol.cpp"
+				"canges",
+				"CHANGES"
 			],
 			[
-				"changes",
-				"CHANGES"
+				"client.h",
+				"include/Client.h"
+			],
+			[
+				"server.h",
+				"include/Server.h"
+			],
+			[
+				"bsdsockets.h",
+				"include/BSDSockets.h"
+			],
+			[
+				"testclientserver.cpp",
+				"tests/TestClientServer.cpp"
+			],
+			[
+				"sockets.h",
+				"include/BSDSockets.h"
+			],
+			[
+				"testbsdsockets.cpp",
+				"tests/TestBSDSockets.cpp"
+			],
+			[
+				"testbsd",
+				"tests/TestBSDSockets.cpp"
+			],
+			[
+				"bsdsocket",
+				"include/BSDSockets.h"
+			],
+			[
+				"soaktest.cpp",
+				"tests/SoakTest.cpp"
+			],
+			[
+				"relibalemessagechannel.h",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"bitpacker.h",
+				"include/BitPacker.h"
+			],
+			[
+				"testmessag",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"soaktest",
+				"tests/SoakTest.cpp"
+			],
+			[
+				"testreliable",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"test",
+				"tests/SoakTest.cpp"
+			],
+			[
+				"testconnection.cpp",
+				"tests/TestConnection.cpp"
+			],
+			[
+				"client",
+				"include/ClientServerPackets.h"
+			],
+			[
+				"bsd",
+				"include/BSDSockets.h"
+			],
+			[
+				"reliablemessagechannel.h",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"channel.h",
+				"include/Channel.h"
+			],
+			[
+				"testconnection",
+				"tests/TestConnection.cpp"
+			],
+			[
+				"testreliablemessagechannel.cpp",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"channelstructure.h",
+				"include/ChannelStructure.h"
+			],
+			[
+				"connection.h",
+				"include/Connection.h"
+			],
+			[
+				"common.h",
+				"include/Common.h"
+			],
+			[
+				"clientserverpackets.h",
+				"include/ClientServerPackets.h"
+			],
+			[
+				"steram.h",
+				"include/Stream.h"
+			],
+			[
+				"server",
+				"include/ClientServerPackets.h"
+			],
+			[
+				"networkinterface.h",
+				"include/NetworkInterface.h"
+			],
+			[
+				"stream.h",
+				"include/Stream.h"
+			],
+			[
+				"resolver.h",
+				"include/Resolver.h"
+			],
+			[
+				"res",
+				"include/Resolver.h"
+			],
+			[
+				"dns",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"simulator.h",
+				"include/NetworkSimulator.h"
+			],
+			[
+				"testdns",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"testres",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"resolve.h",
+				"include/Resolver.h"
+			],
+			[
+				"interface.h",
+				"include/NetworkInterface.h"
+			],
+			[
+				"server.cpp",
+				"tests/TestClientServer.cpp"
+			],
+			[
+				"notes",
+				"NOTES"
+			],
+			[
+				"testnetwok",
+				"tests/TestNetworkInterface.cpp"
+			],
+			[
+				"bsdsoc",
+				"include/BSDSockets.h"
+			],
+			[
+				"testaddress.cpp",
+				"tests/TestAddress.cpp"
+			],
+			[
+				"testreliabl",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"output.txt",
+				"output.txt"
+			],
+			[
+				"out",
+				"output.txt"
+			],
+			[
+				"output",
+				"output.txt"
+			],
+			[
+				"reliable",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"network",
+				"include/NetworkSimulator.h"
+			],
+			[
+				"interface",
+				"include/NetworkInterface.h"
+			],
+			[
+				"packet.h",
+				"include/Packet.h"
+			],
+			[
+				"bsdsockets.cpp",
+				"tests/TestBSDSockets.cpp"
+			],
+			[
+				"message.h",
+				"include/Message.h"
+			],
+			[
+				"testcommon.cpp",
+				"tests/TestCommon.cpp"
+			],
+			[
+				"",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"testrel",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"bitpacke.h",
+				"include/BitPacker.h"
+			],
+			[
+				"messagechannel.h",
+				"include/MessageChannel.h"
+			],
+			[
+				"bitacker.h",
+				"include/BitPacker.h"
+			],
+			[
+				"testre",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"soak",
+				"tests/SoakTest.cpp"
+			],
+			[
+				"bsdsocketsinterface.h",
+				"include/BSDSocketsInterface.h"
+			],
+			[
+				"testreli",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"teststream.cpp",
+				"tests/TestStream.cpp"
+			],
+			[
+				"testbit",
+				"tests/TestBitPacker.cpp"
+			],
+			[
+				"testmessage",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"rel",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"messagech",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"testreliablem",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"testmes",
+				"tests/TestMessageChannel.cpp"
+			],
+			[
+				"testmessagechannel.cpp",
+				"TestMessageChannel.cpp"
+			],
+			[
+				"message",
+				"TestMessageChannel.cpp"
+			],
+			[
+				"testnet",
+				"TestNetworkInterface.cpp"
+			],
+			[
+				"testin",
+				"TestNetworkInterface.cpp"
+			],
+			[
+				"testinterface",
+				"TestNetworkInterface.cpp"
+			],
+			[
+				"testinterfac",
+				"TestNetworkInterface.cpp"
+			],
+			[
+				"testnetworkinterface.cpp",
+				"TestNetworkInterface.cpp"
+			],
+			[
+				"network.h",
+				"Network.h"
+			],
+			[
+				"unittest.cpp",
+				"UnitTest.cpp"
+			],
+			[
+				"protocol.cpp",
+				"Protocol.cpp"
 			],
 			[
 				"goals",
@@ -645,15 +1013,7 @@
 				"reference/Serialize.cpp"
 			],
 			[
-				"",
-				"reference/Serialize.cpp"
-			],
-			[
 				"netstream.h",
-				"reference/07 - Reading and Writing Packets/NetStream.h"
-			],
-			[
-				"stream.h",
 				"reference/07 - Reading and Writing Packets/NetStream.h"
 			],
 			[
@@ -795,314 +1155,6 @@
 			[
 				"stoneinstance.h",
 				"StoneInstance.h"
-			],
-			[
-				"config.h",
-				"Config.h"
-			],
-			[
-				"telemetry.h",
-				"Telemetry.h"
-			],
-			[
-				"intersection.h",
-				"Intersection.h"
-			],
-			[
-				"stonedata.h",
-				"StoneData.h"
-			],
-			[
-				"main",
-				"xcode/Virtual Go/main.m"
-			],
-			[
-				"game",
-				"GameInstance.h"
-			],
-			[
-				"physics.h",
-				"Physics.h"
-			],
-			[
-				"rigidbody.h",
-				"RigidBody.h"
-			],
-			[
-				"accel",
-				"Accelerometer.h"
-			],
-			[
-				"vec3f.h",
-				"vectorial/vec3f.h"
-			],
-			[
-				"touch.h",
-				"Touch.h"
-			],
-			[
-				"log.txt",
-				"log.txt"
-			],
-			[
-				"viewcont",
-				"xcode/Virtual Go/ViewController.m"
-			],
-			[
-				"opengl.m",
-				"xcode/Virtual Go/OpenGL.m"
-			],
-			[
-				"gen",
-				"MeshGenerators.h"
-			],
-			[
-				"mat4f.h",
-				"vectorial/mat4f.h"
-			],
-			[
-				"mat4f",
-				"vectorial/mat4f.h"
-			],
-			[
-				"viewcontroller.h",
-				"xcode/Virtual Go/ViewController.h"
-			],
-			[
-				"meshgenerators.h",
-				"MeshGenerators.h"
-			],
-			[
-				"opengl.h",
-				"xcode/Virtual Go/OpenGL.h"
-			],
-			[
-				"board.h",
-				"Board.h"
-			],
-			[
-				"mesh.h",
-				"Mesh.h"
-			],
-			[
-				"gener",
-				"MeshGenerators.h"
-			],
-			[
-				"common.h",
-				"Common.h"
-			],
-			[
-				"scenegrid.h",
-				"SceneGrid.h"
-			],
-			[
-				"mesh",
-				"MeshGenerators.h"
-			],
-			[
-				"render.h",
-				"Render.h"
-			],
-			[
-				"vew",
-				"xcode/Virtual Go/ViewController.m"
-			],
-			[
-				"generat",
-				"MeshGenerators.h"
-			],
-			[
-				"stone.h",
-				"StoneData.h"
-			],
-			[
-				"mat3f.h",
-				"vectorial/mat3f.h"
-			],
-			[
-				"simd",
-				"vectorial/simd4x4f.h"
-			],
-			[
-				"mat4h",
-				"vectorial/mat4f.h"
-			],
-			[
-				"stone",
-				"StoneData.h"
-			],
-			[
-				"physcis.h",
-				"Physics.h"
-			],
-			[
-				"collisiondetection.h",
-				"CollisionDetection.h"
-			],
-			[
-				"collisionresponse.h",
-				"CollisionResponse.h"
-			],
-			[
-				"unittest.cpp",
-				"UnitTest.cpp"
-			],
-			[
-				"viewcontrol.",
-				"xcode/Virtual Go/ViewController.m"
-			],
-			[
-				"simd4",
-				"vectorial/simd4x4f.h"
-			],
-			[
-				"inter",
-				"Intersection.h"
-			],
-			[
-				"oldviewcontroller.m",
-				"xcode/Virtual Go/OldViewController.m"
-			],
-			[
-				"old",
-				"xcode/Virtual Go/OldViewController.m"
-			],
-			[
-				"gameinstnce.h",
-				"GameInstance.h"
-			],
-			[
-				"oldview",
-				"xcode/Virtual Go/OldViewController.m"
-			],
-			[
-				"viewcontr",
-				"xcode/Virtual Go/ViewController.m"
-			],
-			[
-				"dynamics.cpp",
-				"Dynamics.cpp"
-			],
-			[
-				"inters",
-				"Intersection.h"
-			],
-			[
-				"tessel",
-				"Tessellation.cpp"
-			],
-			[
-				"collision.cpp",
-				"Collision.cpp"
-			],
-			[
-				"support.cpp",
-				"Support.cpp"
-			],
-			[
-				"tessellation.cpp",
-				"Tessellation.cpp"
-			],
-			[
-				"game.h",
-				"GameInstance.h"
-			],
-			[
-				"vec4f.h",
-				"vectorial/vec4f.h"
-			],
-			[
-				"borad.h",
-				"Board.h"
-			],
-			[
-				"collisiondetectioh.",
-				"CollisionDetection.h"
-			],
-			[
-				"collisiondetectio.h",
-				"CollisionDetection.h"
-			],
-			[
-				"vec3",
-				"vectorial/vec3f.h"
-			],
-			[
-				"shader.vsh",
-				"xcode/Virtual Go/Shaders/Shader.vsh"
-			],
-			[
-				"shader.fsh",
-				"xcode/Virtual Go/Shaders/Shader.fsh"
-			],
-			[
-				"virtual",
-				"VirtualGo.cpp"
-			],
-			[
-				"virtualgo.cpp",
-				"xcode/Virtual Go.xcodeproj/project.pbxproj"
-			],
-			[
-				"platform.h",
-				"Platform.h"
-			],
-			[
-				"dropstone",
-				"~/Dropbox/talks/gdc2009/sandbox/source/Render.h"
-			],
-			[
-				"simd4x4f.h",
-				"vectorial/simd4x4f.h"
-			],
-			[
-				"premake4.lua",
-				"premake4.lua"
-			],
-			[
-				"inertiatensor.h",
-				"InertiaTensor.h"
-			],
-			[
-				".up",
-				"VirtualGo.sublime-project"
-			],
-			[
-				"go.cpp",
-				"VirtualGo.cpp"
-			],
-			[
-				"colliionresponse.h",
-				"CollisionResponse.h"
-			],
-			[
-				"rigidbod.h",
-				"RigidBody.h"
-			],
-			[
-				"premake",
-				"premake4.lua"
-			],
-			[
-				"stb_image.c",
-				"stb_image.c"
-			],
-			[
-				"platform.cpp",
-				"Platform.cpp"
-			],
-			[
-				"pre",
-				"premake4.lua"
-			],
-			[
-				"stb",
-				"stb_image.c"
-			],
-			[
-				"virtuago.cpp",
-				"VirtualGo.cpp"
 			]
 		],
 		"width": 0.0

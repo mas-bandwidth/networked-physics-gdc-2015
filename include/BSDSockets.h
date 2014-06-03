@@ -40,7 +40,7 @@ namespace protocol
         uint16_t port;                              // port to bind UDP socket to
         int family;                                 // socket family: eg. AF_INET (IPv4 only), AF_INET6 (IPv6 only)
         int maxPacketSize;                          // maximum packet size
-        shared_ptr<Resolver> resolver;              // resolver eg: DNS (optional)
+        shared_ptr<Resolver> resolver;              // resolver eg: DNS (optional)              // todo: remove resolver. doesn't belong here
         shared_ptr<Factory<Packet>> packetFactory;  // packet factory (required)
     };
 
@@ -100,6 +100,8 @@ namespace protocol
                 sock_address.sin6_addr = in6addr_any;
                 sock_address.sin6_port = htons( m_config.port );
             
+//                cout << "bind ipv6 socket to port " << m_config.port << endl;
+
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
                     cout << "bind socket failed: " << strerror( errno ) << endl;
@@ -113,6 +115,8 @@ namespace protocol
                 sock_address.sin_addr.s_addr = INADDR_ANY;
                 sock_address.sin_port = htons( m_config.port );
             
+//                cout << "bind ipv4 socket to port " << m_config.port << endl;
+
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
                     cout << "bind socket failed: " << strerror( errno ) << endl;
@@ -256,6 +260,10 @@ namespace protocol
 
             // todo: remove this resolver integration directly into the network interface - it's unnecessary!
 
+            // todo: turn it into ResolverAdapter -- this takes a network interface and a resolver
+            // on creation, and wraps the network interface with resolve and packet buffering
+            // until resolved. No need to add this per-interface!
+
             m_config.resolver->Update( TimeBase() );
 
             for ( auto itor = m_resolve_send_queues.begin(); itor != m_resolve_send_queues.end(); )
@@ -345,6 +353,8 @@ namespace protocol
                 if ( !received_bytes )
                     break;
 
+//                cout << "received bytes: " << received_bytes << endl;
+
                 try
                 {
                     Stream stream( STREAM_Read, &m_receiveBuffer[0], m_receiveBuffer.size() );
@@ -354,7 +364,6 @@ namespace protocol
                     serialize_int( stream, packetType, 0, maxPacketType );
 
                     auto packet = m_config.packetFactory->Create( packetType );
-
                     if ( !packet )
                         throw runtime_error( "failed to create packet from type" );
 
@@ -429,11 +438,13 @@ namespace protocol
 
             int result = recvfrom( m_socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
 
-            if ( errno == EAGAIN )
-                return 0;
+//            cout << "recvfrom result = " << result;
 
-            if ( result < 0 )
+            if ( result <= 0 )
             {
+                if ( errno == EAGAIN )
+                    return 0;
+
                 cout << "recvfrom failed: " << strerror( errno ) << endl;
                 return 0;
             }

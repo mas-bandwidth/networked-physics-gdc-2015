@@ -262,14 +262,13 @@ void test_client_connection_request_timeout()
     assert( client.GetError() == CLIENT_ERROR_ConnectionRequestTimedOut );
 }
 
-// todo: bring this back now that we have channel structure
-
-/*
 void test_client_connection_request_denied()
 {
     cout << "test_client_connection_request_denied" << endl;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>();
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
@@ -282,7 +281,7 @@ void test_client_connection_request_denied()
     auto resolver = make_shared<DNSResolver>();
 
     ClientConfig clientConfig;
-    clientConfig.packetFactory = packetFactory;
+    clientConfig.channelStructure = channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -293,10 +292,12 @@ void test_client_connection_request_denied()
     auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.packetFactory = packetFactory;
+    serverConfig.channelStructure = channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
+
+    server.Close();     // IMPORTANT: close the server so all connection requests are denied
 
     assert( client.IsConnecting() );
     assert( !client.IsDisconnected() );
@@ -316,6 +317,8 @@ void test_client_connection_request_denied()
 
         server.Update( timeBase );
 
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
         timeBase.time += timeBase.deltaTime;
     }
 
@@ -327,7 +330,6 @@ void test_client_connection_request_denied()
     assert( client.GetError() == CLIENT_ERROR_ConnectionRequestDenied );
     assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ServerClosed );
 }
-*/
 
 /*
 
@@ -411,7 +413,8 @@ int main()
         test_client_resolve_hostname_timeout();
         test_client_resolve_hostname_success();
         test_client_connection_request_timeout();
-        //test_client_connection_request_denied();
+        test_client_connection_request_denied();
+
         //test_client_connection_request_succeeded();
 
         /*
