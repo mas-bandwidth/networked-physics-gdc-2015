@@ -2,105 +2,38 @@ DONE:
 
 TODO:
 
-    The plan (tm):
+    Add code on server to send server data block to client.
 
-    Add function "FindClientIndex" which returns a client index, or -1
-    if no matching client is found.
+    Block should be *constant* initially, eg. add it as part of server config.
 
-    Add a new function "FindFreeClientSlot", which returns client index
-    of a free slot, or -1 if no free slot is available (server full).
+    Assumption is that if client needs more complicated non-constant info
+    on connect, then this could be implemented via the internal connection
+    protocol, eg. send down a large block.
 
-    Add code to take a client request packet and search for client index
-    matching address and client guid.
+    Implement server -> client block transfer
 
-    If no matching client slot is found, search for a free slot.
+    Server sends one block fragment per-packet. No need for complicated reliability.
 
-    If a matching client slot is found, don't do anything. Ignore packets.
+    Client replies with a separate packet acking each fragment he sees. Nothing complicated.
 
-    If a free slot is available, set up that client slot with the client
-    guid, address, generate a new server guid for the slot.
+    Server just keeps sending them until all acked.
 
-    If no free slot is available, reply with connection denied server full.
+    Once server has sent the block, go into the requesting client block state.
 
-    Add code inside UpdateSendingChallenge to construct a challenge packet
-    and send it out at a specific rate. This should be configurable,
-    default to 10 times per-second.
-
-    Add code inside update sending challenge to timeout the slot if a 
-    certain amount of time has passed, default to 5 seconds.
-
-    Add function to implement the timeout of client slot.
-
-    --------------
-
-    Otherwise, create the client entry and put that client in a state where
-    it will send connection challenge responses every frame.
-
-    Implement code to walk across client state machines and send packets.
-
-    Implement server config for send rate while in various states.
-
-    Implement server side timeout code, eg. 5 seconds timeout for challenge response.
-
-    Add a unit test to verify that the server moves into sending challenge state,
-    and the client moves into sending challenge response state.
-
-    ----------------------
-
-    Add code to detect that the server is full. Send a connection denied
-    with server full reason in this case.
-
-    Add a unit test case to verify that the server is correctly handling
-    this case. 
-
-    Note, being full doesn't necessarily mean the server has fully connected
-    clients, it only matters that the client slot is taken up by somebody who
-    is trying to connect in that slot.
+    Add unit test to verify it's working, and to verify timeout on client if 
+    the server doesn't send block packets down (eg. stop the server)
 
     ------------------------
 
-    Decide on the reasons server can deny connect, eg. full etc.
-    might want to stash this data somewhere so it can be debugged.
+    Once the server is finished sending block, send down a packet "request client block"
+    message until the client starts sending blocks through, then server goes into
+    "receiving client block" state.
 
-    Add a unit test to verify the timeout when the server does
-    not reply with the expected connection response in time.
+    Some thing in reverse for client -> server block.
 
-    -------------------------
+    Once the block transfers have completed, go to connected state.
 
-    Implement the server side
-
-    Add the server connection response packet as well, eg. enum with type
-    of response, as well as data, eg. denied, allowed, etc.
-
-    Add server side code to detect connection request, and transform that
-    into a per-client connection state on the server side.
-
-    Add a way to force the server to deny connections.
-
-    Add a unit test to verify the client has the connection denied.
-
-    -------------------------
-
-    Add another test to verify that both the client and server
-    go past the connection request and into the challenge state
-    on both the client and server.
-
-    ------------------------
-
-    Implement a reservation system at this point which allows a group of
-    n players to have a reservation on the server. Don't muddy the water
-    with teams at this point.
-
-    Extend the connection state machine to pass in a token.
-
-    If you have a token, and no reservation exists for that token,
-    deny the connection request.
-
-    Make my reservation system flexible such that new connections
-    can be attempted from a client, *while* retaining connection
-    to a current server, eg. I'd like the reservation to try to
-    move a group of players to a new server, but if it fails,
-    for those players to remain connected to current server.
+    Add tests for all cases.
 
     ------------------------
 
@@ -115,6 +48,9 @@ TODO:
     Use this cube demo for the meeting with rocket hall
 
     ------------------------
+
+
+
 
 
 

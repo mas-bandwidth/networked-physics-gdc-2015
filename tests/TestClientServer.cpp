@@ -76,7 +76,7 @@ void test_client_resolve_hostname_failure()
 
     Client client( clientConfig );
 
-    client.Connect( "my butt" );
+    client.Connect( "asduoanuhaoenuthaosuhta" );
 
     assert( client.IsConnecting() );
     assert( !client.IsDisconnected() );
@@ -305,6 +305,8 @@ void test_client_connection_request_denied()
     assert( !client.HasError() );
     assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
 
+    assert( !server.IsOpen() );
+
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
 
@@ -329,6 +331,149 @@ void test_client_connection_request_denied()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_ConnectionRequestDenied );
     assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ServerClosed );
+}
+
+void test_client_connection_challenge()
+{
+    cout << "test_client_connection_challenge" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    auto resolver = make_shared<DNSResolver>();
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_SendingChallengeResponse )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( !client.IsDisconnected() );
+    assert( client.IsConnecting() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingChallengeResponse );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+
+    // todo: find client slot and assert one slot connected, and is in correct state
+}
+
+void test_client_connection_challenge_response()
+{
+    cout << "test_client_connection_challenge_response" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    auto resolver = make_shared<DNSResolver>();
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    const int clientIndex = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( server.GetClientState(clientIndex) == SERVER_CLIENT_SendingDataBlock )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_SendingDataBlock );
+    assert( !client.IsDisconnected() );
+    assert( client.IsConnecting() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingChallengeResponse );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
 }
 
 /*
@@ -414,6 +559,8 @@ int main()
         test_client_resolve_hostname_success();
         test_client_connection_request_timeout();
         test_client_connection_request_denied();
+        test_client_connection_challenge();
+        test_client_connection_challenge_response();
 
         //test_client_connection_request_succeeded();
 

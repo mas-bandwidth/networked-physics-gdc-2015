@@ -1,3 +1,89 @@
+Thursday vening, June 5th, 2014:
+--------------------------------
+
+    Extend server code to listen to challenge response packet.
+
+    Clean packet processing on server up a bit, there is now
+    a "ProcessX" function for each packet type.
+
+    When challenge response is received, go into sending data block state.
+
+    Add test to verify this happens. Keep it separate from previous test.
+
+
+Thursday Morning, June 5th, 2014:
+---------------------------------
+
+    There is a crash in the server creation or update. What is going on?
+
+    Verified it is in the update, not the create.
+
+    It appears to be in the address comparison on packets.
+
+    I don't really understand how this can be happening?!
+
+    It seems to be caused by a fall through that should have
+    broken out of the packet receive on m_open == false.
+
+    Still not sure why this would crash though?!
+
+    Added a new test with the server open. 
+
+    It crashes again, my guess is that there is something broken
+    in the client data array on the server?
+
+    Found it. Bad condition in if statement.
+
+    Add code inside UpdateSendingChallenge to construct a challenge packet
+    and send it out at a specific rate, eg. add accumulator to the client
+    data struct.
+
+    Added test to verify client progresses to sending challenge response state.
+
+
+Tuesday Morning, June 3rd, 2014:
+--------------------------------
+
+    Add function "FindClientIndex" which returns a client index, or -1
+    if no matching client is found.
+
+    Add a new function "FindFreeClientSlot", which returns client index
+    of a free slot, or -1 if no free slot is available (server full).
+
+    Add code to take a client request packet and search for client index
+    matching address and client guid.
+
+    If no matching client slot is found, search for a free slot.
+
+    If a matching client slot is found, don't do anything. Ignore packets.
+
+    If a free slot is available, set up that client slot with the client
+    guid, address, generate a new server guid for the slot.
+
+    If no free slot is available, reply with connection denied server full.
+
+    Add function "FindClientIndex" which returns a client index, or -1
+    if no matching client is found.
+
+    Add a new function "FindFreeClientSlot", which returns client index
+    of a free slot, or -1 if no free slot is available (server full).
+
+    Add code to take a client request packet and search for client index
+    matching address and client guid.
+
+    If no matching client slot is found, search for a free slot.
+
+    If a matching client slot is found, don't do anything. Ignore packets.
+
+    If a free slot is available, set up that client slot with the client
+    guid, address, generate a new server guid for the slot.
+
+    If no free slot is available, reply with connection denied server full.
+
+    Added timeout config and code inside server to time out client slot
+    and free it up for future connects if no packets received.
+
+
 Monday Evening, June 2nd, 2014:
 -------------------------------
 

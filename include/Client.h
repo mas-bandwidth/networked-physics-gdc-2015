@@ -344,6 +344,10 @@ namespace protocol
                     UpdateSendingConnectionRequest();
                     break;
 
+                case CLIENT_STATE_SendingChallengeResponse:
+                    UpdateSendingChallengeResponse();
+                    break;
+
                 default:
                     break;
             }
@@ -426,6 +430,8 @@ namespace protocol
 
             if ( m_sendingChallengeResponseData.accumulator >= timeBetweenPackets )
             {
+//                cout << "client sent challenge response" << endl;
+
                 m_sendingChallengeResponseData.accumulator -= timeBetweenPackets;
 
                 auto packet = make_shared<ChallengeResponsePacket>();
