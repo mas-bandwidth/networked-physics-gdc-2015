@@ -315,10 +315,15 @@ namespace protocol
                 if ( !packet )
                     break;
 
+                if ( packet->GetType() == PACKET_Disconnected )
+                {
+//                    cout << "client received disconnected packet" << endl;
+                    ProcessDisconnectedPacket( static_pointer_cast<DisconnectedPacket>( packet ) );
+                    continue;
+                }
+
                 switch ( m_state )
                 {
-                    // todo: clean this up. hard to read.
-
                     case CLIENT_STATE_SendingConnectionRequest:
                     {
                         if ( packet->GetType() == PACKET_ConnectionChallenge )
@@ -416,6 +421,15 @@ namespace protocol
                         break;
                 }
             }
+        }
+
+        void ProcessDisconnectedPacket( shared_ptr<DisconnectedPacket> packet )
+        {
+            // todo: want to check packet clientGuid and serverGuid vs. my own
+            // but these are stashed currently inside state data -- which seems
+            // a bit annoying.
+
+            DisconnectAndSetError( CLIENT_ERROR_DisconnectedFromServer );
         }
 
         void UpdateCurrentState()

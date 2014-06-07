@@ -6,6 +6,20 @@ Friday Evening, June 7th, 2014:
 
     Messages are working. Success!
 
+    Add a test for server side disconnect
+
+    Added method "DisconnectClient" to server.
+
+    Need to implement disconnect client, first implementation
+    could just send a disconnect packet to client then reset
+    the client slot.
+
+    Add client code to handle the disconnect packet and 
+    go into disconnected state. Set error to indicate
+    client was disconnected.
+
+    Verify test passes. Yep.
+
 
 Friday Morning, June 6th, 2014:
 -------------------------------

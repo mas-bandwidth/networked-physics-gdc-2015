@@ -111,6 +111,29 @@ namespace protocol
             UpdateReceivePackets();
         }
 
+        void DisconnectClient( int clientIndex )
+        {
+            assert( clientIndex >= 0 );
+            assert( clientIndex < m_config.maxClients );
+
+            auto & client = m_clients[clientIndex];
+
+            if ( client.state == SERVER_CLIENT_Disconnected )
+                return;
+
+//            cout << "sent disconnected packet to client" << endl;
+
+            auto packet = make_shared<DisconnectedPacket>();
+
+            packet->protocolId = m_config.protocolId;
+            packet->clientGuid = client.clientGuid;
+            packet->serverGuid = client.serverGuid;
+
+            m_config.networkInterface->SendPacket( client.address, packet );
+
+            ResetClientSlot( clientIndex );
+        }
+
         ServerClientState GetClientState( int clientIndex ) const
         {
             assert( clientIndex >= 0 );

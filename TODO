@@ -2,17 +2,15 @@ DONE:
 
 TODO:
 
-    Add a test for server side disconnect
-
-    Add a test for connected denied server full
-
-    ---------------
-
     Client timeout needs to be fixed. 
 
     In connected state it needs to be based off last packet receive time.
 
     Add a test for server side timeout (eg. connect and stop updating server)
+
+    ---------------
+
+    Add a test for connected denied server full
 
     -----------
 
@@ -35,6 +33,21 @@ TODO:
     - timeouts in remaining connecting states that aren't covered
     - timeout after connection established
     - connection denied because server is full
+
+    ---------------
+
+    It's really annoying having to process the disconnect packet
+    and having client guid and server guid stashed in the per-state
+    data. Maybe it they should be global data instead in the client?
+
+    ---------------
+
+    Next pass would be to set up an entry for this client guid
+    such that a disconnect is sent 10 additional times, every 0.1 
+    sec from the disconnect point, to combat packet loss.
+
+    Is this necessary? Packet loss is not that high. and if it is,
+    just let the client timeout. Fuck 'em?
 
     -------------------------
 

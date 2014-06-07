@@ -26,7 +26,7 @@ namespace protocol
         PACKET_ConnectionDenied,                                // server denies request for connection. contains reason int, eg. full, closed etc.
         PACKET_ConnectionChallenge,                             // server response to client connection request.
         PACKET_RequestClientData,                               // server is ready for the client to start sending data to it.
-        PACKET_Disconnected,                                    // courtesy packet from serevr to tell the client they have been disconnected. sent for one second after server-side disconnect
+        PACKET_Disconnected,                                    // courtesy packet from server to tell the client they have been disconnected. sent for one second after server-side disconnect
 
         // bidirectional
 
@@ -127,6 +127,22 @@ namespace protocol
         }
     };
 
+    struct DisconnectedPacket : public Packet
+    {
+        uint64_t protocolId = 0;
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+
+        DisconnectedPacket() : Packet( PACKET_Disconnected ) {}
+
+        void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, protocolId );
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
+        }
+    };
+
     class ClientServerPacketFactory : public Factory<Packet>
     {
     public:
@@ -142,6 +158,7 @@ namespace protocol
             Register( PACKET_ConnectionDenied, [] { return make_shared<ConnectionDeniedPacket>(); } );
             Register( PACKET_ConnectionChallenge, [] { return make_shared<ConnectionChallengePacket>(); } );
             Register( PACKET_RequestClientData, [] { return make_shared<RequestClientDataPacket>(); } );
+            Register( PACKET_Disconnected, [] { return make_shared<DisconnectedPacket>(); } );
 
             // bidirectional messages
             Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
