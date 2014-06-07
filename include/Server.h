@@ -22,8 +22,9 @@ namespace protocol
     {
         SERVER_CLIENT_Disconnected,                             // client is disconnected. default state.
         SERVER_CLIENT_SendingChallenge,                         // responding with connection challenge waiting for challenge response
-        SERVER_CLIENT_SendingDataBlock,                         // sending data block to client
-        SERVER_CLIENT_ReceivingDataBlock,                       // receiving data block from client
+        SERVER_CLIENT_SendingServerData,                        // sending server data to client
+        SERVER_CLIENT_RequestingClientData,                     // requesting client data
+        SERVER_CLIENT_ReceivingClientData,                      // receiving client data
         SERVER_CLIENT_Connected                                 // client is fully connected. connection packets are now exchanged.
     };
 
@@ -44,8 +45,11 @@ namespace protocol
         int maxClients = 16;                                    // max number of clients supported by this server.
         float sendRate = 10;                                    // packets to send per-second. probably want to make this dynamic, eg. per-client set send rate instead.
         float timeout = 10.0f;                                  // number of seconds of no received packets from client before they are timed out.
+
         shared_ptr<NetworkInterface> networkInterface;          // network interface used to send and receive packets
         shared_ptr<ChannelStructure> channelStructure;          // defines the connection channel structure
+        
+        shared_ptr<Block> block;                                // data block sent to clients on connect. must be constant, eg. protocol is a function of this
     };
 
     class Server
@@ -114,6 +118,13 @@ namespace protocol
             return m_clients[clientIndex].state;
         }
 
+        shared_ptr<Connection> GetClientConnection( int clientIndex )
+        {
+            assert( clientIndex >= 0 );
+            assert( clientIndex < m_config.maxClients );
+            return m_clients[clientIndex].connection;
+        }
+
     protected:
 
         void UpdateClients()
@@ -126,12 +137,16 @@ namespace protocol
                         UpdateSendingChallenge( i );
                         break;
 
-                    case SERVER_CLIENT_SendingDataBlock:
-                        UpdateSendingDataBlock( i );
+                    case SERVER_CLIENT_SendingServerData:
+                        UpdateSendingServerData( i );
                         break;
 
-                    case SERVER_CLIENT_ReceivingDataBlock:
-                        UpdateReceivingDataBlock( i );
+                    case SERVER_CLIENT_RequestingClientData:
+                        UpdateRequestingClientData( i );
+                        break;
+
+                    case SERVER_CLIENT_ReceivingClientData:
+                        UpdateReceivingClientData( i );
                         break;
 
                     case SERVER_CLIENT_Connected:
@@ -154,33 +169,58 @@ namespace protocol
 
             if ( client.accumulator > 1.0 / m_config.sendRate )
             {
-                auto connectionChallengePacket = make_shared<ConnectionChallengePacket>();
-                connectionChallengePacket->protocolId = m_config.protocolId;
-                connectionChallengePacket->clientGuid = client.clientGuid;
-                connectionChallengePacket->serverGuid = client.serverGuid;
+                auto packet = make_shared<ConnectionChallengePacket>();
 
-                m_config.networkInterface->SendPacket( client.address, connectionChallengePacket );
+                packet->protocolId = m_config.protocolId;
+                packet->clientGuid = client.clientGuid;
+                packet->serverGuid = client.serverGuid;
+
+                m_config.networkInterface->SendPacket( client.address, packet );
 
                 client.accumulator = 0.0;
             }
         }
 
-        void UpdateSendingDataBlock( int clientIndex )
+        void UpdateSendingServerData( int clientIndex )
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_SendingDataBlock );
+            assert( client.state == SERVER_CLIENT_SendingServerData );
 
-            // ...
+            // todo: not implemented yet
+            assert( false );
         }
 
-        void UpdateReceivingDataBlock( int clientIndex )
+        void UpdateRequestingClientData( int clientIndex )
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_ReceivingDataBlock );
+            assert( client.state == SERVER_CLIENT_RequestingClientData );
 
-            // ...
+            if ( client.accumulator > 1.0 / m_config.sendRate )
+            {
+//                cout << "sent request client data packet" << endl;
+
+                auto packet = make_shared<RequestClientDataPacket>();
+
+                packet->protocolId = m_config.protocolId;
+                packet->clientGuid = client.clientGuid;
+                packet->serverGuid = client.serverGuid;
+
+                m_config.networkInterface->SendPacket( client.address, packet );
+
+                client.accumulator = 0.0;
+            }
+        }
+
+        void UpdateReceivingClientData( int clientIndex )
+        {
+            ServerClientData & client = m_clients[clientIndex];
+
+            assert( client.state == SERVER_CLIENT_ReceivingClientData );
+
+            // todo: not implemented yet
+            assert( false );
         }
 
         void UpdateConnected( int clientIndex )
@@ -192,6 +232,17 @@ namespace protocol
             assert( client.connection );
 
             client.connection->Update( m_timeBase );
+
+            if ( client.accumulator > 1.0 / m_config.sendRate )
+            {
+                auto packet = client.connection->WritePacket();
+
+//                cout << "server sent connection packet" << endl;
+
+                m_config.networkInterface->SendPacket( client.address, packet );
+
+                client.accumulator = 0.0;
+            }
         }
 
         void UpdateTimeouts( int clientIndex )
@@ -205,7 +256,7 @@ namespace protocol
 
             if ( client.lastPacketTime + m_config.timeout < m_timeBase.time )
             {
-                cout << "client " << clientIndex << " timed out" << endl;
+//                cout << "client " << clientIndex << " timed out" << endl;
 
                 ResetClientSlot( clientIndex );
             }
@@ -236,6 +287,14 @@ namespace protocol
 
                     case PACKET_ChallengeResponse:
                         ProcessChallengeResponse( static_pointer_cast<ChallengeResponsePacket>( packet ) );
+                        break;
+
+                    case PACKET_ReadyForConnection:
+                        ProcessReadyForConnection( static_pointer_cast<ReadyForConnectionPacket>( packet ) );
+                        break;
+
+                    case PACKET_Connection:
+                        ProcessConnection( static_pointer_cast<ConnectionPacket>( packet ) );
                         break;
 
                     default:
@@ -320,7 +379,78 @@ namespace protocol
 
             client.accumulator = 0.0;
             client.lastPacketTime = m_timeBase.time;
-            client.state = SERVER_CLIENT_SendingDataBlock;
+            client.state = m_config.block ? SERVER_CLIENT_SendingServerData : SERVER_CLIENT_RequestingClientData;
+        }
+
+        void ProcessReadyForConnection( shared_ptr<ReadyForConnectionPacket> packet )
+        {
+//            cout << "server received ready for connection packet" << endl;
+
+            const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+            if ( clientIndex == -1 )
+            {
+//                cout << "found no matching client" << endl;
+                return;
+            }
+
+            ServerClientData & client = m_clients[clientIndex];
+
+            if ( client.serverGuid != packet->serverGuid )
+            {
+//                cout << "client server guid does not match" << endl;
+                return;
+            }
+
+            // todo: should also transition here from received client data state
+
+            if ( client.state != SERVER_CLIENT_RequestingClientData )
+            {
+//                cout << "ignoring because client slot is not in correct state" << endl;
+                return;
+            }
+
+            client.accumulator = 0.0;
+            client.lastPacketTime = m_timeBase.time;
+            client.state = SERVER_CLIENT_Connected;
+        }
+
+        void ProcessConnection( shared_ptr<ConnectionPacket> packet )
+        {
+//            cout << "server received connection packet" << endl;
+
+            const int clientIndex = FindClientIndex( packet->GetAddress() );
+            if ( clientIndex == -1 )
+            {
+//                cout << "found no matching client" << endl;
+                return;
+            }
+
+            ServerClientData & client = m_clients[clientIndex];
+            if ( client.state != SERVER_CLIENT_Connected )
+            {
+//                cout << "ignoring because client slot is not in correct state" << endl;
+                return;
+            }
+
+            client.connection->ReadPacket( packet );
+
+            client.lastPacketTime = m_timeBase.time;
+        }
+
+        int FindClientIndex( const Address & address ) const
+        {
+            for ( int i = 0; i < m_clients.size(); ++i )
+            {
+                if ( m_clients[i].state == SERVER_CLIENT_Disconnected )
+                    continue;
+                
+                if ( m_clients[i].address == address )
+                {
+                    assert( m_clients[i].state != SERVER_CLIENT_Disconnected );
+                    return i;
+                }
+            }
+            return -1;
         }
 
         int FindClientIndex( const Address & address, uint64_t clientGuid ) const

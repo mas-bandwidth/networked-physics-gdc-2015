@@ -19,8 +19,9 @@ namespace protocol
         CLIENT_STATE_ResolvingHostname,                       // client is resolving hostname to address using the supplied resolver.
         CLIENT_STATE_SendingConnectionRequest,                // client is sending connection request packets to the server address.
         CLIENT_STATE_SendingChallengeResponse,                // client has received a connection challenge from server and is sending response packets.
-        CLIENT_STATE_ReceivingDataBlock,                      // client is receiving a connection data block from the server.
-        CLIENT_STATE_SendingDataBlock,                        // client is sending their own connection data block up to the server.
+        CLIENT_STATE_ReceivingServerData,                     // client is receiving a data block from the server.
+        CLIENT_STATE_SendingClientData,                       // client is sending their own data block up to the server.
+        CLIENT_STATE_ReadyForConnection,                      // client is ready for the server to start sending connection packets.
         CLIENT_STATE_Connected,                               // client is fully connected to the server. connection packets may now be processed.
         CLIENT_STATE_NumStates
     };
@@ -33,8 +34,9 @@ namespace protocol
             case CLIENT_STATE_ResolvingHostname:                return "resolving hostname";
             case CLIENT_STATE_SendingConnectionRequest:         return "sending connection request";
             case CLIENT_STATE_SendingChallengeResponse:         return "sending challenge response";
-            case CLIENT_STATE_ReceivingDataBlock:               return "receiving data block";
-            case CLIENT_STATE_SendingDataBlock:                 return "sending data block";
+            case CLIENT_STATE_ReceivingServerData:              return "receiving server data";
+            case CLIENT_STATE_SendingClientData:                return "sending client data";
+            case CLIENT_STATE_ReadyForConnection:               return "ready for connection";
             case CLIENT_STATE_Connected:                        return "connected";
             default: 
                 assert( 0 );
@@ -50,8 +52,9 @@ namespace protocol
         CLIENT_ERROR_ConnectionRequestDenied,                 // client received a connection denied response to their connection request.
         CLIENT_ERROR_ConnectionRequestTimedOut,               // client timed out while sending connection requests.
         CLIENT_ERROR_ChallengeResponseTimedOut,               // client timed out while sending connection challenge responses.
-        CLIENT_ERROR_ReceiveDataBlockTimedOut,                // client timed out while receiving data block from server.
-        CLIENT_ERROR_SendDataBlockTimedOut,                   // client timed out while sending data block to server.
+        CLIENT_ERROR_ReceiveServerDataTimedOut,               // client timed out while receiving server data
+        CLIENT_ERROR_SendClientDataTimedOut,                  // client timed out while sending client data
+        CLIENT_ERROR_ReadyForConnectionTimedOut,              // client timed out while in the ready for connection state
         CLIENT_ERROR_DisconnectedFromServer,                  // client was fully connected to the server, then received a disconnect packet.
         CLIENT_ERROR_ConnectionTimedOut,                      // client was fully connected to the server, then the connection timed out.
         CLIENT_ERROR_NumStates
@@ -67,8 +70,9 @@ namespace protocol
             case CLIENT_ERROR_ConnectionRequestDenied:          return "connection request denied";
             case CLIENT_ERROR_ConnectionRequestTimedOut:        return "connection request timed out";
             case CLIENT_ERROR_ChallengeResponseTimedOut:        return "challenge response timed out";
-            case CLIENT_ERROR_ReceiveDataBlockTimedOut:         return "receive data block timed out";
-            case CLIENT_ERROR_SendDataBlockTimedOut:            return "send data block timed out";
+            case CLIENT_ERROR_ReceiveServerDataTimedOut:        return "receive server data timed out";
+            case CLIENT_ERROR_SendClientDataTimedOut:           return "send client data timed out";
+            case CLIENT_ERROR_ReadyForConnectionTimedOut:       return "ready for connection timed out";
             case CLIENT_ERROR_DisconnectedFromServer:           return "disconnected from server";
             default:
                 assert( false );
@@ -80,21 +84,17 @@ namespace protocol
     {
         uint64_t protocolId = 42;                               // the protocol id. must be same on client or server or they cannot talk to each other.
 
-        float resolveHostnameTimeout = 5.0f;                    // number of seconds until we give up trying to resolve server hostname into a network address (eg. DNS typically)
-        float connectionRequestTimeout = 5.0f;                  // number of seconds in the connection request state until timeout if no challenge packet received from server.
-        float challengeResponseTimeout = 5.0f;                  // number of seconds in the challenge response state until timeout if the server does not reply with data block packet.
-        float receiveDataBlockTimeout = 5.0f;                   // number of seconds in the receive data block state if no data block packet received from server.
-        float sendDataBlockTimeout = 5.0f;                      // number of seconds in the send data block state if server doesn't send us a response ack, or a connection packet (indicating data block fully received)
-        float connectionTimeOut = 10.0f;                        // number of seconds in the connected state before timing out if no connection packet received from server.
+        float connectingTimeOut = 5.0f;                         // number of seconds before timeout for any situation *before* the client establishes connection
+        float connectedTimeOut = 10.0f;                         // number of seconds in the connected state before timing out if no connection packet received
 
-        float connectionRequestSendRate = 10.0f;                // number of packets to send per-second while in sending connection request state.
-        float challengeResponseSendRate = 10.0f;                // number of packets to send per-second while in sending challenge response state.
+        float connectingSendRate = 10.0f;                       // client send rate while connecting
+        float connectedSendRate = 30.0f;                        // client send rate *after* being connected, eg. connection packets
 
         shared_ptr<Resolver> resolver;                          // optional resolver used to to lookup server address by hostname.
-
         shared_ptr<NetworkInterface> networkInterface;          // network interface used to send and receive packets.
-
         shared_ptr<ChannelStructure> channelStructure;          // channel structure for connections
+
+        shared_ptr<Block> block;                                // data block sent to server on connect. optional.
     };
 
     class Client
@@ -132,9 +132,29 @@ namespace protocol
             double accumulator = 0.0;
         };
 
+        struct ReadyForConnectionData
+        {
+            Address address;
+            double startTime = 0.0;
+            uint64_t clientGuid = 0;
+            uint64_t serverGuid = 0;
+            double accumulator = 0.0;
+        };
+
+        struct ConnectedData
+        {
+            Address address;
+            double startTime = 0.0;
+            uint64_t clientGuid = 0;
+            uint64_t serverGuid = 0;
+            double accumulator = 0.0;
+        };
+
         ResolveHostnameData m_resolveHostnameData;
         SendingConnectionRequestData m_sendingConnectionRequestData;
         SendingChallengeResponseData m_sendingChallengeResponseData;
+        ReadyForConnectionData m_readyForConnectionData;
+        ConnectedData m_connectedData;
 
     public:
 
@@ -256,6 +276,11 @@ namespace protocol
             return m_config.networkInterface;
         }
 
+        shared_ptr<Connection> GetConnection() const
+        {
+            return m_connection;
+        }
+
         void Update( const TimeBase & timeBase )
         {
             m_timeBase = timeBase;
@@ -292,6 +317,8 @@ namespace protocol
 
                 switch ( m_state )
                 {
+                    // todo: clean this up. hard to read.
+
                     case CLIENT_STATE_SendingConnectionRequest:
                     {
                         if ( packet->GetType() == PACKET_ConnectionChallenge )
@@ -326,6 +353,65 @@ namespace protocol
                     }
                     break;
 
+                    case CLIENT_STATE_SendingChallengeResponse:
+                    {
+                        if ( packet->GetType() == PACKET_RequestClientData )
+                        {
+                            auto requestClientDataPacket = static_pointer_cast<RequestClientDataPacket>( packet );
+
+                            if ( requestClientDataPacket->GetAddress() == m_sendingChallengeResponseData.address &&
+                                 requestClientDataPacket->clientGuid == m_sendingChallengeResponseData.clientGuid &&
+                                 requestClientDataPacket->serverGuid == m_sendingChallengeResponseData.serverGuid )
+                            {
+//                                cout << "received request client data packet from server" << endl;
+
+                                if ( !m_config.block )
+                                {
+//                                    cout << "client is ready for connection" << endl;
+
+                                    m_state = CLIENT_STATE_ReadyForConnection;
+
+                                    m_readyForConnectionData.startTime = m_timeBase.time;
+                                    m_readyForConnectionData.address = m_sendingChallengeResponseData.address;
+                                    m_readyForConnectionData.clientGuid = requestClientDataPacket->clientGuid;
+                                    m_readyForConnectionData.serverGuid = requestClientDataPacket->serverGuid;
+                                }
+                                else
+                                {
+                                    // todo: implement client block send to server
+                                    assert( false );
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                    case CLIENT_STATE_ReadyForConnection:
+                    case CLIENT_STATE_Connected:
+                    {
+                        if ( packet->GetType() == PACKET_Connection )
+                        {
+//                            cout << "client received connection packet" << endl;
+
+                            if ( m_state == CLIENT_STATE_ReadyForConnection )
+                            {
+//                                cout << "client transitioned to connected state" << endl;
+
+                                m_state = CLIENT_STATE_Connected;
+                                m_connectedData.startTime = m_timeBase.time;
+                                m_connectedData.accumulator = 0.0;
+                                m_connectedData.address = m_readyForConnectionData.address;
+                                m_connectedData.clientGuid = m_readyForConnectionData.clientGuid;
+                                m_connectedData.serverGuid = m_readyForConnectionData.serverGuid;
+                            }
+
+                            m_connection->ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
+
+                            // todo: update last packet received time
+                        }
+                    }
+                    break;
+
                     default:
                         break;
                 }
@@ -348,6 +434,14 @@ namespace protocol
                     UpdateSendingChallengeResponse();
                     break;
 
+                case CLIENT_STATE_ReadyForConnection:
+                    UpdateReadyForConnection();
+                    break;
+
+                case CLIENT_STATE_Connected:
+                    UpdateConnected();
+                    break;
+
                 default:
                     break;
             }
@@ -357,7 +451,7 @@ namespace protocol
         {
             assert( m_state == CLIENT_STATE_ResolvingHostname );
 
-            if ( m_timeBase.time - m_resolveHostnameData.startTime > m_config.resolveHostnameTimeout )
+            if ( m_timeBase.time - m_resolveHostnameData.startTime > m_config.connectingTimeOut )
             {
                 DisconnectAndSetError( CLIENT_ERROR_ResolveHostnameTimedOut );
                 return;
@@ -389,7 +483,7 @@ namespace protocol
         {
             assert( m_state == CLIENT_STATE_SendingConnectionRequest );
 
-            if ( m_timeBase.time - m_sendingConnectionRequestData.startTime > m_config.connectionRequestTimeout )
+            if ( m_timeBase.time - m_sendingConnectionRequestData.startTime > m_config.connectingTimeOut )
             {
 //                cout << "connection request timed out" << endl;
                 DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestTimedOut );
@@ -398,7 +492,7 @@ namespace protocol
 
             m_sendingConnectionRequestData.accumulator += m_timeBase.deltaTime;
 
-            const float timeBetweenPackets = 1.0f / m_config.connectionRequestSendRate;
+            const float timeBetweenPackets = 1.0f / m_config.connectingSendRate;
 
             if ( m_sendingConnectionRequestData.accumulator >= timeBetweenPackets )
             {
@@ -418,7 +512,7 @@ namespace protocol
         {
             assert( m_state == CLIENT_STATE_SendingChallengeResponse );
 
-            if ( m_timeBase.time - m_sendingChallengeResponseData.startTime > m_config.challengeResponseTimeout )
+            if ( m_timeBase.time - m_sendingChallengeResponseData.startTime > m_config.connectingTimeOut )
             {
                 DisconnectAndSetError( CLIENT_ERROR_ChallengeResponseTimedOut );
                 return;
@@ -426,7 +520,7 @@ namespace protocol
 
             m_sendingChallengeResponseData.accumulator += m_timeBase.deltaTime;
 
-            const float timeBetweenPackets = 1.0f / m_config.challengeResponseSendRate;
+            const float timeBetweenPackets = 1.0f / m_config.connectingSendRate;
 
             if ( m_sendingChallengeResponseData.accumulator >= timeBetweenPackets )
             {
@@ -435,11 +529,76 @@ namespace protocol
                 m_sendingChallengeResponseData.accumulator -= timeBetweenPackets;
 
                 auto packet = make_shared<ChallengeResponsePacket>();
+
                 packet->protocolId = m_config.protocolId;
                 packet->clientGuid = m_sendingChallengeResponseData.clientGuid;
                 packet->serverGuid = m_sendingChallengeResponseData.serverGuid;
 
                 m_config.networkInterface->SendPacket( m_sendingChallengeResponseData.address, packet );
+            }
+        }
+
+        void UpdateReadyForConnection()
+        {
+            assert( m_state == CLIENT_STATE_ReadyForConnection );
+
+            if ( m_timeBase.time - m_readyForConnectionData.startTime > m_config.connectingTimeOut )
+            {
+                // todo: add unit test for this case
+                DisconnectAndSetError( CLIENT_ERROR_ReadyForConnectionTimedOut );
+                return;
+            }
+
+            m_readyForConnectionData.accumulator += m_timeBase.deltaTime;
+
+            const float timeBetweenPackets = 1.0f / m_config.connectingSendRate;
+
+            if ( m_readyForConnectionData.accumulator >= timeBetweenPackets )
+            {
+//                cout << "client sent ready for connection packet" << endl;
+
+                m_readyForConnectionData.accumulator -= timeBetweenPackets;
+
+                auto packet = make_shared<ReadyForConnectionPacket>();
+
+                packet->protocolId = m_config.protocolId;
+                packet->clientGuid = m_readyForConnectionData.clientGuid;
+                packet->serverGuid = m_readyForConnectionData.serverGuid;
+
+                m_config.networkInterface->SendPacket( m_readyForConnectionData.address, packet );
+            }
+        }
+
+        void UpdateConnected()
+        {
+            assert( m_state == CLIENT_STATE_Connected );
+
+            // todo: this needs to be based off last packet receive time, not start time!
+            /*
+            if ( m_timeBase.time - m_connectedData.startTime > m_config.connectedTimeOut )
+            {
+                // todo: add unit test for this case
+                cout << "client timed out while connected" << endl;
+                DisconnectAndSetError( CLIENT_ERROR_ConnectionTimedOut );
+                return;
+            }
+            */
+
+            m_connection->Update( m_timeBase );
+
+            m_connectedData.accumulator += m_timeBase.deltaTime;
+
+            const float timeBetweenPackets = 1.0f / m_config.connectedSendRate;
+
+            if ( m_connectedData.accumulator >= timeBetweenPackets )
+            {
+//                cout << "client sent connection packet" << endl;
+
+                m_connectedData.accumulator -= timeBetweenPackets;
+
+                auto packet = m_connection->WritePacket();
+
+                m_config.networkInterface->SendPacket( m_connectedData.address, packet );
             }
         }
 
@@ -464,6 +623,8 @@ namespace protocol
             m_resolveHostnameData = ResolveHostnameData();
             m_sendingConnectionRequestData = SendingConnectionRequestData();
             m_sendingChallengeResponseData = SendingChallengeResponseData();
+            m_readyForConnectionData = ReadyForConnectionData();
+            m_connectedData = ConnectedData();
         }
     };
 }

@@ -1,25 +1,89 @@
 #include "Client.h"
 #include "Server.h"
+#include "Message.h"
 #include "BSDSockets.h"
 #include "DNSResolver.h"
 #include "ClientServerPackets.h"
+#include "ReliableMessageChannel.h"
 
 using namespace std;
 using namespace protocol;
 
-class TestChannel : public ChannelAdapter 
+enum MessageType
+{
+    MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
+    MESSAGE_Test
+};
+
+struct TestMessage : public Message
+{
+    TestMessage() : Message( MESSAGE_Test )
+    {
+        sequence = 0;
+    }
+
+    void Serialize( Stream & stream )
+    {        
+        serialize_bits( stream, sequence, 16 );
+        for ( int i = 0; i < sequence % 8; ++i )
+        {
+            int value = 0;
+            serialize_bits( stream, value, 32 );
+        }
+
+
+        if ( stream.IsWriting() )
+            magic = 0xDEADBEEF;
+
+        serialize_bits( stream, magic, 32 );
+
+        assert( magic == 0xDEADBEEF );
+    }
+
+    uint16_t sequence;
+    uint32_t magic;
+};
+
+class MessageFactory : public Factory<Message>
 {
 public:
-    TestChannel() {}
+    MessageFactory()
+    {
+        Register( MESSAGE_Block, [] { return make_shared<BlockMessage>(); } );
+        Register( MESSAGE_Test, [] { return make_shared<TestMessage>(); } );
+    }
 };
 
 class TestChannelStructure : public ChannelStructure
 {
+    ReliableMessageChannelConfig m_config;
+
 public:
+
     TestChannelStructure()
     {
-        AddChannel( "test channel", [] { return make_shared<TestChannel>(); }, [] { return nullptr; } );
+        m_config.messageFactory = make_shared<MessageFactory>();
+
+        AddChannel( "reliable message channel", 
+                    [this] { return CreateReliableMessageChannel(); }, 
+                    [this] { return CreateReliableMessageChannelData(); } );
+
         Lock();
+    }
+
+    shared_ptr<ReliableMessageChannel> CreateReliableMessageChannel()
+    {
+        return make_shared<ReliableMessageChannel>( m_config );
+    }
+
+    shared_ptr<ReliableMessageChannelData> CreateReliableMessageChannelData()
+    {
+        return make_shared<ReliableMessageChannelData>( m_config );
+    }
+
+    const ReliableMessageChannelConfig & GetConfig() const
+    {
+        return m_config;
     }
 };
 
@@ -87,7 +151,7 @@ void test_client_resolve_hostname_failure()
     TimeBase timeBase;
     timeBase.deltaTime = 1.0f;
 
-    for ( int i = 0; i < 60; ++i )
+    for ( int i = 0; i < 600; ++i )
     {
         if ( client.HasError() )
             break;
@@ -227,7 +291,6 @@ void test_client_connection_request_timeout()
     auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.resolver = make_shared<DNSResolver>();
     clientConfig.networkInterface = networkInterface;
     clientConfig.channelStructure = channelStructure;
 
@@ -277,8 +340,6 @@ void test_client_connection_request_denied()
     bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
 
     auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
-
-    auto resolver = make_shared<DNSResolver>();
 
     ClientConfig clientConfig;
     clientConfig.channelStructure = channelStructure;
@@ -349,8 +410,6 @@ void test_client_connection_challenge()
 
     auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
 
-    auto resolver = make_shared<DNSResolver>();
-
     ClientConfig clientConfig;
     clientConfig.channelStructure = channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
@@ -379,6 +438,8 @@ void test_client_connection_challenge()
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
 
+    const int clientIndex = 0;
+
     for ( int i = 0; i < 256; ++i )
     {
         if ( client.GetState() == CLIENT_STATE_SendingChallengeResponse )
@@ -393,6 +454,8 @@ void test_client_connection_challenge()
         timeBase.time += timeBase.deltaTime;
     }
 
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_SendingChallenge );
+
     assert( !client.IsDisconnected() );
     assert( client.IsConnecting() );
     assert( !client.IsConnected() );
@@ -400,8 +463,6 @@ void test_client_connection_challenge()
     assert( client.GetState() == CLIENT_STATE_SendingChallengeResponse );
     assert( client.GetError() == CLIENT_ERROR_None );
     assert( client.GetExtendedError() == 0 );
-
-    // todo: find client slot and assert one slot connected, and is in correct state
 }
 
 void test_client_connection_challenge_response()
@@ -419,8 +480,6 @@ void test_client_connection_challenge_response()
     bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
 
     auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
-
-    auto resolver = make_shared<DNSResolver>();
 
     ClientConfig clientConfig;
     clientConfig.channelStructure = channelStructure;
@@ -454,7 +513,7 @@ void test_client_connection_challenge_response()
 
     for ( int i = 0; i < 256; ++i )
     {
-        if ( server.GetClientState(clientIndex) == SERVER_CLIENT_SendingDataBlock )
+        if ( server.GetClientState(clientIndex) == SERVER_CLIENT_RequestingClientData )
             break;
 
         client.Update( timeBase );
@@ -466,7 +525,7 @@ void test_client_connection_challenge_response()
         timeBase.time += timeBase.deltaTime;
     }
 
-    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_SendingDataBlock );
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_RequestingClientData );
     assert( !client.IsDisconnected() );
     assert( client.IsConnecting() );
     assert( !client.IsConnected() );
@@ -476,75 +535,221 @@ void test_client_connection_challenge_response()
     assert( client.GetExtendedError() == 0 );
 }
 
+void test_client_connection_established()
+{
+    cout << "test_client_connection_established" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    const int clientIndex = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_Connected && server.GetClientState(clientIndex) == SERVER_CLIENT_Connected )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_Connected );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Connected );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+}
+
+void test_client_connection_messages()
+{
+    cout << "test_client_connection_messages" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    const int clientIndex = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_Connected && server.GetClientState(clientIndex) == SERVER_CLIENT_Connected )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_Connected );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Connected );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+
+    auto clientMessageChannel = static_pointer_cast<ReliableMessageChannel>( client.GetConnection()->GetChannel( 0 ) );
+    auto serverMessageChannel = static_pointer_cast<ReliableMessageChannel>( server.GetClientConnection( clientIndex )->GetChannel( 0 ) );
+
+    const int NumMessagesSent = 32;
+
+    for ( int i = 0; i < NumMessagesSent; ++i )
+    {
+        auto message = make_shared<TestMessage>();
+        message->sequence = i;
+        clientMessageChannel->SendMessage( message );
+    }
+
+    for ( int i = 0; i < NumMessagesSent; ++i )
+    {
+        auto message = make_shared<TestMessage>();
+        message->sequence = i;
+        serverMessageChannel->SendMessage( message );
+    }
+
+    int numMessagesReceivedOnClient = 0;
+    int numMessagesReceivedOnServer = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        while ( true )
+        {
+            auto message = clientMessageChannel->ReceiveMessage();
+
+            if ( !message )
+                break;
+
+            assert( message->GetId() == numMessagesReceivedOnClient );
+            assert( message->GetType() == MESSAGE_Test );
+
+            auto testMessage = static_pointer_cast<TestMessage>( message );
+
+            assert( testMessage->sequence == numMessagesReceivedOnClient );
+
+            ++numMessagesReceivedOnClient;
+        }
+
+        while ( true )
+        {
+            auto message = serverMessageChannel->ReceiveMessage();
+
+            if ( !message )
+                break;
+
+            assert( message->GetId() == numMessagesReceivedOnServer );
+            assert( message->GetType() == MESSAGE_Test );
+
+            auto testMessage = static_pointer_cast<TestMessage>( message );
+
+            assert( testMessage->sequence == numMessagesReceivedOnServer );
+
+            ++numMessagesReceivedOnServer;
+        }
+
+        if ( numMessagesReceivedOnClient == NumMessagesSent && numMessagesReceivedOnServer == NumMessagesSent )
+            break;
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+
+    }
+}
+
 /*
-
-void test_client_connection_request_timeout()
-{
-    cout << "test_client_connection_request_timeout" << endl;
-
-    // ...
-}
-
-void test_client_connection_challenge_timeout()
-{
-    cout << "test_client_connection_challenge_timeout" << endl;
-
-    // ...
-}
-
-void test_client_receive_data_timeout()
-{
-    cout << "test_client_receive_data_timeout" << endl;
-
-    // ...
-}
-
-void test_client_send_data_timeout()
-{
-    cout << "test_client_send_data_timeout" << endl;
-
-    // ...
-}
-
-void test_client_connect_by_name()
-{
-    cout << "test_client_connect_by_name" << endl;
-
-    // ...
-}
-
-void test_client_connect_by_address()
-{
-    cout << "test_client_connect_by_address" << endl;
-
-    // ...
-}
-
-void test_client_connect_by_address_string()
-{
-    cout << "test_client_connect_by_address_string" << endl;
-
-    // ...
-}
-
-void test_client_connection()
-{
-    cout << "test_client_connection" << endl;
-}
-
-void test_client_disconnected_from_server()
-{
-    cout << "test_client_disconnected_from_server" << endl;
-
-    // ...
-}
-
-void test_client_connection_timed_out()
-{
-    cout << "test_client_connection_timed_out" << endl;
-
-    // ...
-}
+    auto serverBlock = make_shared<Block>( 64 * 1024 );
+    for ( int i = 0; i < serverBlock->size(); ++i )
+        (*serverBlock)[i] = (uint8_t) i;
 */
 
 int main()
@@ -561,20 +766,8 @@ int main()
         test_client_connection_request_denied();
         test_client_connection_challenge();
         test_client_connection_challenge_response();
-
-        //test_client_connection_request_succeeded();
-
-        /*
-        test_client_connection_challenge_timeout();
-        test_client_receive_data_timeout();
-        test_client_send_data_timeout();
-        test_client_connect_by_name();
-        test_client_connect_by_address();
-        test_client_connect_by_address_string();
-        test_client_connection();
-        test_client_disconnected_from_server();
-        test_client_connection_timed_out();
-        */
+        test_client_connection_established();
+        test_client_connection_messages();
     }
     catch ( runtime_error & e )
     {

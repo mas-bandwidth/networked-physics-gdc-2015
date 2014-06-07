@@ -19,16 +19,14 @@ namespace protocol
 
         PACKET_ConnectionRequest,                               // client is requesting a connection.
         PACKET_ChallengeResponse,                               // client response to server connection challenge.
-        PACKET_AckServerBlockFragment,                          // client received a data block fragment from server. ack it.
-        PACKET_SendClientBlockFragment,                         // client sending data block fragment to server.
+        PACKET_ReadyForConnection,                              // client is ready for connection packets
 
         // server -> client
 
         PACKET_ConnectionDenied,                                // server denies request for connection. contains reason int, eg. full, closed etc.
         PACKET_ConnectionChallenge,                             // server response to client connection request.
-        PACKET_SendServerBlockFragment,                         // server sending a data block fragment down to client.
-        PACKET_AckClientBlockFragment,                          // server received a data block fragment from client. ack it.
-        PACKET_Disconnected,                                    // server is telling the client they have been disconnected. sent for one second on disconnect
+        PACKET_RequestClientData,                               // server is ready for the client to start sending data to it.
+        PACKET_Disconnected,                                    // courtesy packet from serevr to tell the client they have been disconnected. sent for one second after server-side disconnect
 
         // bidirectional
 
@@ -97,6 +95,38 @@ namespace protocol
         }
     };
 
+    struct RequestClientDataPacket : public Packet
+    {
+        uint64_t protocolId = 0;
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+
+        RequestClientDataPacket() : Packet( PACKET_RequestClientData ) {}
+
+        void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, protocolId );
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
+        }
+    };
+
+    struct ReadyForConnectionPacket : public Packet
+    {
+        uint64_t protocolId = 0;
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+
+        ReadyForConnectionPacket() : Packet( PACKET_ReadyForConnection ) {}
+
+        void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, protocolId );
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
+        }
+    };
+
     class ClientServerPacketFactory : public Factory<Packet>
     {
     public:
@@ -106,10 +136,12 @@ namespace protocol
             // client -> server messages
             Register( PACKET_ConnectionRequest, [] { return make_shared<ConnectionRequestPacket>(); } );
             Register( PACKET_ChallengeResponse, [] { return make_shared<ChallengeResponsePacket>(); } );
+            Register( PACKET_ReadyForConnection, [] { return make_shared<ReadyForConnectionPacket>(); } );
 
             // server -> client messages
             Register( PACKET_ConnectionDenied, [] { return make_shared<ConnectionDeniedPacket>(); } );
             Register( PACKET_ConnectionChallenge, [] { return make_shared<ConnectionChallengePacket>(); } );
+            Register( PACKET_RequestClientData, [] { return make_shared<RequestClientDataPacket>(); } );
 
             // bidirectional messages
             Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );

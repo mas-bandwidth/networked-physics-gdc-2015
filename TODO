@@ -2,6 +2,42 @@ DONE:
 
 TODO:
 
+    Add a test for server side disconnect
+
+    Add a test for connected denied server full
+
+    ---------------
+
+    Client timeout needs to be fixed. 
+
+    In connected state it needs to be based off last packet receive time.
+
+    Add a test for server side timeout (eg. connect and stop updating server)
+
+    -----------
+
+    Add remaining tests for timeout cases while connecting that haven't been
+    implemented so far, eg. specific timeout errors that are missing inside
+    TestClientServer.cpp
+
+    ------------
+
+    On the server, have separate connecting and connected send rates and timeouts.
+
+    ------------
+
+    On the server and client, have a *virtual* callback on each state transition, a -> b.
+
+    On the client, run a bit of a cleanup it's getting sloppy in the packet process.
+
+    Add unit tests for remaining cases, eg:
+
+    - timeouts in remaining connecting states that aren't covered
+    - timeout after connection established
+    - connection denied because server is full
+
+    -------------------------
+
     Add code on server to send server data block to client.
 
     Block should be *constant* initially, eg. add it as part of server config.
@@ -25,6 +61,12 @@ TODO:
 
     ------------------------
 
+    Hostname parsing needs to handle :port
+
+    eg. "localhost:10000" should resolve to port 10000 on the hostname that gets looked up.
+
+    ------------------------
+
     Once the server is finished sending block, send down a packet "request client block"
     message until the client starts sending blocks through, then server goes into
     "receiving client block" state.
@@ -34,6 +76,12 @@ TODO:
     Once the block transfers have completed, go to connected state.
 
     Add tests for all cases.
+
+    ------------------------
+
+    Implement send table concept. Implement delta encoding tables etc.
+
+    Use the server data to communicate this table down to the client.
 
     ------------------------
 

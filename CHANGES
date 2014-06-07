@@ -1,5 +1,57 @@
-Thursday vening, June 5th, 2014:
---------------------------------
+Friday Evening, June 7th, 2014:
+-------------------------------
+
+    Verify connection is *functional*. eg. exchange a few client
+    and server events back and forth.
+
+    Messages are working. Success!
+
+
+Friday Morning, June 6th, 2014:
+-------------------------------
+
+    Implement the case where client and server blocks AREN'T specified.
+
+    eg. make them optional. In this case, skip ahead to states that say
+    go to the next state, eg. server skips immediately to "send client block"
+    state and then client immediately on getting that packet goes into
+    "ready for connection" state.
+
+    On the server, if the block is nullptr, go immediately into
+    "requesting client data block" state.
+
+    Cleaned up packets. It's now "server data" and "client data".
+
+    Cleaned up states. Added "requesting client data" and go to it
+    immediately after challenge response, if the server data is nullptr.    
+
+    Implement the server sending "request client data" packets
+    while in the requesting client data state.
+
+    Cleaned up the client states, and consolidated timeouts
+    and send rates into "connecting" and "connected" timeouts.
+
+    On the client, when we get the "request client data" go either
+    into the "sending client data" state *or* if the client data is
+    nullptr, just go directly into "ready for connection" state.
+
+    On the client while in "ready for connection" state just send
+    out "ready for connection" packets to the server.
+
+    On the server, if a "ready for connection" packet is received
+    and the server is in the "requesting client data", just go
+    directly to connected state.
+
+    On the server in the connected state, send connection packets
+
+    On client, when a connection packet is received while in the
+    "ready for connection" state go directly to connected state.
+
+    Verify client and server are in connected state.
+
+
+Thursday Evening, June 5th, 2014:
+---------------------------------
 
     Extend server code to listen to challenge response packet.
 
