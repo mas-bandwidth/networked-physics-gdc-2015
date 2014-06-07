@@ -117,36 +117,25 @@ namespace protocol
 
         struct SendingConnectionRequestData
         {
-            Address address;
             double startTime = 0.0;
-            uint64_t clientGuid = 0;
             double accumulator = 0.0;
         };
 
         struct SendingChallengeResponseData
         {
-            Address address;
             double startTime = 0.0;
-            uint64_t clientGuid = 0;
-            uint64_t serverGuid = 0;
             double accumulator = 0.0;
         };
 
         struct ReadyForConnectionData
         {
-            Address address;
             double startTime = 0.0;
-            uint64_t clientGuid = 0;
-            uint64_t serverGuid = 0;
             double accumulator = 0.0;
         };
 
         struct ConnectedData
         {
-            Address address;
             double startTime = 0.0;
-            uint64_t clientGuid = 0;
-            uint64_t serverGuid = 0;
             double accumulator = 0.0;
         };
 
@@ -155,6 +144,10 @@ namespace protocol
         SendingChallengeResponseData m_sendingChallengeResponseData;
         ReadyForConnectionData m_readyForConnectionData;
         ConnectedData m_connectedData;
+
+        Address m_address;
+        uint64_t m_clientGuid = 0;
+        uint64_t m_serverGuid = 0;
 
     public:
 
@@ -182,10 +175,11 @@ namespace protocol
 //            cout << "client connect by address: " << address.ToString() << endl;
 
             m_state = CLIENT_STATE_SendingConnectionRequest;
+            m_address = address;
+            m_clientGuid = GenerateGuid();
 
-            m_sendingConnectionRequestData.address = address;
             m_sendingConnectionRequestData.startTime = m_timeBase.time;
-            m_sendingConnectionRequestData.clientGuid = GenerateGuid();
+            
         }
 
         void Connect( const string & hostname )
@@ -318,7 +312,7 @@ namespace protocol
                 if ( packet->GetType() == PACKET_Disconnected )
                 {
 //                    cout << "client received disconnected packet" << endl;
-                    ProcessDisconnectedPacket( static_pointer_cast<DisconnectedPacket>( packet ) );
+                    ProcessDisconnected( static_pointer_cast<DisconnectedPacket>( packet ) );
                     continue;
                 }
 
@@ -330,25 +324,24 @@ namespace protocol
                         {
                             auto connectionChallengePacket = static_pointer_cast<ConnectionChallengePacket>( packet );
 
-                            if ( connectionChallengePacket->GetAddress() == m_sendingConnectionRequestData.address &&
-                                 connectionChallengePacket->clientGuid == m_sendingConnectionRequestData.clientGuid )
+                            if ( connectionChallengePacket->GetAddress() == m_address &&
+                                 connectionChallengePacket->clientGuid == m_clientGuid )
                             {
 //                                cout << "received connection challenge packet from server" << endl;
 
                                 m_state = CLIENT_STATE_SendingChallengeResponse;
 
                                 m_sendingChallengeResponseData.startTime = m_timeBase.time;
-                                m_sendingChallengeResponseData.address = m_sendingConnectionRequestData.address;
-                                m_sendingChallengeResponseData.clientGuid = connectionChallengePacket->clientGuid;
-                                m_sendingChallengeResponseData.serverGuid = connectionChallengePacket->serverGuid;
+
+                                m_serverGuid = connectionChallengePacket->serverGuid;
                             }
                         }
                         else if ( packet->GetType() == PACKET_ConnectionDenied )
                         {
                             auto connectionDeniedPacket = static_pointer_cast<ConnectionDeniedPacket>( packet );
 
-                            if ( connectionDeniedPacket->GetAddress() == m_sendingConnectionRequestData.address &&
-                                 connectionDeniedPacket->clientGuid == m_sendingConnectionRequestData.clientGuid )
+                            if ( connectionDeniedPacket->GetAddress() == m_address &&
+                                 connectionDeniedPacket->clientGuid == m_clientGuid )
                             {
 //                                cout << "received connection denied packet from server" << endl;
 
@@ -364,9 +357,9 @@ namespace protocol
                         {
                             auto requestClientDataPacket = static_pointer_cast<RequestClientDataPacket>( packet );
 
-                            if ( requestClientDataPacket->GetAddress() == m_sendingChallengeResponseData.address &&
-                                 requestClientDataPacket->clientGuid == m_sendingChallengeResponseData.clientGuid &&
-                                 requestClientDataPacket->serverGuid == m_sendingChallengeResponseData.serverGuid )
+                            if ( requestClientDataPacket->GetAddress() == m_address &&
+                                 requestClientDataPacket->clientGuid == m_clientGuid &&
+                                 requestClientDataPacket->serverGuid == m_serverGuid )
                             {
 //                                cout << "received request client data packet from server" << endl;
 
@@ -377,9 +370,6 @@ namespace protocol
                                     m_state = CLIENT_STATE_ReadyForConnection;
 
                                     m_readyForConnectionData.startTime = m_timeBase.time;
-                                    m_readyForConnectionData.address = m_sendingChallengeResponseData.address;
-                                    m_readyForConnectionData.clientGuid = requestClientDataPacket->clientGuid;
-                                    m_readyForConnectionData.serverGuid = requestClientDataPacket->serverGuid;
                                 }
                                 else
                                 {
@@ -405,9 +395,6 @@ namespace protocol
                                 m_state = CLIENT_STATE_Connected;
                                 m_connectedData.startTime = m_timeBase.time;
                                 m_connectedData.accumulator = 0.0;
-                                m_connectedData.address = m_readyForConnectionData.address;
-                                m_connectedData.clientGuid = m_readyForConnectionData.clientGuid;
-                                m_connectedData.serverGuid = m_readyForConnectionData.serverGuid;
                             }
 
                             m_connection->ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
@@ -423,11 +410,16 @@ namespace protocol
             }
         }
 
-        void ProcessDisconnectedPacket( shared_ptr<DisconnectedPacket> packet )
+        void ProcessDisconnected( shared_ptr<DisconnectedPacket> packet )
         {
-            // todo: want to check packet clientGuid and serverGuid vs. my own
-            // but these are stashed currently inside state data -- which seems
-            // a bit annoying.
+            if ( packet->GetAddress() != m_address )
+                return;
+            
+            if ( packet->clientGuid != m_clientGuid )
+                return;
+
+            if ( packet->serverGuid != m_serverGuid )
+                return;
 
             DisconnectAndSetError( CLIENT_ERROR_DisconnectedFromServer );
         }
@@ -513,12 +505,13 @@ namespace protocol
                 m_sendingConnectionRequestData.accumulator -= timeBetweenPackets;
 
                 auto packet = make_shared<ConnectionRequestPacket>();
+
                 packet->protocolId = m_config.protocolId;
-                packet->clientGuid = m_sendingConnectionRequestData.clientGuid;
+                packet->clientGuid = m_clientGuid;
 
 //                cout << "client sent connection request packet" << endl;
 
-                m_config.networkInterface->SendPacket( m_sendingConnectionRequestData.address, packet );
+                m_config.networkInterface->SendPacket( m_address, packet );
             }
         }
 
@@ -545,10 +538,10 @@ namespace protocol
                 auto packet = make_shared<ChallengeResponsePacket>();
 
                 packet->protocolId = m_config.protocolId;
-                packet->clientGuid = m_sendingChallengeResponseData.clientGuid;
-                packet->serverGuid = m_sendingChallengeResponseData.serverGuid;
+                packet->clientGuid = m_clientGuid;
+                packet->serverGuid = m_serverGuid;
 
-                m_config.networkInterface->SendPacket( m_sendingChallengeResponseData.address, packet );
+                m_config.networkInterface->SendPacket( m_address, packet );
             }
         }
 
@@ -576,10 +569,10 @@ namespace protocol
                 auto packet = make_shared<ReadyForConnectionPacket>();
 
                 packet->protocolId = m_config.protocolId;
-                packet->clientGuid = m_readyForConnectionData.clientGuid;
-                packet->serverGuid = m_readyForConnectionData.serverGuid;
+                packet->clientGuid = m_clientGuid;
+                packet->serverGuid = m_serverGuid;
 
-                m_config.networkInterface->SendPacket( m_readyForConnectionData.address, packet );
+                m_config.networkInterface->SendPacket( m_address, packet );
             }
         }
 
@@ -612,7 +605,7 @@ namespace protocol
 
                 auto packet = m_connection->WritePacket();
 
-                m_config.networkInterface->SendPacket( m_connectedData.address, packet );
+                m_config.networkInterface->SendPacket( m_address, packet );
             }
         }
 
@@ -639,6 +632,10 @@ namespace protocol
             m_sendingChallengeResponseData = SendingChallengeResponseData();
             m_readyForConnectionData = ReadyForConnectionData();
             m_connectedData = ConnectedData();
+
+            m_address = Address();
+            m_clientGuid = 0;
+            m_serverGuid = 0;
         }
     };
 }

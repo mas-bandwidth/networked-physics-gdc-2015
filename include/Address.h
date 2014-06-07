@@ -255,6 +255,11 @@ namespace protocol
                 return false;
         }
 
+        bool operator !=( const Address & other ) const
+        {
+            return !( *this == other );
+        }
+
     private:
 
         AddressType type;

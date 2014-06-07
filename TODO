@@ -1,12 +1,39 @@
 DONE:
 
+    It's really annoying having to process the disconnect packet
+    and having client guid and server guid stashed in the per-state
+    data. Maybe it they should be global data instead in the client?
+
+    Fixed by moving clientGuid, serverGuid and address out of the state data.
+
 TODO:
 
-    Client timeout needs to be fixed. 
+    Now all that remains is the startTime and accumulator.
 
-    In connected state it needs to be based off last packet receive time.
+    These could easily be moved out, and then state data would no longer
+    be required. This seems the cleanest option. The states just aren't
+    that complicated.
+
+    Refactor to support processing of packet type centric behavior,
+    vs. previous client receive which was state centric and harder
+    to read (and less flexible) in the receive packets fn.
+
+    ---------------
+
+    Fix the client timeout to work properly. It should be time since 
+    received an *acceptable* packet, eg. so if in server block receive
+    state the client could theoretically be waiting in there for a long
+    time, provided server keeps sending data to it.
 
     Add a test for server side timeout (eg. connect and stop updating server)
+
+    Add a test for client timeout, eg. connect and stop updating client
+    and verify server detects this and transitions to correct.
+
+    ---------------
+
+    Add functions for server side queries, eg. # of connected clients
+    and a so on, these will make unit testing a bit easier.
 
     ---------------
 
@@ -22,34 +49,21 @@ TODO:
 
     On the server, have separate connecting and connected send rates and timeouts.
 
-    ------------
-
-    On the server and client, have a *virtual* callback on each state transition, a -> b.
-
-    On the client, run a bit of a cleanup it's getting sloppy in the packet process.
-
-    Add unit tests for remaining cases, eg:
-
-    - timeouts in remaining connecting states that aren't covered
-    - timeout after connection established
-    - connection denied because server is full
-
-    ---------------
-
-    It's really annoying having to process the disconnect packet
-    and having client guid and server guid stashed in the per-state
-    data. Maybe it they should be global data instead in the client?
-
-    ---------------
-
-    Next pass would be to set up an entry for this client guid
-    such that a disconnect is sent 10 additional times, every 0.1 
-    sec from the disconnect point, to combat packet loss.
-
-    Is this necessary? Packet loss is not that high. and if it is,
-    just let the client timeout. Fuck 'em?
-
     -------------------------
+
+
+
+
+
+
+    Decide next step at this point... Might be good to recover cubes demo in case
+    I have to show Rocket something interesting about networking a large open world.
+
+
+
+
+
+    ----------------------
 
     Add code on server to send server data block to client.
 
