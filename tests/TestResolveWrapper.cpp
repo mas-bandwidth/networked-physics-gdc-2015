@@ -151,7 +151,67 @@ void test_resolve_wrapper_send_to_hostname()
         timeBase.time += timeBase.deltaTime;
     }
 
-    assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets )
+    assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );
+    assert( bsdSockets->GetCounter( BSDSockets::PacketsReceived ) == numPackets );
+
+    auto finish = chrono::steady_clock::now();
+
+    auto delta = finish - start;
+
+    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
+}
+
+void test_resolve_wrapper_send_to_hostname_port()
+{
+    cout << "test_resolve_wrapper_send_to_hostname_port" << endl;
+
+    BSDSocketsConfig config;
+
+    auto packetFactory = make_shared<PacketFactory>();
+
+    config.port = 10000;
+    config.family = AF_INET6;
+    config.maxPacketSize = 1024;
+    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto bsdSockets = make_shared<BSDSockets>( config );
+
+    ResolveWrapperConfig wrapperConfig;
+    wrapperConfig.resolver = make_shared<DNSResolver>();
+    wrapperConfig.networkInterface = bsdSockets;
+
+    auto interface = make_shared<ResolveWrapper>( wrapperConfig );
+
+    int numPackets = 10;
+
+    for ( int i = 0; i < numPackets; ++i )
+    {
+        auto packet = packetFactory->Create( PACKET_Connect );
+
+        interface->SendPacket( "localhost:10000", packet );
+    }
+
+    auto start = chrono::steady_clock::now();
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+
+    for ( int i = 0; i < 20; ++i )
+    {
+        interface->Update( timeBase );
+
+        if ( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets )
+            break;
+
+        this_thread::sleep_for( ms );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );
+    assert( bsdSockets->GetCounter( BSDSockets::PacketsReceived ) == numPackets );
 
     auto finish = chrono::steady_clock::now();
 
@@ -173,6 +233,7 @@ int main()
     try
     {
         test_resolve_wrapper_send_to_hostname();
+        test_resolve_wrapper_send_to_hostname_port();
     }
     catch ( runtime_error & e )
     {

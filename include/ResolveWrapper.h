@@ -37,8 +37,17 @@ namespace protocol
             m_config.networkInterface->SendPacket( address, packet );
         }
 
+        void SendPacket( const string & hostname, shared_ptr<Packet> packet )
+        {
+            // Will try to extract port from hostname, eg: "localhost:10000"
+
+            SendPacket( hostname, 0, packet );
+        }
+
         void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet )
         {
+            // Will use the port specified in port argument
+
             Address address;
             address.SetPort( port );
             packet->SetAddress( address );
@@ -53,7 +62,8 @@ namespace protocol
                     {
                         assert( resolveEntry->result->addresses.size() >= 1 );
                         Address address = resolveEntry->result->addresses[0];
-                        address.SetPort( port );
+                        if ( port != 0 )
+                            address.SetPort( port );
                         SendPacket( address, packet );
                         cout << "resolve succeeded: sending packet to " << address.ToString() << endl;
                     }
@@ -116,7 +126,8 @@ namespace protocol
                             auto packet = resolve_send_queue->front();
                             resolve_send_queue->pop();
                             const uint16_t port = packet->GetAddress().GetPort();
-                            address.SetPort( port );
+                            if ( port )
+                                address.SetPort( port );
                             cout << "sent buffered packet to " << address.ToString() << endl;
                             SendPacket( address, packet );
                         }
