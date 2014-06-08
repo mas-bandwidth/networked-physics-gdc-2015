@@ -46,6 +46,30 @@ Sunday Morning, June 8th, 2014:
 
     But I can do this later, it's not blocking me.
 
+    Added a test for connected denied server full
+
+    Added a test that covers client and server side timeouts
+
+    Decide what should happen if the same address (client) tries
+    to connect while still being connected (by address only).
+
+    I think it should be denied "already connected", otherwise
+    it's a bit too easy to DOS a server, eg. just continually
+    add connections.
+
+    Implement server rejecting client if they are already connected
+
+    Added new reason for denying connection request:
+
+        CONNECTION_REQUEST_DENIED_AlreadyConnected
+
+    Add a test for this case. Passes!
+
+    Add a test for client reconnect.
+
+    In this case you must disconnect the client fully before reconnecting,
+    server side "DisconnectClient" makes the most sense here.
+
 
 Saturday Morning, June 7th, 2014:
 ---------------------------------

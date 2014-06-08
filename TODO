@@ -2,83 +2,9 @@ DONE:
 
 TODO:
 
-    Add a test for server side timeout (eg. connect and stop updating server)
+    I don't really want to do the block sending right now.
 
-    Add a test for client timeout, eg. connect and stop updating client
-    and verify server detects this and transitions to correct.
-
-    Add a test for connected denied server full
-
-    On the server, have separate connecting and connected send rates and timeouts.
-
-    -------------------------
-
-
-
-
-
-
-    ----------------------
-
-    Add code on server to send server data block to client.
-
-    Block should be *constant* initially, eg. add it as part of server config.
-
-    Assumption is that if client needs more complicated non-constant info
-    on connect, then this could be implemented via the internal connection
-    protocol, eg. send down a large block.
-
-    Implement server -> client block transfer
-
-    Server sends one block fragment per-packet. No need for complicated reliability.
-
-    Client replies with a separate packet acking each fragment he sees. Nothing complicated.
-
-    Server just keeps sending them until all acked.
-
-    Once server has sent the block, go into the requesting client block state.
-
-    Add unit test to verify it's working, and to verify timeout on client if 
-    the server doesn't send block packets down (eg. stop the server)
-
-    ------------------------
-
-    Once the server is finished sending block, send down a packet "request client block"
-    message until the client starts sending blocks through, then server goes into
-    "receiving client block" state.
-
-    Some thing in reverse for client -> server block.
-
-    Once the block transfers have completed, go to connected state.
-
-    Add tests for all cases.
-
-    ------------------------
-
-    Implement send table concept. Implement delta encoding tables etc.
-
-    Use the server data to communicate this table down to the client.
-
-    ------------------------
-
-    Actually implement a client/server setup and host the server in the cloud.
-
-    Provide build steps using chef/knife or whatever to easily deploy this server.
-
-    ------------------------
-
-    Implement cube demo with this protocol library, but in a client/server manner.
-
-    Use this cube demo for the meeting with rocket hall
-
-    ------------------------
-
-
-
-
-
-
-WOULD BE NICE:
+    Do some small cleanup tasks.
 
     ------------------------
 
@@ -139,6 +65,95 @@ WOULD BE NICE:
     work with and budget channels decently without knowing exactly what they are.
 
     ----------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ------------------------
+
+    Add code on server to send server data block to client.
+
+    Block should be *constant* initially, eg. add it as part of server config.
+
+    Assumption is that if client needs more complicated non-constant info
+    on connect, then this could be implemented via the internal connection
+    protocol, eg. send down a large block.
+
+    Implement server -> client block transfer
+
+    Server sends one block fragment per-packet. No need for complicated reliability.
+
+    Client replies with a separate packet acking each fragment he sees. Nothing complicated.
+
+    Server just keeps sending them until all acked.
+
+    Once server has sent the block, go into the requesting client block state.
+
+    Add unit test to verify it's working, and to verify timeout on client if 
+    the server doesn't send block packets down (eg. stop the server)
+
+    ------------------------
+
+    Once the server is finished sending block, send down a packet "request client block"
+    message until the client starts sending blocks through, then server goes into
+    "receiving client block" state.
+
+    Some thing in reverse for client -> server block.
+
+    Once the block transfers have completed, go to connected state.
+
+    Add tests for all cases.
+
+    ------------------------
+
+
+
+
+
+
+
+
+
+
+    *** SEND TABLES ***
+
+    ---------------
+
+    Implement send table concept. Implement delta encoding tables etc.
+
+    Use the server data to communicate this table down to the client.
+
+    ------------------------
+
+    Actually implement a client/server setup and host the server in the cloud.
+
+    Provide build steps using chef/knife or whatever to easily deploy this server.
+
+    ------------------------
+
+    Implement cube demo with this protocol library, but in a client/server manner.
+
+    Use this cube demo for the meeting with rocket hall
+
+    ------------------------
+
+
+
+
+
+
+WOULD BE NICE:
 
     Move the channel budget out of the channel config (static)
     and in to the connection. 

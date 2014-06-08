@@ -133,6 +133,7 @@ void test_client_resolve_hostname_failure()
     auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
 
     ClientConfig clientConfig;
+    clientConfig.connectingTimeOut = 1000000.0;
     clientConfig.resolver = make_shared<DNSResolver>( AF_INET6 );
     clientConfig.networkInterface = networkInterface;
     clientConfig.channelStructure = channelStructure;
@@ -743,7 +744,6 @@ void test_client_connection_messages()
         this_thread::sleep_for( chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
-
     }
 }
 
@@ -844,11 +844,464 @@ void test_client_connection_disconnect()
     assert( client.GetExtendedError() == 0 );
 }
 
-/*
-    auto serverBlock = make_shared<Block>( 64 * 1024 );
-    for ( int i = 0; i < serverBlock->size(); ++i )
-        (*serverBlock)[i] = (uint8_t) i;
-*/
+void test_client_connection_server_full()
+{
+    cout << "test_client_connection_server_full" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    // create a server on port 10000
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    // connect the maximum number of clients to the server
+    // and wait until they are all fully connected.
+
+    vector<shared_ptr<Client>> clients;
+
+    bsdSocketsConfig.port = 0;
+
+    for ( int i = 0; i < serverConfig.maxClients; ++i )
+    {
+        auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+        ClientConfig clientConfig;
+        clientConfig.channelStructure = channelStructure;
+        clientConfig.networkInterface = clientNetworkInterface;
+
+        auto client = make_shared<Client>( clientConfig );
+
+        client->Connect( "[::1]:10000" );
+
+        assert( client->IsConnecting() );
+        assert( !client->IsDisconnected() );
+        assert( !client->IsConnected() );
+        assert( !client->HasError() );
+        assert( client->GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+        clients.push_back( client );
+    }
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        int numConnectedClients = 0;
+        for ( auto client : clients )
+        {
+            if ( client->GetState() == CLIENT_STATE_Connected )
+                numConnectedClients++;
+
+            client->Update( timeBase );
+        }
+
+        if ( numConnectedClients == serverConfig.maxClients )
+            break;
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    for ( int i = 0; i < serverConfig.maxClients; ++i )
+        assert( server.GetClientState(i) == SERVER_CLIENT_Connected );
+
+    for ( auto client : clients )
+    {
+        assert( !client->IsDisconnected() );
+        assert( !client->IsConnecting() );
+        assert( client->IsConnected() );
+        assert( !client->HasError() );
+        assert( client->GetState() == CLIENT_STATE_Connected );
+        assert( client->GetError() == CLIENT_ERROR_None );
+        assert( client->GetExtendedError() == 0 );
+    }
+
+    // now try to connect another client, and verify this client fails to connect
+    // with the "server full" connection denied response and the other clients
+    // remain connected throughout the test.
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    auto extraClient = make_shared<Client>( clientConfig );
+
+    extraClient->Connect( "[::1]:10000" );
+
+    assert( extraClient->IsConnecting() );
+    assert( !extraClient->IsDisconnected() );
+    assert( !extraClient->IsConnected() );
+    assert( !extraClient->HasError() );
+    assert( extraClient->GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        for ( auto client : clients )
+            client->Update( timeBase );
+
+        extraClient->Update( timeBase );
+
+        if ( extraClient->HasError() )
+            break;
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    for ( int i = 0; i < serverConfig.maxClients; ++i )
+        assert( server.GetClientState(i) == SERVER_CLIENT_Connected );
+
+    for ( auto client : clients )
+    {
+        assert( !client->IsDisconnected() );
+        assert( !client->IsConnecting() );
+        assert( client->IsConnected() );
+        assert( !client->HasError() );
+        assert( client->GetState() == CLIENT_STATE_Connected );
+        assert( client->GetError() == CLIENT_ERROR_None );
+        assert( client->GetExtendedError() == 0 );
+    }
+
+    assert( extraClient->HasError() );
+    assert( extraClient->IsDisconnected() );
+    assert( !extraClient->IsConnecting() );
+    assert( !extraClient->IsConnected() );
+    assert( extraClient->GetState() == CLIENT_STATE_Disconnected );
+    assert( extraClient->GetError() == CLIENT_ERROR_ConnectionRequestDenied );
+    assert( extraClient->GetExtendedError() == CONNECTION_REQUEST_DENIED_ServerFull );
+}
+
+void test_client_connection_timeout()
+{
+    cout << "test_client_connection_timeout" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    // start server and connect one client and wait the client is fully connected
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    const int clientIndex = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_Connected && server.GetClientState(clientIndex) == SERVER_CLIENT_Connected )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_Connected );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Connected );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+
+    // now stop updating the server and verify that the client times out
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.HasError() )
+            break;
+
+        client.Update( timeBase );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( !client.IsConnected() );
+    assert( client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Disconnected );
+    assert( client.GetError() == CLIENT_ERROR_ConnectionTimedOut );    
+    assert( client.GetExtendedError() == CLIENT_STATE_Connected );
+
+    // now update only the server and verify that the client slot times out
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( server.GetClientState( clientIndex ) == SERVER_CLIENT_Disconnected )
+            break;
+
+        server.Update( timeBase );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_Disconnected );
+}
+
+void test_client_connection_already_connected()
+{
+    cout << "test_client_connection_already_connected" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    // start a server and connect a client. wait until the client is fully connected
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    const int clientIndex = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_Connected && server.GetClientState(clientIndex) == SERVER_CLIENT_Connected )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_Connected );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Connected );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+
+    // now connect the client while already connected
+    // verify the client connect is *denied* with reason already connected.
+
+    client.Connect( "[::1]:10001" );
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.HasError() )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( !client.IsConnected() );
+    assert( client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Disconnected );
+    assert( client.GetError() == CLIENT_ERROR_ConnectionRequestDenied );
+    assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_AlreadyConnected );
+}
+
+void test_client_connection_reconnect()
+{
+    cout << "test_client_connection_reconnect" << endl;
+
+    auto channelStructure = make_shared<TestChannelStructure>();
+
+    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+
+    // start a server and connect a client. wait until the client is fully connected
+
+    BSDSocketsConfig bsdSocketsConfig;
+    bsdSocketsConfig.port = 10000;
+    bsdSocketsConfig.family = AF_INET6;
+    bsdSocketsConfig.maxPacketSize = 1024;
+    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+
+    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ClientConfig clientConfig;
+    clientConfig.channelStructure = channelStructure;
+    clientConfig.networkInterface = clientNetworkInterface;
+
+    Client client( clientConfig );
+
+    client.Connect( "[::1]:10001" );
+
+    bsdSocketsConfig.port = 10001;
+    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+
+    ServerConfig serverConfig;
+    serverConfig.channelStructure = channelStructure;
+    serverConfig.networkInterface = serverNetworkInterface;
+
+    Server server( serverConfig );
+
+    assert( server.IsOpen() );
+
+    assert( client.IsConnecting() );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
+
+    TimeBase timeBase;
+    timeBase.deltaTime = 0.1f;
+
+    const int clientIndex = 0;
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_Connected && server.GetClientState(clientIndex) == SERVER_CLIENT_Connected )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_Connected );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Connected );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+
+    // now disconnect the client on the server and call connect again
+    // verify the client can create a new connection to the server.
+
+    server.DisconnectClient( clientIndex );
+
+    client.Connect( "[::1]:10001" );
+
+    for ( int i = 0; i < 256; ++i )
+    {
+        if ( client.GetState() == CLIENT_STATE_Connected && server.GetClientState(clientIndex) == SERVER_CLIENT_Connected )
+            break;
+
+        client.Update( timeBase );
+
+        server.Update( timeBase );
+
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+
+        timeBase.time += timeBase.deltaTime;
+    }
+
+    assert( server.GetClientState(clientIndex) == SERVER_CLIENT_Connected );
+    assert( !client.IsDisconnected() );
+    assert( !client.IsConnecting() );
+    assert( client.IsConnected() );
+    assert( !client.HasError() );
+    assert( client.GetState() == CLIENT_STATE_Connected );
+    assert( client.GetError() == CLIENT_ERROR_None );
+    assert( client.GetExtendedError() == 0 );
+}
 
 int main()
 {
@@ -867,11 +1320,10 @@ int main()
         test_client_connection_established();
         test_client_connection_messages();
         test_client_connection_disconnect();
-
-        // todo: client and server side timeouts need to be tested
-
-        //test_client_connection_timeout();
-        //test_client_connection_reconnect();
+        test_client_connection_server_full();
+        test_client_connection_timeout();
+        test_client_connection_already_connected();
+        test_client_connection_reconnect();
     }
     catch ( runtime_error & e )
     {

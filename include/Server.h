@@ -16,6 +16,7 @@ namespace protocol
     {
         CONNECTION_REQUEST_DENIED_ServerClosed,                 // server is closed. all connection requests are denied.
         CONNECTION_REQUEST_DENIED_ServerFull,                   // server is full. no free slots for a connecting client.
+        CONNECTION_REQUEST_DENIED_AlreadyConnected              // client is already connected to the server by address but with different guids.
     };
 
     enum ServerClientState
@@ -42,9 +43,14 @@ namespace protocol
     struct ServerConfig
     {
         uint64_t protocolId = 42;                               // the protocol id. must be the same for client and server to talk.
+        
         int maxClients = 16;                                    // max number of clients supported by this server.
-        float sendRate = 10;                                    // packets to send per-second. probably want to make this dynamic, eg. per-client set send rate instead.
-        float timeout = 10.0f;                                  // number of seconds of no received packets from client before they are timed out.
+
+        float connectingSendRate = 10;                          // packets to send per-second while a client slot is connecting.
+        float connectedSendRate = 30;                           // packets to send per-second once a client is connected.
+
+        float connectingTimeOut = 5.0f;                         // timeout in seconds while a client is connecting
+        float connectedTimeOut = 10.0f;                         // timeout in seconds once a client is connected
 
         shared_ptr<NetworkInterface> networkInterface;          // network interface used to send and receive packets
         shared_ptr<ChannelStructure> channelStructure;          // defines the connection channel structure
@@ -190,7 +196,7 @@ namespace protocol
 
             assert( client.state == SERVER_CLIENT_SendingChallenge );
 
-            if ( client.accumulator > 1.0 / m_config.sendRate )
+            if ( client.accumulator > 1.0 / m_config.connectingSendRate )
             {
                 auto packet = make_shared<ConnectionChallengePacket>();
 
@@ -220,7 +226,7 @@ namespace protocol
 
             assert( client.state == SERVER_CLIENT_RequestingClientData );
 
-            if ( client.accumulator > 1.0 / m_config.sendRate )
+            if ( client.accumulator > 1.0 / m_config.connectingSendRate )
             {
 //                cout << "sent request client data packet" << endl;
 
@@ -256,7 +262,7 @@ namespace protocol
 
             client.connection->Update( m_timeBase );
 
-            if ( client.accumulator > 1.0 / m_config.sendRate )
+            if ( client.accumulator > 1.0 / m_config.connectedSendRate )
             {
                 auto packet = client.connection->WritePacket();
 
@@ -277,7 +283,9 @@ namespace protocol
 
             client.accumulator += m_timeBase.deltaTime;
 
-            if ( client.lastPacketTime + m_config.timeout < m_timeBase.time )
+            const float timeout = client.state == SERVER_CLIENT_Connected ? m_config.connectedTimeOut : m_config.connectingTimeOut;
+
+            if ( client.lastPacketTime + timeout < m_timeBase.time )
             {
 //                cout << "client " << clientIndex << " timed out" << endl;
 
@@ -344,33 +352,43 @@ namespace protocol
                 return;
             }
 
-            if ( FindClientIndex( packet->GetAddress(), packet->clientGuid ) != -1 )
+            auto address = packet->GetAddress();
+
+            if ( FindClientIndex( address, packet->clientGuid ) != -1 )
             {
 //                cout << "ignoring connection request. client already has a slot" << endl;
                 return;
             }
 
-            const int clientIndex = FindFreeClientSlot();
+            int clientIndex = FindClientIndex( address );
+            if ( clientIndex != -1 && m_clients[clientIndex].clientGuid != packet->clientGuid )
+            {
+//                cout << "client is already connected. denying connection request" << endl;
+                auto connectionDeniedPacket = make_shared<ConnectionDeniedPacket>();
+                connectionDeniedPacket->protocolId = m_config.protocolId;
+                connectionDeniedPacket->clientGuid = packet->clientGuid;
+                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_AlreadyConnected;
+                m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+            }
+
+            clientIndex = FindFreeClientSlot();
             if ( clientIndex == -1 )
             {
 //              cout << "server is full. denying connection request" << endl;
-
                 auto connectionDeniedPacket = make_shared<ConnectionDeniedPacket>();
                 connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
                 connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ServerFull;
-
-                m_config.networkInterface->SendPacket( packet->GetAddress(), connectionDeniedPacket );
+                m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
             }
 
 //            cout << "new client connection at index " << clientIndex << endl;
 
             ServerClientData & client = m_clients[clientIndex];
 
-            client.address = packet->GetAddress();
+            client.address = address;
             client.clientGuid = packet->clientGuid;
             client.serverGuid = GenerateGuid();
-            client.accumulator = 1.0 / m_config.sendRate;
             client.lastPacketTime = m_timeBase.time;
             client.state = SERVER_CLIENT_SendingChallenge;
         }
