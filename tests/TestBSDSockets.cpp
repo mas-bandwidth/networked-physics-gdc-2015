@@ -1,5 +1,4 @@
 #include "BSDSockets.h"
-#include "DNSResolver.h"
 
 using namespace std;
 using namespace protocol;
@@ -101,107 +100,6 @@ public:
     }
 };
 
-void test_bsd_sockets_send_to_hostname()
-{
-    cout << "test_bsd_sockets_send_to_hostname" << endl;
-
-    BSDSocketsConfig config;
-
-    auto packetFactory = make_shared<PacketFactory>();
-
-    config.port = 10000;
-    config.family = AF_INET;
-    config.maxPacketSize = 1024;
-    config.resolver = make_shared<DNSResolver>();
-    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
-
-    BSDSockets interface( config );
-
-    int numPackets = 10;
-
-    for ( int i = 0; i < numPackets; ++i )
-    {
-        auto packet = packetFactory->Create( PACKET_Connect );
-
-        interface.SendPacket( "google.com", config.port, packet );
-    }
-
-    auto start = chrono::steady_clock::now();
-
-    TimeBase timeBase;
-    timeBase.deltaTime = 0.1f;
-
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
-
-    for ( int i = 0; i < 20; ++i )
-    {
-        interface.Update( timeBase );
-
-        if ( interface.GetCounter( BSDSockets::PacketsSent ) == numPackets )
-            break;
-
-        this_thread::sleep_for( ms );
-
-        timeBase.time += timeBase.deltaTime;
-    }
-
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
-}
-
-void test_bsd_sockets_send_to_hostname_failure()
-{
-    cout << "test_bsd_sockets_send_to_hostname_failure" << endl;
-
-    BSDSocketsConfig config;
-
-    auto packetFactory = make_shared<PacketFactory>();
-
-    config.port = 10000;
-    config.maxPacketSize = 1024;
-    config.resolver = make_shared<DNSResolver>();
-    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
-
-    BSDSockets interface( config );
-
-    int numPackets = 10;
-
-    for ( int i = 0; i < numPackets; ++i )
-    {
-        auto packet = packetFactory->Create( PACKET_Connect );
-
-        interface.SendPacket( "aoesortuhantuehanthua", config.port, packet );
-    }
-
-    auto start = chrono::steady_clock::now();
-
-    TimeBase timeBase;
-    timeBase.deltaTime = 0.1f;
-
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
-
-    for ( int i = 0; i < 20; ++i )
-    {
-        interface.Update( timeBase );
-
-        if ( interface.GetCounter( BSDSockets::PacketsDiscarded ) == numPackets )
-            break;
-
-        this_thread::sleep_for( ms );
-
-        timeBase.time += timeBase.deltaTime;
-    }
-
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
-}
-
 void test_bsd_sockets_send_and_receive_ipv4()
 {
     cout << "test_bsd_sockets_send_and_receive_ipv4" << endl;
@@ -213,7 +111,6 @@ void test_bsd_sockets_send_and_receive_ipv4()
     config.port = 10000;
     config.family = AF_INET;
     config.maxPacketSize = 1024;
-    config.resolver = make_shared<DNSResolver>( AF_INET );
     config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
 
     BSDSockets interface( config );
@@ -313,7 +210,6 @@ void test_bsd_sockets_send_and_receive_ipv6()
     config.port = 10000;
     config.family = AF_INET6;
     config.maxPacketSize = 1024;
-    config.resolver = make_shared<DNSResolver>( AF_INET6 );
     config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
 
     BSDSockets interface( config );
@@ -635,8 +531,6 @@ int main()
 
     try
     {
-        test_bsd_sockets_send_to_hostname();
-        test_bsd_sockets_send_to_hostname_failure();
         test_bsd_sockets_send_and_receive_ipv4();
         test_bsd_sockets_send_and_receive_ipv6();
         test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4();

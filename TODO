@@ -2,16 +2,6 @@ DONE:
 
 TODO:
 
-    I don't really want to do the block sending right now.
-
-    Do some small cleanup tasks.
-
-    ------------------------
-
-    Hostname parsing needs to handle port
-
-    eg. "localhost:10000" should resolve to port 10000 on the hostname that gets looked up.
-
     ----------------
 
     Add an "Align" method to stream.
@@ -19,6 +9,15 @@ TODO:
     Pass in # of bits to align to in stream ctor and default it to 8.
 
     This would be useful for testing compression with Oodle.
+
+    Verify it works, and add asserts on read back to verify remainder.
+
+    Add a test, eg. scan for an aligned string written in the serialize bits
+    which would only be found if the string is actually aligned on write.
+
+    Add optimized versions of "write bytes" that copy in directly
+    if the bitpacker is already aligned (I will make sure this is
+    the common case...)
 
     ----------------
 
@@ -30,13 +29,14 @@ TODO:
 
     --------------------
 
-    Try to clean up the error handling from "ProcessData".
+    Clean up the error handling from "ProcessData".
 
     Want three options:
 
-    a) data is ok, keep processing rest of channels (common case)
-    b) discard packet (no ack), but keep processing remaining channel data.
-    c) discard packet and stop immediately. data is bad. don't process remaining channels.
+        a) data is ok, keep processing rest of channels (common case)
+        b) discard packet (no ack), but keep processing remaining channel data.
+        c) discard packet and stop immediately. data is bad. don't process remaining channels.
+           probably should disconnect the client that this connection belongs to.
 
     Probably want an enum result to return from process data, eg. ProcessDataResult
 
@@ -47,24 +47,6 @@ TODO:
     and replace it with something that makes more sense.
 
     ----------------
-
-    I'd like a logging system. It's annoying to have to comment out and re-enable
-    logs as I debug things. Would be nice to be able to have logs like Deja.
-
-    ------------------
-
-    Might be nice to add a validate step to the config for connection/channels
-    because it's possible to specify a config that doesn't work now. eg. 
-    interdependent parameters.
-
-    Would be nice if the reliable message channel could report the minimal functional
-    budget that would work for it, given its configuration. This would be great
-    for the connection to budget for the channel.
-
-    This should be in the base class for channel interface, so we can generically
-    work with and budget channels decently without knowing exactly what they are.
-
-    ----------------------
 
 
 
@@ -154,6 +136,26 @@ TODO:
 
 
 WOULD BE NICE:
+
+    ----------------------
+
+    I'd like a logging system. It's annoying to have to comment out and re-enable
+    logs as I debug things. Would be nice to be able to have logs like Deja.
+
+    ------------------
+
+    Might be nice to add a validate step to the config for connection/channels
+    because it's possible to specify a config that doesn't work now. eg. 
+    interdependent parameters.
+
+    Would be nice if the reliable message channel could report the minimal functional
+    budget that would work for it, given its configuration. This would be great
+    for the connection to budget for the channel.
+
+    This should be in the base class for channel interface, so we can generically
+    work with and budget channels decently without knowing exactly what they are.
+
+    ----------------------
 
     Move the channel budget out of the channel config (static)
     and in to the connection. 

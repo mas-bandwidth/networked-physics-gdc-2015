@@ -10,16 +10,24 @@
 
 namespace protocol
 {
-    static shared_ptr<ResolveResult> DNSResolve_Blocking( const string & name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
+    static shared_ptr<ResolveResult> DNSResolve_Blocking( string name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
     {
         struct addrinfo hints, *res, *p;
         memset( &hints, 0, sizeof hints );
         hints.ai_family = family;
         hints.ai_socktype = socktype;
 
-        // todo: we really want to split the string on ":" and extract out port here (optional)
-
-        const char * hostname = name.c_str();
+        uint16_t port = 0;
+        char * hostname = const_cast<char*>( name.c_str() );
+        for ( int i = 0; i < name.size(); ++i )
+        {
+            if ( hostname[i] == ':' )
+            {
+                hostname[i] = '\0';
+                port = atoi( &hostname[i+1] );
+                break;
+            }
+        }
 
         if ( getaddrinfo( hostname, nullptr, &hints, &res ) != 0 )
             return nullptr;
@@ -30,7 +38,11 @@ namespace protocol
         {
             auto address = Address( p );
             if ( address.IsValid() )
+            {
+                if ( port != 0 )
+                    address.SetPort( port );
                 result->addresses.push_back( address );
+            }
         }
 
         freeaddrinfo( res );

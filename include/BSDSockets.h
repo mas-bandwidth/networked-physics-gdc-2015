@@ -7,7 +7,6 @@
 #define PROTOCOL_BSD_SOCKETS_H
 
 #include "NetworkInterface.h"
-#include "Resolver.h"
 
 namespace protocol
 {
@@ -40,20 +39,26 @@ namespace protocol
         uint16_t port;                              // port to bind UDP socket to
         int family;                                 // socket family: eg. AF_INET (IPv4 only), AF_INET6 (IPv6 only)
         int maxPacketSize;                          // maximum packet size
-        shared_ptr<Resolver> resolver;              // resolver eg: DNS (optional)              // todo: remove resolver. doesn't belong here
         shared_ptr<Factory<Packet>> packetFactory;  // packet factory (required)
     };
 
     class BSDSockets : public NetworkInterface
     {
+        const BSDSocketsConfig m_config;
+
+        int m_socket;
+        PacketQueue m_send_queue;
+        PacketQueue m_receive_queue;
+        vector<uint64_t> m_counters;
+        vector<uint8_t> m_receiveBuffer;
+
     public:
 
         enum Counters
         {
             PacketsSent,                            // number of packets sent (eg. added to send queue)
             PacketsReceived,                        // number of packets received (eg. added to recv queue)
-            PacketsDiscarded,                       // number of packets discarded on send because we couldn't resolve host
-            SendToFailures,                         // number of packets lost due to sendto failure
+            SendFailures,                           // number of packets lost due to sendto failure
             SerializeWriteFailures,                 // number of serialize write failures
             SerializeReadFailures,                  // number of serialize read failures
             NumCounters
@@ -167,60 +172,6 @@ namespace protocol
             m_send_queue.push( packet );
         }
 
-        void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet )
-        {
-            if ( !m_config.resolver )
-                throw runtime_error( "cannot resolve address: resolver is null" );
-
-            Address address;
-            address.SetPort( port );
-            packet->SetAddress( address );
-
-            auto resolveEntry = m_config.resolver->GetEntry( hostname );
-
-            if ( resolveEntry )
-            {
-                switch ( resolveEntry->status )
-                {
-                    case ResolveStatus::Succeeded:
-                    {
-                        assert( resolveEntry->result->addresses.size() >= 1 );
-                        Address address = resolveEntry->result->addresses[0];
-                        address.SetPort( port );
-                        packet->SetAddress( address );
-                        m_send_queue.push( packet );
-                        m_counters[PacketsSent]++;
-                        cout << "resolve succeeded: sending packet to " << address.ToString() << endl;
-                    }
-                    break;
-
-                    case ResolveStatus::InProgress:
-                    {
-                        cout << "resolve in progress: buffering packet" << endl;
-                        auto resolve_send_queue = m_resolve_send_queues[hostname];
-                        assert( resolve_send_queue );
-                        resolve_send_queue->push( packet );
-                    }
-                    break;
-
-                    case ResolveStatus::Failed:
-                    {
-                        cout << "resolve failed: discarding packet for \"" << hostname << "\"" << endl;
-                        m_counters[PacketsDiscarded]++;
-                    }
-                    break;
-                }
-            }
-            else
-            {
-                cout << "resolving \"" << hostname << "\": buffering packet" << endl;
-                m_config.resolver->Resolve( hostname );
-                auto resolve_send_queue = make_shared<PacketQueue>();
-                resolve_send_queue->push( packet );
-                m_resolve_send_queues[hostname] = resolve_send_queue;
-            }
-        }
-
         shared_ptr<Packet> ReceivePacket()
         {
             if ( m_receive_queue.empty() )
@@ -232,8 +183,6 @@ namespace protocol
 
         void Update( const TimeBase & timeBase )
         {
-            UpdateResolver();
-
             SendPackets();
 
             ReceivePackets();
@@ -252,59 +201,6 @@ namespace protocol
         }
 
     private:
-
-        void UpdateResolver()
-        {
-            if ( !m_config.resolver )
-                return;
-
-            // todo: remove this resolver integration directly into the network interface - it's unnecessary!
-
-            // todo: turn it into ResolverAdapter -- this takes a network interface and a resolver
-            // on creation, and wraps the network interface with resolve and packet buffering
-            // until resolved. No need to add this per-interface!
-
-            m_config.resolver->Update( TimeBase() );
-
-            for ( auto itor = m_resolve_send_queues.begin(); itor != m_resolve_send_queues.end(); )
-            {
-                auto hostname = itor->first;
-                auto resolve_send_queue = itor->second;
-
-                auto entry = m_config.resolver->GetEntry( hostname );
-                assert( entry );
-                if ( entry->status != ResolveStatus::InProgress )
-                {
-                    if ( entry->status == ResolveStatus::Succeeded )
-                    {
-                        assert( entry->result->addresses.size() > 0 );
-                        auto address = entry->result->addresses[0];
-                        cout << format_string( "resolved \"%s\" to %s", hostname.c_str(), address.ToString().c_str() ) << endl;
-
-                        m_counters[PacketsSent] += resolve_send_queue->size();
-                        while ( !resolve_send_queue->empty() )
-                        {
-                            auto packet = resolve_send_queue->front();
-                            resolve_send_queue->pop();
-                            const uint16_t port = packet->GetAddress().GetPort();
-                            address.SetPort( port );
-                            cout << "sent buffered packet to " << address.ToString() << endl;
-                            packet->SetAddress( address );
-                            m_send_queue.push( packet );
-                        }
-                        m_resolve_send_queues.erase( itor++ );
-                    }
-                    else if ( entry->status == ResolveStatus::Failed )
-                    {
-                        cout << "failed to resolve \"" << hostname << "\". discarding " << resolve_send_queue->size() << " packets" << endl;
-                        m_counters[PacketsDiscarded] += resolve_send_queue->size();
-                        m_resolve_send_queues.erase( itor++ );
-                    }
-                }
-                else
-                    ++itor;
-            }
-        }
 
         void SendPackets()
         {
@@ -392,6 +288,8 @@ namespace protocol
 
             bool result = false;
 
+            m_counters[PacketsSent]++;
+
             if ( address.GetType() == AddressType::IPv6 )
             {
 //                cout << "ipv6 packet" << endl;
@@ -417,7 +315,7 @@ namespace protocol
             if ( !result )
             {
                 cout << "sendto failed: " << strerror( errno ) << endl;
-                m_counters[SendToFailures]++;
+                m_counters[SendFailures]++;
             }
 
             return result;
@@ -453,17 +351,10 @@ namespace protocol
 
             assert( result >= 0 );
 
+            m_counters[PacketsReceived]++;
+
             return result;
         }
-
-        const BSDSocketsConfig m_config;
-
-        int m_socket;
-        PacketQueue m_send_queue;
-        PacketQueue m_receive_queue;
-        map<string,shared_ptr<PacketQueue>> m_resolve_send_queues;
-        vector<uint64_t> m_counters;
-        vector<uint8_t> m_receiveBuffer;
     };
 }
 

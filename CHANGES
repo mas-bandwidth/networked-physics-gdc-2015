@@ -70,6 +70,24 @@ Sunday Morning, June 8th, 2014:
     In this case you must disconnect the client fully before reconnecting,
     server side "DisconnectClient" makes the most sense here.
 
+    I don't really want to do the block sending right now.
+
+    Do some small cleanup tasks.
+
+    Hostname parsing needs to handle port
+
+    eg. "localhost:10000" should resolve to port 10000 on the hostname that gets looked up.
+
+    Remove the integration of the resolver with the network interface.
+
+    Remove resolver from BSDSockets interface.
+
+    Move it to another class, "ResolveWrapper" and update tests to use this.
+
+    PacketsSent and PacketsReceived counters were broken in BSD sockets.
+
+    Fixed them and added a unit test to check they are working.
+
 
 Saturday Morning, June 7th, 2014:
 ---------------------------------
