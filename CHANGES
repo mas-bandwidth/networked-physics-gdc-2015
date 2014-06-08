@@ -1,5 +1,54 @@
-Friday Evening, June 7th, 2014:
+Sunday Morning, June 8th, 2014:
 -------------------------------
+
+    It's really annoying having to process the disconnect packet
+    and having client guid and server guid stashed in the per-state
+    data. Maybe it they should be global data instead in the client?
+
+    Fixed by moving clientGuid, serverGuid and address out of the state data.
+
+    Removed start time.
+
+    Moved out accumulator.
+
+    Clean up the timeout by having a unified "timed out" state,
+    but with the extra error specifying the state the client
+    was in when they timed out. Works nicely!
+
+    Update unit tests to be fixed according to this new setup.
+
+    Client side unit tests are broken now. Find out why.
+
+    Update timeout was not getting called.
+
+    Also, resolver was taking a garbage hostname and returning
+    a valid IPv4 address. Fixed by specifying IPv6 only in the
+    DNS lookup. Seems strange though.
+
+    Unify the timeout processing and the accumulator fn. for sends
+    when a packet should be sent, call a function that checks current
+    state and decides to send or not.
+
+    Finished refactoring Client.h 
+
+    It's good enough. Time to move on.
+
+    There is an issue now with sending packets in test_client_resolve_hostname_success
+
+    What is going on?
+
+    It's because no port is specified in the hostname and the address has port 0.
+
+    Fixed by adding a "defaultServerPort" to config and setting the port to that
+    if the resolved address has port zero.
+
+    I also need to extend hostname parsing to support "host:port" format (optional)
+
+    But I can do this later, it's not blocking me.
+
+
+Saturday Morning, June 7th, 2014:
+---------------------------------
 
     Verify connection is *functional*. eg. exchange a few client
     and server events back and forth.

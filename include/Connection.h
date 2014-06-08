@@ -221,14 +221,14 @@ namespace protocol
             return packet;
         }
 
-        void ReadPacket( shared_ptr<ConnectionPacket> packet )
+        bool ReadPacket( shared_ptr<ConnectionPacket> packet )
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
             assert( packet->channelData.size() == m_channels.size() );
 
             if ( packet->protocolId != m_config.protocolId )
-                return;
+                return false;
 
 //            cout << "read packet " << packet->sequence << endl;
 
@@ -247,16 +247,18 @@ namespace protocol
                 // todo: rename this counter
 //                cout << "read packet failure" << endl;
                 m_counters[ReadPacketFailures]++;
-                return;                
+                return false;            
             }
 
             if ( !m_receivedPackets->Insert( packet->sequence ) )
             {
                 m_counters[PacketsDiscarded]++;
-                return;
+                return false;
             }
 
             ProcessAcks( packet->ack, packet->ack_bits );
+
+            return true;
         }
 
         uint64_t GetCounter( int index ) const

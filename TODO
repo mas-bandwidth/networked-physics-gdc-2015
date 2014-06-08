@@ -1,63 +1,18 @@
 DONE:
 
-    It's really annoying having to process the disconnect packet
-    and having client guid and server guid stashed in the per-state
-    data. Maybe it they should be global data instead in the client?
-
-    Fixed by moving clientGuid, serverGuid and address out of the state data.
-
 TODO:
-
-    Now all that remains is the startTime and accumulator.
-
-    These could easily be moved out, and then state data would no longer
-    be required. This seems the cleanest option. The states just aren't
-    that complicated.
-
-    Refactor to support processing of packet type centric behavior,
-    vs. previous client receive which was state centric and harder
-    to read (and less flexible) in the receive packets fn.
-
-    ---------------
-
-    Fix the client timeout to work properly. It should be time since 
-    received an *acceptable* packet, eg. so if in server block receive
-    state the client could theoretically be waiting in there for a long
-    time, provided server keeps sending data to it.
 
     Add a test for server side timeout (eg. connect and stop updating server)
 
     Add a test for client timeout, eg. connect and stop updating client
     and verify server detects this and transitions to correct.
 
-    ---------------
-
-    Add functions for server side queries, eg. # of connected clients
-    and a so on, these will make unit testing a bit easier.
-
-    ---------------
-
     Add a test for connected denied server full
-
-    -----------
-
-    Add remaining tests for timeout cases while connecting that haven't been
-    implemented so far, eg. specific timeout errors that are missing inside
-    TestClientServer.cpp
-
-    ------------
 
     On the server, have separate connecting and connected send rates and timeouts.
 
     -------------------------
 
-
-
-
-
-
-    Decide next step at this point... Might be good to recover cubes demo in case
-    I have to show Rocket something interesting about networking a large open world.
 
 
 
@@ -85,12 +40,6 @@ TODO:
 
     Add unit test to verify it's working, and to verify timeout on client if 
     the server doesn't send block packets down (eg. stop the server)
-
-    ------------------------
-
-    Hostname parsing needs to handle :port
-
-    eg. "localhost:10000" should resolve to port 10000 on the hostname that gets looked up.
 
     ------------------------
 
@@ -130,6 +79,12 @@ TODO:
 
 
 WOULD BE NICE:
+
+    ------------------------
+
+    Hostname parsing needs to handle port
+
+    eg. "localhost:10000" should resolve to port 10000 on the hostname that gets looked up.
 
     ----------------
 

@@ -17,6 +17,8 @@ namespace protocol
         hints.ai_family = family;
         hints.ai_socktype = socktype;
 
+        // todo: we really want to split the string on ":" and extract out port here (optional)
+
         const char * hostname = name.c_str();
 
         if ( getaddrinfo( hostname, nullptr, &hints, &res ) != 0 )
@@ -45,7 +47,7 @@ namespace protocol
     {
     public:
 
-        DNSResolver( int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
+        DNSResolver( int family = AF_INET6, int socktype = SOCK_DGRAM )
         {
             m_family = family;
             m_socktype = socktype;

@@ -124,6 +124,9 @@ void test_dns_resolve_failure()
     assert( entry->result == nullptr );
 }
 
+// todo: add tests for resolving with port, eg. "localhost:10000" should return
+// an address with port 10000, eg. "[::1]:10000"
+
 int main()
 {
     srand( time( NULL ) );

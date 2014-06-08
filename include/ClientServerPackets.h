@@ -149,18 +149,18 @@ namespace protocol
 
         ClientServerPacketFactory( shared_ptr<ChannelStructure> channelStructure )
         {
-            // client -> server messages
+            // client -> server packets
             Register( PACKET_ConnectionRequest, [] { return make_shared<ConnectionRequestPacket>(); } );
             Register( PACKET_ChallengeResponse, [] { return make_shared<ChallengeResponsePacket>(); } );
             Register( PACKET_ReadyForConnection, [] { return make_shared<ReadyForConnectionPacket>(); } );
 
-            // server -> client messages
+            // server -> client packets
             Register( PACKET_ConnectionDenied, [] { return make_shared<ConnectionDeniedPacket>(); } );
             Register( PACKET_ConnectionChallenge, [] { return make_shared<ConnectionChallengePacket>(); } );
             Register( PACKET_RequestClientData, [] { return make_shared<RequestClientDataPacket>(); } );
             Register( PACKET_Disconnected, [] { return make_shared<DisconnectedPacket>(); } );
 
-            // bidirectional messages
+            // bidirectional packets
             Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
         }
     };

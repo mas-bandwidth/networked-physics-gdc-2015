@@ -31,7 +31,6 @@ struct TestMessage : public Message
             serialize_bits( stream, value, 32 );
         }
 
-
         if ( stream.IsWriting() )
             magic = 0xDEADBEEF;
 
@@ -134,13 +133,13 @@ void test_client_resolve_hostname_failure()
     auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.resolver = make_shared<DNSResolver>();
+    clientConfig.resolver = make_shared<DNSResolver>( AF_INET6 );
     clientConfig.networkInterface = networkInterface;
     clientConfig.channelStructure = channelStructure;
 
     Client client( clientConfig );
 
-    client.Connect( "asduoanuhaoenuthaosuhta" );
+    client.Connect( "my butt" );
 
     assert( client.IsConnecting() );
     assert( !client.IsDisconnected() );
@@ -151,7 +150,7 @@ void test_client_resolve_hostname_failure()
     TimeBase timeBase;
     timeBase.deltaTime = 1.0f;
 
-    for ( int i = 0; i < 600; ++i )
+    for ( int i = 0; i < 100; ++i )
     {
         if ( client.HasError() )
             break;
@@ -219,7 +218,8 @@ void test_client_resolve_hostname_timeout()
     assert( !client.IsConnected() );
     assert( client.HasError() );
     assert( client.GetState() == CLIENT_STATE_Disconnected );
-    assert( client.GetError() == CLIENT_ERROR_ResolveHostnameTimedOut );
+    assert( client.GetError() == CLIENT_ERROR_ConnectionTimedOut );
+    assert( client.GetExtendedError() == CLIENT_STATE_ResolvingHostname );
 }
 
 void test_client_resolve_hostname_success()
@@ -238,7 +238,7 @@ void test_client_resolve_hostname_success()
     auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.resolver = make_shared<DNSResolver>();
+    clientConfig.resolver = make_shared<DNSResolver>( AF_INET6 );
     clientConfig.networkInterface = networkInterface;
     clientConfig.channelStructure = channelStructure;
 
@@ -322,7 +322,8 @@ void test_client_connection_request_timeout()
     assert( !client.IsConnected() );
     assert( client.HasError() );
     assert( client.GetState() == CLIENT_STATE_Disconnected );
-    assert( client.GetError() == CLIENT_ERROR_ConnectionRequestTimedOut );
+    assert( client.GetError() == CLIENT_ERROR_ConnectionTimedOut );
+    assert( client.GetExtendedError() == CLIENT_STATE_SendingConnectionRequest );
 }
 
 void test_client_connection_request_denied()
