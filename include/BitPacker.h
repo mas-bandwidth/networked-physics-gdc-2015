@@ -31,6 +31,10 @@ namespace protocol
         {
             assert( bits > 0 );
             assert( bits <= 32 );
+
+//            if ( m_bitsWritten + bits > m_numBits )
+//                cout << format_string( "bitpacker overflow: bits written = %d + %d, max %d", m_bitsWritten, bits, m_numBits ) << endl;
+
             assert( m_bitsWritten + bits <= m_numBits );
 
             if ( m_bitsWritten + bits > m_numBits )
@@ -55,6 +59,23 @@ namespace protocol
             }
 
             m_bitsWritten += bits;
+        }
+
+        void WriteAlign()
+        {
+            const int remainderBits = m_bitsWritten % 8;
+            if ( remainderBits != 0 )
+            {
+                uint32_t zero = 0;
+                WriteBits( zero, 8 - remainderBits );
+                assert( m_bitsWritten % 8 == 0 );
+            }
+        }
+
+        int GetAlignBits() const
+        {
+            const int remainderBits = m_bitsWritten % 8;
+            return remainderBits ? 8 - remainderBits : 0;
         }
 
         void FlushBits()
@@ -158,6 +179,23 @@ namespace protocol
             m_scratch &= 0xFFFFFFFF;
 
             return output;
+        }
+
+        void ReadAlign()
+        {
+            const int remainderBits = m_bitsRead % 8;
+            if ( remainderBits != 0 )
+            {
+                uint32_t value = ReadBits( 8 - remainderBits );
+                assert( value == 0 );
+                assert( m_bitsRead % 8 == 0 );
+            }
+        }
+
+        int GetAlignBits() const
+        {
+            const int remainderBits = m_bitsRead % 8;
+            return remainderBits ? 8 - remainderBits : 0;
         }
 
         int GetBitsRead() const

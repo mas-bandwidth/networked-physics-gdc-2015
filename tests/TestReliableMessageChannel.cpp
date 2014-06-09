@@ -26,19 +26,14 @@ struct TestMessage : public Message
     void Serialize( Stream & stream )
     {        
         serialize_bits( stream, sequence, 16 );
+
         for ( int i = 0; i < sequence % 8; ++i )
         {
             int value = 0;
             serialize_bits( stream, value, 32 );
         }
 
-
-        if ( stream.IsWriting() )
-            magic = 0xDEADBEEF;
-
-        serialize_bits( stream, magic, 32 );
-
-        assert( magic == 0xDEADBEEF );
+        stream.Check( 0xDEADBEEF );
     }
 
     uint16_t sequence;

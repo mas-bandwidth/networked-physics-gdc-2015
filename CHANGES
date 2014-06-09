@@ -1,3 +1,46 @@
+Sunday Evening, June 8th, 2014:
+-------------------------------
+
+    Add "ReadAlign" and "WriteAlign" methods to bitpacker classes.
+
+    Added serialize check, eg. "Check" which takes a magic value.
+
+    Add an "Align" method to stream.
+
+    Add a "Check" method to stream, take in a magic number uint32_t
+
+    Verify it works, and add asserts on read back to verify remainder.
+
+    Extend the connection header to read/write align after packet header.
+
+    Change the connection to write bits of channels which have data in
+    one block, vs. one bit, then channel data etc. Will compress better
+    with something like oodle.
+
+    Add alignment in front of each channel data serialized.    
+
+    Need a function to calculate align bits at given stream point.
+
+    eg. GetAlignBits for bitpacker read and write.
+
+    Add config inside reliable channel config to add alignment
+    per-message, eg. align on message id, and align before message
+    contents, for block serialization, add align before block data
+    also.
+
+    Extend bit of code to conservatively estimate including
+    padding, eg. add n bytes overhead (seems 4 bytes) max,
+    plus up to an extra byte per-message should do it.
+
+    Align seems to be working in unit tests.
+
+    Now try soak test with align... seems to be working!
+
+    My guess is that the align check is highly conservative,
+    eg. most time we have room for a few more messages but
+    just don't bother, so it's no big deal.
+
+
 Sunday Morning, June 8th, 2014:
 -------------------------------
 

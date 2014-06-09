@@ -2,22 +2,7 @@ DONE:
 
 TODO:
 
-    ----------------
-
-    Add an "Align" method to stream.
-
-    Pass in # of bits to align to in stream ctor and default it to 8.
-
-    This would be useful for testing compression with Oodle.
-
-    Verify it works, and add asserts on read back to verify remainder.
-
-    Add a test, eg. scan for an aligned string written in the serialize bits
-    which would only be found if the string is actually aligned on write.
-
-    Add optimized versions of "write bytes" that copy in directly
-    if the bitpacker is already aligned (I will make sure this is
-    the common case...)
+    Implement reset for reliable message channel, needed for connection and client/server.
 
     ----------------
 

@@ -77,6 +77,28 @@ namespace protocol
             }
         }
 
+        void Align()
+        {
+            if ( IsWriting() )
+                m_writer.WriteAlign();
+            else
+                m_reader.ReadAlign();
+        }
+
+        int GetAlignBits() const
+        {
+            return IsWriting() ? m_writer.GetAlignBits() : m_reader.GetAlignBits();
+        }
+
+        void Check( uint32_t magic )
+        {
+            uint32_t value = 0;
+            if ( IsWriting() )
+                value = magic;
+            SerializeBits( value, 32 );
+            assert( value == magic );
+        }
+
         void Flush()
         {
             if ( IsWriting() )

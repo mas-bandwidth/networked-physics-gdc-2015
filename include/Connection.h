@@ -73,14 +73,14 @@ namespace protocol
             else
                 ack_bits = 0xFFFFFFFF;
 
+            stream.Align();
+
             if ( stream.IsWriting() )
             {
                 for ( auto data : channelData )
                 {
                     bool has_data = data != nullptr;
                     serialize_bool( stream, has_data );
-                    if ( data )
-                        data->Serialize( stream );
                 }
             }
             else                
@@ -98,9 +98,16 @@ namespace protocol
                             cout << "failed to create channel data?!" << endl;
                             throw runtime_error( format_string( "serialize read failed to create channel data [%d]", i ) );
                         }
-
-                        channelData[i]->Serialize( stream );
                     }
+                }
+            }
+
+            for ( int i = 0; i < channelData.size(); ++i )
+            {
+                if ( channelData[i] )
+                {
+                    stream.Align();
+                    channelData[i]->Serialize( stream );
                 }
             }
         }

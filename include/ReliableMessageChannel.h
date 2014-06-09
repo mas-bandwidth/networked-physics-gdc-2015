@@ -26,6 +26,7 @@ namespace protocol
             blockFragmentSize = 64;
             packetBudget = 128;
             giveUpBits = 64;
+            align = true;
         }
 
         float resendRate;               // message max resend rate in seconds, until acked.
@@ -39,6 +40,7 @@ namespace protocol
         int blockFragmentSize;          // fragment size that large blocks are split up to for transmission.
         int packetBudget;               // maximum number of bytes this channel may take per-packet. 
         int giveUpBits;                 // give up trying to add more messages to packet if we have less than this # of bits available.
+        bool align;                     // if true then insert align at key points, eg. before messages etc. good for dictionary based LZ compressors
 
         shared_ptr<Factory<Message>> messageFactory;
     };
@@ -63,6 +65,9 @@ namespace protocol
         {
             serialize_bits( stream, largeBlock, 1 );
 
+            if ( config.align )
+                stream.Align();
+
             if ( largeBlock )
             {
                 if ( stream.IsWriting() )
@@ -75,45 +80,78 @@ namespace protocol
                     fragment = make_shared<Block>( config.blockFragmentSize );
                 }
 
+                if ( config.align )
+                    assert( stream.GetAlignBits() == 0 );
+
                 serialize_bits( stream, blockId, 16 );
                 serialize_bits( stream, fragmentId, 16 );
                 serialize_bits( stream, blockSize, 32 );
 
+                if ( config.align )
+                    assert( stream.GetAlignBits() == 0 );
+
                 Block & data = *fragment;
                 for ( int i = 0; i < config.blockFragmentSize; ++i )
                     serialize_bits( stream, data[i], 8 );
+
+                if ( config.align )
+                    assert( stream.GetAlignBits() == 0 );
             }
             else
             {
                 assert( config.messageFactory );
 
                 int numMessages = stream.IsWriting() ? messages.size() : 0;
+                if ( config.align )
+                    assert( stream.GetAlignBits() == 0 );
+
                 serialize_int( stream, numMessages, 0, config.maxMessagesPerPacket );
                 if ( stream.IsReading() )
                     messages.resize( numMessages );
 
+                int messageTypes[numMessages];
+                uint16_t messageIds[numMessages];
+
+                if ( stream.IsWriting() )
+                {
+                    for ( int i = 0; i < numMessages; ++i )
+                    {
+                        assert( messages[i] );
+                        messageTypes[i] = messages[i]->GetType();
+                        messageIds[i] = messages[i]->GetId();
+                    }
+                }
+                else
+                {
+                    memset( messageTypes, 0, sizeof( messageTypes ) );
+                    memset( messageIds, 0, sizeof( messageIds ) );
+                }
+
+                if ( config.align )
+                    stream.Align();
+
+                for ( int i = 0; i < numMessages; ++i )
+                    serialize_bits( stream, messageIds[i], 16 );
+
+                if ( config.align )
+                    assert( stream.GetAlignBits() == 0 );
+
                 for ( int i = 0; i < numMessages; ++i )
                 {
-                    #ifndef NDEBUG
-                    if ( stream.IsWriting() )
-                        assert( messages[i] );
-                    #endif
+                    if ( config.align )
+                        stream.Align();
 
-                    int messageType = stream.IsWriting() ? messages[i]->GetType() : 0;
-                    serialize_int( stream, messageType, 0, config.messageFactory->GetMaxType() );
+                    serialize_int( stream, messageTypes[i], 0, config.messageFactory->GetMaxType() );
+
+                    if ( config.align )
+                        stream.Align();
+
                     if ( stream.IsReading() )
                     {
-                        messages[i] = config.messageFactory->Create( messageType );
+                        messages[i] = config.messageFactory->Create( messageTypes[i] );
                         assert( messages[i] );
-                        assert( messages[i]->GetType() == messageType );
-                    }
-
-                    uint16_t messageId = stream.IsWriting() ? messages[i]->GetId() : 0;
-                    serialize_bits( stream, messageId, 16 );
-                    if ( stream.IsReading() )
-                    {
-                        messages[i]->SetId( messageId );
-                        assert( messages[i]->GetId() == messageId );
+                        assert( messages[i]->GetType() == messageTypes[i] );
+                        messages[i]->SetId( messageIds[i] );
                     }
 
                     messages[i]->Serialize( stream );
@@ -268,7 +306,8 @@ namespace protocol
 
             const int MessageIdBits = 16;
             const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
-            m_messageOverheadBits = MessageIdBits + MessageTypeBits;
+            const int MessageAlignOverhead = m_config.align ? 14 : 0;
+            m_messageOverheadBits = MessageIdBits + MessageTypeBits + MessageAlignOverhead;
 
 //            cout << "message overhead is " << m_messageOverheadBits << " bits" << endl;
 
@@ -499,27 +538,36 @@ namespace protocol
                 // gather messages to include in the packet
 
                 int availableBits = m_config.packetBudget * 8;
+                if ( m_config.align )
+                    availableBits -= 3 * 8;
+
                 int numMessageIds = 0;
                 uint16_t messageIds[m_config.maxMessagesPerPacket];
                 for ( int i = 0; i < m_config.receiveQueueSize; ++i )
                 {
                     if ( availableBits < m_config.giveUpBits )
                         break;
+                    
                     const uint16_t messageId = firstMessageId + i;
+
                     SendQueueEntry * entry = m_sendQueue->Find( messageId );
+                    
                     if ( !entry )
                         break;
                     if ( entry->largeBlock )
                         break;
+
                     if ( entry->timeLastSent + m_config.resendRate <= m_timeBase.time && availableBits - entry->measuredBits >= 0 )
                     {
                         messageIds[numMessageIds++] = messageId;
                         entry->timeLastSent = m_timeBase.time;
                         availableBits -= entry->measuredBits;
                     }
+
                     if ( numMessageIds == m_config.maxMessagesPerPacket )
                         break;
                 }
+
                 assert( numMessageIds >= 0 );
                 assert( numMessageIds <= m_config.maxMessagesPerPacket );
 
