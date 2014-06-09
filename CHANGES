@@ -40,6 +40,8 @@ Sunday Evening, June 8th, 2014:
     eg. most time we have room for a few more messages but
     just don't bother, so it's no big deal.
 
+    Implement reset for reliable message channel, needed for connection and client/server.
+
 
 Sunday Morning, June 8th, 2014:
 -------------------------------

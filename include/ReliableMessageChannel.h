@@ -219,6 +219,11 @@ namespace protocol
         {
             SendLargeBlockData()
             {
+                Reset();
+            }
+
+            void Reset()
+            {
                 active = false;
                 numFragments = 0;
                 numAckedFragments = 0;
@@ -238,11 +243,16 @@ namespace protocol
         {
             ReceiveLargeBlockData()
             {
+                Reset();
+            }
+
+            void Reset()
+            {
                 active = false;
                 numFragments = 0;
                 numReceivedFragments = 0;
                 blockId = 0;
-                blockSize = 0;
+                blockSize = 0;                
             }
 
             bool active;                                // true if we are currently receiving a large block
@@ -253,6 +263,27 @@ namespace protocol
             vector<ReceiveFragmentData> fragments;      // per-fragment data for receive
             shared_ptr<Block> block;                    // the actual block being received!!!
         };
+
+    private:
+
+        ReliableMessageChannelConfig m_config;                              // constant configuration data
+
+        int m_maxBlockFragments;                                            // maximum number of fragments per-block
+        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
+
+        TimeBase m_timeBase;                                                // current time base from last update
+        uint16_t m_sendMessageId;                                           // id for next message added to send queue
+        uint16_t m_receiveMessageId;                                        // id for next message to be received
+
+        shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;              // message send queue
+        shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;           // sent packets (for acks)
+        shared_ptr<SlidingWindow<ReceiveQueueEntry>> m_receiveQueue;        // message receive queue
+
+        vector<uint64_t> m_counters;                                        // counters used for unit testing and validation
+        vector<uint8_t> m_measureBuffer;                                    // buffer used for measuring message size in bits
+
+        SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
+        ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received
 
     public:
 
@@ -290,30 +321,23 @@ namespace protocol
             assert( config.messageFactory );
             assert( config.maxSmallBlockSize <= MaxSmallBlockSize );
 
-            m_sendMessageId = 0;
-            m_receiveMessageId = 0;
-
             m_sendQueue = make_shared<SlidingWindow<SendQueueEntry>>( m_config.sendQueueSize );
             m_sentPackets = make_shared<SlidingWindow<SentPacketEntry>>( m_config.sentPacketsSize );
             m_receiveQueue = make_shared<SlidingWindow<ReceiveQueueEntry>>( m_config.receiveQueueSize );
 
             m_counters.resize( NumCounters, 0 );
 
+            Reset();
+
             const int SmallBlockOverhead = bits_required( 0, MaxSmallBlockSize - 1 );
             m_measureBuffer.resize( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
-
-//            cout << "measure buffer is " << m_measureBuffer.size() << " bytes" << endl;
 
             const int MessageIdBits = 16;
             const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
             const int MessageAlignOverhead = m_config.align ? 14 : 0;
             m_messageOverheadBits = MessageIdBits + MessageTypeBits + MessageAlignOverhead;
 
-//            cout << "message overhead is " << m_messageOverheadBits << " bits" << endl;
-
             m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
-
-//            cout << "max block fragments = " << m_maxBlockFragments << endl;
 
             m_sendLargeBlock.fragments.resize( m_maxBlockFragments );
             m_receiveLargeBlock.fragments.resize( m_maxBlockFragments );
@@ -321,7 +345,20 @@ namespace protocol
 
         void Reset()
         {
-            // todo: Implement reliable message channel reset. This is going to get called on each new connection!
+            m_sendMessageId = 0;
+            m_receiveMessageId = 0;
+
+            m_sendQueue->Reset();
+            m_sentPackets->Reset();
+            m_receiveQueue->Reset();
+
+            for ( int i = 0; i < m_counters.size(); ++i )
+                m_counters[i] = 0;
+
+            m_timeBase = TimeBase();
+
+            m_sendLargeBlock.Reset();
+            m_receiveLargeBlock.Reset();
         }
 
         bool CanSendMessage() const
@@ -909,27 +946,6 @@ namespace protocol
             status.numReceivedFragments = m_receiveLargeBlock.numReceivedFragments;
             return status;
         }
-
-    private:
-
-        ReliableMessageChannelConfig m_config;                              // constant configuration data
-
-        int m_maxBlockFragments;                                            // maximum number of fragments per-block
-        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
-
-        TimeBase m_timeBase;                                                // current time base from last update
-        uint16_t m_sendMessageId;                                           // id for next message added to send queue
-        uint16_t m_receiveMessageId;                                        // id for next message to be received
-
-        shared_ptr<SlidingWindow<SendQueueEntry>> m_sendQueue;              // message send queue
-        shared_ptr<SlidingWindow<SentPacketEntry>> m_sentPackets;           // sent packets (for acks)
-        shared_ptr<SlidingWindow<ReceiveQueueEntry>> m_receiveQueue;        // message receive queue
-
-        vector<uint64_t> m_counters;                                        // counters used for unit testing and validation
-        vector<uint8_t> m_measureBuffer;                                    // buffer used for measuring message size in bits
-
-        SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
-        ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received
     };
 }
 

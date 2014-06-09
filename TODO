@@ -2,16 +2,6 @@ DONE:
 
 TODO:
 
-    Implement reset for reliable message channel, needed for connection and client/server.
-
-    ----------------
-
-    Add counters for all the different things inside the large blocks,
-    eg. # of large blocks sent, received, read/written, also # of
-    fragments read/written.
-
-    Write some basic tests to verify these counters are functional.
-
     --------------------
 
     Clean up the error handling from "ProcessData".
@@ -33,7 +23,13 @@ TODO:
 
     ----------------
 
+    Add counters for all the different things inside the large blocks,
+    eg. # of large blocks sent, received, read/written, also # of
+    fragments read/written.
 
+    Write some basic tests to verify these counters are functional.
+
+    ----------------
 
 
 
