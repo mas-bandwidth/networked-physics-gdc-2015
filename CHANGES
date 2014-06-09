@@ -42,6 +42,30 @@ Sunday Evening, June 8th, 2014:
 
     Implement reset for reliable message channel, needed for connection and client/server.
 
+    Clean up counter names, remove that bad "PacketReadFailures" counter
+    and replace it with something that makes more sense, eg: PacketsDiscarded
+
+    Clean up the error handling from "ProcessData".
+
+    Basically, if it returns false it means discard the packet, but keep 
+    processing the rest of the channels, basically -- don't ack this.
+
+    I've managed to break the reliable message channel somehow. FML
+
+    Fixed. It was the case where I just have to skip and do nothing,
+    and I had incorrectly switched it to return false there.
+
+    Fixed missing alignment after packet type inside BSDSockets.h
+
+    Can optimize the packet header by encoding the acked relative
+    to the sequence, eg. sequence - n = ack #, where n is typically
+    in range [1,32] or so.
+
+    Also, shuffled packet header so that infrequently changing values
+    are grouped together, and frequently changing values are separate.
+
+    This should help the dictionary based compressor do a better job.
+
 
 Sunday Morning, June 8th, 2014:
 -------------------------------
@@ -132,6 +156,12 @@ Sunday Morning, June 8th, 2014:
     PacketsSent and PacketsReceived counters were broken in BSD sockets.
 
     Fixed them and added a unit test to check they are working.
+
+    Appears to be something wrong with acks.
+
+    Fixed it, had a few logic errors in there that showed up 
+    only as strange behavior in soak test, eg. long periods
+    with no acks, an assert firing randomly etc.
 
 
 Saturday Morning, June 7th, 2014:

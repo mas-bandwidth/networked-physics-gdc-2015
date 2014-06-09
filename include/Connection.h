@@ -61,10 +61,10 @@ namespace protocol
         {
             assert( channelStructure );
 
-            serialize_uint64( stream, protocolId );
+            // IMPORTANT: Insert non-frequently changing values here
+            // This helps LZ dictionary based compressors do a good job!
 
-            serialize_bits( stream, sequence, 16 );
-            serialize_bits( stream, ack, 16 );
+            serialize_uint64( stream, protocolId );
 
             bool perfect = ack_bits == 0xFFFFFFFF;
             serialize_bool( stream, perfect );
@@ -101,6 +101,38 @@ namespace protocol
                     }
                 }
             }
+
+            // IMPORTANT: Insert frequently changing values below
+
+            serialize_bits( stream, sequence, 16 );
+
+            int ack_delta = 0;
+            bool ack_in_range = false;
+
+            if ( stream.IsWriting() )
+            {
+                if ( ack < sequence )
+                    ack_delta = sequence - ack;
+                else
+                    ack_delta = (int)sequence + 65536 - ack;
+
+                assert( ack_delta > 0 );
+                
+                ack_in_range = ack_delta <= 128;
+            }
+
+            serialize_bool( stream, ack_in_range );
+    
+            if ( ack_in_range )
+            {
+                serialize_int( stream, ack_delta, 1, 128 );
+                if ( stream.IsReading() )
+                    ack = sequence - ack_delta;
+            }
+            else
+                serialize_bits( stream, ack, 16 );
+
+            // now serialize per-channel data
 
             for ( int i = 0; i < channelData.size(); ++i )
             {
@@ -150,9 +182,8 @@ namespace protocol
         {
             PacketsRead,                            // number of packets read
             PacketsWritten,                         // number of packets written
-            PacketsDiscarded,                       // number of packets discarded
             PacketsAcked,                           // number of packets acked
-            ReadPacketFailures,                     // number of read packet failures
+            PacketsDiscarded,                       // number of read packets that we discarded (eg. not acked)
             NumCounters
         };
 
@@ -234,36 +265,36 @@ namespace protocol
             assert( packet->GetType() == m_config.packetType );
             assert( packet->channelData.size() == m_channels.size() );
 
+            if ( packet->channelData.size() != m_channels.size() )
+                return false;
+
             if ( packet->protocolId != m_config.protocolId )
                 return false;
 
 //            cout << "read packet " << packet->sequence << endl;
 
+            ProcessAcks( packet->ack, packet->ack_bits );
+
             m_counters[PacketsRead]++;
 
-            try
+            bool discardPacket = false;
+
+            for ( int i = 0; i < packet->channelData.size(); ++i )
             {
-                for ( int i = 0; i < packet->channelData.size(); ++i )
-                {
-                    if ( packet->channelData[i] )
-                        m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
-                }
-            }
-            catch ( runtime_error & e )
-            {
-                // todo: rename this counter
-//                cout << "read packet failure" << endl;
-                m_counters[ReadPacketFailures]++;
-                return false;            
+                if ( !packet->channelData[i] )
+                    continue;
+
+                auto result = m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
+
+                if ( !result )
+                    discardPacket = true;
             }
 
-            if ( !m_receivedPackets->Insert( packet->sequence ) )
+            if ( discardPacket || !m_receivedPackets->Insert( packet->sequence ) )
             {
                 m_counters[PacketsDiscarded]++;
-                return false;
+                return false;            
             }
-
-            ProcessAcks( packet->ack, packet->ack_bits );
 
             return true;
         }

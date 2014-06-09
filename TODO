@@ -2,58 +2,11 @@ DONE:
 
 TODO:
 
-    --------------------
-
-    Clean up the error handling from "ProcessData".
-
-    Want three options:
-
-        a) data is ok, keep processing rest of channels (common case)
-        b) discard packet (no ack), but keep processing remaining channel data.
-        c) discard packet and stop immediately. data is bad. don't process remaining channels.
-           probably should disconnect the client that this connection belongs to.
-
-    Probably want an enum result to return from process data, eg. ProcessDataResult
-
-    Make sure that counters distinguish between each case, and that serialize read failure
-    which still throws an exception is not counted the same as a packet discard above.
-
-    Clean up counter names, remove that bad "PacketReadFailures" counter
-    and replace it with something that makes more sense.
-
-    ----------------
-
-    Add counters for all the different things inside the large blocks,
-    eg. # of large blocks sent, received, read/written, also # of
-    fragments read/written.
-
-    Write some basic tests to verify these counters are functional.
-
-    ----------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ------------------------
+    -----------------
 
     Add code on server to send server data block to client.
 
-    Block should be *constant* initially, eg. add it as part of server config.
-
-    Assumption is that if client needs more complicated non-constant info
-    on connect, then this could be implemented via the internal connection
-    protocol, eg. send down a large block.
-
-    Implement server -> client block transfer
+    Block must be *constant*. eg. add it as part of server config
 
     Server sends one block fragment per-packet. No need for complicated reliability.
 
@@ -61,25 +14,45 @@ TODO:
 
     Server just keeps sending them until all acked.
 
-    Once server has sent the block, go into the requesting client block state.
+    Once server has acks for every fragment, go into the requesting client block state.
 
-    Add unit test to verify it's working, and to verify timeout on client if 
-    the server doesn't send block packets down (eg. stop the server)
+    Client should store, and make the server data block accessible via accessor.
+
+    Add unit test to verify it's working, make sure to check the block size and contents match.
 
     ------------------------
-
-    Once the server is finished sending block, send down a packet "request client block"
-    message until the client starts sending blocks through, then server goes into
-    "receiving client block" state.
 
     Some thing in reverse for client -> server block.
 
     Once the block transfers have completed, go to connected state.
 
-    Add tests for all cases.
+    Make client block accessible per-server, and make sure it is cleared when the client disconnects.
+
+    Add test to verify server receives the correct size block and contents from the client.
 
     ------------------------
 
+    Can optimize messages id serialization quite a bit, by encoding next message id 
+    relative to the previous one, eg. +1, +5, up to n where n would actually be small, 
+    eg. half sliding window size.
+
+    Common case would probably be a bunch of messages in order too, eg.
+    one bit = +1, repeated n times.
+
+    This is a big optimization.
+
+    What would also be awesome about this is that this would convert
+    the message ids into something that is more likely to be *constant*
+    or at least, would often have repeating patterns from packet to packet.
+
+    When doing this, make sure that the message types are followed
+    by the message ids in a separate array, vs. being interleaved
+    with message data.
+
+    This would help out the dictionary based LZ compressor quite a bit,
+    vs. the current bunch of message ids that change from packet to packet.
+
+    ----------------------
 
 
 
@@ -105,11 +78,8 @@ TODO:
 
     ------------------------
 
-    Implement cube demo with this protocol library, but in a client/server manner.
 
-    Use this cube demo for the meeting with rocket hall
 
-    ------------------------
 
 
 
@@ -117,6 +87,20 @@ TODO:
 
 
 WOULD BE NICE:
+
+    -----------------
+
+    Implement fragmentation and reassembly for large packets, do this
+    at the connection level once we have large snapshots, this would
+    probably be a good idea to have -- set MTU to 1200 bytes.
+
+    ----------------
+
+    Add counters for all the different things inside the large blocks,
+    eg. # of large blocks sent, received, read/written, also # of
+    fragments read/written.
+
+    Write some basic tests to verify these counters are functional.
 
     ----------------------
 
@@ -145,25 +129,10 @@ WOULD BE NICE:
     connection type and specify channel budgets dynamically based on flow control, 
     for example.
 
-    --------------------
+    --------------
 
-    Implement unreliable message channel.
-
-    Implement something where if you pass in -1 to the channel budget,
-    it gives that last channel access to the remaining bits in the packet.
-
-    This prequires that a channel accurately estimates the bits it is 
-    using in the packet data, eg. via return perhaps?
-
-    We should verify that the estimated bits are >= the actual serialized
-    bits on write. I'm OK if it is not exact, although it can be made so.
-
-    After this is working, get the soak test working such that it 
-    has a second channel of unreliable events with -1 budget.
-
-    Send so many unreliable events that the packet is almost always full.
-
-    Verify soak tests works, unreliable events get through etc.
+    Add a fast path for read/write bytes when the bitpacker is aligned,
+    eg. just copy in/out with memcpy vs. actually doing bits level ops.
 
     --------------
 
@@ -198,19 +167,6 @@ WOULD BE NICE:
 
     We only need one bit per-fragment, "has it been received?"
 
-    --------------------
-
-    I don't like the exception throw on packet receive. This is sloppy!
-
-    These are not exceptional conditions. These *can* and do happen under
-    real usage, all it requires is some latency or out of order packets.
-
-    Using an exception (slow path) for such things is *WRONG*
-
-    return false from process data to indicate the packet should be discarded instead!
-
-    eg. ProcessData should return false if it wants a packet discard.
-
     ---------------------
 
     What is next?
@@ -236,15 +192,5 @@ WOULD BE NICE:
        and receiving user packets. This interface should allow running the actual serialization
        and packet reading entirely on a separate thread. Do it here where it is most natural,
        to avoid overcomplicating the interface/connection code.
-
-    ------------------
-
-    I think the DNS lookup integration in the net interface is bad.
-
-    It complicates the net interface, and derived classes (eg. network simulator)
-    now don't fully implement the base class.
-
-    I think DNS resolve actually belongs inside client/server classes
-    as part of the client -> server connect state machine.
 
     ----------------

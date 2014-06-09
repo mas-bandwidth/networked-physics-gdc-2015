@@ -40,7 +40,7 @@ namespace protocol
 
         virtual shared_ptr<ChannelData> GetData( uint16_t sequence ) = 0;
 
-        virtual void ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) = 0;
+        virtual bool ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) = 0;
 
         virtual void ProcessAck( uint16_t ack ) = 0;
 
@@ -61,7 +61,7 @@ namespace protocol
 
         shared_ptr<ChannelData> GetData( uint16_t sequence ) { return nullptr; }
 
-        void ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) {}
+        bool ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) { return true; }
 
         void ProcessAck( uint16_t ack ) {}
 

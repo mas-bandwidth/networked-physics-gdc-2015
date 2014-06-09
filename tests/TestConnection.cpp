@@ -63,7 +63,6 @@ void test_connection()
     assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
     assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
     assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
-    assert( connection.GetCounter( Connection::ReadPacketFailures ) == 0 );
 }
 
 class AckChannel : public ChannelAdapter
@@ -74,10 +73,9 @@ public:
     AckChannel( vector<bool> & _ackedPackets )
         : ackedPackets( _ackedPackets ) {}
 
-    void ProcessData( uint16_t sequence, shared_ptr<ChannelData> data )
+    bool ProcessData( uint16_t sequence, shared_ptr<ChannelData> data )
     {
-        if ( rand() % 10 )
-            throw runtime_error( "jinx!" );
+        return rand() % 10 != 0;
     }
 
     void ProcessAck( uint16_t ack )

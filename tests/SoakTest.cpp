@@ -317,7 +317,7 @@ void soak_test()
 
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == numMessagesSent );
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesDiscardedEarly ) == 0 );
+        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
 
         timeBase.time += dt;
     }

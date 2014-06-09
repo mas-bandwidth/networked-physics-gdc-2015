@@ -216,8 +216,13 @@ namespace protocol
                     Stream stream( STREAM_Write, buffer, m_config.maxPacketSize );
 
                     const int maxPacketType = m_config.packetFactory->GetMaxType();
+                    
                     int packetType = packet->GetType();
+                    
                     serialize_int( stream, packetType, 0, maxPacketType );
+                    
+                    stream.Align();
+
                     packet->Serialize( stream );                
 
                     stream.Flush();
@@ -258,6 +263,8 @@ namespace protocol
                     const int maxPacketType = m_config.packetFactory->GetMaxType();
                     int packetType = 0;
                     serialize_int( stream, packetType, 0, maxPacketType );
+
+                    stream.Align();
 
                     auto packet = m_config.packetFactory->Create( packetType );
                     if ( !packet )

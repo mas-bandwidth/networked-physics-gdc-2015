@@ -293,8 +293,8 @@ namespace protocol
             MessagesWritten,
             MessagesRead,
             MessagesReceived,
-            MessagesDiscardedLate,
-            MessagesDiscardedEarly,
+            MessagesLate,
+            MessagesEarly,
             NumCounters
         };
 
@@ -648,7 +648,7 @@ namespace protocol
 
         }
 
-        void ProcessData( uint16_t sequence, shared_ptr<ChannelData> channelData )
+        bool ProcessData( uint16_t sequence, shared_ptr<ChannelData> channelData )
         {
             assert( channelData );
 
@@ -670,7 +670,7 @@ namespace protocol
             */
 
             if ( data.largeBlock && sequence_less_than( data.blockId, m_receiveQueue->GetSequence() ) )
-                return;
+                return true;
 
             /*
                 If we are currently receiving a large block, discard any packets
@@ -682,7 +682,8 @@ namespace protocol
 
             if ( !data.largeBlock && m_receiveLargeBlock.active )
             {
-                throw runtime_error( "received unexpected bitpacked message or small block while receiving large block" );
+//                cout << "received unexpected bitpacked message or small block while receiving large block" << endl;
+                return false;
             }
 
             // process the packet data according to its contents
@@ -700,7 +701,10 @@ namespace protocol
                     const uint16_t expectedBlockId = m_receiveQueue->GetSequence();
 
                     if ( data.blockId != expectedBlockId )
-                        throw runtime_error( "unexpected large block id" );
+                    {
+//                        cout << "unexpected large block id" << endl;
+                        return false;
+                    }
 
                     const int numFragments = (int) ceil( data.blockSize / (float)m_config.blockFragmentSize );
 
@@ -708,7 +712,10 @@ namespace protocol
                     assert( numFragments <= m_maxBlockFragments );
 
                     if ( numFragments < 0 || numFragments > m_maxBlockFragments )
-                        throw runtime_error( "large block num fragments outside of range" );
+                    {
+                        cout << "large block num fragments outside of range" << endl;
+                        return false;
+                    }
 
 //                    cout << "receiving large block " << data.blockId << " (" << data.blockSize << " bytes)" << endl;
 
@@ -728,8 +735,7 @@ namespace protocol
                 if ( data.blockId != m_receiveLargeBlock.blockId )
                 {
 //                    cout << "unexpected large block id. got " << data.blockId << " but was expecting " << m_receiveLargeBlock.blockId << endl;
-
-                    throw runtime_error( "unexpected large block id" );
+                    return false;
                 }
 
                 assert( data.blockId == m_receiveLargeBlock.blockId );
@@ -739,22 +745,19 @@ namespace protocol
                 if ( data.blockId != m_receiveLargeBlock.blockId )
                 {
 //                    cout << "recieve large block id mismatch. got " << data.blockId << " but was expecting " << m_receiveLargeBlock.blockId << endl;
-
-                    throw runtime_error( "receive large block id mismatch" );
+                    return false;
                 }
 
                 if ( data.blockSize != m_receiveLargeBlock.blockSize )
                 {
 //                    cout << "large block size mismatch. got " << data.blockSize << " but was expecting " << m_receiveLargeBlock.blockSize << endl;
-
-                    throw runtime_error( "receive large block size mismatch" );
+                    return false;
                 }
 
                 if ( data.fragmentId >= m_receiveLargeBlock.numFragments )
                 {
 //                    cout << "large block fragment out of bounds. " << data.fragmentId << " >= num fragments of " << m_receiveLargeBlock.numFragments << endl;
-
-                    throw runtime_error( "receive large block fragment id out of bounds" );
+                    return false;
                 }
 
                 auto & fragment = m_receiveLargeBlock.fragments[data.fragmentId];
@@ -830,7 +833,7 @@ namespace protocol
                     {
 //                        cout << "old message " << messageId << ", min = " << minMessageId << " max = " << maxMessageId << endl;
 
-                        m_counters[MessagesDiscardedLate]++;
+                        m_counters[MessagesLate]++;
                     }
                     else if ( sequence_greater_than( messageId, maxMessageId ) )
                     {
@@ -838,7 +841,7 @@ namespace protocol
 
                         earlyMessage = true;
 
-                        m_counters[MessagesDiscardedEarly]++;
+                        m_counters[MessagesEarly]++;
                     }
                     else
                     {
@@ -851,8 +854,13 @@ namespace protocol
                 }
 
                 if ( earlyMessage )
-                    throw runtime_error( "received early message" );
+                {
+                    cout << "received early message" << endl;
+                    return false;
+                }
             }
+
+            return true;
         }
 
         void ProcessAck( uint16_t ack )

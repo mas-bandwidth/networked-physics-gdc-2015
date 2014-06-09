@@ -378,7 +378,6 @@ namespace protocol
 
     uint64_t GenerateGuid()
     {
-        // todo: we really want something better than this
         return ( uint64_t(rand()) << 32 ) | time( NULL );
     }
 }
