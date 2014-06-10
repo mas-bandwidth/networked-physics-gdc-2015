@@ -77,6 +77,15 @@ namespace protocol
             }
         }
 
+        void SerializeBytes( uint8_t * data, int bytes )
+        {
+            Align();
+            if ( IsWriting() )
+                m_writer.WriteBytes( data, bytes );
+            else
+                m_reader.ReadBytes( data, bytes );
+        }
+
         void Align()
         {
             if ( IsWriting() )
@@ -183,59 +192,26 @@ namespace protocol
 
     void serialize_block( Stream & stream, shared_ptr<Block> & block_ptr, int maxBytes )
     { 
-        int numBytesMinusOne = 0;
+        int numBytes = 0;
 
         if ( stream.IsWriting() )
         {
             assert( block_ptr );
-            numBytesMinusOne = int( block_ptr->size() ) - 1;
-            assert( numBytesMinusOne >= 0 );
-            assert( numBytesMinusOne <= maxBytes - 1 );
+            numBytes = (int) block_ptr->size();
         }
 
-        serialize_int( stream, numBytesMinusOne, 0, maxBytes - 1 );
-        
-        const int numBytes = numBytesMinusOne + 1;
+        stream.Align();
 
+        serialize_int( stream, numBytes, 1, maxBytes - 1 );
+
+        stream.Align();
+        
         if ( stream.IsReading() )
             block_ptr = make_shared<Block>( numBytes );
         
         Block & block = *block_ptr;
 
-        const int numWords = numBytes / 4;
-
-        if ( stream.IsWriting() )
-        {
-            for ( int i = 0; i < numWords; ++i )
-            {
-                uint32_t value =             block[i*4]               |
-                                 ( uint32_t( block[i*4+1] ) << 8 )    |
-                                 ( uint32_t( block[i*4+2] ) << 16 )   |
-                                 ( uint32_t( block[i*4+3] ) << 24 );
-
-                serialize_bits( stream, value, 32 );
-            }
-        }
-        else
-        {
-            for ( int i = 0; i < numWords; ++i )
-            {
-                uint32_t value = 0;
-
-                serialize_bits( stream, value, 32 );
-
-                block[i*4] = value & 0xFF;
-                block[i*4+1] = ( value >> 8 ) & 0xFF;
-                block[i*4+2] = ( value >> 16 ) & 0xFF;
-                block[i*4+3] = ( value >> 24 ) & 0xFF;
-            }
-        }
-
-        const int tailIndex = numWords * 4;
-        const int tailBytes = numBytes - numWords * 4;
-
-        for ( int i = 0; i < tailBytes; ++i )
-            serialize_bits( stream, block[tailIndex+i], 8 );
+        stream.SerializeBytes( &block[0], numBytes );
     }
 }  //
 

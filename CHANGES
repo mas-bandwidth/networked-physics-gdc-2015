@@ -1,3 +1,33 @@
+Monday Evening, June 9th, 2014:
+-------------------------------
+
+    Add optimized "serialize_bytes" which aligns and then just memcpys in/out.
+
+    Add this to stream.
+
+    Then add to BitReader, BitWriter.
+
+    Hook this up to be used in all cases where blocks are serialized.
+
+    Now that it is functional, make it faster going through memcpy in/out.
+
+    It should be a *lot* faster than the bitpacked version, for large blocks!
+
+    It's quite tricky! Have to split into head/body/tail to work with
+    the bitpacker word based operation, and this is not trivial.
+
+    Got it working with "ReadBits(8)" in the body loop, but need
+    some more work to get it working with memcpy, eg. have to
+    remember how I did the "ReadBits" implementation w. scratch.
+
+    Got it working. Needed to clean up the word index a bit.
+
+    Once this is working, apply the similar memcpy optimization
+    to write bytes, with head/body/tail.
+
+    Seems to work fine. Running soak test to verify.
+
+
 Sunday Evening, June 8th, 2014:
 -------------------------------
 

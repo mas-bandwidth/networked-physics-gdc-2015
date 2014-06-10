@@ -53,9 +53,10 @@ namespace protocol
             {
                 assert( m_wordIndex < m_numWords );
 //                cout << "write word: " << htonl( m_scratch >> 32 ) << endl;
-                m_data[m_wordIndex++] = htonl( uint32_t( m_scratch >> 32 ) );
+                m_data[m_wordIndex] = htonl( uint32_t( m_scratch >> 32 ) );
                 m_scratch <<= 32;
                 m_bitIndex -= 32;
+                m_wordIndex++;
             }
 
             m_bitsWritten += bits;
@@ -76,6 +77,62 @@ namespace protocol
         {
             const int remainderBits = m_bitsWritten % 8;
             return remainderBits ? 8 - remainderBits : 0;
+        }
+
+        void WriteBytes( const uint8_t * data, int bytes )
+        {
+            assert( GetAlignBits() == 0 );
+            if ( m_bitsWritten + bytes * 8 >= m_numBits )
+            {
+                m_overflow = true;
+                return;
+            }
+
+            /*
+            // todo: switch this out for memcpy once it is working
+            for ( int i = 0; i < bytes; ++i )
+                WriteBits( data[i], 8 );
+                */
+
+            // write head bytes
+
+            assert( m_bitIndex == 0 || m_bitIndex == 8 || m_bitIndex == 16 || m_bitIndex == 24 );
+
+            int headBytes = ( 4 - m_bitIndex / 8 ) % 4;
+            if ( headBytes > bytes )
+                headBytes = bytes;
+            for ( int i = 0; i < headBytes; ++i )
+                WriteBits( data[i], 8 );
+            if ( headBytes == bytes )
+                return;
+
+            assert( GetAlignBits() == 0 );
+
+            // write words
+
+            int numWords = ( bytes - headBytes ) / 4;
+            if ( numWords > 0 )
+            {
+                assert( m_bitIndex == 0 );
+                memcpy( &m_data[m_wordIndex], data + headBytes, numWords * 4 );
+                m_bitsWritten += numWords * 32;
+                m_wordIndex += numWords;
+                m_scratch = 0;
+            }
+
+            assert( GetAlignBits() == 0 );
+
+            // write tail
+
+            int tailStart = headBytes + numWords * 4;
+            int tailBytes = bytes - tailStart;
+            assert( tailBytes >= 0 && tailBytes < 4 );
+            for ( int i = 0; i < tailBytes; ++i )
+                WriteBits( data[tailStart+i], 8 );
+
+            assert( GetAlignBits() == 0 );
+
+            assert( headBytes + numWords * 4 + tailBytes == bytes );
         }
 
         void FlushBits()
@@ -137,7 +194,7 @@ namespace protocol
             m_numBits = m_numWords * 32;
             m_bitsRead = 0;
             m_bitIndex = 0;
-            m_wordIndex = 1;
+            m_wordIndex = 0;
             m_scratch = ntohl( m_data[0] );
             m_overflow = false;
 //            cout << "read word = " << m_data[0] << endl;
@@ -157,19 +214,21 @@ namespace protocol
 
             m_bitsRead += bits;
 
-            if ( m_bitIndex + bits <= 32 )
+            assert( m_bitIndex < 32 );
+
+            if ( m_bitIndex + bits < 32 )
             {
                 m_scratch <<= bits;
                 m_bitIndex += bits;
             }
             else
             {
-                assert( m_wordIndex < m_numWords );
+                assert( ++m_wordIndex < m_numWords );
                 const uint32_t a = 32 - m_bitIndex;
                 const uint32_t b = bits - a;
                 m_scratch <<= a;
+                m_scratch |= ntohl( m_data[m_wordIndex] );
 //                cout << "read word = " << m_data[m_wordIndex] << endl;
-                m_scratch |= ntohl( m_data[m_wordIndex++] );
                 m_scratch <<= b;
                 m_bitIndex = b;
             }
@@ -196,6 +255,58 @@ namespace protocol
         {
             const int remainderBits = m_bitsRead % 8;
             return remainderBits ? 8 - remainderBits : 0;
+        }
+
+        void ReadBytes( uint8_t * data, int bytes )
+        {
+            assert( GetAlignBits() == 0 );
+
+            if ( m_bitsRead + bytes * 8 >= m_numBits )
+            {
+                memset( data, bytes, 0 );
+                m_overflow = true;
+                return;
+            }
+
+            // read head bytes
+
+            assert( m_bitIndex == 0 || m_bitIndex == 8 || m_bitIndex == 16 || m_bitIndex == 24 );
+
+            int headBytes = ( 4 - m_bitIndex / 8 ) % 4;
+            if ( headBytes > bytes )
+                headBytes = bytes;
+            for ( int i = 0; i < headBytes; ++i )
+                data[i] = ReadBits( 8 );
+            if ( headBytes == bytes )
+                return;
+
+            assert( GetAlignBits() == 0 );
+
+            // read words
+
+            int numWords = ( bytes - headBytes ) / 4;
+            if ( numWords > 0 )
+            {
+                assert( m_bitIndex == 0 );
+                memcpy( data + headBytes, &m_data[m_wordIndex], numWords * 4 );
+                m_bitsRead += numWords * 32;
+                m_wordIndex += numWords;
+                m_scratch = ntohl( m_data[m_wordIndex] );
+            }
+
+            assert( GetAlignBits() == 0 );
+
+            // write tail
+
+            int tailStart = headBytes + numWords * 4;
+            int tailBytes = bytes - tailStart;
+            assert( tailBytes >= 0 && tailBytes < 4 );
+            for ( int i = 0; i < tailBytes; ++i )
+                data[tailStart+i] = ReadBits( 8 );
+
+            assert( GetAlignBits() == 0 );
+
+            assert( headBytes + numWords * 4 + tailBytes == bytes );
         }
 
         int GetBitsRead() const

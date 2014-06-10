@@ -2,6 +2,34 @@ DONE:
 
 TODO:
 
+    ------------
+
+    Can optimize messages id serialization quite a bit, by encoding next message id 
+    relative to the previous one, eg. +1, +5, up to n where n would actually be small, 
+    eg. half sliding window size.
+
+    Common case would probably be a bunch of messages in order too, eg.
+    one bit = +1, repeated n times.
+
+    This is a big optimization.
+
+    What would also be awesome about this is that this would convert
+    the message ids into something that is more likely to be *constant*
+    or at least, would often have repeating patterns from packet to packet.
+
+    When doing this, make sure that the message types are followed
+    by the message ids in a separate array, vs. being interleaved
+    with message data.
+
+    This would help out the dictionary based LZ compressor quite a bit,
+    vs. the current bunch of message ids that change from packet to packet.
+
+    -----------------
+
+    Implement an aligned memcpy in/out of bitpacker when writing bytes.
+
+    This is much faster than going through the bitpacking codepath.
+
     -----------------
 
     Add code on server to send server data block to client.
@@ -31,28 +59,6 @@ TODO:
     Add test to verify server receives the correct size block and contents from the client.
 
     ------------------------
-
-    Can optimize messages id serialization quite a bit, by encoding next message id 
-    relative to the previous one, eg. +1, +5, up to n where n would actually be small, 
-    eg. half sliding window size.
-
-    Common case would probably be a bunch of messages in order too, eg.
-    one bit = +1, repeated n times.
-
-    This is a big optimization.
-
-    What would also be awesome about this is that this would convert
-    the message ids into something that is more likely to be *constant*
-    or at least, would often have repeating patterns from packet to packet.
-
-    When doing this, make sure that the message types are followed
-    by the message ids in a separate array, vs. being interleaved
-    with message data.
-
-    This would help out the dictionary based LZ compressor quite a bit,
-    vs. the current bunch of message ids that change from packet to packet.
-
-    ----------------------
 
 
 

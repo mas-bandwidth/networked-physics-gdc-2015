@@ -677,7 +677,7 @@ namespace protocol
                 that contain bitpacked messages or small blocks. It is necessary
                 to discard the packet so the sender doesn't think these messages
                 are acked, when in fact we were not able to process them 
-                (otherwise the sender may never resend them, and stall out)
+                (otherwise the sender may never resend them, and stall out...)
             */
 
             if ( !data.largeBlock && m_receiveLargeBlock.active )
