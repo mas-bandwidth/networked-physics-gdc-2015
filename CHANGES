@@ -1,3 +1,63 @@
+Early Tuesday Morning, June 10th, 2014:
+---------------------------------------
+
+    Profile SoakTest.
+
+    Expensive parts are:
+
+        ConnectionPacket::Serialize (read and write -- consider templated read/write stream types)
+        sendto and recvfrom system calls (should be on another thread!)
+        ReliableMessageChannel::GetData --> SlidingWindow::Find (looking for oldest unacked message? cache it!)
+        ReliableMessageChannel::GetData --> sequence_less_than
+
+    Misc bits that should be fixed:
+
+        memset 0 for sockaddr_in (removed)
+        shared_ptr overhead (what is the alternative?)
+        std::string widening, allocations, format_string etc. (disable logging!)
+
+    Switching to an optimized build and it looks like this:
+
+        58%  - sleep
+        13%  - BSDSockets::ReceivePackets
+        7.4% - Connection::WritePacket
+        5.7% - format_string (remove this! clearly it is awful...)
+        4.8% - basic_ostream (printf is looking really good right about now...)
+        4.3% - BSDSockets::SendPackets
+        1.8% - basic_ostream again
+        1.7% - shared_ptr (alternatives?)
+        0.5% - Connection::ReadPacket
+        0.2% - basic_ostream again
+        0.2% - more shared_ptr stuff.
+
+    From this it is clear: my goal is to get the code as close as possible 
+    to having all the time spent in the sleep, or in functions like sendto
+    and recvfrom over which I have no control.
+
+    All other functions are *fair game*.
+
+    It is clear that:
+
+        a) I should cache the oldest message to avoid SlidingWindow::Find per-get data
+        b) I should optimize the bitpacker, most likely splitting read and write via templates
+        c) format_string should die in a fire
+        d) printf is better than cout
+        e) shared_ptr is slow. i need an alternative
+        f) allocating stuff is slow. have an allocator strategy.
+
+    After removing printf calls:
+
+        57.8% - sleep
+        19.3% - Connection::WritePacket
+         9.4% - BSDSockets::ReceivePackets
+         7.7% - BSDSockets::SendPackets
+         2.5% - shared_ptr
+         0.7% - Connection::ReadPacket
+         0.2% - shared_ptr
+         0.1% - ReliableMessageChannel::ReceiveMessage
+         0.1% - ReliableMessageChannel::CanSendMessage
+
+
 Monday Evening, June 9th, 2014:
 -------------------------------
 
@@ -26,6 +86,35 @@ Monday Evening, June 9th, 2014:
     to write bytes, with head/body/tail.
 
     Seems to work fine. Running soak test to verify.
+
+    Can optimize messages id serialization quite a bit, by encoding next message id 
+    relative to the previous one, eg. +1, +5, up to n where n would actually be small, 
+    eg. half sliding window size.
+
+    This is a big optimization.
+
+    Common case would probably be a bunch of messages in order too, eg.
+    one bit = +1, repeated n times.
+
+    What would also be awesome about this is that this would convert
+    the message ids into something that is more likely to be *constant*
+    or at least, would often have repeating patterns from packet to packet.
+
+    When doing this, make sure that the message types are followed
+    by the message ids in a separate array, vs. being interleaved
+    with message data.
+
+    This would help out the dictionary based LZ compressor quite a bit,
+    vs. the current bunch of message ids that change from packet to packet.
+
+    Add a function to serialize an integer relative to another integer.
+
+    Use this to serialize the message ids.
+
+    Holy shit it works!
+
+    Fixed an issue with message id wraparound past 16bits with relative int encode.
+
 
 
 Sunday Evening, June 8th, 2014:

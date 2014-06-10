@@ -105,6 +105,9 @@ namespace protocol
                 if ( config.align )
                     assert( stream.GetAlignBits() == 0 );
 
+                if ( stream.IsWriting() )
+                    assert( numMessages > 0 );
+
                 serialize_int( stream, numMessages, 0, config.maxMessagesPerPacket );
                 if ( stream.IsReading() )
                     messages.resize( numMessages );
@@ -130,11 +133,25 @@ namespace protocol
                 if ( config.align )
                     stream.Align();
 
-                for ( int i = 0; i < numMessages; ++i )
-                    serialize_bits( stream, messageIds[i], 16 );
+                serialize_bits( stream, messageIds[0], 16 );
+                for ( int i = 1; i < numMessages; ++i )
+                {
+                    if ( messageIds[i] > messageIds[i-1] )
+                    {
+                        serialize_int_relative( stream, messageIds[i-1], messageIds[i] );
+                    }
+                    else
+                    {
+                        uint32_t a = messageIds[i-1];
+                        uint32_t b = messageIds[i] + 65536;
+                        serialize_int_relative( stream, a, b );
+                        if ( stream.IsReading() )
+                            messageIds[i] = uint16_t( b );
+                    }
+                }
 
                 if ( config.align )
-                    assert( stream.GetAlignBits() == 0 );
+                    stream.Align();
 
                 for ( int i = 0; i < numMessages; ++i )
                 {
@@ -392,8 +409,9 @@ namespace protocol
             bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
             assert( result );
 
-            #ifndef NDEBUG
             auto entry = m_sendQueue->Find( m_sendMessageId );
+
+            #ifndef NDEBUG
             assert( entry );
             assert( entry->valid );
             assert( entry->sequence == m_sendMessageId );

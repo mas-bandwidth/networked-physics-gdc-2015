@@ -127,7 +127,7 @@ public:
 
 void soak_test()
 {
-    cout << "[soak test]" << endl;
+//    printf( "[soak test]\n" );
 
     auto channelStructure = make_shared<TestChannelStructure>();
     auto packetFactory = make_shared<PacketFactory>( channelStructure );
@@ -194,20 +194,13 @@ void soak_test()
             if ( value < 5000 )
             {
                 // bitpacked message
-
                 auto message = make_shared<TestMessage>();
-
-//                cout << format_string( "%09.2f - sent message %d", timeBase.time, sendMessageId ) << endl;
-
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
             else if ( value < 9999 )
             {
                 // small block
-
-//                cout << format_string( "%09.2f - sent small block %d", timeBase.time, message->GetId() ) << endl;
-
                 int index = sendMessageId % 32;
                 auto block = make_shared<Block>( index + 1, 0 );
                 for ( int i = 0; i < block->size(); ++i )
@@ -217,14 +210,11 @@ void soak_test()
             else
             {
                 // large block
-
-//                  cout << format_string( "%09.2f - sent block %d", timeBase.time, message->GetId() ) << endl;
-
-                    int index = sendMessageId % 4;
-                    auto block = make_shared<Block>( (index+1) * 1024 * 1000 + index, 0 );
-                    for ( int i = 0; i < block->size(); ++i )
-                        (*block)[i] = ( index + i ) % 256;
-                    messageChannel->SendBlock( block );
+                int index = sendMessageId % 4;
+                auto block = make_shared<Block>( (index+1) * 1024 * 1000 + index, 0 );
+                for ( int i = 0; i < block->size(); ++i )
+                    (*block)[i] = ( index + i ) % 256;
+                messageChannel->SendBlock( block );
             }
             
             sendMessageId++;
@@ -235,8 +225,6 @@ void soak_test()
 
         simulator.SendPacket( address, packet );
         
-//        cout << format_string( "%09.2f - sent packet %d", timeBase.time, packet->sequence ) << endl;
-
         simulator.Update( timeBase );
 
         packet = simulator.ReceivePacket();
@@ -261,8 +249,6 @@ void soak_test()
 
             auto connectionPacket = static_pointer_cast<ConnectionPacket>( packet );
 
-//            cout << format_string( "%09.2f - received packet %d", timeBase.time, connectionPacket->sequence ) << endl;
-
             connection.ReadPacket( connectionPacket );
         }
 
@@ -278,7 +264,7 @@ void soak_test()
 
             if ( message->GetType() == MESSAGE_Test )
             {
-                cout << format_string( "%09.2f - received message %d - test message", timeBase.time, message->GetId() ) << endl;
+//                printf( "%09.2f - received message %d - test message\n", timeBase.time, message->GetId() );
             }
             else
             {
@@ -292,7 +278,7 @@ void soak_test()
                     assert( block->size() == index + 1 );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );
-                    cout << format_string( "%09.2f - received message %d - small block", timeBase.time, message->GetId() ) << endl;
+//                    printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
                 }
                 else
                 {
@@ -300,20 +286,22 @@ void soak_test()
                     assert( block->size() == (index + 1 ) * 1024 * 1000 + index );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );
-                    cout << format_string( "%09.2f - received message %d - large block", timeBase.time, message->GetId() ) << endl;
+//                    printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
                 }
             }
 
             numMessagesReceived++;
         }
 
+        /*
         auto status = messageChannel->GetReceiveLargeBlockStatus();
         if ( status.receiving )
-            cout << format_string( "%09.2f - receiving large block %d - %d/%d fragments", 
-                                   timeBase.time, 
-                                   status.blockId, 
-                                   status.numReceivedFragments, 
-                                   status.numFragments ) << endl;
+            printf( "%09.2f - receiving large block %d - %d/%d fragments\n",
+                    timeBase.time, 
+                    status.blockId, 
+                    status.numReceivedFragments, 
+                    status.numFragments );
+                    */
 
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == numMessagesSent );
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );

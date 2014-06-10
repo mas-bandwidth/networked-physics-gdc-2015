@@ -1,36 +1,74 @@
 DONE:
 
 TODO:
+    
+    OPTIMIZE!!!
 
-    ------------
+    --------------------
 
-    Can optimize messages id serialization quite a bit, by encoding next message id 
-    relative to the previous one, eg. +1, +5, up to n where n would actually be small, 
-    eg. half sliding window size.
+    Instead of walking the send queue to find the oldest message id not acked,
+    cache this value, and on each update, walk left to right to skip past acked
+    messages in the send queue to get the new value.
 
-    Common case would probably be a bunch of messages in order too, eg.
-    one bit = +1, repeated n times.
+    --------------------
 
-    This is a big optimization.
+    Optimization for fragments, track oldest unacked fragment id, and start there
+    and go left to right to search for fragments to send.
 
-    What would also be awesome about this is that this would convert
-    the message ids into something that is more likely to be *constant*
-    or at least, would often have repeating patterns from packet to packet.
+    --------------------
 
-    When doing this, make sure that the message types are followed
-    by the message ids in a separate array, vs. being interleaved
-    with message data.
+    Add a new fragmentSendWindow config, eg. 64 and only look this far past
+    the oldest unacked fragment. Should save unnecessary scans for large block
+    sizes.
 
-    This would help out the dictionary based LZ compressor quite a bit,
-    vs. the current bunch of message ids that change from packet to packet.
+    --------------------
 
-    -----------------
+    Bring back templated serialize functions.
 
-    Implement an aligned memcpy in/out of bitpacker when writing bytes.
+    Yes, network object should have virtual SerializeRead( ReadStream & stream )
+    and SerializeWrite functions, BUT... these can be implemented via templated 
+    serialize fn in the class.
 
-    This is much faster than going through the bitpacking codepath.
+    I think this is the best of both worlds, and avoids any overhead in the
+    serialize due to extra branching.
 
-    -----------------
+    --------------------
+
+    Remove usage of cout and replace uniformly with printf. Fuck cout it's slow as shit.
+
+    --------------------
+
+    Remove "format_string" function.
+
+    --------------------
+
+    SoakTest seems to not work with -DNDEBUG. Why?
+
+    --------------------
+
+    I'd like a logging system. It's annoying to have to comment out and re-enable
+    logs as I debug things. Would be nice to be able to enable/disable channels,
+    and have virtually zero cost if a channel is disabled.
+
+    Would be nice to have logs completely disabled in release build.
+
+    Perhaps I could get an evaluation of deja. Maybe I can even get a licence
+    if I write an article explaining my usage of deja? Contact the authors.
+
+    But does deja have a mac UI client? Almost certainly not.
+
+    --------------------
+
+
+
+
+
+
+
+
+
+
+    ------------------------
 
     Add code on server to send server data block to client.
 
@@ -60,8 +98,24 @@ TODO:
 
     ------------------------
 
+    Implement fragmentation and reassembly for large packets, do this
+    at the connection level once we have large snapshots, this would
+    probably be a good idea to have -- set MTU to 1200 bytes.
 
+    Keep it simple. A packet is received when all its fragments
+    have been received. If any of the fragments are dropped,
+    then the packet is dropped.
 
+    I propose a simple header, eg. a packet type for fragment packet
+    with a header x/y fragments and the sequence number of the *unacked*
+    packet.
+
+    Then the complexity becomes:
+
+    a) writing the fragments, and not sending them out too rapidly
+    b) on the receive side collating the fragments and reassembling them.
+
+    ------------------------
 
 
 
@@ -94,12 +148,6 @@ TODO:
 
 WOULD BE NICE:
 
-    -----------------
-
-    Implement fragmentation and reassembly for large packets, do this
-    at the connection level once we have large snapshots, this would
-    probably be a good idea to have -- set MTU to 1200 bytes.
-
     ----------------
 
     Add counters for all the different things inside the large blocks,
@@ -107,11 +155,6 @@ WOULD BE NICE:
     fragments read/written.
 
     Write some basic tests to verify these counters are functional.
-
-    ----------------------
-
-    I'd like a logging system. It's annoying to have to comment out and re-enable
-    logs as I debug things. Would be nice to be able to have logs like Deja.
 
     ------------------
 
@@ -135,37 +178,15 @@ WOULD BE NICE:
     connection type and specify channel budgets dynamically based on flow control, 
     for example.
 
-    --------------
-
-    Add a fast path for read/write bytes when the bitpacker is aligned,
-    eg. just copy in/out with memcpy vs. actually doing bits level ops.
-
-    --------------
-
-    It would be nice to bring back templated serialize functions, and have specialized
-    read, write and measure streams. I think the code generated would be much more
-    amenable to optimization, however before doing this I should definitely profile.
-
-    --------------------
-
-    Instead of walking the send queue to find the oldest message id not acked,
-    cache this value, and on each update, walk left to right to skip past acked
-    messages in the send queue to get the new value.
-
-    --------------------
-
-    Optimization for fragments, track oldest unacked fragment id, and start there
-    and go left to right to search for fragments to send.
-
-    Add a new fragmentSendWindow config, eg. 64 and only look this far past
-    the oldest unacked fragment. Should save unnecessary scans for large block
-    sizes.
-
     --------------------
 
     Optimize the block send and receive to not require a data copy or allocation
     for each fragment data block, use pointers and directly serialize in/out of
     block data instead.
+
+    ^-- is this a significant overhead? I'm not sure it is. 
+
+    But maybe for large fragment sizes.
 
     --------------------
 
@@ -175,28 +196,26 @@ WOULD BE NICE:
 
     ---------------------
 
-    What is next?
+    Integrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
+    for compression. Try it out in the stress test and see how it generates dictionaries
+    and how much compression it gets post-dictionary and so on. Do not check in the oodle
+    libs, but do check in the interface and source code that uses it.
 
-    1) Start doing performance analysis (CPU, memory etc.)
+    ---------------------
 
-    2) Investigate using a custom allocator. Potentially ditch STL usage at this point.
+    Implement packet encryption via key, plus hash to detect tampering (unified). Optional feature.
 
-    3) Consider cost of shared_ptr. Is it slow? Where should I use it? Where should I not?
+    ---------------------
 
-    4) Integrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
-       for compression. Try it out in the stress test and see how it generates dictionaries
-       and how much compression it gets post-dictionary and so on. Do not check in the oodle
-       libs, but do check in the interface and source code that uses it.
+    Implement an unreliable channel (messages), 
+    eg. queue up unreliable messages to send and discard any that don't fit in the packet.
+    Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
 
-    5) Implement encryption via key, plus hash to detect tampering (unified). Optional feature.
+    --------------------
 
-    6) Implement an unreliable channel (messages), 
-       eg. queue up unreliable messages to send and discard any that don't fit in the packet.
-       Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
-
-    7) Implement an atomic queue on top of the client and server interface for sending
-       and receiving user packets. This interface should allow running the actual serialization
-       and packet reading entirely on a separate thread. Do it here where it is most natural,
-       to avoid overcomplicating the interface/connection code.
+    Implement an atomic queue on top of the client and server interface for sending
+    and receiving user packets. This interface should allow running the actual serialization
+    and packet reading entirely on a separate thread. Do it here where it is most natural,
+    to avoid overcomplicating the interface/connection code.
 
     ----------------

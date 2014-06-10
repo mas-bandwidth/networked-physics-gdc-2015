@@ -301,7 +301,6 @@ namespace protocol
             {
 //                cout << "ipv6 packet" << endl;
                 sockaddr_in6 s_addr;
-                memset( &s_addr, 0, sizeof(s_addr) );
                 s_addr.sin6_family = AF_INET6;
                 s_addr.sin6_port = htons( address.GetPort() );
                 memcpy( &s_addr.sin6_addr, address.GetAddress6(), sizeof( s_addr.sin6_addr ) );

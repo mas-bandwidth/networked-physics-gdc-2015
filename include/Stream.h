@@ -213,6 +213,81 @@ namespace protocol
 
         stream.SerializeBytes( &block[0], numBytes );
     }
+
+    template <typename T> void serialize_int_relative( Stream & stream, T previous, T & current )
+    {
+        uint32_t difference = 0;
+        if ( stream.IsWriting() )
+        {
+            assert( previous < current );
+            difference = current - previous;
+            assert( difference >= 0 );
+        }
+
+        bool oneBit = difference == 1;
+        serialize_bool( stream, oneBit );
+        if ( oneBit )
+        {
+            if ( stream.IsReading() )
+                current = previous + 1;
+            return;
+        }
+
+        bool twoBits = difference <= 4;
+        serialize_bool( stream, twoBits );
+        if ( twoBits )
+        {
+            serialize_int( stream, difference, 1, 4 );
+            if ( stream.IsReading() )
+                current = previous + difference;
+            return;
+        }
+
+        bool fourBits = difference <= 16;
+        serialize_bool( stream, fourBits );
+        if ( fourBits )
+        {
+            serialize_int( stream, difference, 1, 16 );
+            if ( stream.IsReading() )
+                current = previous + difference;
+            return;
+        }
+
+        bool eightBits = difference <= 256;
+        serialize_bool( stream, eightBits );
+        if ( eightBits )
+        {
+            serialize_int( stream, difference, 1, 256 );
+            if ( stream.IsReading() )
+                current = previous + difference;
+            return;
+        }
+
+        bool twelveBits = difference <= 4096;
+        serialize_bool( stream, twelveBits );
+        if ( twelveBits )
+        {
+            serialize_int( stream, difference, 1, 4096 );
+            if ( stream.IsReading() )
+                current = previous + difference;
+            return;
+        }
+
+        bool sixteenBits = difference <= 65535;
+        serialize_bool( stream, sixteenBits );
+        if ( sixteenBits )
+        {
+            serialize_int( stream, difference, 1, 256 );
+            if ( stream.IsReading() )
+                current = previous + difference;
+            return;
+        }
+
+        uint32_t value = current;
+        serialize_uint32( stream, value );
+        if ( stream.IsReading() )
+            current = (decltype(current)) value;
+    }
 }  //
 
 #endif
