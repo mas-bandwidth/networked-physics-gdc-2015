@@ -148,6 +148,80 @@ namespace protocol
         BitReader m_reader;
     };
 
+    class MeasureStream
+    {
+    public:
+
+        enum { IsWriting = 1 };
+        enum { IsReading = 0 };
+
+        MeasureStream( int bytes ) : m_bytes( bytes ), m_bitsWritten(0) {}
+
+        void SerializeInteger( int32_t value, int32_t min, int32_t max )
+        {
+            assert( min < max );
+            assert( value >= min );
+            assert( value <= max );
+            const int bits = bits_required( min, max );
+            m_bitsWritten += bits;
+        }
+
+        void SerializeBits( uint32_t value, int bits )
+        {
+            assert( bits > 0 );
+            assert( bits <= 32 );
+            m_bitsWritten += bits;
+        }
+
+        void SerializeBytes( const uint8_t * data, int bytes )
+        {
+            Align();
+            m_bitsWritten += bytes * 8;
+        }
+
+        void Align()
+        {
+            const int alignBits = GetAlignBits();
+            m_bitsWritten += alignBits;
+        }
+
+        int GetAlignBits() const
+        {
+            const int remainderBits = m_bitsWritten % 8;
+            return remainderBits ? 8 - remainderBits : 0;
+        }
+
+        bool Check( uint32_t magic )
+        {
+            m_bitsWritten += 32;
+            return true;
+        }
+
+        void Flush()
+        {
+        }
+
+        int GetBits() const
+        {
+            return m_bitsWritten;
+        }
+
+        int GetBytes() const
+        {
+            return m_bytes;
+        }
+
+        bool IsOverflow() const
+        {
+            return m_bitsWritten * 8 > m_bytes;
+        }
+
+    private:
+
+        int m_bytes;
+        int m_bitsWritten;
+    };
+
     template <typename T> void serialize_object( ReadStream & stream, T & object )
     {                        
         object.SerializeRead( stream );
@@ -158,6 +232,11 @@ namespace protocol
         object.SerializeWrite( stream );
     }
 
+    template <typename T> void serialize_object( MeasureStream & stream, T & object )
+    {                        
+        object.SerializeMeasure( stream );
+    }
+    
     #define serialize_int( stream, value, min, max )            \
         do                                                      \
         {                                                       \

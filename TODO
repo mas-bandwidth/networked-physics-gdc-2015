@@ -2,15 +2,7 @@ DONE:
 
 TODO:
 
-    I think I can fix it by adding a reference count to the connection packet.
-
-    Basically, the connection packet has ref count 0 initially.
-
-    Then, I can addref to message for each packet that includes it,
-    as well as addref when it is added to the send packets.
-
-    Then when it is acked, *or* when a packet is deleted, 
-    decrement the ref, if the ref is zero, delete the message.
+    Why is serialize read slower than serialize write?
 
     ----------------------
 
@@ -75,6 +67,8 @@ TODO:
     and copy.
 
     This is probably the largest optimization that can be made at this stage.
+
+    ^-------- PROFILE AGAIN BEFORE TRYING THIS!!!
 
     --------------------
 

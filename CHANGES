@@ -85,6 +85,143 @@ Wednesday Evening, June 11th, 2014:
 
     This is probably the cause of it. This is CRAZY. I'm not sure how to fix this!
 
+    (one hour later...)
+
+    I think I can fix it by adding a reference count to the connection packet.
+
+    Basically, the connection packet has ref count 0 initially.
+
+    Then, I can addref to message for each packet that includes it,
+    as well as addref when it is added to the send packets.
+
+    Then when it is acked, *or* when a packet is deleted, 
+    decrement the ref, if the ref is zero, delete the message.
+
+    That seems to have fixed it. Soak test works now!
+
+    Still getting a crash in profile mode SoakTest.
+
+    Was caused by feeding the written packet directly back in for read.
+
+    Can't do that. Realized the soak test wasn't even running any
+    serialization as well -- crazy. Fixed it.
+
+    Now the soak test is awesome.
+
+    Profiling the SoakTest again:
+
+        67.4% - Connection::WritePacket (of which almost all is ReliableMessageChannel::GetData)  <--- WHAT IS GOING ON?!
+        27.2% - ConnectionPacket::SerializeWrite
+         0.2% - ConnectionPacket::SerializeRead (!?!?!?)
+
+    Two things are strange:
+
+        1. What could possibly be inside Connection::WritePacket to be so slow?
+
+        2. Why is serialize write 100X slower than read?!
+
+    I can't explain this.
+
+    Bitpacked messages only:
+
+        65.2% - Connection::WritePacket
+        29.9% - ConnectionPacket::SerializeWrite
+         0.4% - Connection::ReadPacket
+         0.2% - ConnectionPacket::SerializeRead
+
+    Small blocks only:
+
+        74.5% - Connection::WritePacket
+        19.5% - ConnectionPacket::SerializeWrite (makes sense, less work to do... kinda)
+         0.5% - Connection::ReadPacket
+         0.2% - ConnectionPacket::SerializeRead
+
+    Large blocks only:
+
+        46.0% - ConnectionPacket::SerializeWrite
+        34.1% - Connection::WritePacket
+         1.3% - ConnectionPacket::~ConnectionPacket
+         0.1% - ConnectionPacket::ReadPacket
+         0.1% - ConnectionPacket::SerializeRead
+
+    *** I DON'T KNOW WHAT IS GOING ON ***
+
+    Strangely if I turn off the "GetData" to always return nullptr:
+
+        36.0% - Connection::WritePacket
+        29.9% - Connection::ReadPacket
+         7.8% - ConnectionPacket::~ConnectionPacket
+         6.4% - ConnectionPacket::SerializeRead
+         6.1% - ConnectionPacket::ConnectionPacket (?!)
+         6.0% - ConnectionPacket::SerializeWrite
+         1.0% - Connection::Update
+
+    It seems that read and write can get very close to the same cost.
+
+    Why is it then that serialize read and write differ so much
+    under real world data?! --- OH... the optimizer might be
+    working out that you aren't actually reading into data
+    that is being used... DOH
+
+    Nope. Tried this.
+
+    I think there is something broken with -DNDEBUG
+
+    I think the code is behaving incorrectly.
+
+    Dropping to without -DNDEBUG and seeing what profiler looks like:
+
+    YES! It's more reasonable.
+
+    Also, we *definitely* have a memory leak!!! =)
+
+        21.2% - ConnectionPacket::SerializeRead
+        12.6% - ConnectionPacket::SerializeWrite
+        12.3% - Connection::WritePacket
+         8.9% - Connection::ReadPacket
+         1.5% - Connection::SendMessage
+         1.3% - ConnectionPacket::~ConnectionPacket
+         1.1% - BlockMessage::~BlockMessage
+
+    ^--- Above looks much more reasonable.
+
+    Need to work out why SoakTest.cpp is broken with -DNDEBUG!
+
+    Found it! A ++m_wordIndex inside an assert. Dumbass.
+
+    This explains everything.
+
+    Now we have:
+
+        27.9% - ConnectionPacket::SerializeRead
+        17.0% - ConnectionPacket::SerializeWrite
+        12.3% - Connection::ReadPacket
+        10.4% - ConnectionPacket::~ConnectionPacket (mostly vector free)
+         8.9% - Connection::WritePacket (mostly vector new)
+         5.9% - vector new
+         5.8% - BlockMessage::~BlockMessage (mostly vector free)
+
+    Bottom line looking at these stats -- I need custom allocators!
+
+    Also, I think if I introduced a faster measure stream, it would reduce
+    the cost of the serialize write to be at the same level as the read.
+
+    I should do this ASAP.
+
+    Implement specialized MeasureStream
+
+    This should speed up the event measure quite a bit.
+
+    Now it is:
+
+        27.7% - ConnectionPacket::SerializeRead
+        17.8% - ConnectionPacket::SerializeWrite
+        12.3% - Connection::ReadPacket
+        10.5% - ConnectionPacket::~ConnectionPacket
+         8.7% - Connection::WritePacket
+         6.1% - vector new
+         5.7% - vector free
+
 
 Tuesday Evening, June 10th, 2014:
 ---------------------------------

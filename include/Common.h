@@ -159,6 +159,8 @@ namespace protocol
         virtual void SerializeRead( class ReadStream & stream ) = 0;
 
         virtual void SerializeWrite( class WriteStream & stream ) = 0;
+
+        virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
     };
 
     template <typename T> class Factory

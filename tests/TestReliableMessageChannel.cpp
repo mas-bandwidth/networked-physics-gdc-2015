@@ -154,6 +154,8 @@ void test_reliable_message_channel_messages()
         writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
 
+        delete writePacket;
+
         ReadStream readStream( buffer, MaxPacketSize );
         auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
         readPacket->SerializeRead( readStream );

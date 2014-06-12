@@ -12,7 +12,7 @@ enum MessageType
     MESSAGE_Test
 };
 
-static int messageBitsArray[] = { 1, 320, 120, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8, 512, 1000, 5000, 5, 3, 7, 800 };
+static int messageBitsArray[] = { 1, 320, 120, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8, 512, 5, 3, 7, 50 };
 
 int GetNumBitsForMessage( uint16_t sequence )
 {
@@ -26,6 +26,7 @@ struct TestMessage : public Message
     TestMessage() : Message( MESSAGE_Test )
     {
         sequence = 0;
+        dummy = 0;
     }
 
     template <typename Stream> void Serialize( Stream & stream )
@@ -35,16 +36,10 @@ struct TestMessage : public Message
         int numBits = GetNumBitsForMessage( sequence );
         int numWords = numBits / 32;
         for ( int i = 0; i < numWords; ++i )
-        {
-            int dummy = 0;
             serialize_bits( stream, dummy, 32 );
-        }
         int numRemainderBits = numBits - numWords * 32;
         if ( numRemainderBits > 0 )
-        {
-            int dummy = 0;
             serialize_bits( stream, dummy, numRemainderBits );
-        }
 
         serialize_check( stream, 0xDEADBEEF );
     }
@@ -59,7 +54,13 @@ struct TestMessage : public Message
         Serialize( stream );
     }
 
+    void SerializeMeasure( MeasureStream & stream )
+    {
+        Serialize( stream );
+    }
+
     uint16_t sequence;
+    uint32_t dummy;
 };
 
 class MessageFactory : public Factory<Message>
@@ -156,20 +157,6 @@ void soak_test()
 
     Address address( "::1" );
 
-#if !PROFILE
-
-    BSDSocketsConfig interfaceConfig;
-    interfaceConfig.port = 10000;
-    interfaceConfig.family = AF_INET6;
-    interfaceConfig.maxPacketSize = MaxPacketSize;
-    interfaceConfig.packetFactory = &packetFactory;
-    
-    BSDSockets interface( interfaceConfig );
-
-    address.SetPort( interfaceConfig.port );
-
-#endif
-
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
@@ -183,15 +170,13 @@ void soak_test()
 
     auto messageChannelConfig = channelStructure.GetConfig(); 
     
-    double dt = 0.01f;
-
     uint16_t sendMessageId = 0;
     uint64_t numMessagesSent = 0;
     uint64_t numMessagesReceived = 0;
 
     TimeBase timeBase;
     timeBase.time = 0.0;
-    timeBase.deltaTime = dt;
+    timeBase.deltaTime = 0.01;
 
     while ( true )
     {
@@ -234,50 +219,27 @@ void soak_test()
             numMessagesSent++;
         }
 
-        Packet * packet = connection.WritePacket();
+        ConnectionPacket * writePacket = connection.WritePacket();
 
-#if PROFILE
+        uint8_t buffer[MaxPacketSize];
 
-        connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+        WriteStream writeStream( buffer, MaxPacketSize );
+        writePacket->SerializeWrite( writeStream );
+        writeStream.Flush();
+        assert( !writeStream.IsOverflow() );
 
-        delete packet;
+        delete writePacket;
+
+        ReadStream readStream( buffer, MaxPacketSize );
+        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+        readPacket->SerializeRead( readStream );
+        assert( !readStream.IsOverflow() );
+
+        connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
+
+        delete readPacket;
 
         connection.Update( timeBase );
-
-#else
-
-        simulator.SendPacket( address, packet );
-        
-        simulator.Update( timeBase );
-
-        packet = simulator.ReceivePacket();
-
-        if ( packet )
-            interface.SendPacket( address, packet );
-
-        connection.Update( timeBase );
-
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
-
-        interface.Update( timeBase );
-
-        while ( true )
-        {
-            auto packet = interface.ReceivePacket();
-            if ( !packet )
-                break;
-
-            assert( packet->GetAddress() == address );
-            assert( packet->GetType() == PACKET_Connection );
-
-            auto connectionPacket = static_cast<ConnectionPacket*>( packet );
-
-            connection.ReadPacket( connectionPacket );
-
-            delete packet;
-        }
-
-#endif
 
         while ( true )
         {
@@ -342,7 +304,7 @@ void soak_test()
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
 
-        timeBase.time += dt;
+        timeBase.time += timeBase.deltaTime;
     }
 }
 

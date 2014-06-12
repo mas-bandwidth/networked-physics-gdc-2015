@@ -18,7 +18,9 @@ namespace protocol
     {
     public:
 
-        Message( int type ) : m_type(type) {}
+        Message( int type ) : m_refCount(0), m_id(0), m_type(type) {}
+
+        ~Message() { assert( m_refCount == 0 ); }
 
         int GetId() const {  return m_id; }
         int GetType() const { return m_type; }
@@ -27,10 +29,18 @@ namespace protocol
 
         bool IsBlock() const { return m_type == BlockMessageType; }
 
+        void AddRef() { m_refCount++; }
+        void Release() { assert( m_refCount > 0 ); m_refCount--; }
+        int GetRefCount() { return m_refCount; }
+
     private:
       
-        uint16_t m_id;  
-        uint16_t m_type;       
+        Message( const Message & other );
+        const Message & operator = ( const Message & other );
+
+        int m_refCount;
+        uint32_t m_id : 16;
+        uint32_t m_type : 16;       
     };
 
     class BlockMessage : public Message
@@ -63,6 +73,11 @@ namespace protocol
         }
 
         void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeMeasure( MeasureStream & stream )
         {
             Serialize( stream );
         }

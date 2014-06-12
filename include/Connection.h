@@ -173,6 +173,11 @@ namespace protocol
             return Serialize( stream );
         }
 
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            return Serialize( stream );
+        }
+
         bool operator ==( const ConnectionPacket & other ) const
         {
             return sequence == other.sequence &&
@@ -184,6 +189,12 @@ namespace protocol
         {
             return !( *this == other );
         }
+
+    private:
+
+        ConnectionPacket( const ConnectionPacket & other );
+        const ConnectionPacket & operator = ( const ConnectionPacket & other );
+
     };
 
     struct ConnectionConfig

@@ -54,8 +54,16 @@ namespace protocol
 
     public:
 
+        vector<Message*> messages;             // array of messages. valid if *not* sending large block.
+        uint64_t largeBlock : 1;               // true if currently sending a large block.
+        uint64_t blockSize : 32;               // block size in bytes. valid if sending large block.
+        uint64_t blockId : 16;                 // block id. valid if sending large block.
+        uint64_t fragmentId : 16;              // fragment id. valid if sending large block.
+        uint64_t releaseMessages : 1;          // 1 if this channel data should release the messages in destructor.
+        Block * fragment;                      // the actual fragment data. valid if sending large block.
+
         ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
-            : config( _config ), largeBlock(0), blockSize(0), blockId(0), fragmentId(0) 
+            : config( _config ), largeBlock(0), blockSize(0), blockId(0), fragmentId(0), releaseMessages(0)
         {
             fragment = nullptr;
         }
@@ -68,14 +76,20 @@ namespace protocol
                 delete fragment;
                 fragment = nullptr;
             }
-        }
 
-        vector<Message*> messages;                      // array of messages. valid if *not* sending large block.
-        uint64_t largeBlock : 1;                        // true if currently sending a large block.
-        uint64_t blockSize : 32;                        // block size in bytes. valid if sending large block.
-        uint64_t blockId : 16;                          // block id. valid if sending large block.
-        uint64_t fragmentId : 16;                       // fragment id. valid if sending large block.
-        Block * fragment;                               // the actual fragment data. valid if sending large block.
+            if ( releaseMessages )
+            {
+                for ( int i = 0; i < messages.size(); ++i )
+                {
+                    assert( messages[i] );
+                    messages[i]->Release();
+                    if ( messages[i]->GetRefCount() == 0 )
+                        delete messages[i];
+                }
+            }
+
+            messages.resize( 0 );
+        }
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -159,8 +173,11 @@ namespace protocol
                     if ( config.align )
                         stream.Align();
 
-                    if ( messageTypes[i] < 0 || messageTypes[i] > config.messageFactory->GetMaxType() )
-                        printf( "message type out of bounds? %d\n", messageTypes[i] );
+                    if ( Stream::IsWriting )
+                    {
+                        if ( messageTypes[i] < 0 || messageTypes[i] > config.messageFactory->GetMaxType() )
+                            printf( "message type out of bounds? %d\n", messageTypes[i] );
+                    }
 
                     serialize_int( stream, messageTypes[i], 0, config.messageFactory->GetMaxType() );
 
@@ -186,6 +203,11 @@ namespace protocol
         }
 
         void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeMeasure( MeasureStream & stream )
         {
             Serialize( stream );
         }
@@ -312,7 +334,6 @@ namespace protocol
         SlidingWindow<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
 
         vector<uint64_t> m_counters;                                        // counters used for unit testing and validation
-        vector<uint8_t> m_measureBuffer;                                    // buffer used for measuring message size in bits
 
         SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
         ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received
@@ -361,12 +382,10 @@ namespace protocol
 
             m_counters.resize( NumCounters, 0 );
 
-            const int SmallBlockOverhead = bits_required( 0, MaxSmallBlockSize - 1 );
-            m_measureBuffer.resize( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
-
             const int MessageIdBits = 16;
             const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
             const int MessageAlignOverhead = m_config.align ? 14 : 0;
+
             m_messageOverheadBits = MessageIdBits + MessageTypeBits + MessageAlignOverhead;
 
             m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
@@ -428,6 +447,7 @@ namespace protocol
                 // todo: we need a way to set a fatal error here
                 // the connection must be torn down at this point
                 // we cannot continue.
+                delete message;
                 return;
             }
 
@@ -447,27 +467,26 @@ namespace protocol
             if ( largeBlock )
                 printf( "sent large block %d\n", (int) m_sendMessageId );
 */
+
+            message->AddRef();
             bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
             assert( result );
 
             auto entry = m_sendQueue->Find( m_sendMessageId );
 
-            #ifndef NDEBUG
             assert( entry );
             assert( entry->valid );
             assert( entry->sequence == m_sendMessageId );
             assert( entry->message );
             assert( entry->message->GetId() == m_sendMessageId );
-            #endif
 
             if ( !largeBlock )
             {
-                // todo: a specialized measure stream would be faster
-
-                typedef WriteStream Stream;
-                Stream stream( &m_measureBuffer[0], m_measureBuffer.size() );
-                message->SerializeWrite( stream );
-                entry->measuredBits = stream.GetBits() + m_messageOverheadBits;
+                typedef MeasureStream Stream;
+                MeasureStream measureStream( m_config.maxMessageSize );
+                message->SerializeMeasure( measureStream );
+                entry->measuredBits = measureStream.GetBits() + m_messageOverheadBits;
+                assert( !measureStream.IsOverflow() );
 
 //              printf( "message %d is %d bits\n", (int) m_sendMessageId, entity->measuredBits );
             }
@@ -507,6 +526,8 @@ namespace protocol
             m_counters[MessagesReceived]++;
 
             m_receiveMessageId++;
+
+            assert( message->GetRefCount() == 0 );      // must be a normal object. delete when done with it
 
             return message;
         }
@@ -684,8 +705,11 @@ namespace protocol
                     auto entry = m_sendQueue->Find( messageIds[i] );
                     assert( entry );
                     assert( entry->message );
+                    entry->message->AddRef();
                     data->messages[i] = entry->message;
                 }
+
+//                printf( "sent %d messages in packet\n", data->messages.size() );
 
                 return data;
             }
@@ -694,6 +718,8 @@ namespace protocol
         bool ProcessData( uint16_t sequence, ChannelData * channelData )
         {
             assert( channelData );
+
+  //          printf( "process data %d\n", sequence );
 
             // todo: must remember to delete the channel data somewhere.
             // maybe not here. probably after the connection calls "ProcessData"
@@ -946,7 +972,9 @@ namespace protocol
 
 //                        printf( "acked message %d\n", messageId );
 
-                        delete sendQueueEntry->message;
+                        sendQueueEntry->message->Release();
+                        if ( sendQueueEntry->message->GetRefCount() == 0 )
+                            delete sendQueueEntry->message;
 
                         sendQueueEntry->valid = 0;
                         sendQueueEntry->message = nullptr;
@@ -981,7 +1009,9 @@ namespace protocol
                         auto sendQueueEntry = m_sendQueue->Find( sentPacket->blockId );
                         assert( sendQueueEntry );
                         
-                        delete sendQueueEntry->message;
+                        sendQueueEntry->message->Release();
+                        if ( sendQueueEntry->message->GetRefCount() == 0 )
+                            delete sendQueueEntry->message;
                         
                         sendQueueEntry->valid = 0;
                         sendQueueEntry->message = nullptr;

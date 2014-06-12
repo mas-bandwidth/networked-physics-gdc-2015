@@ -223,7 +223,8 @@ namespace protocol
             }
             else
             {
-                assert( ++m_wordIndex < m_numWords );
+                m_wordIndex++;
+                assert( m_wordIndex < m_numWords );
                 const uint32_t a = 32 - m_bitIndex;
                 const uint32_t b = bits - a;
                 m_scratch <<= a;
