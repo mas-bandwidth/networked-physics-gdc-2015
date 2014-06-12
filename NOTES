@@ -2,48 +2,10 @@ NOTES
 
 -----------------------------------------
 
-IMPORTANT: Make sure client has a guid per-connection, so we can
-distinguish packets from previous connection from the current.
-This was a problem for me in the past with other implementations
-so make sure this is solved off the bat. 32bit guid.
-
------------------------------------------
-
-Client and server should have *no* knowledge of the exact
-resolver and network interface implementation.
-
-These should be passed in via config.
-
-This means the client and server can run over any network interface
-implementation and resolver.
-
------------------------------------------
-
 Client and server should be designed to be *Extendable*
 
 My guess is that integration into the game will require
 deriving your own client and server classes from the base.
-
------------------------------------------
-
-Client and server interface.
-
-These should allow you to pass in a network interface, and then manage
-the set of connections on the server, one-per client, and on the client
-just have a single connection to the server.
-
-Note that there needs to be a state machine on the server and on the client 
-to negotiate connection. Once established stabilizes to "Connection" 
-packet type.
-
-Make sure to build in a block of data which gets transferred to the client
-prior to connection packets being sent down, eg. as part of the client connect
-state machine.
-
-This is essential, as it may include something that informs the client of 
-the data required to actually *process* the connection packets (Eg. send tables) 
-so it is essential that this data is sent down here *prior* to connection packets 
-being processed at all (they should be discarded if received prior)
 
 -------------------------------------------------------------------------------------------------------------
 
@@ -78,114 +40,12 @@ additional libraries and try them out. Try them all! :D
 
 -------------------------------------------------------------------------------------------------------------
 
-Is it necessary to include multiple blocks per-packet?
-
-I think once you drop to blocks you are basically saying, this is no longer
-time critical stuff.
-
-Perhaps initially I should not support multiple block aggregated per-packet,
-and instead focus blocks on the fragmentation and reassembly.
-
-Messages are necessary to do the multiple block aggregation.
-
-Besides, consider what about a stream of message -> block -> message -> block etc.
-
-Blocks should be... OK, now I'm going to try to serialize this block. It's big,
-but it should be included in the reliable-ordered stream for this channel, eg.
-messages sent after this block should be delayed until the block gets through.
-
-If you really want a fast block, stick it inside a message, for real.
-
-*HOWEVER*
-
-It might be possible to treat small blocks like messages, eg. fake the serialize
-and then just not worry about it -- only drop to the block mode for big blocks.
-
-Yes. This needs to be done.
-
--------------------------------------------------------------------------------------------------------------
-
-I would like to standardize on "Message" instead of "Event"
-
-This means I could have a "ReliableChannel" that supports "messages" and "blocks"
-
-Should blocks be wrapped in a special type of "BlockMessage" for consistency? Probably.
-
-  channel.SendMessage( loginMessage );
-  channel.SendBlock( serverData );
-
-Nah. I like the split of blocks and messages, but on the receive side they need to be unified:
-
-  while ( auto message = channel.Receive() )
-  {
-      if ( message.IsBlock() )
-      {
-          // handle block
-      }
-      else
-      {
-          // handle message
-      }
-  }
-
-So it seems they do need some unification for them to be received in-order.
-
-So "SendBlock" is just a convenience function that wraps a block in a "BlockMessage" with "IsBlock" true
-and accessors to get the # of bytes in the block and a ptr to the block data.
-
--------------------------------------------------------------------------------------------------------------
-
 When sending a message, it should be up to the runtime to decide how to send it.
 
 I have seen flexibility in systems at work that allow the game code to decide
 whether something is reliable or not at runtime depending on context.
 
 Do not assign "reliable" or "unreliable" to a message type statically at definition.
-
--------------------------------------------------------------------------------------------------------------
-
-It would be nice if the message channel could support both events and blocks.
-
-In certain cases you just want to send chunks of bytes across.
-
-In other cases you want to send tight messages with serialize functions.
-
-It is silly to force blocks in through the same serialize codepath, they don't need serialize!
-
-Find a nice way to unify the two different inputs to the message channel.
-
--------------------------------------------------------------------------------------------------------------
-
-    Been away from the code for quite a while.
-
-    Some new notes:
-
-        1. It is still necessary to support reliable-ordered time critical events for game code
-
-        2. These events should be able to be interspersed with large blocks (greater than packet size)
-        
-        3. There should be two threads for writing packets, one to serialize the messages
-           to the bitpacker (and measure bits) and another to actually send the packet.
-
-        4. The channel idea is still a really good concept.
-
-        5. Should probably pass over and implement a message channel first,
-           before changing it to
-
-        6. Really should implement bitpacker soon too
-
-------------------------------------------------------------------------------------------------------------
-
-Idea: Although the packet size can vary widely, it would be
-nice to have a bandwidth rate cap per channel, a channel could
-artificially say it has no data if it has gone over the bandwidth
-usage over the past n seconds, this would allow bandwidth throttling
-even if the actual size of the block being sent is potentially
-quite a large chunk of the packet size.
-
-Eg. this is a simpler approach than trying to efficiently pack
-and throttle the data into a very small, fixed size packet,
-eg. 256 bytes 30 times per-second (64kbps roughly)
 
 ------------------------------------------------------------------------------------------------------------
 
@@ -198,56 +58,12 @@ What do I want my library to achieve?
 
     2. It should operate over UDP and have reliability built in with ack bits (done)
 
-    4. It should support bit-packing *at minimum* or better (eg. range encoding)
+    4. It should support bit-packing (done)
 
-    5. It should (optionally) support encryption and signatures for messages so it is platform independent.
+    5. It should be designed to work well with LZ dictionary based compression (done)
 
-    6. It should be possible to efficiently encode game data, eg. bulk of delta encoded
-       game data, snapshots and so on -- eg. traditional FPS network model
+    6. It should be extremely fast, eg. low CPU cost for packet read and write (in progress)
 
-    7. It should provide a way to send and receive reliable-ordered non-time critical messages, 
-       which may be small *or* larger than natural packet size, and support fragmentation and
-       re-assembly of these messages.
-
-    8. It should do all significant processing off the main thread (eg. send/receive packets
-       as well as all serialization heavy lifting, etc...)
-
-Things I don't want to do:
-
-    0. Support P2P topology. Client/server or ad-hoc UDP packets *only*.
-
-    1. Define my own RPC serialization protocol or reflection layer aside from simple serialize fns.
-
-    2. Pack towards a small max packet size, eg. try to always fit into 256 bytes and never go over. 
-       Packet size should be variable, eg. average packet size is what I care about, *not* efficiently 
-       packing always to max packet size -- a few larger than usual packets are totally OK.
-
-------------------------------------------------------------------------------------------------------------
-
-I think the simplest thing to do then is:
-
-    1. Channels serialize in order (eg. channel 0 gets a go, then 1 then 2 etc...) (done)
-
-    2. Should be easy to define new channel types. Base channel class with serialization
-       support, ack support etc (done)
-
-    3. Channels should be able to throw exceptions during serialize read to discard packet (done)
-
-    4. Assume that the # of channels are small, eg. use skip bits when no data exists (done)
-
-    5. Channel should perform serialize if its skip bit is 1, and be entirely self contained, 
-       eg. can decode whatever is in that block of data into a temporary format (done)
-
-------------------------------------------------------------------------------------------------------------
-
-Once the system above is working, I can implement serializers for each channel *HOWEVER I LIKE*
-
-These serializers will then work with the reliability layer and be extendable.
-
-I avoid wasting time on integrated serialize in one step as per-last protocol (eg. in-place serialize events)
-
-I avoid silliness like the level state machine / token system because the channel has unified
-reliable-ordered events no matter what the size of the individual events, eg. chunk would come in
-and then finish, and then events after that come in.
+    7. It should support send tables, entities, snapshots, delta encoding and interpolation.
 
 ------------------------------------------------------------------------------------------------------------

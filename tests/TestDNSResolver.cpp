@@ -5,7 +5,7 @@ using namespace protocol;
 
 void test_dns_resolve()
 {
-    cout << "test_dns_resolve" << endl;
+    printf( "test_dns_resolve\n" );
 
     DNSResolver resolver;
 
@@ -14,13 +14,13 @@ void test_dns_resolve()
 
     string google_hostname( "google.com" );
 
-    cout << "resolving " << google_hostname << endl;
+//    printf( "resolving %s\n", google_hostname.c_str() );
 
     const int num_google_iterations = 10;
 
     for ( int i = 0; i < num_google_iterations; ++i )
     {
-        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, shared_ptr<ResolveResult> result ) 
+        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, ResolveResult * result ) 
         { 
             assert( name == google_hostname );
             assert( result );
@@ -34,8 +34,6 @@ void test_dns_resolve()
     auto google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
     assert( google_entry->status == ResolveStatus::InProgress );
-
-    auto start = chrono::steady_clock::now();
 
     double t = 0.0;
     double dt = 0.1f;
@@ -56,24 +54,21 @@ void test_dns_resolve()
     assert( num_google_success_callbacks == num_google_iterations );
     assert( num_google_failure_callbacks == 0 );
 
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
-
     google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
     assert( google_entry->status == ResolveStatus::Succeeded );
+    assert( google_entry->result->addresses.size() );
 
-    cout << google_hostname << ":" << endl;
+    /*
+    printf( "%s:\n", google_hostname.c_str() );
     for ( auto & address : google_entry->result->addresses )
-        cout << " + " << address.ToString() << endl;
+        printf( " + %s\n", address.ToString().c_str() );
+        */
 }
 
 void test_dns_resolve_with_port()
 {
-    cout << "test_dns_resolve_with_port" << endl;
+    printf( "test_dns_resolve_with_port\n" );
 
     DNSResolver resolver;
 
@@ -82,13 +77,13 @@ void test_dns_resolve_with_port()
 
     string google_hostname( "google.com:5000" );
 
-    cout << "resolving " << google_hostname << endl;
+//    printf( "resolving %s\n", google_hostname.c_str() );
 
     const int num_google_iterations = 10;
 
     for ( int i = 0; i < num_google_iterations; ++i )
     {
-        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, shared_ptr<ResolveResult> result ) 
+        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, ResolveResult * result ) 
         { 
             assert( name == google_hostname );
             assert( result );
@@ -102,8 +97,6 @@ void test_dns_resolve_with_port()
     auto google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
     assert( google_entry->status == ResolveStatus::InProgress );
-
-    auto start = chrono::steady_clock::now();
 
     double t = 0.0;
     double dt = 0.1f;
@@ -124,27 +117,21 @@ void test_dns_resolve_with_port()
     assert( num_google_success_callbacks == num_google_iterations );
     assert( num_google_failure_callbacks == 0 );
 
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
-
     google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
     assert( google_entry->status == ResolveStatus::Succeeded );
+    assert( google_entry->result->addresses.size() );
 
-    cout << google_hostname << ":" << endl;
+    /*
+    printf( "%s:\n", google_hostname.c_str() );
     for ( auto & address : google_entry->result->addresses )
-    {
-        cout << " + " << address.ToString() << endl;
-        assert( address.GetPort() == 5000 );
-    }
+        printf( " + %s\n", address.ToString().c_str() );
+        */
 }
 
 void test_dns_resolve_failure()
 {
-    cout << "test_dns_resolve_failure" << endl;
+    printf( "test_dns_resolve_failure\n" );
 
     DNSResolver resolver;
 
@@ -152,9 +139,9 @@ void test_dns_resolve_failure()
 
     string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
 
-    cout << "resolving garbage hostname: " << garbage_hostname << endl;
+//    printf( "resolving garbage hostname: %s\n", garbage_hostname.c_str() );
 
-    resolver.Resolve( garbage_hostname, [&resolved, &garbage_hostname] ( const string & name, shared_ptr<ResolveResult> result ) 
+    resolver.Resolve( garbage_hostname, [&resolved, &garbage_hostname] ( const string & name, ResolveResult * result ) 
     { 
         assert( name == garbage_hostname );
         assert( result == nullptr );
@@ -164,8 +151,6 @@ void test_dns_resolve_failure()
     auto entry = resolver.GetEntry( garbage_hostname );
     assert( entry );
     assert( entry->status == ResolveStatus::InProgress );
-
-    auto start = chrono::steady_clock::now();
 
     double t = 0.0;
     double dt = 0.1f;
@@ -183,12 +168,6 @@ void test_dns_resolve_failure()
         t += dt;
     }
 
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
-
     entry = resolver.GetEntry( garbage_hostname );
     assert( entry );
     assert( entry->status == ResolveStatus::Failed );
@@ -199,16 +178,9 @@ int main()
 {
     srand( time( NULL ) );
 
-    try
-    {
-        test_dns_resolve();
-        test_dns_resolve_with_port();
-        test_dns_resolve_failure();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_dns_resolve();
+    test_dns_resolve_with_port();
+    test_dns_resolve_failure();
 
     return 0;
 }

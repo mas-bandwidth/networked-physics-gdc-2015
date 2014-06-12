@@ -47,17 +47,34 @@ namespace protocol
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
-        vector<shared_ptr<ChannelData>> channelData;
-        shared_ptr<ChannelStructure> channelStructure;
+        vector<ChannelData*> channelData;
+        ChannelStructure * channelStructure;
 
-        ConnectionPacket( int type, shared_ptr<ChannelStructure> _channelStructure ) : Packet( type )
+        ConnectionPacket( int type, ChannelStructure * _channelStructure ) : Packet( type )
         {
+//            printf( "ConnectionPacket\n" );
             assert( _channelStructure );
             channelStructure = _channelStructure;
             channelData.resize( channelStructure->GetNumChannels() );
         }
 
-        void Serialize( Stream & stream )
+        ~ConnectionPacket()
+        {
+//            printf( "~ConnectionPacket\n" );
+            assert( channelStructure );     // double delete?
+            channelStructure = nullptr;
+            for ( int i = 0; i < channelData.size(); ++i )
+            {
+                if ( channelData[i] )
+                {
+                    delete channelData[i];
+                    channelData[i] = nullptr;
+                }
+            }
+            channelData.clear();
+        }
+
+        template <typename Stream> void Serialize( Stream & stream )
         {
             assert( channelStructure );
 
@@ -66,8 +83,12 @@ namespace protocol
 
             serialize_uint64( stream, protocolId );
 
-            bool perfect = ack_bits == 0xFFFFFFFF;
+            bool perfect;
+            if ( Stream::IsWriting )
+                 perfect = ack_bits == 0xFFFFFFFF;
+
             serialize_bool( stream, perfect );
+
             if ( !perfect )
                 serialize_bits( stream, ack_bits, 32 );
             else
@@ -75,7 +96,7 @@ namespace protocol
 
             stream.Align();
 
-            if ( stream.IsWriting() )
+            if ( Stream::IsWriting )
             {
                 for ( auto data : channelData )
                 {
@@ -87,17 +108,14 @@ namespace protocol
             {
                 for ( int i = 0; i < channelData.size(); ++i )
                 {
-                    bool has_data = 0;
+                    bool has_data;
                     serialize_bool( stream, has_data );
                     if ( has_data )
                     {
                         channelData[i] = channelStructure->CreateChannelData( i );
-                        
-                        if ( !channelData[i] )
-                        {
-                            cout << "failed to create channel data?!" << endl;
-                            throw runtime_error( format_string( "serialize read failed to create channel data [%d]", i ) );
-                        }
+                        assert( channelData[i] );
+
+                        // todo: need a way to set an error indicating that serialization has failed    
                     }
                 }
             }
@@ -109,7 +127,7 @@ namespace protocol
             int ack_delta = 0;
             bool ack_in_range = false;
 
-            if ( stream.IsWriting() )
+            if ( Stream::IsWriting )
             {
                 if ( ack < sequence )
                     ack_delta = sequence - ack;
@@ -126,7 +144,7 @@ namespace protocol
             if ( ack_in_range )
             {
                 serialize_int( stream, ack_delta, 1, 128 );
-                if ( stream.IsReading() )
+                if ( Stream::IsReading )
                     ack = sequence - ack_delta;
             }
             else
@@ -139,9 +157,20 @@ namespace protocol
                 if ( channelData[i] )
                 {
                     stream.Align();
-                    channelData[i]->Serialize( stream );
+
+                    serialize_object( stream, *channelData[i] );
                 }
             }
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            return Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            return Serialize( stream );
         }
 
         bool operator ==( const ConnectionPacket & other ) const
@@ -163,17 +192,17 @@ namespace protocol
         int packetType = 0;
         int maxPacketSize = 1024;
         int slidingWindowSize = 256;
-        shared_ptr<Factory<Packet>> packetFactory;
-        shared_ptr<ChannelStructure> channelStructure;
+        Factory<Packet> * packetFactory = nullptr;
+        ChannelStructure * channelStructure = nullptr;
     };
 
     class Connection
     {
         const ConnectionConfig m_config;                    // const configuration data
         TimeBase m_timeBase;                                // network time base
-        shared_ptr<SentPackets> m_sentPackets;              // sliding window of recently sent packets
-        shared_ptr<ReceivedPackets> m_receivedPackets;      // sliding window of recently received packets
-        vector<shared_ptr<Channel>> m_channels;             // array of channels created according to channel structure
+        SentPackets * m_sentPackets = nullptr;              // sliding window of recently sent packets
+        ReceivedPackets * m_receivedPackets = nullptr;      // sliding window of recently received packets
+        vector<Channel*> m_channels;                        // array of channels created according to channel structure
         vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
 
     public:
@@ -192,9 +221,8 @@ namespace protocol
             assert( config.packetFactory );
             assert( config.channelStructure );
 
-            m_sentPackets = make_shared<SentPackets>( m_config.slidingWindowSize );
- 
-            m_receivedPackets = make_shared<ReceivedPackets>( m_config.slidingWindowSize );
+            m_sentPackets = new SentPackets( m_config.slidingWindowSize );
+            m_receivedPackets = new ReceivedPackets( m_config.slidingWindowSize );
 
             const int numChannels = config.channelStructure->GetNumChannels();
             m_channels.resize( numChannels );
@@ -209,7 +237,19 @@ namespace protocol
             Reset();
         }
 
-        shared_ptr<Channel> GetChannel( int index )
+        ~Connection()
+        {
+            assert( m_sentPackets );
+            assert( m_receivedPackets );
+
+            delete m_sentPackets;
+            delete m_receivedPackets;
+
+            m_sentPackets = nullptr;
+            m_receivedPackets = nullptr;
+        }
+
+        Channel * GetChannel( int index )
         {
             if ( index >= 0 && index < m_channels.size() )
                 return m_channels[index];
@@ -240,9 +280,9 @@ namespace protocol
             return m_timeBase;
         }
 
-        shared_ptr<ConnectionPacket> WritePacket()
+        ConnectionPacket * WritePacket()
         {
-            auto packet = static_pointer_cast<ConnectionPacket>( m_config.packetFactory->Create( m_config.packetType ) );
+            auto packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( m_config.packetType ) );
 
             packet->protocolId = m_config.protocolId;
             packet->sequence = m_sentPackets->GetSequence();
@@ -259,7 +299,7 @@ namespace protocol
             return packet;
         }
 
-        bool ReadPacket( shared_ptr<ConnectionPacket> packet )
+        bool ReadPacket( ConnectionPacket * packet )
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
@@ -271,7 +311,7 @@ namespace protocol
             if ( packet->protocolId != m_config.protocolId )
                 return false;
 
-//            cout << "read packet " << packet->sequence << endl;
+//            printf( "read packet %d\n", (int) packet->sequence );
 
             ProcessAcks( packet->ack, packet->ack_bits );
 
@@ -310,7 +350,7 @@ namespace protocol
 
         void ProcessAcks( uint16_t ack, uint32_t ack_bits )
         {
-//            cout << format_string( "process acks: %d - %x", (int)ack, ack_bits ) << endl;
+//            printf( "process acks: %d - %x\n", (int)ack, ack_bits );
 
             for ( int i = 0; i < 32; ++i )
             {
@@ -330,7 +370,7 @@ namespace protocol
 
         void PacketAcked( uint16_t sequence )
         {
-//            cout << "packet " << sequence << " acked" << endl;
+//            printf( "packet %d acked\n", (int) sequence );
 
             m_counters[PacketsAcked]++;
             for ( auto channel : m_channels )

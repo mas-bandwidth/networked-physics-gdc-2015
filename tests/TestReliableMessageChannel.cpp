@@ -23,7 +23,7 @@ struct TestMessage : public Message
         sequence = 0;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {        
         serialize_bits( stream, sequence, 16 );
 
@@ -36,6 +36,16 @@ struct TestMessage : public Message
         stream.Check( 0xDEADBEEF );
     }
 
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
     uint16_t sequence;
     uint32_t magic;
 };
@@ -45,8 +55,8 @@ class MessageFactory : public Factory<Message>
 public:
     MessageFactory()
     {
-        Register( MESSAGE_Block, [] { return make_shared<BlockMessage>(); } );
-        Register( MESSAGE_Test, [] { return make_shared<TestMessage>(); } );
+        Register( MESSAGE_Block, [] { return new BlockMessage(); } );
+        Register( MESSAGE_Test,  [] { return new TestMessage();  } );
     }
 };
 
@@ -58,7 +68,7 @@ public:
 
     TestChannelStructure()
     {
-        m_config.messageFactory = make_shared<MessageFactory>();
+        m_config.messageFactory = new MessageFactory();
 
         AddChannel( "reliable message channel", 
                     [this] { return CreateReliableMessageChannel(); }, 
@@ -67,14 +77,14 @@ public:
         Lock();
     }
 
-    shared_ptr<ReliableMessageChannel> CreateReliableMessageChannel()
+    ReliableMessageChannel * CreateReliableMessageChannel()
     {
-        return make_shared<ReliableMessageChannel>( m_config );
+        return new ReliableMessageChannel( m_config );
     }
 
-    shared_ptr<ReliableMessageChannelData> CreateReliableMessageChannelData()
+    ReliableMessageChannelData * CreateReliableMessageChannelData()
     {
-        return make_shared<ReliableMessageChannelData>( m_config );
+        return new ReliableMessageChannelData( m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const
@@ -87,36 +97,37 @@ class PacketFactory : public Factory<Packet>
 {
 public:
 
-    PacketFactory( shared_ptr<ChannelStructure> channelStructure )
+    PacketFactory( ChannelStructure * channelStructure )
     {
-        Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
+        Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
     }
 };
 
 void test_reliable_message_channel_messages()
 {
-    cout << "test_reliable_message_channel_messages" << endl;
+    printf( "test_reliable_message_channel_messages\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-    auto packetFactory = make_shared<PacketFactory>( channelStructure );
+    TestChannelStructure channelStructure;
+
+    PacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 256;
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = packetFactory;
-    connectionConfig.channelStructure = channelStructure;
+    connectionConfig.packetFactory = &packetFactory;
+    connectionConfig.channelStructure = &channelStructure;
 
     Connection connection( connectionConfig );
 
-    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
+    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
     
     const int NumMessagesSent = 32;
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto message = make_shared<TestMessage>();
+        auto message = new TestMessage();
         message->sequence = i;
         messageChannel->SendMessage( message );
     }
@@ -139,13 +150,13 @@ void test_reliable_message_channel_messages()
 
         uint8_t buffer[MaxPacketSize];
 
-        Stream writeStream( STREAM_Write, buffer, MaxPacketSize );
-        writePacket->Serialize( writeStream );
+        WriteStream writeStream( buffer, MaxPacketSize );
+        writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
 
-        Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
-        readPacket->Serialize( readStream );
+        ReadStream readStream( buffer, MaxPacketSize );
+        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+        readPacket->SerializeRead( readStream );
 
         simulator.SendPacket( address, readPacket );
 
@@ -154,7 +165,10 @@ void test_reliable_message_channel_messages()
         auto packet = simulator.ReceivePacket();
 
         if ( packet )
-            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
+        {
+            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+            delete packet;
+        }
 
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
@@ -170,11 +184,13 @@ void test_reliable_message_channel_messages()
             assert( message->GetId() == numMessagesReceived );
             assert( message->GetType() == MESSAGE_Test );
 
-            auto testMessage = static_pointer_cast<TestMessage>( message );
+            auto testMessage = static_cast<TestMessage*>( message );
 
             assert( testMessage->sequence == numMessagesReceived );
 
             ++numMessagesReceived;
+
+            delete message;
         }
 
         if ( numMessagesReceived == NumMessagesSent )
@@ -197,31 +213,33 @@ void test_reliable_message_channel_messages()
 
 void test_reliable_message_channel_small_blocks()
 {
-    cout << "test_reliable_message_channel_small_blocks" << endl;
+    printf( "test_reliable_message_channel_small_blocks\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-    auto packetFactory = make_shared<PacketFactory>( channelStructure );
-    auto messageFactory = make_shared<MessageFactory>();
+    TestChannelStructure channelStructure;
+
+    PacketFactory packetFactory( &channelStructure );
+    
+    MessageFactory messageFactory;
 
     const int MaxPacketSize = 256;
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = packetFactory;
-    connectionConfig.channelStructure = channelStructure;
+    connectionConfig.packetFactory = &packetFactory;
+    connectionConfig.channelStructure = &channelStructure;
 
     Connection connection( connectionConfig );
 
-    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
+    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
-    auto channelConfig = channelStructure->GetConfig(); 
+    auto channelConfig = channelStructure.GetConfig(); 
 
     const int NumMessagesSent = channelConfig.maxSmallBlockSize;
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto block = make_shared<Block>( i + 1, i );
+        auto block = new Block( i + 1 );
         for ( int j = 0; j < block->size(); ++j )
             (*block)[j] = ( i + j ) % 256;
         messageChannel->SendBlock( block );
@@ -245,13 +263,13 @@ void test_reliable_message_channel_small_blocks()
 
         uint8_t buffer[MaxPacketSize];
 
-        Stream writeStream( STREAM_Write, buffer, MaxPacketSize );
-        writePacket->Serialize( writeStream );
+        WriteStream writeStream( buffer, MaxPacketSize );
+        writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
 
-        Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
-        readPacket->Serialize( readStream );
+        ReadStream readStream( buffer, MaxPacketSize );
+        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+        readPacket->SerializeRead( readStream );
 
         simulator.SendPacket( address, readPacket );
 
@@ -260,7 +278,10 @@ void test_reliable_message_channel_small_blocks()
         auto packet = simulator.ReceivePacket();
 
         if ( packet )
-            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
+        {
+            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+            delete packet;
+        }
 
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
@@ -276,7 +297,7 @@ void test_reliable_message_channel_small_blocks()
             assert( message->GetId() == numMessagesReceived );
             assert( message->GetType() == MESSAGE_Block );
 
-            auto blockMessage = static_pointer_cast<BlockMessage>( message );
+            auto blockMessage = static_cast<BlockMessage*>( message );
 
             auto block = blockMessage->GetBlock();
 
@@ -285,6 +306,8 @@ void test_reliable_message_channel_small_blocks()
                 assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
 
             ++numMessagesReceived;
+
+            delete message;
         }
 
         if ( numMessagesReceived == NumMessagesSent )
@@ -307,30 +330,29 @@ void test_reliable_message_channel_small_blocks()
 
 void test_reliable_message_channel_large_blocks()
 {
-    cout << "test_reliable_message_channel_large_blocks" << endl;
+    printf( "test_reliable_message_channel_large_blocks\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-    auto packetFactory = make_shared<PacketFactory>( channelStructure );
+    TestChannelStructure channelStructure;
+
+    PacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 256;
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = packetFactory;
-    connectionConfig.channelStructure = channelStructure;
+    connectionConfig.packetFactory = &packetFactory;
+    connectionConfig.channelStructure = &channelStructure;
 
     Connection connection( connectionConfig );
 
-    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
-
-    auto channelConfig = channelStructure->GetConfig(); 
+    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
     const int NumMessagesSent = 16;
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto block = make_shared<Block>( ( i + 1 ) * 1024 + i, 0 );
+        auto block = new Block( ( i + 1 ) * 1024 + i );
         for ( int j = 0; j < block->size(); ++j )
             (*block)[j] = ( i + j ) % 256;
         messageChannel->SendBlock( block );
@@ -354,13 +376,13 @@ void test_reliable_message_channel_large_blocks()
 
         uint8_t buffer[MaxPacketSize];
 
-        Stream writeStream( STREAM_Write, buffer, MaxPacketSize );
-        writePacket->Serialize( writeStream );
+        WriteStream writeStream( buffer, MaxPacketSize );
+        writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
 
-        Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
-        readPacket->Serialize( readStream );
+        ReadStream readStream( buffer, MaxPacketSize );
+        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+        readPacket->SerializeRead( readStream );
 
         simulator.SendPacket( address, readPacket );
 
@@ -369,8 +391,12 @@ void test_reliable_message_channel_large_blocks()
         auto packet = simulator.ReceivePacket();
 
         if ( packet )
-            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
+        {
+            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
 
+            delete packet;
+        }
+    
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
@@ -385,17 +411,19 @@ void test_reliable_message_channel_large_blocks()
             assert( message->GetId() == numMessagesReceived );
             assert( message->GetType() == MESSAGE_Block );
 
-            auto blockMessage = static_pointer_cast<BlockMessage>( message );
+            auto blockMessage = static_cast<BlockMessage*>( message );
 
             auto block = blockMessage->GetBlock();
 
-            cout << "received block " << blockMessage->GetId() << " (" << block->size() << " bytes)" << endl;
+//            printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
             assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
             for ( int i = 0; i < block->size(); ++i )
                 assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
 
             ++numMessagesReceived;
+
+            delete message;
         }
 
         if ( numMessagesReceived == NumMessagesSent )
@@ -417,24 +445,23 @@ void test_reliable_message_channel_large_blocks()
 
 void test_reliable_message_channel_mixture()
 {
-    cout << "test_reliable_message_channel_mixture" << endl;
+    printf( "test_reliable_message_channel_mixture\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-    auto packetFactory = make_shared<PacketFactory>( channelStructure );
+    TestChannelStructure channelStructure;
+
+    PacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 256;
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = packetFactory;
-    connectionConfig.channelStructure = channelStructure;
+    connectionConfig.packetFactory = &packetFactory;
+    connectionConfig.channelStructure = &channelStructure;
 
     Connection connection( connectionConfig );
 
-    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
-
-    auto channelConfig = channelStructure->GetConfig(); 
+    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
     const int NumMessagesSent = 256;
 
@@ -442,13 +469,13 @@ void test_reliable_message_channel_mixture()
     {
         if ( rand() % 10 )
         {
-            auto message = make_shared<TestMessage>();
+            auto message = new TestMessage();
             message->sequence = i;
             messageChannel->SendMessage( message );
         }
         else
         {
-            auto block = make_shared<Block>( ( i + 1 ) * 8 + i, 0 );
+            auto block = new Block( ( i + 1 ) * 8 + i );
             for ( int j = 0; j < block->size(); ++j )
                 (*block)[j] = ( i + j ) % 256;
             messageChannel->SendBlock( block );
@@ -473,13 +500,13 @@ void test_reliable_message_channel_mixture()
 
         uint8_t buffer[MaxPacketSize];
 
-        Stream writeStream( STREAM_Write, buffer, MaxPacketSize );
-        writePacket->Serialize( writeStream );
+        WriteStream writeStream( buffer, MaxPacketSize );
+        writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
 
-        Stream readStream( STREAM_Read, buffer, MaxPacketSize );
-        auto readPacket = make_shared<ConnectionPacket>( PACKET_Connection, channelStructure );
-        readPacket->Serialize( readStream );
+        ReadStream readStream( buffer, MaxPacketSize );
+        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+        readPacket->SerializeRead( readStream );
 
         simulator.SendPacket( address, readPacket );
 
@@ -488,8 +515,11 @@ void test_reliable_message_channel_mixture()
         auto packet = simulator.ReceivePacket();
 
         if ( packet )
-            connection.ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
-
+        {
+            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+            delete packet;
+        }
+        
         assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
         assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
@@ -507,11 +537,11 @@ void test_reliable_message_channel_mixture()
             {
                 assert( message->GetType() == MESSAGE_Block );
 
-                auto blockMessage = static_pointer_cast<BlockMessage>( message );
+                auto blockMessage = static_cast<BlockMessage*>( message );
 
                 auto block = blockMessage->GetBlock();
 
-                cout << "received block " << blockMessage->GetId() << " (" << block->size() << " bytes)" << endl;
+//                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
                 assert( block->size() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
                 for ( int i = 0; i < block->size(); ++i )
@@ -521,14 +551,16 @@ void test_reliable_message_channel_mixture()
             {
                 assert( message->GetType() == MESSAGE_Test );
 
-                cout << "received message " << message->GetId() << endl;
+//                printf( "received message %d\n", message->GetId() );
 
-                auto testMessage = static_pointer_cast<TestMessage>( message );
+                auto testMessage = static_cast<TestMessage*>( message );
 
                 assert( testMessage->sequence == numMessagesReceived );
             }
 
             ++numMessagesReceived;
+
+            delete message;
         }
 
         if ( numMessagesReceived == NumMessagesSent )
@@ -552,17 +584,10 @@ int main()
 {
     srand( time( NULL ) );
 
-    try
-    {
-        test_reliable_message_channel_messages();
-        test_reliable_message_channel_small_blocks();
-        test_reliable_message_channel_large_blocks();
-        test_reliable_message_channel_mixture();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_reliable_message_channel_messages();
+    test_reliable_message_channel_small_blocks();
+    test_reliable_message_channel_large_blocks();
+    test_reliable_message_channel_mixture();
 
     return 0;
 }

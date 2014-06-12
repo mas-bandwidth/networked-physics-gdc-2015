@@ -39,18 +39,41 @@ namespace protocol
 
         BlockMessage() : Message( BlockMessageType ) {}
 
-        BlockMessage( shared_ptr<Block> block ) : Message( BlockMessageType ) { m_block = block; }
+        BlockMessage( Block * block ) : Message( BlockMessageType ) 
+        { 
+            assert( block ); 
+            m_block = block; 
+        }
 
-        virtual void Serialize( Stream & stream )
+        ~BlockMessage()
+        {
+            assert( m_block );
+            delete m_block;
+            m_block = nullptr;
+        }
+
+        template <typename Stream> void Serialize( Stream & stream )
         { 
             serialize_block( stream, m_block, MaxSmallBlockSize );
         }
 
-        shared_ptr<Block> GetBlock() { return m_block; }
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        Block * GetBlock() { return m_block; }
 
     private:
 
-        shared_ptr<Block> m_block;
+        // todo: need to disable copy constructor etc.
+
+        Block * m_block = nullptr;
     };
 }
 

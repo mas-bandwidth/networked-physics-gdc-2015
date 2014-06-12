@@ -81,11 +81,10 @@ namespace protocol
         float connectingSendRate = 10.0f;                       // client send rate while connecting
         float connectedSendRate = 30.0f;                        // client send rate *after* being connected, eg. connection packets
 
-        shared_ptr<Resolver> resolver;                          // optional resolver used to to lookup server address by hostname.
-        shared_ptr<NetworkInterface> networkInterface;          // network interface used to send and receive packets.
-        shared_ptr<ChannelStructure> channelStructure;          // channel structure for connections
-
-        shared_ptr<Block> block;                                // data block sent to server on connect. optional.
+        Block * block = nullptr;                                // data block sent to server on connect. optional.
+        Resolver * resolver = nullptr;                          // optional resolver used to to lookup server address by hostname.
+        NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets. required.
+        ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
     };
 
     class Client
@@ -94,7 +93,8 @@ namespace protocol
 
         TimeBase m_timeBase;
 
-        shared_ptr<Connection> m_connection;
+        Connection * m_connection;
+        ClientServerPacketFactory * m_packetFactory;
 
         string m_hostname;
         Address m_address;
@@ -106,6 +106,8 @@ namespace protocol
         ClientError m_error = CLIENT_ERROR_None;
         uint32_t m_extendedError = 0;
 
+        // todo: need to disable copy constructor etc.
+
     public:
 
         Client( const ClientConfig & config )
@@ -114,13 +116,27 @@ namespace protocol
             assert( m_config.networkInterface );
             assert( m_config.channelStructure );
 
+            m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
+
             ConnectionConfig connectionConfig;
             connectionConfig.packetType = PACKET_Connection;
             connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
             connectionConfig.channelStructure = m_config.channelStructure;
-            connectionConfig.packetFactory = make_shared<ClientServerPacketFactory>( m_config.channelStructure );
+            connectionConfig.packetFactory = m_packetFactory;
 
-            m_connection = make_shared<Connection>( connectionConfig );
+            m_connection = new Connection( connectionConfig );
+        }
+
+        ~Client()
+        {
+            assert( m_connection );
+            assert( m_packetFactory );
+
+            delete m_connection;
+            delete m_packetFactory;
+            
+            m_connection = nullptr;
+            m_packetFactory = nullptr;
         }
 
         void Connect( const Address & address )
@@ -129,7 +145,7 @@ namespace protocol
 
             ClearError();
 
-//            cout << "client connect by address: " << address.ToString() << endl;
+//            printf( "client connect by address: %s\n", address.ToString().c_str() );
 
             m_state = CLIENT_STATE_SendingConnectionRequest;
             m_address = address;
@@ -153,7 +169,7 @@ namespace protocol
 
             // ok, it's really a hostname. go into the resolving hostname state
 
-//            cout << "resolving hostname: \"" << hostname << "\"" << endl;
+//            printf( "resolving hostname: \"%s\"\n", hostname.c_str() );
 
             assert( m_config.resolver );
 
@@ -169,7 +185,7 @@ namespace protocol
             if ( IsDisconnected() )
                 return;
 
-//            cout << "client disconnect" << endl;
+//            printf( "client disconnect\n" );
             
             m_connection->Reset();
 
@@ -213,17 +229,17 @@ namespace protocol
             return m_extendedError;
         }
 
-        shared_ptr<Resolver> GetResolver() const
+        Resolver * GetResolver() const
         {
             return m_config.resolver;
         }
 
-        shared_ptr<NetworkInterface> GetNetworkInterface() const
+        NetworkInterface * GetNetworkInterface() const
         {
             return m_config.networkInterface;
         }
 
-        shared_ptr<Connection> GetConnection() const
+        Connection * GetConnection() const
         {
             return m_connection;
         }
@@ -262,18 +278,18 @@ namespace protocol
 
             auto entry = m_config.resolver->GetEntry( m_hostname );
 
-//            cout << "update resolve hostname" << endl;
+//            printf( "update resolve hostname\n" );
 
             if ( !entry || entry->status == ResolveStatus::Failed )
             {
-//                cout << "resolve hostname failed" << endl;
+//                printf( "resolve hostname failed\n" );
                 DisconnectAndSetError( CLIENT_ERROR_ResolveHostnameFailed );
                 return;
             }
 
             if ( entry->status == ResolveStatus::Succeeded )
             {
-//                cout << "resolve hostname succeeded: " << entry->result->addresses[0].ToString() << endl;
+//                printf( "resolve hostname succeeded: %s\n", entry->result->addresses[0].ToString().c_str() );
 
                 auto address = entry->result->addresses[0];
 
@@ -307,8 +323,8 @@ namespace protocol
                 {
                     case CLIENT_STATE_SendingConnectionRequest:
                     {
-//                        cout << "client sent connection request packet" << endl;
-                        auto packet = make_shared<ConnectionRequestPacket>();
+//                        printf( "client sent connection request packet\n" );
+                        auto packet = new ConnectionRequestPacket();
                         packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
                         m_config.networkInterface->SendPacket( m_address, packet );
@@ -317,8 +333,8 @@ namespace protocol
 
                     case CLIENT_STATE_SendingChallengeResponse:
                     {
-//                        cout << "client sent challenge response packet" << endl;
-                        auto packet = make_shared<ChallengeResponsePacket>();
+//                        printf( "client sent challenge response packet\n" );
+                        auto packet = new ChallengeResponsePacket();
                         packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
                         packet->serverGuid = m_serverGuid;
@@ -328,7 +344,7 @@ namespace protocol
 
                     case CLIENT_STATE_ReadyForConnection:
                     {
-                        auto packet = make_shared<ReadyForConnectionPacket>();
+                        auto packet = new ReadyForConnectionPacket();
                         packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
                         packet->serverGuid = m_serverGuid;
@@ -338,7 +354,7 @@ namespace protocol
 
                     case CLIENT_STATE_Connected:
                     {
-//                        cout << "client sent connection packet" << endl;
+//                        printf( "client sent connection packet\n" );
                         auto packet = m_connection->WritePacket();
                         m_config.networkInterface->SendPacket( m_address, packet );
                     }
@@ -360,8 +376,8 @@ namespace protocol
 
                 if ( packet->GetType() == PACKET_Disconnected )
                 {
-//                    cout << "client received disconnected packet" << endl;
-                    ProcessDisconnected( static_pointer_cast<DisconnectedPacket>( packet ) );
+//                    printf( "client received disconnected packet\n" );
+                    ProcessDisconnected( static_cast<DisconnectedPacket*>( packet ) );
                     continue;
                 }
 
@@ -371,12 +387,12 @@ namespace protocol
                     {
                         if ( packet->GetType() == PACKET_ConnectionChallenge )
                         {
-                            auto connectionChallengePacket = static_pointer_cast<ConnectionChallengePacket>( packet );
+                            auto connectionChallengePacket = static_cast<ConnectionChallengePacket*>( packet );
 
                             if ( connectionChallengePacket->GetAddress() == m_address &&
                                  connectionChallengePacket->clientGuid == m_clientGuid )
                             {
-//                                cout << "received connection challenge packet from server" << endl;
+//                                printf( "received connection challenge packet from server\n" );
 
                                 m_state = CLIENT_STATE_SendingChallengeResponse;
                                 m_serverGuid = connectionChallengePacket->serverGuid;
@@ -385,12 +401,12 @@ namespace protocol
                         }
                         else if ( packet->GetType() == PACKET_ConnectionDenied )
                         {
-                            auto connectionDeniedPacket = static_pointer_cast<ConnectionDeniedPacket>( packet );
+                            auto connectionDeniedPacket = static_cast<ConnectionDeniedPacket*>( packet );
 
                             if ( connectionDeniedPacket->GetAddress() == m_address &&
                                  connectionDeniedPacket->clientGuid == m_clientGuid )
                             {
-//                                cout << "received connection denied packet from server" << endl;
+//                                printf( "received connection denied packet from server\n" );
 
                                 DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestDenied, connectionDeniedPacket->reason );
                             }
@@ -402,17 +418,17 @@ namespace protocol
                     {
                         if ( packet->GetType() == PACKET_RequestClientData )
                         {
-                            auto requestClientDataPacket = static_pointer_cast<RequestClientDataPacket>( packet );
+                            auto requestClientDataPacket = static_cast<RequestClientDataPacket*>( packet );
 
                             if ( requestClientDataPacket->GetAddress() == m_address &&
                                  requestClientDataPacket->clientGuid == m_clientGuid &&
                                  requestClientDataPacket->serverGuid == m_serverGuid )
                             {
-//                                cout << "received request client data packet from server" << endl;
+//                                printf( "received request client data packet from server\n" );
 
                                 if ( !m_config.block )
                                 {
-//                                    cout << "client is ready for connection" << endl;
+//                                    printf( "client is ready for connection\n" );
 
                                     m_state = CLIENT_STATE_ReadyForConnection;
                                     m_lastPacketReceiveTime = m_timeBase.time;
@@ -432,16 +448,16 @@ namespace protocol
                     {
                         if ( packet->GetType() == PACKET_Connection )
                         {
-//                            cout << "client received connection packet" << endl;
+//                            printf( "client received connection packet\n" );
 
                             if ( m_state == CLIENT_STATE_ReadyForConnection )
                             {
-//                                cout << "client transitioned to connected state" << endl;
+//                                printf( "client transitioned to connected state\n" );
 
                                 m_state = CLIENT_STATE_Connected;
                             }
 
-                            const bool result = m_connection->ReadPacket( static_pointer_cast<ConnectionPacket>( packet ) );
+                            const bool result = m_connection->ReadPacket( static_cast<ConnectionPacket*>( packet ) );
                             if ( result )
                                 m_lastPacketReceiveTime = m_timeBase.time;
                         }
@@ -451,11 +467,15 @@ namespace protocol
                     default:
                         break;
                 }
+
+                delete packet;
             }
         }
 
-        void ProcessDisconnected( shared_ptr<DisconnectedPacket> packet )
+        void ProcessDisconnected( DisconnectedPacket * packet )
         {
+            assert( packet );
+
             if ( packet->GetAddress() != m_address )
                 return;
 
@@ -477,14 +497,14 @@ namespace protocol
 
             if ( m_lastPacketReceiveTime + timeout < m_timeBase.time )
             {
-//                cout << "client timed out" << endl;
+//                printf( "client timed out\n" );
                 DisconnectAndSetError( CLIENT_ERROR_ConnectionTimedOut, m_state );
             }
         }
 
         void DisconnectAndSetError( ClientError error, uint32_t extendedError = 0 )
         {
-//            cout << "client error: " << GetClientErrorString( error ) << endl;
+//            printf( "client error: %s\n", GetClientErrorString( error ) );
 
             Disconnect();
             

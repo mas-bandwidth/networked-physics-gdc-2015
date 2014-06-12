@@ -10,7 +10,7 @@
 
 namespace protocol
 {
-    static shared_ptr<ResolveResult> DNSResolve_Blocking( string name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
+    static ResolveResult * DNSResolve_Blocking( string name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
     {
         struct addrinfo hints, *res, *p;
         memset( &hints, 0, sizeof hints );
@@ -32,7 +32,7 @@ namespace protocol
         if ( getaddrinfo( hostname, nullptr, &hints, &res ) != 0 )
             return nullptr;
 
-        auto result = make_shared<ResolveResult>();
+        auto result = new ResolveResult();
 
         for ( p = res; p != nullptr; p = p->ai_next )
         {
@@ -53,7 +53,7 @@ namespace protocol
         return result;
     }
 
-    typedef map<string,shared_ptr<ResolveEntry>> ResolveMap;
+    typedef map<string,ResolveEntry*> ResolveMap;
 
     class DNSResolver : public Resolver
     {
@@ -63,6 +63,11 @@ namespace protocol
         {
             m_family = family;
             m_socktype = socktype;
+        }
+
+        ~DNSResolver()
+        {
+            // todo: this class owns the entry pointers so it is responsible for deleting them
         }
 
         virtual void Resolve( const string & name, ResolveCallback callback )
@@ -88,13 +93,19 @@ namespace protocol
                 return;
             }
 
-            auto entry = make_shared<ResolveEntry>();
+            auto entry = new ResolveEntry();
             entry->status = ResolveStatus::InProgress;
             if ( callback != nullptr )
                 entry->callbacks.push_back( callback );
             const int family = m_family;
             const int socktype = m_socktype;
-            entry->future = async( launch::async, [name, family, socktype] () -> shared_ptr<ResolveResult> 
+
+            // todo: probably want to do the alloc of the result *here*
+            // while we are on main thread, before the future runs async
+            // my allocators will *not* be threadsafe by design, eg. only
+            // to be used on one thread.
+
+            entry->future = async( launch::async, [name, family, socktype] () -> ResolveResult*
             { 
                 return DNSResolve_Blocking( name, family, socktype );
             } );
@@ -129,7 +140,7 @@ namespace protocol
             map.clear();
         }
 
-        virtual shared_ptr<ResolveEntry> GetEntry( const string & name )
+        virtual ResolveEntry * GetEntry( const string & name )
         {
             auto itor = map.find( name );
             if ( itor != map.end() )

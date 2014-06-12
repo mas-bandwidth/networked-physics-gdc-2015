@@ -18,11 +18,11 @@ namespace protocol
 
         virtual bool CanSendMessage() const = 0;
 
-        virtual void SendMessage( shared_ptr<Message> message ) = 0;
+        virtual void SendMessage( Message * message ) = 0;          // takes ownership of message pointer
 
-        virtual void SendBlock( shared_ptr<Block> block ) = 0;
+        virtual void SendBlock( Block * block ) = 0;                // takes ownership of block pointer
 
-        virtual shared_ptr<Message> ReceiveMessage() = 0;
+        virtual Message * ReceiveMessage() = 0;                     // gives ownership of message pointer to *you*
     };
 }
 

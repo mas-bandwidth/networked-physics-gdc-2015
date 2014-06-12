@@ -23,11 +23,21 @@ struct ConnectPacket : public Packet
         c = 3;        
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_int( stream, a, -10, 10 );
         serialize_int( stream, b, -10, 10 );
         serialize_int( stream, c, -10, 10 );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     bool operator ==( const ConnectPacket & other ) const
@@ -50,9 +60,19 @@ struct UpdatePacket : public Packet
         timestamp = 0;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_bits( stream, timestamp, 16 );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     bool operator ==( const UpdatePacket & other ) const
@@ -75,9 +95,19 @@ struct DisconnectPacket : public Packet
         x = 2;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_int( stream, x, -100, +100 );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     bool operator ==( const DisconnectPacket & other ) const
@@ -96,43 +126,43 @@ class PacketFactory : public Factory<Packet>
 public:
     PacketFactory()
     {
-        Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
-        Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
-        Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+        Register( PACKET_Connect,    [] { return new ConnectPacket();    } );
+        Register( PACKET_Update,     [] { return new UpdatePacket();     } );
+        Register( PACKET_Disconnect, [] { return new DisconnectPacket(); } );
     }
 };
 
 void test_resolve_wrapper_send_to_hostname()
 {
-    cout << "test_resolve_wrapper_send_to_hostname" << endl;
+    printf( "test_resolve_wrapper_send_to_hostname\n" );
 
     BSDSocketsConfig config;
 
-    auto packetFactory = make_shared<PacketFactory>();
+    PacketFactory packetFactory;
 
     config.port = 10000;
     config.family = AF_INET6;
     config.maxPacketSize = 1024;
-    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    config.packetFactory = &packetFactory;
 
-    auto bsdSockets = make_shared<BSDSockets>( config );
+    auto bsdSockets = new BSDSockets( config );
+
+    DNSResolver resolver;
 
     ResolveWrapperConfig wrapperConfig;
-    wrapperConfig.resolver = make_shared<DNSResolver>();
+    wrapperConfig.resolver = &resolver;
     wrapperConfig.networkInterface = bsdSockets;
 
-    auto interface = make_shared<ResolveWrapper>( wrapperConfig );
+    auto interface = new ResolveWrapper( wrapperConfig );
 
     int numPackets = 10;
 
     for ( int i = 0; i < numPackets; ++i )
     {
-        auto packet = packetFactory->Create( PACKET_Connect );
+        auto packet = packetFactory.Create( PACKET_Connect );
 
         interface->SendPacket( "localhost", config.port, packet );
     }
-
-    auto start = chrono::steady_clock::now();
 
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
@@ -154,33 +184,32 @@ void test_resolve_wrapper_send_to_hostname()
     assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );
     assert( bsdSockets->GetCounter( BSDSockets::PacketsReceived ) == numPackets );
 
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
+    delete bsdSockets;
+    delete interface;
 }
 
 void test_resolve_wrapper_send_to_hostname_port()
 {
-    cout << "test_resolve_wrapper_send_to_hostname_port" << endl;
+    printf( "test_resolve_wrapper_send_to_hostname_port\n" );
 
     BSDSocketsConfig config;
 
-    auto packetFactory = make_shared<PacketFactory>();
+    PacketFactory packetFactory;
 
     config.port = 10000;
     config.family = AF_INET6;
     config.maxPacketSize = 1024;
-    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    config.packetFactory = &packetFactory;
 
-    auto bsdSockets = make_shared<BSDSockets>( config );
+    auto bsdSockets = new BSDSockets( config );
+
+    DNSResolver resolver;
 
     ResolveWrapperConfig wrapperConfig;
-    wrapperConfig.resolver = make_shared<DNSResolver>();
+    wrapperConfig.resolver = &resolver;
     wrapperConfig.networkInterface = bsdSockets;
 
-    auto interface = make_shared<ResolveWrapper>( wrapperConfig );
+    auto interface = new ResolveWrapper( wrapperConfig );
 
     int numPackets = 10;
 
@@ -191,8 +220,6 @@ void test_resolve_wrapper_send_to_hostname_port()
         interface->SendPacket( "localhost:10000", packet );
     }
 
-    auto start = chrono::steady_clock::now();
-
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
 
@@ -213,11 +240,8 @@ void test_resolve_wrapper_send_to_hostname_port()
     assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );
     assert( bsdSockets->GetCounter( BSDSockets::PacketsReceived ) == numPackets );
 
-    auto finish = chrono::steady_clock::now();
-
-    auto delta = finish - start;
-
-    cout << chrono::duration<double,milli>( delta ).count() << " ms" << endl;
+    delete interface;
+    delete bsdSockets;
 }
 
 int main()
@@ -226,19 +250,12 @@ int main()
 
     if ( !InitializeSockets() )
     {
-        cerr << "failed to initialize sockets" << endl;
+        printf( "failed to initialize sockets\n" );
         return 1;
     }
 
-    try
-    {
-        test_resolve_wrapper_send_to_hostname();
-        test_resolve_wrapper_send_to_hostname_port();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_resolve_wrapper_send_to_hostname();
+    test_resolve_wrapper_send_to_hostname_port();
 
     ShutdownSockets();
 

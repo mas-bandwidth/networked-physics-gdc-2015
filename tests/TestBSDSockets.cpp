@@ -21,11 +21,21 @@ struct ConnectPacket : public Packet
         c = 3;        
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_int( stream, a, -10, 10 );
         serialize_int( stream, b, -10, 10 );
         serialize_int( stream, c, -10, 10 );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     bool operator ==( const ConnectPacket & other ) const
@@ -48,9 +58,19 @@ struct UpdatePacket : public Packet
         timestamp = 0;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_bits( stream, timestamp, 16 );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     bool operator ==( const UpdatePacket & other ) const
@@ -73,9 +93,19 @@ struct DisconnectPacket : public Packet
         x = 2;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_int( stream, x, -100, +100 );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     bool operator ==( const DisconnectPacket & other ) const
@@ -94,24 +124,24 @@ class PacketFactory : public Factory<Packet>
 public:
     PacketFactory()
     {
-        Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
-        Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
-        Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+        Register( PACKET_Connect,    [] { return new ConnectPacket();    } );
+        Register( PACKET_Update,     [] { return new UpdatePacket();     } );
+        Register( PACKET_Disconnect, [] { return new DisconnectPacket(); } );
     }
 };
 
 void test_bsd_sockets_send_and_receive_ipv4()
 {
-    cout << "test_bsd_sockets_send_and_receive_ipv4" << endl;
+    printf( "test_bsd_sockets_send_and_receive_ipv4\n" );
 
     BSDSocketsConfig config;
 
-    auto packetFactory = make_shared<PacketFactory>();
+    PacketFactory packetFactory;
 
     config.port = 10000;
     config.family = AF_INET;
     config.maxPacketSize = 1024;
-    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    config.packetFactory = &packetFactory;
 
     BSDSockets interface( config );
 
@@ -133,9 +163,10 @@ void test_bsd_sockets_send_and_receive_ipv4()
     {
         assert ( iterations++ < 10 );
 
-        auto connectPacket = make_shared<ConnectPacket>();
-        auto updatePacket = make_shared<UpdatePacket>();
-        auto disconnectPacket = make_shared<DisconnectPacket>();
+        // todo: can't hold on to these pointers after sending -- need to rework this test
+        auto connectPacket = new ConnectPacket();
+        auto updatePacket = new UpdatePacket();
+        auto disconnectPacket = new DisconnectPacket();
 
         connectPacket->a = 2;
         connectPacket->b = 6;
@@ -165,8 +196,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
             {
                 case PACKET_Connect:
                 {
-                    cout << "received connect packet" << endl;
-                    auto recv_connectPacket = static_pointer_cast<ConnectPacket>( packet );
+                    auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == *connectPacket );
                     receivedConnectPacket = true;
                 }
@@ -174,8 +204,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
 
                 case PACKET_Update:
                 {
-                    cout << "received update packet" << endl;
-                    auto recv_updatePacket = static_pointer_cast<UpdatePacket>( packet );
+                    auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == *updatePacket );
                     receivedUpdatePacket = true;
                 }
@@ -183,13 +212,14 @@ void test_bsd_sockets_send_and_receive_ipv4()
 
                 case PACKET_Disconnect:
                 {
-                    cout << "received disconnect packet" << endl;
-                    auto recv_disconnectPacket = static_pointer_cast<DisconnectPacket>( packet );
+                    auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == *disconnectPacket );
                     receivedDisconnectPacket = true;
                 }
                 break;
             }
+
+            delete packet;
         }
 
         if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -201,16 +231,16 @@ void test_bsd_sockets_send_and_receive_ipv4()
 
 void test_bsd_sockets_send_and_receive_ipv6()
 {
-    cout << "test_bsd_sockets_send_and_receive_ipv6" << endl;
+    printf( "test_bsd_sockets_send_and_receive_ipv6\n" );
 
     BSDSocketsConfig config;
 
-    auto packetFactory = make_shared<PacketFactory>();
+    PacketFactory packetFactory;
 
     config.port = 10000;
     config.family = AF_INET6;
     config.maxPacketSize = 1024;
-    config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    config.packetFactory = &packetFactory;
 
     BSDSockets interface( config );
 
@@ -232,9 +262,10 @@ void test_bsd_sockets_send_and_receive_ipv6()
     {
         assert ( iterations++ < 10 );
 
-        auto connectPacket = make_shared<ConnectPacket>();
-        auto updatePacket = make_shared<UpdatePacket>();
-        auto disconnectPacket = make_shared<DisconnectPacket>();
+        // todo: can't hold on to these pointers after sending -- need to rework this test
+        auto connectPacket = new ConnectPacket();
+        auto updatePacket = new UpdatePacket();
+        auto disconnectPacket = new DisconnectPacket();
 
         connectPacket->a = 2;
         connectPacket->b = 6;
@@ -258,16 +289,13 @@ void test_bsd_sockets_send_and_receive_ipv6()
             if ( !packet )
                 break;
 
-            cout << "receive packet from address " << packet->GetAddress().ToString() << endl;
-
             assert( packet->GetAddress() == address );
 
             switch ( packet->GetType() )
             {
                 case PACKET_Connect:
                 {
-                    cout << "received connect packet" << endl;
-                    auto recv_connectPacket = static_pointer_cast<ConnectPacket>( packet );
+                    auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == *connectPacket );
                     receivedConnectPacket = true;
                 }
@@ -275,8 +303,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
 
                 case PACKET_Update:
                 {
-                    cout << "received update packet" << endl;
-                    auto recv_updatePacket = static_pointer_cast<UpdatePacket>( packet );
+                    auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == *updatePacket );
                     receivedUpdatePacket = true;
                 }
@@ -284,13 +311,14 @@ void test_bsd_sockets_send_and_receive_ipv6()
 
                 case PACKET_Disconnect:
                 {
-                    cout << "received disconnect packet" << endl;
-                    auto recv_disconnectPacket = static_pointer_cast<DisconnectPacket>( packet );
+                    auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == *disconnectPacket );
                     receivedDisconnectPacket = true;
                 }
                 break;
             }
+
+            delete packet;
         }
 
         if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -302,15 +330,15 @@ void test_bsd_sockets_send_and_receive_ipv6()
 
 void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
 {
-    cout << "test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4" << endl;
+    printf( "test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4\n" );
 
-    auto packetFactory = make_shared<PacketFactory>();
+    PacketFactory packetFactory;
 
     BSDSocketsConfig sender_config;
     sender_config.port = 10000;
     sender_config.family = AF_INET;
     sender_config.maxPacketSize = 1024;
-    sender_config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    sender_config.packetFactory = &packetFactory;
 
     BSDSockets interface_sender( sender_config );
     
@@ -318,7 +346,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
     receiver_config.port = 10001;
     receiver_config.family = AF_INET;
     receiver_config.maxPacketSize = 1024;
-    receiver_config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    receiver_config.packetFactory = &packetFactory;
 
     BSDSockets interface_receiver( receiver_config );
 
@@ -340,9 +368,9 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
     {
         assert ( iterations++ < 4 );
 
-        auto connectPacket = make_shared<ConnectPacket>();
-        auto updatePacket = make_shared<UpdatePacket>();
-        auto disconnectPacket = make_shared<DisconnectPacket>();
+        auto connectPacket = new ConnectPacket();
+        auto updatePacket = new UpdatePacket();
+        auto disconnectPacket = new DisconnectPacket();
 
         connectPacket->a = 2;
         connectPacket->b = 6;
@@ -367,16 +395,13 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
             if ( !packet )
                 break;
 
-            cout << "receive packet from address " << packet->GetAddress().ToString() << endl;
-
             assert( packet->GetAddress() == sender_address );
 
             switch ( packet->GetType() )
             {
                 case PACKET_Connect:
                 {
-                    cout << "received connect packet" << endl;
-                    auto recv_connectPacket = static_pointer_cast<ConnectPacket>( packet );
+                    auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == *connectPacket );
                     receivedConnectPacket = true;
                 }
@@ -384,8 +409,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
 
                 case PACKET_Update:
                 {
-                    cout << "received update packet" << endl;
-                    auto recv_updatePacket = static_pointer_cast<UpdatePacket>( packet );
+                    auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == *updatePacket );
                     receivedUpdatePacket = true;
                 }
@@ -393,13 +417,14 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
 
                 case PACKET_Disconnect:
                 {
-                    cout << "received disconnect packet" << endl;
-                    auto recv_disconnectPacket = static_pointer_cast<DisconnectPacket>( packet );
+                    auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == *disconnectPacket );
                     receivedDisconnectPacket = true;
                 }
                 break;
             }
+
+            delete packet;
         }
 
         if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -411,16 +436,15 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
 
 void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
 {
-    cout << "test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6" << endl;
+    printf( "test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6\n" );
 
-
-    auto packetFactory = make_shared<PacketFactory>();
+    PacketFactory packetFactory;
 
     BSDSocketsConfig sender_config;
     sender_config.port = 10000;
     sender_config.family = AF_INET6;
     sender_config.maxPacketSize = 1024;
-    sender_config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    sender_config.packetFactory = &packetFactory;
 
     BSDSockets interface_sender( sender_config );
     
@@ -428,7 +452,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
     receiver_config.port = 10001;
     receiver_config.family = AF_INET6;
     receiver_config.maxPacketSize = 1024;
-    receiver_config.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    receiver_config.packetFactory = &packetFactory;
 
     BSDSockets interface_receiver( receiver_config );
 
@@ -450,9 +474,10 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
     {
         assert ( iterations++ < 4 );
 
-        auto connectPacket = make_shared<ConnectPacket>();
-        auto updatePacket = make_shared<UpdatePacket>();
-        auto disconnectPacket = make_shared<DisconnectPacket>();
+        // todo: can't hold on to these pointers after sending -- need to rework this test
+        auto connectPacket = new ConnectPacket();
+        auto updatePacket = new UpdatePacket();
+        auto disconnectPacket = new DisconnectPacket();
 
         connectPacket->a = 2;
         connectPacket->b = 6;
@@ -477,16 +502,13 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
             if ( !packet )
                 break;
 
-            cout << "receive packet from address " << packet->GetAddress().ToString() << endl;
-
             assert( packet->GetAddress() == sender_address );
 
             switch ( packet->GetType() )
             {
                 case PACKET_Connect:
                 {
-                    cout << "received connect packet" << endl;
-                    auto recv_connectPacket = static_pointer_cast<ConnectPacket>( packet );
+                    auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == *connectPacket );
                     receivedConnectPacket = true;
                 }
@@ -494,8 +516,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
 
                 case PACKET_Update:
                 {
-                    cout << "received update packet" << endl;
-                    auto recv_updatePacket = static_pointer_cast<UpdatePacket>( packet );
+                    auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == *updatePacket );
                     receivedUpdatePacket = true;
                 }
@@ -503,13 +524,14 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
 
                 case PACKET_Disconnect:
                 {
-                    cout << "received disconnect packet" << endl;
-                    auto recv_disconnectPacket = static_pointer_cast<DisconnectPacket>( packet );
+                    auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == *disconnectPacket );
                     receivedDisconnectPacket = true;
                 }
                 break;
             }
+
+            delete packet;
         }
 
         if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -525,21 +547,14 @@ int main()
 
     if ( !InitializeSockets() )
     {
-        cerr << "failed to initialize sockets" << endl;
+        printf( "failed to initialize sockets\n" );
         return 1;
     }
 
-    try
-    {
-        test_bsd_sockets_send_and_receive_ipv4();
-        test_bsd_sockets_send_and_receive_ipv6();
-        test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4();
-        test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_bsd_sockets_send_and_receive_ipv4();
+    test_bsd_sockets_send_and_receive_ipv6();
+    test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4();
+    test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6();
 
     ShutdownSockets();
 

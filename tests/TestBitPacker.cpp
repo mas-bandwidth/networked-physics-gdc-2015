@@ -5,7 +5,7 @@ using namespace protocol;
 
 void test_bitpacker()
 {
-    cout << "test_bitpacker" << endl;
+    printf( "test_bitpacker\n" );
 
     const int BufferSize = 256;
 
@@ -62,14 +62,7 @@ int main()
 {
     srand( time( NULL ) );
     
-    try
-    {
-        test_bitpacker();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_bitpacker();
 
     return 0;
 }

@@ -28,7 +28,7 @@ struct TestMessage : public Message
         sequence = 0;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {        
         serialize_bits( stream, sequence, 16 );
 
@@ -46,25 +46,30 @@ struct TestMessage : public Message
             serialize_bits( stream, dummy, numRemainderBits );
         }
 
-        if ( stream.IsWriting() )
-            magic = 0xDEADBEEF;
+        serialize_check( stream, 0xDEADBEEF );
+    }
 
-        serialize_uint32( stream, magic );
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
 
-        assert( magic == 0xDEADBEEF );
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     uint16_t sequence;
-    uint32_t magic;
 };
 
 class MessageFactory : public Factory<Message>
 {
 public:
+
     MessageFactory()
     {
-        Register( MESSAGE_Block, [] { return make_shared<BlockMessage>(); } );
-        Register( MESSAGE_Test, [] { return make_shared<TestMessage>(); } );
+        Register( MESSAGE_Block, [] { return new BlockMessage(); } );
+        Register( MESSAGE_Test,  [] { return new TestMessage();  } );
     }
 };
 
@@ -76,6 +81,7 @@ enum
 
 class TestChannelStructure : public ChannelStructure
 {
+    MessageFactory m_messageFactory;
     ReliableMessageChannelConfig m_config;
 
 public:
@@ -89,7 +95,7 @@ public:
         m_config.maxMessageSize = 1024;
         m_config.blockFragmentSize = 3900;
         m_config.maxLargeBlockSize = 32 * 1024 * 1024;
-        m_config.messageFactory = make_shared<MessageFactory>();
+        m_config.messageFactory = &m_messageFactory;
 
         AddChannel( "reliable message channel", 
                     [this] { return CreateReliableMessageChannel(); }, 
@@ -98,14 +104,14 @@ public:
         Lock();
     }
 
-    shared_ptr<ReliableMessageChannel> CreateReliableMessageChannel()
+    ReliableMessageChannel * CreateReliableMessageChannel()
     {
-        return make_shared<ReliableMessageChannel>( m_config );
+        return new ReliableMessageChannel( m_config );
     }
 
-    shared_ptr<ReliableMessageChannelData> CreateReliableMessageChannelData()
+    ReliableMessageChannelData * CreateReliableMessageChannelData()
     {
-        return make_shared<ReliableMessageChannelData>( m_config );
+        return new ReliableMessageChannelData( m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const
@@ -118,19 +124,22 @@ class PacketFactory : public Factory<Packet>
 {
 public:
 
-    PacketFactory( shared_ptr<ChannelStructure> channelStructure )
+    PacketFactory( ChannelStructure * channelStructure )
     {
-        Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
+        Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
         Register( PACKET_Dummy, [] { return nullptr; } );
     }
 };
 
 void soak_test()
 {
-//    printf( "[soak test]\n" );
+#if !PROFILE
+    printf( "[soak test]\n" );
+#endif
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-    auto packetFactory = make_shared<PacketFactory>( channelStructure );
+    TestChannelStructure channelStructure;
+
+    PacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 4096;
 
@@ -145,32 +154,36 @@ void soak_test()
     simulator.AddState( { 1.0f, 0.50f, 50.0f } );
     simulator.AddState( { 1.0f, 1.00f, 100.0f } );
 
+    Address address( "::1" );
+
+#if !PROFILE
+
     BSDSocketsConfig interfaceConfig;
     interfaceConfig.port = 10000;
     interfaceConfig.family = AF_INET6;
     interfaceConfig.maxPacketSize = MaxPacketSize;
-    interfaceConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    interfaceConfig.packetFactory = &packetFactory;
     
     BSDSockets interface( interfaceConfig );
 
-    Address address( "::1" );
     address.SetPort( interfaceConfig.port );
+
+#endif
 
     ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_Connection;
     connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = packetFactory;
+    connectionConfig.packetFactory = &packetFactory;
     connectionConfig.slidingWindowSize = 1024;
-    connectionConfig.channelStructure = channelStructure;
+    connectionConfig.channelStructure = &channelStructure;
 
     Connection connection( connectionConfig );
 
-    auto messageChannel = static_pointer_cast<ReliableMessageChannel>( connection.GetChannel( 0 ) );
+    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
-    auto messageChannelConfig = channelStructure->GetConfig(); 
+    auto messageChannelConfig = channelStructure.GetConfig(); 
     
     double dt = 0.01f;
-    chrono::milliseconds ms( 1 );
 
     uint16_t sendMessageId = 0;
     uint64_t numMessagesSent = 0;
@@ -194,7 +207,7 @@ void soak_test()
             if ( value < 5000 )
             {
                 // bitpacked message
-                auto message = make_shared<TestMessage>();
+                auto message = new TestMessage();
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
@@ -202,7 +215,7 @@ void soak_test()
             {
                 // small block
                 int index = sendMessageId % 32;
-                auto block = make_shared<Block>( index + 1, 0 );
+                auto block = new Block( index + 1 );
                 for ( int i = 0; i < block->size(); ++i )
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
@@ -211,7 +224,7 @@ void soak_test()
             {
                 // large block
                 int index = sendMessageId % 4;
-                auto block = make_shared<Block>( (index+1) * 1024 * 1000 + index, 0 );
+                auto block = new Block( (index+1) * 1024 * 1000 + index );
                 for ( int i = 0; i < block->size(); ++i )
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
@@ -221,7 +234,17 @@ void soak_test()
             numMessagesSent++;
         }
 
-        shared_ptr<Packet> packet = connection.WritePacket();
+        Packet * packet = connection.WritePacket();
+
+#if PROFILE
+
+        connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+
+        delete packet;
+
+        connection.Update( timeBase );
+
+#else
 
         simulator.SendPacket( address, packet );
         
@@ -234,7 +257,7 @@ void soak_test()
 
         connection.Update( timeBase );
 
-        this_thread::sleep_for( ms );
+        this_thread::sleep_for( chrono::milliseconds( 1 ) );
 
         interface.Update( timeBase );
 
@@ -247,10 +270,14 @@ void soak_test()
             assert( packet->GetAddress() == address );
             assert( packet->GetType() == PACKET_Connection );
 
-            auto connectionPacket = static_pointer_cast<ConnectionPacket>( packet );
+            auto connectionPacket = static_cast<ConnectionPacket*>( packet );
 
             connection.ReadPacket( connectionPacket );
+
+            delete packet;
         }
+
+#endif
 
         while ( true )
         {
@@ -264,11 +291,13 @@ void soak_test()
 
             if ( message->GetType() == MESSAGE_Test )
             {
-//                printf( "%09.2f - received message %d - test message\n", timeBase.time, message->GetId() );
+#if !PROFILE
+                printf( "%09.2f - received message %d - test message\n", timeBase.time, message->GetId() );
+#endif
             }
             else
             {
-                auto blockMessage = static_pointer_cast<BlockMessage>( message );
+                auto blockMessage = static_cast<BlockMessage*>( message );
                 auto block = blockMessage->GetBlock();
                 assert( block );
                 
@@ -278,7 +307,9 @@ void soak_test()
                     assert( block->size() == index + 1 );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );
-//                    printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
+#if !PROFILE
+                    printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
+#endif
                 }
                 else
                 {
@@ -286,14 +317,18 @@ void soak_test()
                     assert( block->size() == (index + 1 ) * 1024 * 1000 + index );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );
-//                    printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
+#if !PROFILE
+                    printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
+#endif
                 }
             }
 
             numMessagesReceived++;
+
+            delete message;
         }
 
-        /*
+#if !PROFILE
         auto status = messageChannel->GetReceiveLargeBlockStatus();
         if ( status.receiving )
             printf( "%09.2f - receiving large block %d - %d/%d fragments\n",
@@ -301,7 +336,7 @@ void soak_test()
                     status.blockId, 
                     status.numReceivedFragments, 
                     status.numFragments );
-                    */
+#endif
 
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == numMessagesSent );
         assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
@@ -317,18 +352,11 @@ int main()
 
     if ( !InitializeSockets() )
     {
-        cerr << "failed to initialize sockets" << endl;
+        printf( "failed to initialize sockets\n" );
         return 1;
     }
 
-    try
-    {
-        soak_test();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    soak_test();
 
     ShutdownSockets();
 

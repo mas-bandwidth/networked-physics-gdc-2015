@@ -40,10 +40,20 @@ namespace protocol
 
         ConnectionRequestPacket() : Packet( PACKET_ConnectionRequest ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -55,11 +65,21 @@ namespace protocol
 
         ChallengeResponsePacket() : Packet( PACKET_ChallengeResponse ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -71,11 +91,21 @@ namespace protocol
 
         ConnectionDeniedPacket() : Packet( PACKET_ConnectionDenied ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint32( stream, reason );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -87,11 +117,21 @@ namespace protocol
 
         ConnectionChallengePacket() : Packet( PACKET_ConnectionChallenge ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -103,11 +143,21 @@ namespace protocol
 
         RequestClientDataPacket() : Packet( PACKET_RequestClientData ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -119,11 +169,21 @@ namespace protocol
 
         ReadyForConnectionPacket() : Packet( PACKET_ReadyForConnection ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -135,11 +195,21 @@ namespace protocol
 
         DisconnectedPacket() : Packet( PACKET_Disconnected ) {}
 
-        void Serialize( Stream & stream )
+        template <typename Stream> void Serialize( Stream & stream )
         {
             serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
         }
     };
 
@@ -147,21 +217,23 @@ namespace protocol
     {
     public:
 
-        ClientServerPacketFactory( shared_ptr<ChannelStructure> channelStructure )
+        ClientServerPacketFactory( ChannelStructure * channelStructure )
         {
+            assert( channelStructure );
+
             // client -> server packets
-            Register( PACKET_ConnectionRequest, [] { return make_shared<ConnectionRequestPacket>(); } );
-            Register( PACKET_ChallengeResponse, [] { return make_shared<ChallengeResponsePacket>(); } );
-            Register( PACKET_ReadyForConnection, [] { return make_shared<ReadyForConnectionPacket>(); } );
+            Register( PACKET_ConnectionRequest,  [] { return new ConnectionRequestPacket();  } );
+            Register( PACKET_ChallengeResponse,  [] { return new ChallengeResponsePacket();  } );
+            Register( PACKET_ReadyForConnection, [] { return new ReadyForConnectionPacket(); } );
 
             // server -> client packets
-            Register( PACKET_ConnectionDenied, [] { return make_shared<ConnectionDeniedPacket>(); } );
-            Register( PACKET_ConnectionChallenge, [] { return make_shared<ConnectionChallengePacket>(); } );
-            Register( PACKET_RequestClientData, [] { return make_shared<RequestClientDataPacket>(); } );
-            Register( PACKET_Disconnected, [] { return make_shared<DisconnectedPacket>(); } );
+            Register( PACKET_ConnectionDenied, [] { return new ConnectionDeniedPacket(); } );
+            Register( PACKET_ConnectionChallenge, [] { return new ConnectionChallengePacket(); } );
+            Register( PACKET_RequestClientData, [] { return new RequestClientDataPacket(); } );
+            Register( PACKET_Disconnected, [] { return new DisconnectedPacket(); } );
 
             // bidirectional packets
-            Register( PACKET_Connection, [channelStructure] { return make_shared<ConnectionPacket>( PACKET_Connection, channelStructure ); } );
+            Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
         }
     };
 }

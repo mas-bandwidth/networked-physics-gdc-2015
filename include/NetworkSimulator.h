@@ -50,10 +50,20 @@ namespace protocol
     {
         struct PacketData
         {
-            shared_ptr<Packet> packet;
+            Packet * packet;
             double dequeueTime;
             uint32_t packetNumber;
         };
+
+        const NetworkSimulatorConfig m_config;
+
+        TimeBase m_timeBase;
+        uint32_t m_packetNumber;
+        vector<PacketData> m_packets;
+        NetworkSimulatorState m_state;
+        vector<NetworkSimulatorState> m_states;
+
+        // todo: need to disable copy constructor etc.
 
     public:
 
@@ -64,14 +74,26 @@ namespace protocol
             m_packets.resize( config.numPackets );
         }
 
+        ~NetworkSimulator()
+        {
+            for ( int i = 0; i < m_packets.size(); ++i )
+            {
+                if ( m_packets[i].packet )
+                {
+                    delete m_packets[i].packet;
+                    m_packets[i].packet = nullptr;
+                }
+            }
+        }
+
         void AddState( const NetworkSimulatorState & state )
         {
             m_states.push_back( state );
         }
 
-        void SendPacket( const Address & address, shared_ptr<Packet> packet )
+        void SendPacket( const Address & address, Packet * packet )
         {
-//            cout << "send packet " << m_packetNumber << endl;
+//            printf( "send packet %d\n", m_packetNumber );
 
             assert( packet );
 
@@ -79,8 +101,13 @@ namespace protocol
 
             const int index = m_packetNumber % m_config.numPackets;
 
+            // todo: what the fuck? packet loss is disabled?!
+
 //            if ( random_int( 0, 100 ) <= m_config.packetLoss )
+//            {
+//                delete packet;
 //                return;
+//            }
 
             const float delay = m_state.latency + random_float( -m_state.jitter, +m_state.jitter );
 
@@ -91,13 +118,7 @@ namespace protocol
             m_packetNumber++;
         }
 
-        void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet )
-        {
-            // not implemented
-            assert( false );
-        }
-
-        shared_ptr<Packet> ReceivePacket()
+        Packet * ReceivePacket()
         {
             PacketData * oldestPacket = nullptr;
 
@@ -112,7 +133,7 @@ namespace protocol
 
             if ( oldestPacket && oldestPacket->dequeueTime <= m_timeBase.time )
             {
-//                cout << "receive packet " << oldestPacket->packetNumber << endl;
+//                printf( "receive packet %d\n", (int) oldestPacket->packetNumber );
                 auto packet = oldestPacket->packet;
                 oldestPacket->packet = nullptr;
                 return packet;
@@ -128,7 +149,7 @@ namespace protocol
             if ( m_states.size() && ( rand() % m_config.stateChance ) == 0 )
             {
                 int stateIndex = rand() % m_states.size();
-//                cout << "*** network simulator switching to state " << stateIndex << " ***" << endl;
+//                printf( "*** network simulator switching to state %d ***\n", stateIndex );
                 m_state = m_states[stateIndex];
             }
         }
@@ -137,17 +158,6 @@ namespace protocol
         {
             return 0xFFFFFFFF;
         }
-
-    private:
-
-        NetworkSimulatorConfig m_config;
-
-        TimeBase m_timeBase;
-        uint32_t m_packetNumber;
-        vector<PacketData> m_packets;
-
-        NetworkSimulatorState m_state;
-        vector<NetworkSimulatorState> m_states;
     };
 }
 

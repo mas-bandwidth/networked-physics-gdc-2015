@@ -28,7 +28,8 @@ namespace protocol
         const Address & GetAddress() const { return address; }
     };
 
-    typedef queue<shared_ptr<Packet>> PacketQueue;
+    // todo: need a replacement for std::queue
+    typedef queue<Packet*> PacketQueue;
 }
 
 #endif

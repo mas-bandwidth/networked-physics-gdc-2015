@@ -19,9 +19,9 @@ namespace protocol
 
         virtual ~NetworkInterface() {}
 
-        virtual void SendPacket( const Address & address, shared_ptr<Packet> packet ) = 0;
+        virtual void SendPacket( const Address & address, Packet * packet ) = 0;        // takes ownership of packet pointer
 
-        virtual shared_ptr<Packet> ReceivePacket() = 0;
+        virtual Packet * ReceivePacket() = 0;                                           // gives you ownership of packet pointer
 
         virtual void Update( const TimeBase & timeBase ) = 0;
 

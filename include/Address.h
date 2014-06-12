@@ -82,7 +82,7 @@ namespace protocol
             }
             else
             {
-                throw runtime_error( "unknown address family" );
+                assert( false );
             }
         }
 
@@ -208,6 +208,8 @@ namespace protocol
             return type;
         }
 
+        // todo: bring this back once we have a std::string replacement
+        /*
         string ToString() const
         {
             if ( type == AddressType::IPv4 )
@@ -235,6 +237,7 @@ namespace protocol
                 return "undefined";
             }
         }
+        */
 
         bool IsValid() const
         {

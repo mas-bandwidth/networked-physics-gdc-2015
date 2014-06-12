@@ -8,16 +8,16 @@
 
 #include "NetworkInterface.h"
 
-namespace protocol
-{
-    inline bool InitializeSockets()
-    {
+namespace protocol 
+{     
+    inline bool InitializeSockets()     
+    {         
         #if PLATFORM == PLATFORM_WINDOWS
-        WSADATA WsaData;
+        WSADATA WsaData;         
         return WSAStartup( MAKEWORD(2,2), &WsaData ) == NO_ERROR;
         #else
-        return true;
-        #endif
+        return true;         
+        #endif     
     }
 
     inline void ShutdownSockets()
@@ -34,12 +34,13 @@ namespace protocol
             port = 10000;
             family = AF_INET6;                      // default to IPv6.
             maxPacketSize = 10*1024;
+            packetFactory = nullptr;
         }
 
         uint16_t port;                              // port to bind UDP socket to
         int family;                                 // socket family: eg. AF_INET (IPv4 only), AF_INET6 (IPv6 only)
         int maxPacketSize;                          // maximum packet size
-        shared_ptr<Factory<Packet>> packetFactory;  // packet factory (required)
+        Factory<Packet> * packetFactory;            // packet factory (required)
     };
 
     class BSDSockets : public NetworkInterface
@@ -72,7 +73,7 @@ namespace protocol
 
             m_receiveBuffer.resize( m_config.maxPacketSize );
 
-//            cout << "creating bsd sockets interface on port " << m_config.port << endl;
+//            printf( "creating bsd sockets interface on port %d\n", m_config.port );
 
             m_counters.resize( NumCounters, 0 );
 
@@ -84,9 +85,11 @@ namespace protocol
 
             if ( m_socket <= 0 )
             {
-                cout << "create socket failed: " << strerror( errno ) << endl;
-                throw runtime_error( "bsd sockets interface failed to create socket" );
-            }
+                //printf( "create socket failed: %s\n", strerror( errno ) );
+
+                // todo: set an error flag
+                assert( false );
+           }
 
             // force IPv6 only if necessary
 
@@ -105,12 +108,14 @@ namespace protocol
                 sock_address.sin6_addr = in6addr_any;
                 sock_address.sin6_port = htons( m_config.port );
             
-//                cout << "bind ipv6 socket to port " << m_config.port << endl;
+//                printf( "bind ipv6 socket to port %d\n", m_config.port );
 
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
-                    cout << "bind socket failed: " << strerror( errno ) << endl;
-                    throw runtime_error( "bsd sockets interface failed to bind socket (ipv6)" );
+                    printf( "bind socket failed: %s\n", strerror( errno ) );
+
+                    // todo: set an error flag
+                    assert( false );
                 }
             }
             else if ( m_config.family == AF_INET )
@@ -120,12 +125,14 @@ namespace protocol
                 sock_address.sin_addr.s_addr = INADDR_ANY;
                 sock_address.sin_port = htons( m_config.port );
             
-//                cout << "bind ipv4 socket to port " << m_config.port << endl;
+//                printf( "bind ipv4 socket to port %d\n", m_config.port );
 
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
-                    cout << "bind socket failed: " << strerror( errno ) << endl;
-                    throw runtime_error( "bsd sockets interface failed to bind socket (ipv4)" );
+                    printf( "bind socket failed: %s\n", strerror( errno ) );
+                    
+                    // todo: set an error flag
+                    assert( false );
                 }
             }
 
@@ -135,13 +142,23 @@ namespace protocol
         
                 int nonBlocking = 1;
                 if ( fcntl( m_socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
-                    throw runtime_error( "bsd sockets interface failed to set non-blocking on socket" );
+                {
+                    //printf( "failed to make socket non-blocking\n" );
+
+                    // todo: set an error flag
+                    assert( false );
+                }
             
             #elif PLATFORM == PLATFORM_WINDOWS
         
                 DWORD nonBlocking = 1;
                 if ( ioctlsocket( m_socket, FIONBIO, &nonBlocking ) != 0 )
-                    throw runtime_error( "bsd sockets interface failed to set non-blocking on socket" );
+                {
+                    //printf( "failed to make socket non-blocking\n" );
+
+                    // todo: set an error flag
+                    assert( false );
+                }
 
             #else
 
@@ -165,14 +182,15 @@ namespace protocol
             }
         }
 
-        void SendPacket( const Address & address, shared_ptr<Packet> packet )
+        void SendPacket( const Address & address, Packet * packet )
         {
+            assert( packet );
             assert( address.IsValid() );
             packet->SetAddress( address );
             m_send_queue.push( packet );
         }
 
-        shared_ptr<Packet> ReceivePacket()
+        Packet * ReceivePacket()
         {
             if ( m_receive_queue.empty() )
                 return nullptr;
@@ -209,39 +227,42 @@ namespace protocol
                 auto packet = m_send_queue.front();
                 m_send_queue.pop();
 
-                try
+                uint8_t buffer[m_config.maxPacketSize];
+
+                typedef WriteStream Stream;
+
+                Stream stream( buffer, m_config.maxPacketSize );
+
+                const int maxPacketType = m_config.packetFactory->GetMaxType();
+                
+                int packetType = packet->GetType();
+                
+                serialize_int( stream, packetType, 0, maxPacketType );
+                
+                stream.Align();
+
+                packet->SerializeWrite( stream );                
+
+                stream.Flush();
+
+                if ( stream.IsOverflow() )
                 {
-                    uint8_t buffer[m_config.maxPacketSize];
-
-                    Stream stream( STREAM_Write, buffer, m_config.maxPacketSize );
-
-                    const int maxPacketType = m_config.packetFactory->GetMaxType();
-                    
-                    int packetType = packet->GetType();
-                    
-                    serialize_int( stream, packetType, 0, maxPacketType );
-                    
-                    stream.Align();
-
-                    packet->Serialize( stream );                
-
-                    stream.Flush();
-
-                    const int bytes = stream.GetBytes();
-                    const uint8_t * data = stream.GetData();
-
-                    if ( bytes > m_config.maxPacketSize )
-                        throw runtime_error( format_string( "packet is larger than max size %llu", m_config.maxPacketSize ) );
-
-                    if ( !SendPacketInternal( packet->GetAddress(), data, bytes ) )
-                        cout << "failed to send packet" << endl;
-                }
-                catch ( runtime_error & error )
-                {
-                    cout << "failed to serialize write packet: " << error.what() << endl;
-                    m_counters[SerializeWriteFailures]++;
+//                    printf( "stream overflow on write\n" );
                     continue;
                 }
+
+                const int bytes = stream.GetBytes();
+                const uint8_t * data = stream.GetData();
+
+                assert( bytes <= m_config.maxPacketSize );
+                if ( bytes > m_config.maxPacketSize )
+                {
+                    //printf( "packet is too large to send\n" );
+                    continue;
+                }
+
+                if ( !SendPacketInternal( packet->GetAddress(), data, bytes ) )
+                    printf( "failed to send packet\n" );
             }
         }
 
@@ -254,33 +275,40 @@ namespace protocol
                 if ( !received_bytes )
                     break;
 
-//                cout << "received bytes: " << received_bytes << endl;
+//                printf( "received bytes: %d\n", received_bytes );
 
-                try
+                typedef ReadStream Stream;
+
+                // todo: we should move read protocol id check *here*
+                // this way we can do any work if a stray UDP packet comes our way
+
+                Stream stream( &m_receiveBuffer[0], m_receiveBuffer.size() );
+
+                const int maxPacketType = m_config.packetFactory->GetMaxType();
+                int packetType = 0;
+                serialize_int( stream, packetType, 0, maxPacketType );
+
+                stream.Align();
+
+                auto packet = m_config.packetFactory->Create( packetType );
+                if ( !packet )
                 {
-                    Stream stream( STREAM_Read, &m_receiveBuffer[0], m_receiveBuffer.size() );
-
-                    const int maxPacketType = m_config.packetFactory->GetMaxType();
-                    int packetType = 0;
-                    serialize_int( stream, packetType, 0, maxPacketType );
-
-                    stream.Align();
-
-                    auto packet = m_config.packetFactory->Create( packetType );
-                    if ( !packet )
-                        throw runtime_error( "failed to create packet from type" );
-
-                    packet->Serialize( stream );
-                    packet->SetAddress( address );
-
-                    m_receive_queue.push( packet );
-                }
-                catch ( runtime_error & error )
-                {
-                    cout << "failed to serialize read packet: " << error.what() << endl;
-                    m_counters[SerializeReadFailures]++;
+                    printf( "failed to create packet of type %d\n", packetType );
                     continue;
                 }
+
+                packet->SerializeRead( stream );
+
+                if ( stream.IsOverflow() )
+                {
+                    printf( "packet overflow on read\n" );
+                    delete packet;
+                    continue;
+                }
+
+                packet->SetAddress( address );
+
+                m_receive_queue.push( packet );
             }
         }
 
@@ -291,7 +319,7 @@ namespace protocol
             assert( bytes > 0 );
             assert( bytes <= m_config.maxPacketSize );
 
-//            cout << "send packet internal: address = " << address.ToString() << ", bytes = " << bytes << endl;
+//            printf( "send packet internal: address = %s, bytes = %d\n", address.ToString().c_str(), bytes );
 
             bool result = false;
 
@@ -299,7 +327,7 @@ namespace protocol
 
             if ( address.GetType() == AddressType::IPv6 )
             {
-//                cout << "ipv6 packet" << endl;
+//                printf( "ipv6 packet\n" );
                 sockaddr_in6 s_addr;
                 s_addr.sin6_family = AF_INET6;
                 s_addr.sin6_port = htons( address.GetPort() );
@@ -309,7 +337,7 @@ namespace protocol
             }
             else if ( address.GetType() == AddressType::IPv4 )
             {
-//                cout << "sent ipv4 packet" << endl;
+//                printf( "sent ipv4 packet\n" );
                 sockaddr_in s_addr;
                 s_addr.sin_family = AF_INET;
                 s_addr.sin_addr.s_addr = address.GetAddress4();
@@ -320,7 +348,7 @@ namespace protocol
 
             if ( !result )
             {
-                cout << "sendto failed: " << strerror( errno ) << endl;
+                printf( "sendto failed: %s\n", strerror( errno ) );
                 m_counters[SendFailures]++;
             }
 
@@ -342,14 +370,14 @@ namespace protocol
 
             int result = recvfrom( m_socket, (char*)data, size, 0, (sockaddr*)&from, &fromLength );
 
-//            cout << "recvfrom result = " << result;
+//            printf( "recvfrom result = %d\n", result );
 
             if ( result <= 0 )
             {
                 if ( errno == EAGAIN )
                     return 0;
 
-                cout << "recvfrom failed: " << strerror( errno ) << endl;
+                printf( "recvfrom failed: %s\n", strerror( errno ) );
                 return 0;
             }
 

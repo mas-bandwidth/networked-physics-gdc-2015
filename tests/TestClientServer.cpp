@@ -22,25 +22,30 @@ struct TestMessage : public Message
         sequence = 0;
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {        
         serialize_bits( stream, sequence, 16 );
+
         for ( int i = 0; i < sequence % 8; ++i )
         {
             int value = 0;
             serialize_bits( stream, value, 32 );
         }
 
-        if ( stream.IsWriting() )
-            magic = 0xDEADBEEF;
+        serialize_check( stream, 0xDEADBEEF );
+    }
 
-        serialize_bits( stream, magic, 32 );
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
 
-        assert( magic == 0xDEADBEEF );
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
     }
 
     uint16_t sequence;
-    uint32_t magic;
 };
 
 class MessageFactory : public Factory<Message>
@@ -48,20 +53,21 @@ class MessageFactory : public Factory<Message>
 public:
     MessageFactory()
     {
-        Register( MESSAGE_Block, [] { return make_shared<BlockMessage>(); } );
-        Register( MESSAGE_Test, [] { return make_shared<TestMessage>(); } );
+        Register( MESSAGE_Block, [] { return new BlockMessage(); } );
+        Register( MESSAGE_Test,  [] { return new TestMessage();  } );
     }
 };
 
 class TestChannelStructure : public ChannelStructure
 {
+    MessageFactory m_messageFactory;
     ReliableMessageChannelConfig m_config;
 
 public:
 
     TestChannelStructure()
     {
-        m_config.messageFactory = make_shared<MessageFactory>();
+        m_config.messageFactory = &m_messageFactory;
 
         AddChannel( "reliable message channel", 
                     [this] { return CreateReliableMessageChannel(); }, 
@@ -70,14 +76,14 @@ public:
         Lock();
     }
 
-    shared_ptr<ReliableMessageChannel> CreateReliableMessageChannel()
+    ReliableMessageChannel * CreateReliableMessageChannel()
     {
-        return make_shared<ReliableMessageChannel>( m_config );
+        return new ReliableMessageChannel( m_config );
     }
 
-    shared_ptr<ReliableMessageChannelData> CreateReliableMessageChannelData()
+    ReliableMessageChannelData * CreateReliableMessageChannelData()
     {
-        return make_shared<ReliableMessageChannelData>( m_config );
+        return new ReliableMessageChannelData( m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const
@@ -88,22 +94,22 @@ public:
 
 void test_client_initial_state()
 {
-    cout << "test_client_initial_state" << endl;
+    printf( "test_client_initial_state\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto networkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
     clientConfig.networkInterface = networkInterface;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
 
     Client client( clientConfig );
 
@@ -115,28 +121,31 @@ void test_client_initial_state()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetNetworkInterface() == networkInterface );
     assert( client.GetResolver() == nullptr );
+
+    delete networkInterface;
 }
 
 void test_client_resolve_hostname_failure()
 {
-    cout << "test_client_resolve_hostname_failure" << endl;
+    printf( "test_client_resolve_hostname_failure\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    TestChannelStructure channelStructure;
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto networkInterface = new BSDSockets( bsdSocketsConfig );
+
+    DNSResolver resolver;
 
     ClientConfig clientConfig;
     clientConfig.connectingTimeOut = 1000000.0;
-    clientConfig.resolver = make_shared<DNSResolver>( AF_INET6 );
+    clientConfig.resolver = &resolver;
     clientConfig.networkInterface = networkInterface;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
 
     Client client( clientConfig );
 
@@ -169,27 +178,31 @@ void test_client_resolve_hostname_failure()
     assert( client.HasError() );
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_ResolveHostnameFailed );
+
+    delete networkInterface;
 }
 
 void test_client_resolve_hostname_timeout()
 {
-    cout << "test_client_resolve_hostname_timeout" << endl;
+    printf( "test_client_resolve_hostname_timeout\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto networkInterface = new BSDSockets( bsdSocketsConfig );
+
+    DNSResolver resolver;
 
     ClientConfig clientConfig;
-    clientConfig.resolver = make_shared<DNSResolver>();
+    clientConfig.resolver = &resolver;
     clientConfig.networkInterface = networkInterface;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
 
     Client client( clientConfig );
 
@@ -221,27 +234,30 @@ void test_client_resolve_hostname_timeout()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_ConnectionTimedOut );
     assert( client.GetExtendedError() == CLIENT_STATE_ResolvingHostname );
+
+    delete networkInterface;
 }
 
 void test_client_resolve_hostname_success()
 {
-    cout << "test_client_resolve_hostname_success" << endl;
+    printf( "test_client_resolve_hostname_success\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
-
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    TestChannelStructure channelStructure;
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto networkInterface = new BSDSockets( bsdSocketsConfig );
+
+    DNSResolver resolver;
 
     ClientConfig clientConfig;
-    clientConfig.resolver = make_shared<DNSResolver>( AF_INET6 );
+    clientConfig.resolver = &resolver;
     clientConfig.networkInterface = networkInterface;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
 
     Client client( clientConfig );
 
@@ -274,26 +290,28 @@ void test_client_resolve_hostname_success()
     assert( !client.HasError() );
     assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
     assert( client.GetError() == CLIENT_ERROR_None );
+
+    delete networkInterface;
 }
 
 void test_client_connection_request_timeout()
 {
-    cout << "test_client_connection_request_timeout" << endl;
+    printf( "test_client_connection_request_timeout\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto networkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto networkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
     clientConfig.networkInterface = networkInterface;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
 
     Client client( clientConfig );
 
@@ -325,26 +343,28 @@ void test_client_connection_request_timeout()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_ConnectionTimedOut );
     assert( client.GetExtendedError() == CLIENT_STATE_SendingConnectionRequest );
+
+    delete networkInterface;
 }
 
 void test_client_connection_request_denied()
 {
-    cout << "test_client_connection_request_denied" << endl;
+    printf( "test_client_connection_request_denied\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -352,10 +372,10 @@ void test_client_connection_request_denied()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -394,26 +414,29 @@ void test_client_connection_request_denied()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_ConnectionRequestDenied );
     assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ServerClosed );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_challenge()
 {
-    cout << "test_client_connection_challenge" << endl;
+    printf( "test_client_connection_challenge\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -421,10 +444,10 @@ void test_client_connection_challenge()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -465,26 +488,29 @@ void test_client_connection_challenge()
     assert( client.GetState() == CLIENT_STATE_SendingChallengeResponse );
     assert( client.GetError() == CLIENT_ERROR_None );
     assert( client.GetExtendedError() == 0 );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_challenge_response()
 {
-    cout << "test_client_connection_challenge_response" << endl;
+    printf( "test_client_connection_challenge_response\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -492,10 +518,10 @@ void test_client_connection_challenge_response()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -535,26 +561,29 @@ void test_client_connection_challenge_response()
     assert( client.GetState() == CLIENT_STATE_SendingChallengeResponse );
     assert( client.GetError() == CLIENT_ERROR_None );
     assert( client.GetExtendedError() == 0 );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_established()
 {
-    cout << "test_client_connection_established" << endl;
+    printf( "test_client_connection_established\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -562,10 +591,10 @@ void test_client_connection_established()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -605,26 +634,29 @@ void test_client_connection_established()
     assert( client.GetState() == CLIENT_STATE_Connected );
     assert( client.GetError() == CLIENT_ERROR_None );
     assert( client.GetExtendedError() == 0 );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_messages()
 {
-    cout << "test_client_connection_messages" << endl;
+    printf( "test_client_connection_messages\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -632,10 +664,10 @@ void test_client_connection_messages()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -676,21 +708,21 @@ void test_client_connection_messages()
     assert( client.GetError() == CLIENT_ERROR_None );
     assert( client.GetExtendedError() == 0 );
 
-    auto clientMessageChannel = static_pointer_cast<ReliableMessageChannel>( client.GetConnection()->GetChannel( 0 ) );
-    auto serverMessageChannel = static_pointer_cast<ReliableMessageChannel>( server.GetClientConnection( clientIndex )->GetChannel( 0 ) );
+    auto clientMessageChannel = static_cast<ReliableMessageChannel*>( client.GetConnection()->GetChannel( 0 ) );
+    auto serverMessageChannel = static_cast<ReliableMessageChannel*>( server.GetClientConnection( clientIndex )->GetChannel( 0 ) );
 
     const int NumMessagesSent = 32;
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto message = make_shared<TestMessage>();
+        auto message = new TestMessage();
         message->sequence = i;
         clientMessageChannel->SendMessage( message );
     }
 
     for ( int i = 0; i < NumMessagesSent; ++i )
     {
-        auto message = make_shared<TestMessage>();
+        auto message = new TestMessage();
         message->sequence = i;
         serverMessageChannel->SendMessage( message );
     }
@@ -714,11 +746,13 @@ void test_client_connection_messages()
             assert( message->GetId() == numMessagesReceivedOnClient );
             assert( message->GetType() == MESSAGE_Test );
 
-            auto testMessage = static_pointer_cast<TestMessage>( message );
+            auto testMessage = static_cast<TestMessage*>( message );
 
             assert( testMessage->sequence == numMessagesReceivedOnClient );
 
             ++numMessagesReceivedOnClient;
+
+            delete message;
         }
 
         while ( true )
@@ -731,11 +765,13 @@ void test_client_connection_messages()
             assert( message->GetId() == numMessagesReceivedOnServer );
             assert( message->GetType() == MESSAGE_Test );
 
-            auto testMessage = static_pointer_cast<TestMessage>( message );
+            auto testMessage = static_cast<TestMessage*>( message );
 
             assert( testMessage->sequence == numMessagesReceivedOnServer );
 
             ++numMessagesReceivedOnServer;
+
+            delete message;
         }
 
         if ( numMessagesReceivedOnClient == NumMessagesSent && numMessagesReceivedOnServer == NumMessagesSent )
@@ -745,26 +781,29 @@ void test_client_connection_messages()
 
         timeBase.time += timeBase.deltaTime;
     }
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_disconnect()
 {
-    cout << "test_client_connection_disconnect" << endl;
+    printf( "test_client_connection_disconnect\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     BSDSocketsConfig bsdSocketsConfig;
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -772,10 +811,10 @@ void test_client_connection_disconnect()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -842,15 +881,18 @@ void test_client_connection_disconnect()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_DisconnectedFromServer );
     assert( client.GetExtendedError() == 0 );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_server_full()
 {
-    cout << "test_client_connection_server_full" << endl;
+    printf( "test_client_connection_server_full\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     // create a server on port 10000
 
@@ -858,12 +900,12 @@ void test_client_connection_server_full()
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -873,19 +915,21 @@ void test_client_connection_server_full()
     // connect the maximum number of clients to the server
     // and wait until they are all fully connected.
 
-    vector<shared_ptr<Client>> clients;
+    vector<Client*> clients;
 
     bsdSocketsConfig.port = 0;
 
     for ( int i = 0; i < serverConfig.maxClients; ++i )
     {
-        auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+        // todo: we need to keep an array of these so we can delete them later
+        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
         ClientConfig clientConfig;
-        clientConfig.channelStructure = channelStructure;
+        clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = clientNetworkInterface;
 
-        auto client = make_shared<Client>( clientConfig );
+        // todo: need to remember to delete this guy
+        auto client = new Client( clientConfig );
 
         client->Connect( "[::1]:10000" );
 
@@ -940,13 +984,13 @@ void test_client_connection_server_full()
     // with the "server full" connection denied response and the other clients
     // remain connected throughout the test.
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
-    auto extraClient = make_shared<Client>( clientConfig );
+    auto extraClient = new Client( clientConfig );
 
     extraClient->Connect( "[::1]:10000" );
 
@@ -994,15 +1038,21 @@ void test_client_connection_server_full()
     assert( extraClient->GetState() == CLIENT_STATE_Disconnected );
     assert( extraClient->GetError() == CLIENT_ERROR_ConnectionRequestDenied );
     assert( extraClient->GetExtendedError() == CONNECTION_REQUEST_DENIED_ServerFull );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
+    delete extraClient;
+    for ( int i = 0; i < clients.size(); ++i )
+        delete clients[i];
 }
 
 void test_client_connection_timeout()
 {
-    cout << "test_client_connection_timeout" << endl;
+    printf( "test_client_connection_timeout\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     // start server and connect one client and wait the client is fully connected
 
@@ -1010,12 +1060,12 @@ void test_client_connection_timeout()
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -1023,10 +1073,10 @@ void test_client_connection_timeout()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -1100,15 +1150,18 @@ void test_client_connection_timeout()
     }
 
     assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_Disconnected );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_already_connected()
 {
-    cout << "test_client_connection_already_connected" << endl;
+    printf( "test_client_connection_already_connected\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     // start a server and connect a client. wait until the client is fully connected
 
@@ -1116,12 +1169,12 @@ void test_client_connection_already_connected()
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -1129,10 +1182,10 @@ void test_client_connection_already_connected()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -1199,15 +1252,18 @@ void test_client_connection_already_connected()
     assert( client.GetState() == CLIENT_STATE_Disconnected );
     assert( client.GetError() == CLIENT_ERROR_ConnectionRequestDenied );
     assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_AlreadyConnected );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 void test_client_connection_reconnect()
 {
-    cout << "test_client_connection_reconnect" << endl;
+    printf( "test_client_connection_reconnect\n" );
 
-    auto channelStructure = make_shared<TestChannelStructure>();
+    TestChannelStructure channelStructure;
 
-    auto packetFactory = make_shared<ClientServerPacketFactory>( channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     // start a server and connect a client. wait until the client is fully connected
 
@@ -1215,12 +1271,12 @@ void test_client_connection_reconnect()
     bsdSocketsConfig.port = 10000;
     bsdSocketsConfig.family = AF_INET6;
     bsdSocketsConfig.maxPacketSize = 1024;
-    bsdSocketsConfig.packetFactory = static_pointer_cast<Factory<Packet>>( packetFactory );
+    bsdSocketsConfig.packetFactory = &packetFactory;
 
-    auto clientNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ClientConfig clientConfig;
-    clientConfig.channelStructure = channelStructure;
+    clientConfig.channelStructure = &channelStructure;
     clientConfig.networkInterface = clientNetworkInterface;
 
     Client client( clientConfig );
@@ -1228,10 +1284,10 @@ void test_client_connection_reconnect()
     client.Connect( "[::1]:10001" );
 
     bsdSocketsConfig.port = 10001;
-    auto serverNetworkInterface = make_shared<BSDSockets>( bsdSocketsConfig );
+    auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
     ServerConfig serverConfig;
-    serverConfig.channelStructure = channelStructure;
+    serverConfig.channelStructure = &channelStructure;
     serverConfig.networkInterface = serverNetworkInterface;
 
     Server server( serverConfig );
@@ -1301,34 +1357,30 @@ void test_client_connection_reconnect()
     assert( client.GetState() == CLIENT_STATE_Connected );
     assert( client.GetError() == CLIENT_ERROR_None );
     assert( client.GetExtendedError() == 0 );
+
+    delete clientNetworkInterface;
+    delete serverNetworkInterface;
 }
 
 int main()
 {
     srand( time( NULL ) );
 
-    try
-    {
-        test_client_initial_state();
-        test_client_resolve_hostname_failure();
-        test_client_resolve_hostname_timeout();
-        test_client_resolve_hostname_success();
-        test_client_connection_request_timeout();
-        test_client_connection_request_denied();
-        test_client_connection_challenge();
-        test_client_connection_challenge_response();
-        test_client_connection_established();
-        test_client_connection_messages();
-        test_client_connection_disconnect();
-        test_client_connection_server_full();
-        test_client_connection_timeout();
-        test_client_connection_already_connected();
-        test_client_connection_reconnect();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_client_initial_state();
+    test_client_resolve_hostname_failure();
+    test_client_resolve_hostname_timeout();
+    test_client_resolve_hostname_success();
+    test_client_connection_request_timeout();
+    test_client_connection_request_denied();
+    test_client_connection_challenge();
+    test_client_connection_challenge_response();
+    test_client_connection_established();
+    test_client_connection_messages();
+    test_client_connection_disconnect();
+    test_client_connection_server_full();
+    test_client_connection_timeout();
+    test_client_connection_already_connected();
+    test_client_connection_reconnect();
 
     return 0;
 }

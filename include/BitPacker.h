@@ -33,7 +33,7 @@ namespace protocol
             assert( bits <= 32 );
 
 //            if ( m_bitsWritten + bits > m_numBits )
-//                cout << format_string( "bitpacker overflow: bits written = %d + %d, max %d", m_bitsWritten, bits, m_numBits ) << endl;
+//                printf( "bitpacker overflow: bits written = %d + %d, max %d\n", m_bitsWritten, bits, m_numBits );
 
             assert( m_bitsWritten + bits <= m_numBits );
 
@@ -52,7 +52,7 @@ namespace protocol
             if ( m_bitIndex >= 32 )
             {
                 assert( m_wordIndex < m_numWords );
-//                cout << "write word: " << htonl( m_scratch >> 32 ) << endl;
+//                printf( "write word: %x\n", htonl( m_scratch >> 32 ) );
                 m_data[m_wordIndex] = htonl( uint32_t( m_scratch >> 32 ) );
                 m_scratch <<= 32;
                 m_bitIndex -= 32;
@@ -139,7 +139,7 @@ namespace protocol
         {
             if ( m_bitIndex != 0 )
             {
-//                cout << "write word: " << htonl( m_scratch >> 32 ) << endl;
+//                printf( "write word: %x\n", htonl( m_scratch >> 32 ) );
                 assert( m_wordIndex < m_numWords );
                 m_data[m_wordIndex++] = htonl( uint32_t( m_scratch >> 32 ) );
             }
@@ -165,7 +165,7 @@ namespace protocol
             return m_wordIndex * 4;
         }
 
-        bool InOverflow() const
+        bool IsOverflow() const
         {
             return m_overflow;
         }
@@ -197,7 +197,7 @@ namespace protocol
             m_wordIndex = 0;
             m_scratch = ntohl( m_data[0] );
             m_overflow = false;
-//            cout << "read word = " << m_data[0] << endl;
+//            printf( "read word = %x\n", m_data[0] );
         }
 
         uint32_t ReadBits( int bits )
@@ -228,7 +228,7 @@ namespace protocol
                 const uint32_t b = bits - a;
                 m_scratch <<= a;
                 m_scratch |= ntohl( m_data[m_wordIndex] );
-//                cout << "read word = " << m_data[m_wordIndex] << endl;
+//                printf( "read word = %x\n" );
                 m_scratch <<= b;
                 m_bitIndex = b;
             }
@@ -319,7 +319,7 @@ namespace protocol
             return m_numBits - m_bitsRead;
         }
 
-        bool InOverflow() const
+        bool IsOverflow() const
         {
             return m_overflow;
         }

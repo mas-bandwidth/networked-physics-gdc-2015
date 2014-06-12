@@ -11,14 +11,12 @@
 #include <vector>
 #include <limits>
 #include <memory>
-#include <vector>
 #include <thread>
 #include <future>
 #include <queue>
 #include <chrono>
 #include <map>
 #include <unistd.h>
-#include <iostream>
 #include <stdexcept>
 #include <string.h>
 #include <sys/types.h>
@@ -59,27 +57,6 @@
 namespace protocol
 {
     using namespace std;
-
-    string format_string( const char * fmt_str, ... ) 
-    {
-        int final_n, n = 256;
-        string str;
-        unique_ptr<char[]> formatted;
-        va_list ap;
-        while(1) 
-        {
-            formatted.reset(new char[n]);
-            strcpy(&formatted[0], fmt_str);
-            va_start(ap, fmt_str);
-            final_n = vsnprintf(&formatted[0], n, fmt_str, ap);
-            va_end(ap);
-            if (final_n < 0 || final_n >= n)
-                n += abs(final_n - n + 1);
-            else
-                break;
-        }
-        return string(formatted.get());
-    }
 
     template <uint32_t x> struct PopCount
     {
@@ -179,14 +156,16 @@ namespace protocol
 
         virtual ~Object() {}
 
-        virtual void Serialize( class Stream & stream ) = 0;
+        virtual void SerializeRead( class ReadStream & stream ) = 0;
+
+        virtual void SerializeWrite( class WriteStream & stream ) = 0;
     };
 
     template <typename T> class Factory
     {
     public:
 
-        typedef function< shared_ptr<T>() > create_function;
+        typedef function<T*()> create_function;
         
         Factory()
         {
@@ -199,13 +178,20 @@ namespace protocol
             max_type = max( type, max_type );
         }
 
-        shared_ptr<T> Create( int type )
+        bool TypeExists( int type )
         {
             auto itor = create_map.find( type );
-            if ( itor == create_map.end() )
-                throw runtime_error( "invalid object type id in factory create" );
-            else
+            return itor != create_map.end();
+        }
+
+        T * Create( int type )
+        {
+            auto itor = create_map.find( type );
+            assert( itor != create_map.end() );
+            if ( itor != create_map.end() )
                 return itor->second();
+            else
+                return nullptr;
         }
 
         int GetMaxType() const
@@ -216,6 +202,8 @@ namespace protocol
     private:
 
         int max_type;
+        
+        // todo: need a replacement for map
         map<int,create_function> create_map;
     };
 

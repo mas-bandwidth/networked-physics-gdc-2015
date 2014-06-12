@@ -1,14 +1,89 @@
 DONE:
 
 TODO:
-    
-    OPTIMIZE!!!
+
+    I think I can fix it by adding a reference count to the connection packet.
+
+    Basically, the connection packet has ref count 0 initially.
+
+    Then, I can addref to message for each packet that includes it,
+    as well as addref when it is added to the send packets.
+
+    Then when it is acked, *or* when a packet is deleted, 
+    decrement the ref, if the ref is zero, delete the message.
+
+    ----------------------
+
+    Add some macros to make defining serialization and messages easier.
+
+    ----------------------
+
+    Make sure all connection packets are deleted after "ReadPacket"
+
+    ----------------------
+
+    Pass over todos and make notes of what else needs to be done.
+
+    ----------------------
+
+    DNSResolver is probably completely broken. Get it working and break
+    down tasks that would turn it into something that can be *pre-allocated*
+    and doesn't do allocations at runtime.
+
+    ----------------------
+
+    All class configs should be *const*.
+
+    ----------------------
+
+    Need to disallow copy construction for classes with pointers.
+
+    ----------------------
+
+    Basic logging. Just start with a "Log" macro that can be redirected
+    to a "Logger" interface via virtual fn. 
+
+    Of course, this is disabled in release build (NDEBUG) but it is 
+    the easiest way to make sure the library can output logs to the
+    appropriate place (console, TTY, file, whatever...)
+
+    Should logs include the "\n" at the end?
+
+    It would be nice if they didn't have to. It's easy to forget.
+
+    ----------------------
+
+
+
+
+
+
+
+
+
+
 
     --------------------
 
-    Instead of walking the send queue to find the oldest message id not acked,
-    cache this value, and on each update, walk left to right to skip past acked
-    messages in the send queue to get the new value.
+    Consolidate bitpacker into stream.
+
+    --------------------
+
+    It appears that fragment allocation inside GetData and ProcessData
+    is expensive. Instead, the fragment should work on a pointer direct
+    to the area of data to be serialized to/from, so there is no alloc 
+    and copy.
+
+    This is probably the largest optimization that can be made at this stage.
+
+    --------------------
+
+    I need a way to determine the speed of the code so that one run
+    to the next is faster. Right now I'm chopping off bits of code
+    that shouldn't be slow, and then they go away from the profile
+    but eventually, I'm going to be looking for an overall speed
+    improvement, average milliseconds per-100 updates or something
+    like this that can be compared between runs.
 
     --------------------
 
@@ -23,45 +98,12 @@ TODO:
 
     --------------------
 
-    Bring back templated serialize functions.
+    Could save a bit of memory and maybe gain some speed by switching 
+    the received fragment data to a bitfield
 
-    Yes, network object should have virtual SerializeRead( ReadStream & stream )
-    and SerializeWrite functions, BUT... these can be implemented via templated 
-    serialize fn in the class.
-
-    I think this is the best of both worlds, and avoids any overhead in the
-    serialize due to extra branching.
+    We only need one bit per-fragment, "has it been received?"
 
     --------------------
-
-    Remove usage of cout and replace uniformly with printf. Fuck cout it's slow as shit.
-
-    --------------------
-
-    Remove "format_string" function.
-
-    --------------------
-
-    SoakTest seems to not work with -DNDEBUG. Why?
-
-    --------------------
-
-    I'd like a logging system. It's annoying to have to comment out and re-enable
-    logs as I debug things. Would be nice to be able to enable/disable channels,
-    and have virtually zero cost if a channel is disabled.
-
-    Would be nice to have logs completely disabled in release build.
-
-    Perhaps I could get an evaluation of deja. Maybe I can even get a licence
-    if I write an article explaining my usage of deja? Contact the authors.
-
-    But does deja have a mac UI client? Almost certainly not.
-
-    --------------------
-
-
-
-
 
 
 
@@ -150,6 +192,32 @@ WOULD BE NICE:
 
     ----------------
 
+    Idea for logging, have an enum of channels, and per-channel a level integer
+    Initial level is zero. Enable logging by setting the level. Per-channel logs
+    can be emitted by passing the level, which defaults to 1.
+
+    Log( "hello everybody %d\n", value );
+
+    On a per-file basis, specify the current log channel via #define
+
+    This may require the project gets split up into cpp files first.
+
+    ----------------
+
+    For the message and block allocator, I'm thinking of a thread
+    local storage allocator that detects when the thread that is
+    calling it is *not* the same as the thread that it is running
+    on, and in this case adds the deallocs to a list (atomic) which 
+    is processed inside the allocator update.
+
+    Alternatively, received messages could just have a policy
+    that they will be deleted on the next update. Don't hold
+    on to them.
+
+    Same for blocks, potentially.
+
+    ----------------
+
     Add counters for all the different things inside the large blocks,
     eg. # of large blocks sent, received, read/written, also # of
     fragments read/written.
@@ -177,22 +245,6 @@ WOULD BE NICE:
     Channel budget should be dynamic. The user should be able to derive their own 
     connection type and specify channel budgets dynamically based on flow control, 
     for example.
-
-    --------------------
-
-    Optimize the block send and receive to not require a data copy or allocation
-    for each fragment data block, use pointers and directly serialize in/out of
-    block data instead.
-
-    ^-- is this a significant overhead? I'm not sure it is. 
-
-    But maybe for large fragment sizes.
-
-    --------------------
-
-    Could save a bit of memory by switching the received fragment data to a bitfield
-
-    We only need one bit per-fragment, "has it been received?"
 
     ---------------------
 

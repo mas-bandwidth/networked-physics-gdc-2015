@@ -7,18 +7,28 @@ class TestInterface : public NetworkInterface
 {
 public:
 
-    virtual void SendPacket( const Address & address, shared_ptr<Packet> packet )
+    TestInterface()
+    {
+        // ...
+    }
+
+    ~TestInterface()
+    {
+        // todo: delete any packets still in the packet_queue
+    }
+
+    virtual void SendPacket( const Address & address, Packet * packet )
     {
         packet->SetAddress( address );
         packet_queue.push( packet );
     }
 
-    virtual void SendPacket( const string & address, uint16_t port, shared_ptr<Packet> packet )
+    virtual void SendPacket( const string & address, uint16_t port, Packet * packet )
     {
         assert( false );        // not supported
     }
 
-    virtual shared_ptr<Packet> ReceivePacket()
+    virtual Packet * ReceivePacket()
     {
         if ( packet_queue.empty() )
             return nullptr;
@@ -51,34 +61,37 @@ class TestPacketA : public Packet
 {
 public:
     TestPacketA() : Packet( PACKET_A ) {}
-    void Serialize( Stream & stream ) {}
+    void SerializeRead( ReadStream & stream ) {}
+    void SerializeWrite( WriteStream & stream ) {}
 };
 
 class TestPacketB : public Packet
 {
 public:
     TestPacketB() : Packet( PACKET_B ) {}
-    void Serialize( Stream & stream ) {}
+    void SerializeRead( ReadStream & stream ) {}
+    void SerializeWrite( WriteStream & stream ) {}
 };
 
 class TestPacketC : public Packet
 {
 public:
     TestPacketC() : Packet( PACKET_C ) {}
-    void Serialize( Stream & stream ) {}
+    void SerializeRead( ReadStream & stream ) {}
+    void SerializeWrite( WriteStream & stream ) {}
 };
 
 void test_network_interface()
 {
-    cout << "test_network_interface" << endl;
+    printf( "test_network_interface\n" );
 
     TestInterface interface;
 
     Address address( 127,0,0,1, 1000 );
 
-    interface.SendPacket( address, make_shared<TestPacketA>() );
-    interface.SendPacket( address, make_shared<TestPacketB>() );
-    interface.SendPacket( address, make_shared<TestPacketC>() );
+    interface.SendPacket( address, new TestPacketA() );
+    interface.SendPacket( address, new TestPacketB() );
+    interface.SendPacket( address, new TestPacketC() );
 
     auto connectPacket = interface.ReceivePacket();
     auto updatePacket = interface.ReceivePacket();
@@ -94,20 +107,17 @@ void test_network_interface()
     assert( disconnectPacket->GetAddress() == address );
 
     assert( interface.ReceivePacket() == nullptr );
+
+    delete connectPacket;
+    delete updatePacket;
+    delete disconnectPacket;
 }
 
 int main()
 {
     srand( time( NULL ) );
 
-    try
-    {
-        test_network_interface();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_network_interface();
 
     return 0;
 }

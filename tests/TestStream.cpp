@@ -1,4 +1,4 @@
-`include "Stream.h"
+#include "Stream.h"
 
 using namespace std;
 using namespace protocol;
@@ -42,7 +42,7 @@ struct TestObject : public Object
             items[i] = i + 10;        
     }
 
-    void Serialize( Stream & stream )
+    template <typename Stream> void Serialize( Stream & stream )
     {
         serialize_int( stream, a, 0, 10 );
         serialize_int( stream, b, -5, +5 );
@@ -58,11 +58,21 @@ struct TestObject : public Object
         for ( int i = 0; i < numItems; ++i )
             serialize_bits( stream, items[i], 8 );
     }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
 };
 
 void test_stream()
 {
-    cout << "test_stream" << endl;
+    printf( "test_stream\n" );
 
     const int BufferSize = 256;
 
@@ -73,17 +83,17 @@ void test_stream()
     TestObject writeObject;
     writeObject.Init();
     {
-        Stream stream( STREAM_Write, buffer, BufferSize );
-        writeObject.Serialize( stream );
-        stream.Flush();
+        WriteStream writeStream( buffer, BufferSize );
+        writeObject.SerializeWrite( writeStream );
+        writeStream.Flush();
     }
 
     // read the object back
 
     TestObject readObject;
     {
-        Stream stream( STREAM_Read, buffer, BufferSize );
-        readObject.Serialize( stream );
+        ReadStream readStream( buffer, BufferSize );
+        readObject.SerializeRead( readStream );
     }
 
     // verify read object matches written object
@@ -104,14 +114,7 @@ int main()
 {
     srand( time( NULL ) );
 
-    try
-    {
-        test_stream();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_stream();
 
     return 0;
 }

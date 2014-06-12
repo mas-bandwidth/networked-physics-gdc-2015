@@ -1,3 +1,227 @@
+Wednesday Evening, June 11th, 2014:
+-----------------------------------
+
+    Clearly usage of smart_ptr is silly.
+
+    I'm going to have to drop back to not using this.
+
+    Also, should not use STL.
+
+    Similarly, I should not use exceptions *anywhere* for error reporting.
+
+    (Otherwise with the standard pointers I have now, it would get painful)
+
+    The bitsquid foundation library looks like a good start.
+
+    However, it does not include pool allocators, which is a bummer.
+
+    I think I should take the bitsquid code as a starting point and
+    then merge it in with my own code. It is a nice system, but only
+    a start.
+
+    Look through the code and prep STL usage for removal.
+
+    Remove usage of cout and replace uniformly with printf.
+
+    Remove exception usage and make notes where we need 
+    error handling, eg. set error flag, or fatal error.
+
+    Removed "format_string" function.
+
+    Remove shared_ptr usage. Replace with standard new and delete.
+
+    This should let me profile the difference, plus think through
+    who owns each pointer.
+
+    Make sure that all ReceiveMessage calls delete the message afterwards.
+
+    Make sure all ReceivePacket calls delete the packet afterwards.
+
+    Connection data now deletes channel data on destructor.
+    
+    Make sure the reliable message channel data cleans up in destructor.
+
+    Important, it doesn't need to clean up the messages, these are owned
+    by the send queue, and are deleted once messages are acked.
+
+    Message needs to be deleted on ack (bitpacked message *and* large block)
+
+    SoakTest definitely has some problems.
+
+    We are deleting some memory we shouldn't:
+
+        SoakTest(29098,0x7fff7d306310) malloc: *** error for object 0x7ff46901e200: pointer being freed was not allocated
+
+    And there are serialization errors that make no sense, eg. corrupt data.
+
+    Message channel definitely has problems. The same crash occurs in the unit test.
+
+    It's breaking in the large block test.
+
+    It's clearly something to do with fragment sending...
+
+    But the fragment is passed in to the channel data... it is supposed to be deleted in the destructor?
+
+    Looks like a double delete. My guess is that the channel data was getting accidentally copied somewhere.
+
+    Yep!
+
+    Get the soak test working.
+
+    Profile the soak test again.
+
+    Getting some crashes and super weird behavior still. 
+
+    There is still somethig broken!
+
+    Suspect the message may be getting deleted early for some reason,
+    perhaps while the channel data is still using that message.
+
+    But is this even possible? I'm not sure it actually is.
+
+    Ohshit. The messages *are* included in the packet,
+    and the packet is serialized LATER, eg. inside the
+    BSDInterface.
+
+    This is probably the cause of it. This is CRAZY. I'm not sure how to fix this!
+
+
+Tuesday Evening, June 10th, 2014:
+---------------------------------
+
+    eg. add a mode where the BSDInterface isn't created and packets
+    and just read and written without going over sockets.
+
+    This will allow for greater focus on the actual packet processing
+    vs. being CPU bound and sleep bound for sockets.
+
+    eg. #define PROFILE 1 in SoakTest.cpp
+
+    Disable sleep in this mode.
+
+    Make sure SoakTest is working properly with -NDEBUG. 
+
+    My guess is is that it was just running too fast to have the IO function.
+
+    The profile mode above should help with this. Verify messages are received.
+
+    Verified. It was just timing with the sleep.
+
+    Disable printf in this mode.
+
+    Look and see what is the most expensive now.
+
+    Now the split looks like this:
+
+        71.4% - Connection::WritePacket
+         9.9% - Connection::ReadPacket
+         2.7% - ConnectionPacket::~ConnectionPacket
+         2.4% - shared_ptr
+         0.5% - ReliableMessageChannel::SendBlock
+         0.3% - ReliableMessageChannel::SendMessage
+         0.1% - ReliableMessageChannel::CanSendMessage
+
+    There is definitely something going wrong inside Connection::WritePacket
+
+    Looks like there is an expensive vector allocation going on inside there?
+
+    I'll bet this is the fragment alloc on send, maybe because it is clearing the data to zero?
+
+    Fixed the clean to zero but no significant change. I think it's the alloc itself.
+
+    I think what is going on is that there are just significantly more packets written
+    that read due to the simulator dropping packets.
+
+    Changed the code so that all written packets are read.
+
+    Lets see what is expensive now:
+
+        31.3% - Connection::ReadPacket
+        24.0% - Connection::WritePacket
+        20.7% - shared_ptr<vector<uint8_t>> allocator (!!!)
+         4.8% - ReliableMessageChannel::SendBlock
+         3.0% - ReliableMessageChannel::SendMessage
+         1.2% - ConnectionPacket::~ConnectionPacket
+         1.1% - ReliableMessageChannel::CanSendMessage
+
+    Bottom line.
+
+        1. Read packet seems a bit slower than write packet. Why is this?
+        2. I need to use a custom allocator
+        3. shared_ptr is stupid. I should not be using it
+
+
+Tuesday Morning, June 10th, 2014:
+---------------------------------
+
+    Inside Connection::WritePacket almost all the cost (18% of 19% total)
+    is inside ReliableMessageChannel::GetData
+
+    Start here!    
+
+    Instead of walking the send queue to find the oldest message id not acked,
+    cache this value, and on each update, walk left to right to skip past acked
+    messages in the send queue to get the new value.
+
+    This has reduced the cost of "GetData" considerably.
+
+    Now the largest cost is serialize. It makes sense to do the serialization fixes first.
+
+    Bring back templated serialize functions.
+
+    Yes, network object should have virtual SerializeRead( ReadStream & stream )
+    and SerializeWrite functions, BUT... these can be implemented via templated 
+    serialize fn in the class.
+
+    I think this is the best of both worlds, and avoids any overhead in the
+    serialize due to extra branching.
+
+    Reworked "Stream" into separate "ReadStream" and "WriteStream"
+
+    Reworked template functions to template <typename Stream>, so we can still get
+    Stream::IsReading, and Stream::IsWriting (easy to read and scan)
+
+    In base object, there are now two virtual methods: SerializeRead and SerializeWrite
+
+    Pass over BSDSockets.cpp and get it working with separate read and write streams.
+
+    Converted BSD sockets over. Had to do a bit of shennanigans with typedef WriteStream Stream
+    for the macros. Don't know how else I could do this, vs. crafting a templated serialize fn.
+
+    Convert Connection.h and TestConnection.cpp
+
+    Converted ReliableMessageChannel.h
+
+    Convert soak test.
+
+    Profile results:
+
+        62.6% - sleep
+        24.5% - BSDSockets::SendPackets
+         9.1% - BSDSockets::ReceivePackets
+         1.7% - Connection::WritePacket
+         0.4% - shared_ptr
+         0.4% - Connection::ReadPacket
+         0.2% - more shared_ptr
+         
+    Now try with -DNDEBUG
+
+    Not sure if I can trust the result, but:
+
+        70.9% - sleep
+        23.8% - BSDSockets::SendPacket
+         2.3% - Connection::WritePacket
+         1.7% - BSDSockets::ReceivePackets
+
+    Inside BSDSockets::SendPacket:
+
+        22% (of 23.8%) is in the sendto... looks like we are IOBound in this test.
+    
+    Convert client/server.
+
+    Everything works. Time for a break.
+
+
 Early Tuesday Morning, June 10th, 2014:
 ---------------------------------------
 
@@ -43,7 +267,7 @@ Early Tuesday Morning, June 10th, 2014:
         c) format_string should die in a fire
         d) printf is better than cout
         e) shared_ptr is slow. i need an alternative
-        f) allocating stuff is slow. have an allocator strategy.
+        f) allocating stuff is slow. need a custom allocator
 
     After removing printf calls:
 

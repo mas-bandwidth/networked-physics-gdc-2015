@@ -23,14 +23,17 @@ namespace protocol
         Failed
     };
 
-    typedef function< void( const string & name, shared_ptr<ResolveResult> result ) > ResolveCallback;
+    typedef function< void( const string & name, ResolveResult * result ) > ResolveCallback;
 
     struct ResolveEntry
     {
         ResolveStatus status;
-        shared_ptr<ResolveResult> result;
-        future<shared_ptr<ResolveResult>> future;
+        ResolveResult * result;
+        future<ResolveResult*> future;
         vector<ResolveCallback> callbacks;
+
+        // todo: still need to determine ownership here. this class should become 
+        // non-POD and will need to be stored only via pointer.
     };
 
     class Resolver
@@ -43,7 +46,7 @@ namespace protocol
 
         virtual void Clear() = 0;
 
-        virtual shared_ptr<ResolveEntry> GetEntry( const string & name ) = 0;
+        virtual ResolveEntry * GetEntry( const string & name ) = 0;
     };
 }
 

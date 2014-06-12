@@ -6,7 +6,7 @@ using namespace protocol;
 
 void test_sequence()
 {
-    cout << "test_sequence" << endl;
+    printf( "test_sequence\n" );
 
     assert( sequence_greater_than( 0, 0 ) == false );
     assert( sequence_greater_than( 1, 0 ) == true );
@@ -31,7 +31,7 @@ struct TestPacketData
 
 void test_sliding_window()
 {
-    cout << "test_sliding_window" << endl;
+    printf( "test_sliding_window\n" );
 
     const int size = 256;
 
@@ -73,7 +73,7 @@ void test_sliding_window()
 
 void test_generate_ack_bits()
 {
-    cout << "test_generate_ack_bits" << endl;
+    printf( "test_generate_ack_bits\n" );
 
     const int size = 256;
 
@@ -115,19 +115,22 @@ enum PacketType
 struct ConnectPacket : public Packet
 {
     ConnectPacket() : Packet( PACKET_Connect ) {}
-    void Serialize( Stream & stream ) {}
+    void SerializeRead( ReadStream & stream ) {}
+    void SerializeWrite( WriteStream & stream ) {}
 };
 
 struct UpdatePacket : public Packet
 {
     UpdatePacket() : Packet( PACKET_Update ) {}
-    void Serialize( Stream & stream ) {}
+    void SerializeRead( ReadStream & stream ) {}
+    void SerializeWrite( WriteStream & stream ) {}
 };
 
 struct DisconnectPacket : public Packet
 {
     DisconnectPacket() : Packet( PACKET_Disconnect ) {}
-    void Serialize( Stream & stream ) {}
+    void SerializeRead( ReadStream & stream ) {}
+    void SerializeWrite( WriteStream & stream ) {}
 };
 
 class PacketFactory : public Factory<Packet>
@@ -135,15 +138,15 @@ class PacketFactory : public Factory<Packet>
 public:
     PacketFactory()
     {
-        Register( PACKET_Connect, [] { return make_shared<ConnectPacket>(); } );
-        Register( PACKET_Update, [] { return make_shared<UpdatePacket>(); } );
-        Register( PACKET_Disconnect, [] { return make_shared<DisconnectPacket>(); } );
+        Register( PACKET_Connect,    [] { return new ConnectPacket();    } );
+        Register( PACKET_Update,     [] { return new UpdatePacket();     } );
+        Register( PACKET_Disconnect, [] { return new DisconnectPacket(); } );
     }
 };
 
 void test_factory()
 {
-    cout << "test_factory" << endl;
+    printf( "test_factory\n" );
 
     PacketFactory packetFactory;
 
@@ -154,23 +157,20 @@ void test_factory()
     assert( connectPacket->GetType() == PACKET_Connect );
     assert( updatePacket->GetType() == PACKET_Update );
     assert( disconnectPacket->GetType() == PACKET_Disconnect );
+
+    delete connectPacket;
+    delete updatePacket;
+    delete disconnectPacket;
 }
 
 int main()
 {
     srand( time( NULL ) );
 
-    try
-    {
-        test_sequence();
-        test_sliding_window();
-        test_generate_ack_bits();
-        test_factory();
-    }
-    catch ( runtime_error & e )
-    {
-        cerr << string( "error: " ) + e.what() << endl;
-    }
+    test_sequence();
+    test_sliding_window();
+    test_generate_ack_bits();
+    test_factory();
 
     return 0;
 }

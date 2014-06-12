@@ -18,7 +18,8 @@ namespace protocol
 
     class ChannelData : public Object
     {
-        // ...
+    public:
+        virtual ~ChannelData() {}
     };
 
     /*
@@ -38,9 +39,9 @@ namespace protocol
 
         virtual void Reset() = 0;
 
-        virtual shared_ptr<ChannelData> GetData( uint16_t sequence ) = 0;
+        virtual ChannelData * GetData( uint16_t sequence ) = 0;
 
-        virtual bool ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) = 0;
+        virtual bool ProcessData( uint16_t sequence, ChannelData * data ) = 0;
 
         virtual void ProcessAck( uint16_t ack ) = 0;
 
@@ -59,9 +60,9 @@ namespace protocol
 
         void Reset() {}
 
-        shared_ptr<ChannelData> GetData( uint16_t sequence ) { return nullptr; }
+        ChannelData * GetData( uint16_t sequence ) { return nullptr; }
 
-        bool ProcessData( uint16_t sequence, shared_ptr<ChannelData> data ) { return true; }
+        bool ProcessData( uint16_t sequence, ChannelData * data ) { return true; }
 
         void ProcessAck( uint16_t ack ) {}
 
@@ -81,8 +82,8 @@ namespace protocol
 
     class ChannelStructure
     {
-        typedef function< shared_ptr<Channel>() > CreateChannelFunction;
-        typedef function< shared_ptr<ChannelData>() > CreateChannelDataFunction;
+        typedef function<Channel*()> CreateChannelFunction;
+        typedef function<ChannelData*()> CreateChannelDataFunction;
 
         struct ChannelEntry
         {
@@ -128,7 +129,7 @@ namespace protocol
             return m_channelEntries.size();
         }
 
-        shared_ptr<Channel> CreateChannel( int channelIndex )
+        Channel * CreateChannel( int channelIndex )
         {
             assert( m_locked );
             assert( channelIndex >= 0 );
@@ -136,7 +137,7 @@ namespace protocol
             return m_channelEntries[channelIndex].createChannel();
         }
 
-        shared_ptr<ChannelData> CreateChannelData( int channelIndex )
+        ChannelData * CreateChannelData( int channelIndex )
         {
             assert( m_locked );
             assert( channelIndex >= 0 );

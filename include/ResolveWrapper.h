@@ -13,15 +13,16 @@ namespace protocol
 {
     struct ResolveWrapperConfig
     {
-        shared_ptr<Resolver> resolver;                      // resolver eg: DNS
-        shared_ptr<NetworkInterface> networkInterface;      // the network interface we are wrapping
+        Resolver * resolver = nullptr;                      // resolver eg: DNS
+        NetworkInterface * networkInterface = nullptr;      // the network interface we are wrapping
     };
 
     class ResolveWrapper : public NetworkInterface
     {
         ResolveWrapperConfig m_config;
 
-        map<string,shared_ptr<PacketQueue>> m_resolve_send_queues;
+        // todo: need a replacement for std::map
+        map<string,PacketQueue*> m_resolve_send_queues;
 
     public:
 
@@ -32,20 +33,29 @@ namespace protocol
             assert( m_config.networkInterface );
         }
 
-        void SendPacket( const Address & address, shared_ptr<Packet> packet )
+        ~ResolveWrapper()
+        {
+            // todo: a *lot* of work needs to be done in here
+            // also, we should try to cancel any async resolves
+            // in progress right now.
+        }
+
+        void SendPacket( const Address & address, Packet * packet )
         {
             m_config.networkInterface->SendPacket( address, packet );
         }
 
-        void SendPacket( const string & hostname, shared_ptr<Packet> packet )
+        void SendPacket( const string & hostname, Packet * packet )
         {
-            // Will try to extract port from hostname, eg: "localhost:10000"
+            // Try to extract port from hostname string, eg: "localhost:10000"
 
             SendPacket( hostname, 0, packet );
         }
 
-        void SendPacket( const string & hostname, uint16_t port, shared_ptr<Packet> packet )
+        void SendPacket( const string & hostname, uint16_t port, Packet * packet )
         {
+            assert( packet );
+
             // Will use the port specified in port argument
 
             Address address;
@@ -65,13 +75,13 @@ namespace protocol
                         if ( port != 0 )
                             address.SetPort( port );
                         SendPacket( address, packet );
-                        cout << "resolve succeeded: sending packet to " << address.ToString() << endl;
+                        //printf( "resolve succeeded: sending packet to %s\n", address.ToString().c_str() );
                     }
                     break;
 
                     case ResolveStatus::InProgress:
                     {
-                        cout << "resolve in progress: buffering packet" << endl;
+                        //printf( "resolve in progress: buffering packet\n" );
                         auto resolve_send_queue = m_resolve_send_queues[hostname];
                         assert( resolve_send_queue );
                         resolve_send_queue->push( packet );
@@ -80,22 +90,22 @@ namespace protocol
 
                     case ResolveStatus::Failed:
                     {
-                        cout << "resolve failed: discarding packet for \"" << hostname << "\"" << endl;
+                        //printf( "resolve failed: discarding packet for \"%s\"\n", hostname.c_str() );
                     }
                     break;
                 }
             }
             else
             {
-                cout << "resolving \"" << hostname << "\": buffering packet" << endl;
+                //printf( "resolving \"%s\": buffering packet\n", hostname.c_str() );
                 m_config.resolver->Resolve( hostname );
-                auto resolve_send_queue = make_shared<PacketQueue>();
+                auto resolve_send_queue = new PacketQueue();
                 resolve_send_queue->push( packet );
                 m_resolve_send_queues[hostname] = resolve_send_queue;
             }
         }
 
-        shared_ptr<Packet> ReceivePacket()
+        Packet * ReceivePacket()
         {
             return m_config.networkInterface->ReceivePacket();
         }
@@ -119,7 +129,7 @@ namespace protocol
                     {
                         assert( entry->result->addresses.size() > 0 );
                         auto address = entry->result->addresses[0];
-                        cout << format_string( "resolved \"%s\" to %s", hostname.c_str(), address.ToString().c_str() ) << endl;
+                        //printf( "resolved \"%s\" to %s\n", hostname.c_str(), address.ToString().c_str() );
 
                         while ( !resolve_send_queue->empty() )
                         {
@@ -128,14 +138,14 @@ namespace protocol
                             const uint16_t port = packet->GetAddress().GetPort();
                             if ( port )
                                 address.SetPort( port );
-                            cout << "sent buffered packet to " << address.ToString() << endl;
+                            //printf( "sent buffered packet to %s\n", address.ToString() );
                             SendPacket( address, packet );
                         }
                         m_resolve_send_queues.erase( itor++ );
                     }
                     else if ( entry->status == ResolveStatus::Failed )
                     {
-                        cout << "failed to resolve \"" << hostname << "\". discarding " << resolve_send_queue->size() << " packets" << endl;
+                        //printf( "failed to resolve \"%s\". discarding %d packets\n", hostname.c_str(), resolve_send_queue->size() );
                         m_resolve_send_queues.erase( itor++ );
                     }
                 }
