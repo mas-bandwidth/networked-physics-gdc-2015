@@ -324,6 +324,8 @@ namespace protocol
         vector<T> m_entries;
     };
 
+    typedef vector<uint8_t> Block;
+
     template <typename T> void GenerateAckBits( const SlidingWindow<T> & packets, 
                                                 uint16_t & ack,
                                                 uint32_t & ack_bits )
@@ -338,17 +340,10 @@ namespace protocol
         }
     }
 
-    typedef vector<uint8_t> Block;
-
-    enum
+    inline uint64_t GenerateGuid()
     {
-        PROTOCOL_LITTLE_ENDIAN = 0x03020100,
-        PROTOCOL_BIG_ENDIAN = 0x00010203
-    };
-
-    static const union { uint8_t bytes[4]; uint32_t value; } protocol_host_order = { { 0, 1, 2, 3 } };
-
-    #define PROTOCOL_HOST_ORDER protocol_host_order.value
+        return ( uint64_t(rand()) << 32 ) | time( NULL );
+    }
 
     inline int random_int( int min, int max )
     {
@@ -366,9 +361,33 @@ namespace protocol
         return (float) ( min + (double) ( max - min ) * scale );
     }
 
-    uint64_t GenerateGuid()
+    inline void * align_forward( void * p, uint32_t align )
     {
-        return ( uint64_t(rand()) << 32 ) | time( NULL );
+        uintptr_t pi = uintptr_t( p );
+        const uint32_t mod = pi % align;
+        if ( mod )
+            pi += align - mod;
+        return (void*) pi;
+    }
+
+    inline void * pointer_add( void * p, uint32_t bytes )
+    {
+        return (void*) ( (uint8_t*)p + bytes );
+    }
+
+    inline const void * pointer_add( const void * p, uint32_t bytes )
+    {
+        return (const void*) ( (const uint8_t*)p + bytes );
+    }
+
+    inline void * pointer_sub( void * p, uint32_t bytes )
+    {
+        return (void*)( (char*)p - bytes );
+    }
+
+    inline const void * pointer_sub( const void * p, uint32_t bytes )
+    {
+        return (const void*) ( (const char*)p - bytes );
     }
 }
 

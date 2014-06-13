@@ -63,7 +63,8 @@ namespace protocol
         NetworkSimulatorState m_state;
         vector<NetworkSimulatorState> m_states;
 
-        // todo: need to disable copy constructor etc.
+        NetworkSimulator( const NetworkSimulator & other );
+        const NetworkSimulator & operator = ( const NetworkSimulator & other );
 
     public:
 

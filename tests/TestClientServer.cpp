@@ -61,7 +61,7 @@ public:
 class TestChannelStructure : public ChannelStructure
 {
     MessageFactory m_messageFactory;
-    ReliableMessageChannelConfig m_config;
+    const ReliableMessageChannelConfig m_config;
 
 public:
 

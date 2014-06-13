@@ -19,7 +19,7 @@ namespace protocol
 
     class ResolveWrapper : public NetworkInterface
     {
-        ResolveWrapperConfig m_config;
+        const ResolveWrapperConfig m_config;
 
         // todo: need a replacement for std::map
         map<string,PacketQueue*> m_resolve_send_queues;

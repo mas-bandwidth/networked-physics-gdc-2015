@@ -25,7 +25,7 @@ namespace protocol
             maxLargeBlockSize = 256 * 1024;
             blockFragmentSize = 64;
             packetBudget = 128;
-            giveUpBits = 64;
+            giveUpBits = 128;
             align = true;
         }
 
@@ -154,17 +154,20 @@ namespace protocol
 
                 for ( int i = 1; i < numMessages; ++i )
                 {
-                    if ( messageIds[i] > messageIds[i-1] )
+                    if ( Stream::IsWriting )
                     {
-                        serialize_int_relative( stream, messageIds[i-1], messageIds[i] );
+                        uint32_t a = messageIds[i-1];
+                        uint32_t b = messageIds[i] + ( messageIds[i-1] > messageIds[i] ? 65536 : 0 );
+                        serialize_int_relative( stream, a, b );
                     }
                     else
                     {
                         uint32_t a = messageIds[i-1];
-                        uint32_t b = messageIds[i] + 65536;
+                        uint32_t b;
                         serialize_int_relative( stream, a, b );
-                        if ( Stream::IsReading )
-                            messageIds[i] = uint16_t( b );
+                        if ( b >= 65536 )
+                            b -= 65536;
+                        messageIds[i] = uint16_t( b );
                     }
                 }
 
@@ -319,7 +322,7 @@ namespace protocol
 
     private:
 
-        ReliableMessageChannelConfig m_config;                              // constant configuration data
+        const ReliableMessageChannelConfig m_config;                        // constant configuration data
 
         int m_maxBlockFragments;                                            // maximum number of fragments per-block
         int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
@@ -483,10 +486,15 @@ namespace protocol
             if ( !largeBlock )
             {
                 typedef MeasureStream Stream;
-                MeasureStream measureStream( m_config.maxMessageSize );
+                const int SmallBlockOverhead = 8;
+                MeasureStream measureStream( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
                 message->SerializeMeasure( measureStream );
-                entry->measuredBits = measureStream.GetBits() + m_messageOverheadBits;
+                if ( measureStream.IsOverflow() )
+                {
+                    printf( "measure stream overflow on message type %d: %d bits written, max is %d\n", message->GetType(), measureStream.GetBitsWritten(), measureStream.GetTotalBits() );
+                }
                 assert( !measureStream.IsOverflow() );
+                entry->measuredBits = measureStream.GetBitsWritten() + m_messageOverheadBits;
 
 //              printf( "message %d is %d bits\n", (int) m_sendMessageId, entity->measuredBits );
             }

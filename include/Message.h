@@ -86,7 +86,8 @@ namespace protocol
 
     private:
 
-        // todo: need to disable copy constructor etc.
+        BlockMessage( const BlockMessage & other );
+        const BlockMessage & operator = ( const BlockMessage & other );
 
         Block * m_block = nullptr;
     };

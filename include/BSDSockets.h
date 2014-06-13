@@ -251,7 +251,7 @@ namespace protocol
                     continue;
                 }
 
-                const int bytes = stream.GetBytes();
+                const int bytes = stream.GetBytesWritten();
                 const uint8_t * data = stream.GetData();
 
                 assert( bytes <= m_config.maxPacketSize );

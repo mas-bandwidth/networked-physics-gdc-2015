@@ -1,3 +1,67 @@
+Thursday Morning, June 12th, 2014:
+----------------------------------
+
+    Fixed align in measure stream to always return 7 bits.
+
+    We can't know the alignment in the measure stream
+    exactly so be conservative and assume 7 bits.
+
+    It's possible that if the message is *always* aligned
+    at start, that the align would be correct as measured
+    should consider whether this is more correct.
+
+    However, if message align is disabled, but an align
+    is added inside a message then it would break without
+    this change, so I think this is for the best.
+
+    BSDSockets was actually always writing max packet size packets,
+    when it should have been writing packets of the size of the actual
+    data serialized.
+
+    Fixed by adding new method "GetBytesWritten" and renamed other
+    method "GetBytes" to "GetTotalBytes" to avoid future confusion.
+
+    There is a serialize measure overflow in the reliable message unit test.
+
+    There was an error in measurement in the overflow check of the
+    measure stream. eg. multiply bits by 8, instead of test bits
+    written > total bytes * 8.
+
+    Valgrind is not giving memory leak source locations.
+
+    Seems broken on MacOSX
+
+    It did find a bug in relative int serialization of message ids though.
+
+    Why is serialize read slower than serialize write?
+
+    eg:
+
+        28.2% - ConnectionPacket::SerializeRead
+        17.0% - ConnectionPacket::SerializeWrite
+
+    I tried removing the htonl and ntohl calls inside the bitpacker,
+    and this probably made it faster, but didn't affect the ratio
+    of read to write speed.
+
+    Honestly to fix this I'm going to need a better profiling tool.
+
+    I'll probably even need to look at the generated assembly.
+
+    Also, make sure the compile is doing a good job of splitting
+    the read/write out and generating only the code required.
+
+    Valgrind seems to assert that it is in fact doing this.
+
+    Now having a read overflow in soak test.
+
+    I think there is a serialize desync and it's only picking it up there.
+
+    Maybe it's the first 65535 wrap breaking with message id?
+
+    Yes, it looks like inverted logic on the 65536 addition for write.
+
+
 Wednesday Evening, June 11th, 2014:
 -----------------------------------
 

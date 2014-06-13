@@ -14,8 +14,9 @@ void test_bitpacker()
     BitWriter writer( buffer, BufferSize );
 
     assert( writer.GetData() == buffer );
-    assert( writer.GetBytes() == 0 );
+    assert( writer.GetTotalBytes() == 0 );
     assert( writer.GetBitsWritten() == 0 );
+    assert( writer.GetBytesWritten() == 0 );
     assert( writer.GetBitsAvailable() == BufferSize * 8 );
 
     writer.WriteBits( 0, 1 );
@@ -29,7 +30,7 @@ void test_bitpacker()
 
     const int bitsWritten = 1 + 1 + 8 + 8 + 10 + 16 + 32;
 
-    assert( writer.GetBytes() == 3 * 4 );
+    assert( writer.GetTotalBytes() == 3 * 4 );
     assert( writer.GetBitsWritten() == bitsWritten );
     assert( writer.GetBitsAvailable() == BufferSize * 8 - bitsWritten );
 

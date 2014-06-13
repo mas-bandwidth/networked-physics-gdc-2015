@@ -55,6 +55,7 @@ namespace protocol
 
         bool Check( uint32_t magic )
         {
+            Align();
             SerializeBits( magic, 32 );
             return true;
         }
@@ -69,14 +70,29 @@ namespace protocol
             return m_writer.GetData();
         }
 
-        int GetBits() const
+        int GetBytesWritten() const
+        {
+            return m_writer.GetBytesWritten();
+        }
+
+        int GetBitsWritten() const
         {
             return m_writer.GetBitsWritten();
         }
 
-        int GetBytes() const
+        int GetBitsRemaining() const
         {
-            return m_writer.GetBytes();
+            return GetTotalBits() - GetBitsWritten();
+        }
+
+        int GetTotalBits() const
+        {
+            return m_writer.GetTotalBytes() * 8;
+        }
+
+        int GetTotalBytes() const
+        {
+            return m_writer.GetTotalBytes();
         }
 
         bool IsOverflow() const
@@ -132,6 +148,7 @@ namespace protocol
 
         bool Check( uint32_t magic )
         {
+            Align();
             uint32_t value = 0;
             SerializeBits( value, 32 );
             assert( value == magic );
@@ -155,7 +172,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        MeasureStream( int bytes ) : m_bytes( bytes ), m_bitsWritten(0) {}
+        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -187,38 +204,44 @@ namespace protocol
 
         int GetAlignBits() const
         {
-            const int remainderBits = m_bitsWritten % 8;
-            return remainderBits ? 8 - remainderBits : 0;
+            return 7;       // worst case
         }
 
         bool Check( uint32_t magic )
         {
+            Align();
             m_bitsWritten += 32;
             return true;
         }
 
-        void Flush()
-        {
-        }
-
-        int GetBits() const
+        int GetBitsWritten() const
         {
             return m_bitsWritten;
         }
 
-        int GetBytes() const
+        int GetBytesWritten() const
         {
-            return m_bytes;
+            return m_bitsWritten / 8 + ( m_bitsWritten % 8 ? 1 : 0 );
+        }
+
+        int GetTotalBytes() const
+        {
+            return m_totalBytes;
+        }
+
+        int GetTotalBits() const
+        {
+            return m_totalBytes * 8;
         }
 
         bool IsOverflow() const
         {
-            return m_bitsWritten * 8 > m_bytes;
+            return m_bitsWritten > m_totalBytes * 8;
         }
 
     private:
 
-        int m_bytes;
+        int m_totalBytes;
         int m_bitsWritten;
     };
 
@@ -250,7 +273,11 @@ namespace protocol
             }                                                   \
             stream.SerializeInteger( int32_value, min, max );   \
             if ( Stream::IsReading )                            \
+            {                                                   \
                 value = (decltype(value)) int32_value;          \
+                assert( value >= min );                         \
+                assert( value <= max );                         \
+            }                                                   \
         } while (0)
 
     #define serialize_bits( stream, value, bits )               \
@@ -323,8 +350,6 @@ namespace protocol
             difference = current - previous;
             assert( difference >= 0 );
         }
-
-        // todo: optimize for read vs. write on bits
 
         bool oneBit;
         if ( Stream::IsWriting )

@@ -53,7 +53,7 @@ namespace protocol
             {
                 assert( m_wordIndex < m_numWords );
 //                printf( "write word: %x\n", htonl( m_scratch >> 32 ) );
-                m_data[m_wordIndex] = htonl( uint32_t( m_scratch >> 32 ) );
+                m_data[m_wordIndex] = uint32_t( m_scratch >> 32 ); //htonl( uint32_t( m_scratch >> 32 ) );
                 m_scratch <<= 32;
                 m_bitIndex -= 32;
                 m_wordIndex++;
@@ -87,12 +87,6 @@ namespace protocol
                 m_overflow = true;
                 return;
             }
-
-            /*
-            // todo: switch this out for memcpy once it is working
-            for ( int i = 0; i < bytes; ++i )
-                WriteBits( data[i], 8 );
-                */
 
             // write head bytes
 
@@ -141,7 +135,12 @@ namespace protocol
             {
 //                printf( "write word: %x\n", htonl( m_scratch >> 32 ) );
                 assert( m_wordIndex < m_numWords );
-                m_data[m_wordIndex++] = htonl( uint32_t( m_scratch >> 32 ) );
+                if ( m_wordIndex >= m_numWords )
+                {
+                    m_overflow = true;
+                    return;
+                }
+                m_data[m_wordIndex++] = uint32_t( m_scratch >> 32 );//htonl( uint32_t( m_scratch >> 32 ) );
             }
         }
 
@@ -160,7 +159,12 @@ namespace protocol
             return (uint8_t*) m_data;
         }
 
-        int GetBytes() const
+        int GetBytesWritten() const
+        {
+            return m_wordIndex;
+        }
+
+        int GetTotalBytes() const
         {
             return m_wordIndex * 4;
         }
@@ -195,7 +199,7 @@ namespace protocol
             m_bitsRead = 0;
             m_bitIndex = 0;
             m_wordIndex = 0;
-            m_scratch = ntohl( m_data[0] );
+            m_scratch = m_data[0];//ntohl( m_data[0] );
             m_overflow = false;
 //            printf( "read word = %x\n", m_data[0] );
         }
@@ -228,7 +232,7 @@ namespace protocol
                 const uint32_t a = 32 - m_bitIndex;
                 const uint32_t b = bits - a;
                 m_scratch <<= a;
-                m_scratch |= ntohl( m_data[m_wordIndex] );
+                m_scratch |= m_data[m_wordIndex];//ntohl( m_data[m_wordIndex] );
 //                printf( "read word = %x\n" );
                 m_scratch <<= b;
                 m_bitIndex = b;
@@ -292,7 +296,7 @@ namespace protocol
                 memcpy( data + headBytes, &m_data[m_wordIndex], numWords * 4 );
                 m_bitsRead += numWords * 32;
                 m_wordIndex += numWords;
-                m_scratch = ntohl( m_data[m_wordIndex] );
+                m_scratch = m_data[m_wordIndex];//ntohl( m_data[m_wordIndex] );
             }
 
             assert( GetAlignBits() == 0 );
@@ -318,6 +322,16 @@ namespace protocol
         int GetBitsRemaining() const
         {
             return m_numBits - m_bitsRead;
+        }
+
+        int GetTotalBits() const 
+        {
+            return m_numBits;
+        }
+
+        int GetTotalBytes() const
+        {
+            return m_numBits * 8;
         }
 
         bool IsOverflow() const

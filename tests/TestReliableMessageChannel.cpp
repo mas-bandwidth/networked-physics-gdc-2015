@@ -30,7 +30,7 @@ struct TestMessage : public Message
         for ( int i = 0; i < sequence % 8; ++i )
         {
             int value = 0;
-            serialize_bits( stream, value, 32 );
+            serialize_bits( stream, value, 8 );
         }
 
         stream.Check( 0xDEADBEEF );
@@ -42,6 +42,11 @@ struct TestMessage : public Message
     }
 
     void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeMeasure( MeasureStream & stream )
     {
         Serialize( stream );
     }

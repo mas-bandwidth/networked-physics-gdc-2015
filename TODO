@@ -1,8 +1,82 @@
 DONE:
 
+    Integrate the allocators from bitsquid engine.
+
+    Brought across basic allocator and helper functions.
+
+    Brought across temp allocator.
+
+    Bring across malloc backed allocator and the rest of it.
+
+    Bring across allocator tests.
+
+    Verify stuff is basically working.
+
 TODO:
 
-    Why is serialize read slower than serialize write?
+    Bring across array.
+
+    Bring across containers and supporting functionality.
+
+    Verify all tests pass.
+
+    Start cleaning up the code!
+
+    ------------------
+
+    Replace all STL usage with bitsquid containers.
+
+    Remove STL header includes.
+
+    Use the bitsquid allocators to track down memory leaks, eg.
+    make sure each individual unit test checks for leaks.
+
+    --------------------
+
+
+
+
+
+
+
+
+    --------------------
+
+    Optimization for fragments, track oldest unacked fragment id, and start there
+    and go left to right to search for fragments to send.
+
+    --------------------
+
+    Add a new fragmentSendWindow config, eg. 64 and only look this far past
+    the oldest unacked fragment. Should save unnecessary scans for large block
+    sizes.
+
+    --------------------
+
+    Could save a bit of memory and maybe gain some speed by switching 
+    the received fragment data to a bitfield
+
+    We only need one bit per-fragment, "has it been received?"
+
+    --------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ----------------------
+
+    TestBSDSockets is broken. I think the sent packets are getting
+    deleted before they can be compared with the received packets?
 
     ----------------------
 
@@ -10,25 +84,9 @@ TODO:
 
     ----------------------
 
-    Make sure all connection packets are deleted after "ReadPacket"
-
-    ----------------------
-
-    Pass over todos and make notes of what else needs to be done.
-
-    ----------------------
-
     DNSResolver is probably completely broken. Get it working and break
     down tasks that would turn it into something that can be *pre-allocated*
     and doesn't do allocations at runtime.
-
-    ----------------------
-
-    All class configs should be *const*.
-
-    ----------------------
-
-    Need to disallow copy construction for classes with pointers.
 
     ----------------------
 
@@ -53,51 +111,6 @@ TODO:
 
 
 
-
-
-    --------------------
-
-    Consolidate bitpacker into stream.
-
-    --------------------
-
-    It appears that fragment allocation inside GetData and ProcessData
-    is expensive. Instead, the fragment should work on a pointer direct
-    to the area of data to be serialized to/from, so there is no alloc 
-    and copy.
-
-    This is probably the largest optimization that can be made at this stage.
-
-    ^-------- PROFILE AGAIN BEFORE TRYING THIS!!!
-
-    --------------------
-
-    I need a way to determine the speed of the code so that one run
-    to the next is faster. Right now I'm chopping off bits of code
-    that shouldn't be slow, and then they go away from the profile
-    but eventually, I'm going to be looking for an overall speed
-    improvement, average milliseconds per-100 updates or something
-    like this that can be compared between runs.
-
-    --------------------
-
-    Optimization for fragments, track oldest unacked fragment id, and start there
-    and go left to right to search for fragments to send.
-
-    --------------------
-
-    Add a new fragmentSendWindow config, eg. 64 and only look this far past
-    the oldest unacked fragment. Should save unnecessary scans for large block
-    sizes.
-
-    --------------------
-
-    Could save a bit of memory and maybe gain some speed by switching 
-    the received fragment data to a bitfield
-
-    We only need one bit per-fragment, "has it been received?"
-
-    --------------------
 
 
 
@@ -183,6 +196,17 @@ TODO:
 
 
 WOULD BE NICE:
+
+    Might be a good idea to consolidate bitpacker into stream class.
+
+    -----------------
+
+    Removed the htonl and ntohl calls inside bitpacker.
+
+    On windows these calls are apparently slow (call out to DLL)
+
+    I need to provide my own efficient byteswap functions in common.h,
+    eg. fast_ntonl, or just bswap if big endian in/out.
 
     ----------------
 

@@ -38,6 +38,11 @@ struct ConnectPacket : public Packet
         Serialize( stream );
     }
 
+    void SerializeMeasure( MeasureStream & stream )
+    {
+        Serialize( stream );
+    }
+
     bool operator ==( const ConnectPacket & other ) const
     {
         return a == other.a && b == other.b && c == other.c;
@@ -73,6 +78,11 @@ struct UpdatePacket : public Packet
         Serialize( stream );
     }
 
+    void SerializeMeasure( MeasureStream & stream )
+    {
+        Serialize( stream );
+    }
+
     bool operator ==( const UpdatePacket & other ) const
     {
         return timestamp == other.timestamp;
@@ -104,6 +114,11 @@ struct DisconnectPacket : public Packet
     }
 
     void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeMeasure( MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -163,7 +178,6 @@ void test_bsd_sockets_send_and_receive_ipv4()
     {
         assert ( iterations++ < 10 );
 
-        // todo: can't hold on to these pointers after sending -- need to rework this test
         auto connectPacket = new ConnectPacket();
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();
@@ -262,7 +276,6 @@ void test_bsd_sockets_send_and_receive_ipv6()
     {
         assert ( iterations++ < 10 );
 
-        // todo: can't hold on to these pointers after sending -- need to rework this test
         auto connectPacket = new ConnectPacket();
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();
@@ -474,7 +487,6 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
     {
         assert ( iterations++ < 4 );
 
-        // todo: can't hold on to these pointers after sending -- need to rework this test
         auto connectPacket = new ConnectPacket();
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();

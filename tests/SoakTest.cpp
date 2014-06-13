@@ -179,6 +179,7 @@ void soak_test()
     timeBase.deltaTime = 0.01;
 
     while ( true )
+    //for ( int i = 0; i < 1000; ++i )
     {
         const int maxMessagesToSend = 1 + rand() % 32;
 
