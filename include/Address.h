@@ -116,7 +116,7 @@ namespace protocol
             }
         }
 
-        Address( string address )
+        Address( std::string address )
         {
             // first try to parse as an IPv6 address:
             // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
@@ -208,9 +208,7 @@ namespace protocol
             return type;
         }
 
-        // todo: bring this back once we have a std::string replacement
-        /*
-        string ToString() const
+        std::string ToString() const
         {
             if ( type == AddressType::IPv4 )
             {
@@ -218,17 +216,23 @@ namespace protocol
                 const uint8_t b = (address4>>8) & 0xff;
                 const uint8_t c = (address4>>16) & 0xff;
                 const uint8_t d = (address4>>24) & 0xff;
+                char buffer[256];
                 if ( port != 0 )
-                    return format_string( "%d.%d.%d.%d:%d", a, b, c, d, port );
+                    sprintf( buffer, "%d.%d.%d.%d:%d", a, b, c, d, port );
                 else
-                    return format_string( "%d.%d.%d.%d", a, b, c, d );
+                    sprintf( buffer, "%d.%d.%d.%d", a, b, c, d );
+                return buffer;
             }
             else if ( type == AddressType::IPv6 )
             {
                 char addressString[INET6_ADDRSTRLEN];
                 inet_ntop( AF_INET6, &address6, addressString, INET6_ADDRSTRLEN );
                 if ( port != 0 )
-                    return format_string( "[%s]:%d", addressString, port );
+                {
+                    char buffer[256];
+                    sprintf( buffer, "[%s]:%d", addressString, port );
+                    return buffer;
+                }
                 else
                     return addressString;
             }
@@ -237,7 +241,6 @@ namespace protocol
                 return "undefined";
             }
         }
-        */
 
         bool IsValid() const
         {

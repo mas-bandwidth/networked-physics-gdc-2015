@@ -2,7 +2,6 @@
 #include "DNSResolver.h"
 #include "ResolveWrapper.h"
 
-using namespace std;
 using namespace protocol;
 
 enum PacketType
@@ -36,6 +35,11 @@ struct ConnectPacket : public Packet
     }
 
     void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeMeasure( MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -75,6 +79,11 @@ struct UpdatePacket : public Packet
         Serialize( stream );
     }
 
+    void SerializeMeasure( MeasureStream & stream )
+    {
+        Serialize( stream );
+    }
+
     bool operator ==( const UpdatePacket & other ) const
     {
         return timestamp == other.timestamp;
@@ -106,6 +115,11 @@ struct DisconnectPacket : public Packet
     }
 
     void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeMeasure( MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -167,7 +181,7 @@ void test_resolve_wrapper_send_to_hostname()
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
 
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
 
     for ( int i = 0; i < 20; ++i )
     {
@@ -176,7 +190,7 @@ void test_resolve_wrapper_send_to_hostname()
         if ( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets )
             break;
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -215,7 +229,7 @@ void test_resolve_wrapper_send_to_hostname_port()
 
     for ( int i = 0; i < numPackets; ++i )
     {
-        auto packet = packetFactory->Create( PACKET_Connect );
+        auto packet = packetFactory.Create( PACKET_Connect );
 
         interface->SendPacket( "localhost:10000", packet );
     }
@@ -223,7 +237,7 @@ void test_resolve_wrapper_send_to_hostname_port()
     TimeBase timeBase;
     timeBase.deltaTime = 0.1f;
 
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
 
     for ( int i = 0; i < 20; ++i )
     {
@@ -232,7 +246,7 @@ void test_resolve_wrapper_send_to_hostname_port()
         if ( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets )
             break;
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         timeBase.time += timeBase.deltaTime;
     }

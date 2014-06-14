@@ -55,6 +55,11 @@ namespace protocol
         {
             Serialize( stream );
         }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
     };
 
     struct ChallengeResponsePacket : public Packet
@@ -78,6 +83,11 @@ namespace protocol
         }
 
         void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+    
+        void SerializeMeasure( MeasureStream & stream )
         {
             Serialize( stream );
         }
@@ -107,6 +117,11 @@ namespace protocol
         {
             Serialize( stream );
         }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
     };
 
     struct ConnectionChallengePacket : public Packet
@@ -130,6 +145,11 @@ namespace protocol
         }
 
         void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+    
+        void SerializeMeasure( MeasureStream & stream )
         {
             Serialize( stream );
         }
@@ -159,6 +179,11 @@ namespace protocol
         {
             Serialize( stream );
         }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
     };
 
     struct ReadyForConnectionPacket : public Packet
@@ -185,6 +210,11 @@ namespace protocol
         {
             Serialize( stream );
         }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
     };
 
     struct DisconnectedPacket : public Packet
@@ -208,6 +238,11 @@ namespace protocol
         }
 
         void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+    
+        void SerializeMeasure( MeasureStream & stream )
         {
             Serialize( stream );
         }

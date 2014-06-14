@@ -45,14 +45,6 @@ namespace protocol
 
     class BSDSockets : public NetworkInterface
     {
-        const BSDSocketsConfig m_config;
-
-        int m_socket;
-        PacketQueue m_send_queue;
-        PacketQueue m_receive_queue;
-        vector<uint64_t> m_counters;
-        vector<uint8_t> m_receiveBuffer;
-
     public:
 
         enum Counters
@@ -65,17 +57,30 @@ namespace protocol
             NumCounters
         };
 
+    private:
+
+        const BSDSocketsConfig m_config;
+
+        int m_socket;
+        PacketQueue m_send_queue;
+        PacketQueue m_receive_queue;
+        uint8_t * m_receiveBuffer;
+        uint64_t m_counters[NumCounters];
+
+        BSDSockets( BSDSockets & other );
+        BSDSockets & operator = ( BSDSockets & other );
+
+    public:
+
         BSDSockets( const BSDSocketsConfig & config = BSDSocketsConfig() )
             : m_config( config )
         {
             assert( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
             assert( m_config.maxPacketSize > 0 );
 
-            m_receiveBuffer.resize( m_config.maxPacketSize );
+            m_receiveBuffer = new uint8_t[m_config.maxPacketSize];
 
 //            printf( "creating bsd sockets interface on port %d\n", m_config.port );
-
-            m_counters.resize( NumCounters, 0 );
 
             // create socket
 
@@ -169,6 +174,9 @@ namespace protocol
 
         ~BSDSockets()
         {
+            assert( m_receiveBuffer );
+            delete [] m_receiveBuffer;
+
             if ( m_socket != 0 )
             {
                 #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
@@ -243,6 +251,8 @@ namespace protocol
 
                 packet->SerializeWrite( stream );                
 
+                stream.Check( 0x51246234 );
+
                 stream.Flush();
 
                 if ( stream.IsOverflow() )
@@ -263,6 +273,8 @@ namespace protocol
 
                 if ( !SendPacketInternal( packet->GetAddress(), data, bytes ) )
                     printf( "failed to send packet\n" );
+
+                delete packet;
             }
         }
 
@@ -271,7 +283,7 @@ namespace protocol
             while ( true )
             {
                 Address address;
-                int received_bytes = ReceivePacketInternal( address, &m_receiveBuffer[0], m_receiveBuffer.size() );
+                int received_bytes = ReceivePacketInternal( address, m_receiveBuffer, m_config.maxPacketSize );
                 if ( !received_bytes )
                     break;
 
@@ -282,7 +294,7 @@ namespace protocol
                 // todo: we should move read protocol id check *here*
                 // this way we can do any work if a stray UDP packet comes our way
 
-                Stream stream( &m_receiveBuffer[0], m_receiveBuffer.size() );
+                Stream stream( m_receiveBuffer, m_config.maxPacketSize );
 
                 const int maxPacketType = m_config.packetFactory->GetMaxType();
                 int packetType = 0;
@@ -305,6 +317,8 @@ namespace protocol
                     delete packet;
                     continue;
                 }
+
+                stream.Check( 0x51246234 );         // if this triggers then the packet was truncated
 
                 packet->SetAddress( address );
 

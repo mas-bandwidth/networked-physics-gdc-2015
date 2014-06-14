@@ -1,6 +1,5 @@
 #include "BSDSockets.h"
 
-using namespace std;
 using namespace protocol;
 
 enum PacketType
@@ -166,7 +165,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
     TimeBase timeBase;
     timeBase.deltaTime = 0.01f;
 
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
 
     bool receivedConnectPacket = false;
     bool receivedUpdatePacket = false;
@@ -196,7 +195,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
 
         interface.Update( timeBase );
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         while ( true )
         {
@@ -264,7 +263,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
     TimeBase timeBase;
     timeBase.deltaTime = 0.01f;
 
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
 
     bool receivedConnectPacket = false;
     bool receivedUpdatePacket = false;
@@ -294,7 +293,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
 
         interface.Update( timeBase );
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         while ( true )
         {
@@ -369,7 +368,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
     TimeBase timeBase;
     timeBase.deltaTime = 0.01f;
 
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
 
     bool receivedConnectPacket = false;
     bool receivedUpdatePacket = false;
@@ -400,7 +399,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
         interface_sender.Update( timeBase );
         interface_receiver.Update( timeBase );
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         while ( true )
         {
@@ -475,7 +474,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
     TimeBase timeBase;
     timeBase.deltaTime = 0.01f;
 
-    chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
 
     bool receivedConnectPacket = false;
     bool receivedUpdatePacket = false;
@@ -506,7 +505,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
         interface_sender.Update( timeBase );
         interface_receiver.Update( timeBase );
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         while ( true )
         {

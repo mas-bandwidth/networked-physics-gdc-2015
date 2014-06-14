@@ -1,7 +1,6 @@
 #include "Common.h"
 #include "Packet.h"
 
-using namespace std;
 using namespace protocol;
 
 void test_sequence()
@@ -117,6 +116,7 @@ struct ConnectPacket : public Packet
     ConnectPacket() : Packet( PACKET_Connect ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
+    void SerializeMeasure( MeasureStream & stream ) {}
 };
 
 struct UpdatePacket : public Packet
@@ -124,6 +124,7 @@ struct UpdatePacket : public Packet
     UpdatePacket() : Packet( PACKET_Update ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
+    void SerializeMeasure( MeasureStream & stream ) {}
 };
 
 struct DisconnectPacket : public Packet
@@ -131,6 +132,7 @@ struct DisconnectPacket : public Packet
     DisconnectPacket() : Packet( PACKET_Disconnect ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
+    void SerializeMeasure( MeasureStream & stream ) {}
 };
 
 class PacketFactory : public Factory<Packet>

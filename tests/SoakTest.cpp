@@ -3,7 +3,6 @@
 #include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
 
-using namespace std;
 using namespace protocol;
 
 enum MessageType
@@ -319,7 +318,11 @@ int main()
         return 1;
     }
 
+    memory::initialize();
+
     soak_test();
+
+    memory::shutdown();
 
     ShutdownSockets();
 

@@ -2,7 +2,6 @@
 #include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
 
-using namespace std;
 using namespace protocol;
 
 enum PacketType
@@ -112,479 +111,501 @@ void test_reliable_message_channel_messages()
 {
     printf( "test_reliable_message_channel_messages\n" );
 
-    TestChannelStructure channelStructure;
-
-    PacketFactory packetFactory( &channelStructure );
-
-    const int MaxPacketSize = 256;
-
-    ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = &packetFactory;
-    connectionConfig.channelStructure = &channelStructure;
-
-    Connection connection( connectionConfig );
-
-    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
-    
-    const int NumMessagesSent = 32;
-
-    for ( int i = 0; i < NumMessagesSent; ++i )
+    memory::initialize();
     {
-        auto message = new TestMessage();
-        message->sequence = i;
-        messageChannel->SendMessage( message );
-    }
+        TestChannelStructure channelStructure;
 
-    TimeBase timeBase;
-    timeBase.deltaTime = 0.01f;
+        PacketFactory packetFactory( &channelStructure );
 
-    uint64_t numMessagesReceived = 0;
+        const int MaxPacketSize = 256;
 
-    Address address( "::1" );
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.maxPacketSize = MaxPacketSize;
+        connectionConfig.packetFactory = &packetFactory;
+        connectionConfig.channelStructure = &channelStructure;
 
-    NetworkSimulator simulator;
-    simulator.AddState( { 1.0f, 1.0f, 90 } );
+        Connection connection( connectionConfig );
 
-    int iteration = 0;
+        auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
+        
+        const int NumMessagesSent = 32;
 
-    while ( true )
-    {  
-        auto writePacket = connection.WritePacket();
-
-        uint8_t buffer[MaxPacketSize];
-
-        WriteStream writeStream( buffer, MaxPacketSize );
-        writePacket->SerializeWrite( writeStream );
-        writeStream.Flush();
-
-        delete writePacket;
-
-        ReadStream readStream( buffer, MaxPacketSize );
-        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
-        readPacket->SerializeRead( readStream );
-
-        simulator.SendPacket( address, readPacket );
-
-        simulator.Update( timeBase );
-
-        auto packet = simulator.ReceivePacket();
-
-        if ( packet )
+        for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
-            delete packet;
+            auto message = new TestMessage();
+            message->sequence = i;
+            messageChannel->SendMessage( message );
         }
 
-        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.01f;
+
+        uint64_t numMessagesReceived = 0;
+
+        Address address( "::1" );
+
+        NetworkSimulator simulator;
+        simulator.AddState( { 1.0f, 1.0f, 90 } );
+
+        int iteration = 0;
 
         while ( true )
-        {
-            auto message = messageChannel->ReceiveMessage();
+        {  
+            auto writePacket = connection.WritePacket();
 
-            if ( !message )
+            uint8_t buffer[MaxPacketSize];
+
+            WriteStream writeStream( buffer, MaxPacketSize );
+            writePacket->SerializeWrite( writeStream );
+            writeStream.Flush();
+
+            delete writePacket;
+
+            ReadStream readStream( buffer, MaxPacketSize );
+            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            readPacket->SerializeRead( readStream );
+
+            simulator.SendPacket( address, readPacket );
+
+            simulator.Update( timeBase );
+
+            auto packet = simulator.ReceivePacket();
+
+            if ( packet )
+            {
+                connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+                delete packet;
+            }
+
+            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+
+            while ( true )
+            {
+                auto message = messageChannel->ReceiveMessage();
+
+                if ( !message )
+                    break;
+
+                assert( message->GetId() == numMessagesReceived );
+                assert( message->GetType() == MESSAGE_Test );
+
+                auto testMessage = static_cast<TestMessage*>( message );
+
+                assert( testMessage->sequence == numMessagesReceived );
+
+                ++numMessagesReceived;
+
+                delete message;
+            }
+
+            if ( numMessagesReceived == NumMessagesSent )
                 break;
 
-            assert( message->GetId() == numMessagesReceived );
-            assert( message->GetType() == MESSAGE_Test );
+            connection.Update( timeBase );
 
-            auto testMessage = static_cast<TestMessage*>( message );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
 
-            assert( testMessage->sequence == numMessagesReceived );
+            timeBase.time += timeBase.deltaTime;
 
-            ++numMessagesReceived;
+            if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
+                break;
 
-            delete message;
+            iteration++;
         }
-
-        if ( numMessagesReceived == NumMessagesSent )
-            break;
-
-        connection.Update( timeBase );
-
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
-
-        timeBase.time += timeBase.deltaTime;
-
-        if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
-            break;
-
-        iteration++;
     }
+    memory::shutdown();
 }
 
 void test_reliable_message_channel_small_blocks()
 {
     printf( "test_reliable_message_channel_small_blocks\n" );
 
-    TestChannelStructure channelStructure;
-
-    PacketFactory packetFactory( &channelStructure );
-    
-    MessageFactory messageFactory;
-
-    const int MaxPacketSize = 256;
-
-    ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = &packetFactory;
-    connectionConfig.channelStructure = &channelStructure;
-
-    Connection connection( connectionConfig );
-
-    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
-
-    auto channelConfig = channelStructure.GetConfig(); 
-
-    const int NumMessagesSent = channelConfig.maxSmallBlockSize;
-
-    for ( int i = 0; i < NumMessagesSent; ++i )
+    memory::initialize();
     {
-        auto block = new Block( i + 1 );
-        for ( int j = 0; j < block->size(); ++j )
-            (*block)[j] = ( i + j ) % 256;
-        messageChannel->SendBlock( block );
-    }
+        TestChannelStructure channelStructure;
 
-    TimeBase timeBase;
-    timeBase.deltaTime = 0.01f;
+        PacketFactory packetFactory( &channelStructure );
+        
+        MessageFactory messageFactory;
 
-    uint64_t numMessagesReceived = 0;
+        const int MaxPacketSize = 256;
 
-    int iteration = 0;
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.maxPacketSize = MaxPacketSize;
+        connectionConfig.packetFactory = &packetFactory;
+        connectionConfig.channelStructure = &channelStructure;
 
-    Address address( "::1" );
+        Connection connection( connectionConfig );
 
-    NetworkSimulator simulator;
-    simulator.AddState( { 1.0f, 1.0f, 90 } );
+        auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
-    while ( true )
-    {  
-        auto writePacket = connection.WritePacket();
+        auto channelConfig = channelStructure.GetConfig(); 
 
-        uint8_t buffer[MaxPacketSize];
+        const int NumMessagesSent = channelConfig.maxSmallBlockSize;
 
-        WriteStream writeStream( buffer, MaxPacketSize );
-        writePacket->SerializeWrite( writeStream );
-        writeStream.Flush();
-
-        ReadStream readStream( buffer, MaxPacketSize );
-        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
-        readPacket->SerializeRead( readStream );
-
-        simulator.SendPacket( address, readPacket );
-
-        simulator.Update( timeBase );
-
-        auto packet = simulator.ReceivePacket();
-
-        if ( packet )
+        for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
-            delete packet;
-        }
-
-        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
-
-        while ( true )
-        {
-            auto message = messageChannel->ReceiveMessage();
-
-            if ( !message )
-                break;
-
-            assert( message->GetId() == numMessagesReceived );
-            assert( message->GetType() == MESSAGE_Block );
-
-            auto blockMessage = static_cast<BlockMessage*>( message );
-
-            auto block = blockMessage->GetBlock();
-
-            assert( block->size() == numMessagesReceived + 1 );
-            for ( int i = 0; i < block->size(); ++i )
-                assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
-
-            ++numMessagesReceived;
-
-            delete message;
-        }
-
-        if ( numMessagesReceived == NumMessagesSent )
-            break;
-
-        connection.Update( timeBase );
-
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
-
-        timeBase.time += timeBase.deltaTime;
-
-        if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
-            break;
-
-        iteration++;
-    }
-}
-
-void test_reliable_message_channel_large_blocks()
-{
-    printf( "test_reliable_message_channel_large_blocks\n" );
-
-    TestChannelStructure channelStructure;
-
-    PacketFactory packetFactory( &channelStructure );
-
-    const int MaxPacketSize = 256;
-
-    ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = &packetFactory;
-    connectionConfig.channelStructure = &channelStructure;
-
-    Connection connection( connectionConfig );
-
-    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
-
-    const int NumMessagesSent = 16;
-
-    for ( int i = 0; i < NumMessagesSent; ++i )
-    {
-        auto block = new Block( ( i + 1 ) * 1024 + i );
-        for ( int j = 0; j < block->size(); ++j )
-            (*block)[j] = ( i + j ) % 256;
-        messageChannel->SendBlock( block );
-    }
-
-    TimeBase timeBase;
-    timeBase.deltaTime = 0.01f;
-
-    uint64_t numMessagesReceived = 0;
-
-    int iteration = 0;
-
-    Address address( "::1" );
-
-    NetworkSimulator simulator;
-    simulator.AddState( { 1.0f, 1.0f, 90 } );
-
-    while ( true )
-    {  
-        auto writePacket = connection.WritePacket();
-
-        uint8_t buffer[MaxPacketSize];
-
-        WriteStream writeStream( buffer, MaxPacketSize );
-        writePacket->SerializeWrite( writeStream );
-        writeStream.Flush();
-
-        ReadStream readStream( buffer, MaxPacketSize );
-        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
-        readPacket->SerializeRead( readStream );
-
-        simulator.SendPacket( address, readPacket );
-
-        simulator.Update( timeBase );
-
-        auto packet = simulator.ReceivePacket();
-
-        if ( packet )
-        {
-            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
-
-            delete packet;
-        }
-    
-        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
-
-        while ( true )
-        {
-            auto message = messageChannel->ReceiveMessage();
-
-            if ( !message )
-                break;
-
-            assert( message->GetId() == numMessagesReceived );
-            assert( message->GetType() == MESSAGE_Block );
-
-            auto blockMessage = static_cast<BlockMessage*>( message );
-
-            auto block = blockMessage->GetBlock();
-
-//            printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
-
-            assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
-            for ( int i = 0; i < block->size(); ++i )
-                assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
-
-            ++numMessagesReceived;
-
-            delete message;
-        }
-
-        if ( numMessagesReceived == NumMessagesSent )
-            break;
-
-        connection.Update( timeBase );
-
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
-
-        timeBase.time += timeBase.deltaTime;
-
-        iteration++;
-    }
-
-    assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
-}
-
-void test_reliable_message_channel_mixture()
-{
-    printf( "test_reliable_message_channel_mixture\n" );
-
-    TestChannelStructure channelStructure;
-
-    PacketFactory packetFactory( &channelStructure );
-
-    const int MaxPacketSize = 256;
-
-    ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
-    connectionConfig.maxPacketSize = MaxPacketSize;
-    connectionConfig.packetFactory = &packetFactory;
-    connectionConfig.channelStructure = &channelStructure;
-
-    Connection connection( connectionConfig );
-
-    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
-
-    const int NumMessagesSent = 256;
-
-    for ( int i = 0; i < NumMessagesSent; ++i )
-    {
-        if ( rand() % 10 )
-        {
-            auto message = new TestMessage();
-            message->sequence = i;
-            messageChannel->SendMessage( message );
-        }
-        else
-        {
-            auto block = new Block( ( i + 1 ) * 8 + i );
+            auto block = new Block( i + 1 );
             for ( int j = 0; j < block->size(); ++j )
                 (*block)[j] = ( i + j ) % 256;
             messageChannel->SendBlock( block );
         }
-    }
 
-    TimeBase timeBase;
-    timeBase.deltaTime = 0.01f;
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.01f;
 
-    uint64_t numMessagesReceived = 0;
+        uint64_t numMessagesReceived = 0;
 
-    int iteration = 0;
+        int iteration = 0;
 
-    Address address( "::1" );
+        Address address( "::1" );
 
-    NetworkSimulator simulator;
-    simulator.AddState( { 1.0f, 1.0f, 90 } );
-
-    while ( true )
-    {  
-        auto writePacket = connection.WritePacket();
-
-        uint8_t buffer[MaxPacketSize];
-
-        WriteStream writeStream( buffer, MaxPacketSize );
-        writePacket->SerializeWrite( writeStream );
-        writeStream.Flush();
-
-        ReadStream readStream( buffer, MaxPacketSize );
-        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
-        readPacket->SerializeRead( readStream );
-
-        simulator.SendPacket( address, readPacket );
-
-        simulator.Update( timeBase );
-
-        auto packet = simulator.ReceivePacket();
-
-        if ( packet )
-        {
-            connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
-            delete packet;
-        }
-        
-        assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-        assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+        NetworkSimulator simulator;
+        simulator.AddState( { 1.0f, 1.0f, 90 } );
 
         while ( true )
-        {
-            auto message = messageChannel->ReceiveMessage();
+        {  
+            auto writePacket = connection.WritePacket();
 
-            if ( !message )
-                break;
+            uint8_t buffer[MaxPacketSize];
 
-            assert( message->GetId() == numMessagesReceived );
+            WriteStream writeStream( buffer, MaxPacketSize );
+            writePacket->SerializeWrite( writeStream );
+            writeStream.Flush();
 
-            if ( message->GetType() == MESSAGE_Block )
+            delete writePacket;
+
+            ReadStream readStream( buffer, MaxPacketSize );
+            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            readPacket->SerializeRead( readStream );
+
+            simulator.SendPacket( address, readPacket );
+
+            simulator.Update( timeBase );
+
+            auto packet = simulator.ReceivePacket();
+
+            if ( packet )
             {
+                connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+                delete packet;
+            }
+
+            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+
+            while ( true )
+            {
+                auto message = messageChannel->ReceiveMessage();
+
+                if ( !message )
+                    break;
+
+                assert( message->GetId() == numMessagesReceived );
                 assert( message->GetType() == MESSAGE_Block );
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
                 auto block = blockMessage->GetBlock();
 
-//                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
-
-                assert( block->size() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
+                assert( block->size() == numMessagesReceived + 1 );
                 for ( int i = 0; i < block->size(); ++i )
                     assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
+
+                ++numMessagesReceived;
+
+                delete message;
+            }
+
+            if ( numMessagesReceived == NumMessagesSent )
+                break;
+
+            connection.Update( timeBase );
+
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+
+            timeBase.time += timeBase.deltaTime;
+
+            if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
+                break;
+
+            iteration++;
+        }
+    }
+    memory::shutdown();
+}
+
+void test_reliable_message_channel_large_blocks()
+{
+    printf( "test_reliable_message_channel_large_blocks\n" );
+
+    memory::initialize();
+    {
+        TestChannelStructure channelStructure;
+
+        PacketFactory packetFactory( &channelStructure );
+
+        const int MaxPacketSize = 256;
+
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.maxPacketSize = MaxPacketSize;
+        connectionConfig.packetFactory = &packetFactory;
+        connectionConfig.channelStructure = &channelStructure;
+
+        Connection connection( connectionConfig );
+
+        auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
+
+        const int NumMessagesSent = 16;
+
+        for ( int i = 0; i < NumMessagesSent; ++i )
+        {
+            auto block = new Block( ( i + 1 ) * 1024 + i );
+            for ( int j = 0; j < block->size(); ++j )
+                (*block)[j] = ( i + j ) % 256;
+            messageChannel->SendBlock( block );
+        }
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.01f;
+
+        uint64_t numMessagesReceived = 0;
+
+        int iteration = 0;
+
+        Address address( "::1" );
+
+        NetworkSimulator simulator;
+        simulator.AddState( { 1.0f, 1.0f, 90 } );
+
+        while ( true )
+        {  
+            auto writePacket = connection.WritePacket();
+
+            uint8_t buffer[MaxPacketSize];
+
+            WriteStream writeStream( buffer, MaxPacketSize );
+            writePacket->SerializeWrite( writeStream );
+            writeStream.Flush();
+
+            delete writePacket;
+
+            ReadStream readStream( buffer, MaxPacketSize );
+            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            readPacket->SerializeRead( readStream );
+
+            simulator.SendPacket( address, readPacket );
+
+            simulator.Update( timeBase );
+
+            auto packet = simulator.ReceivePacket();
+
+            if ( packet )
+            {
+                connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+
+                delete packet;
+            }
+        
+            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+
+            while ( true )
+            {
+                auto message = messageChannel->ReceiveMessage();
+
+                if ( !message )
+                    break;
+
+                assert( message->GetId() == numMessagesReceived );
+                assert( message->GetType() == MESSAGE_Block );
+
+                auto blockMessage = static_cast<BlockMessage*>( message );
+
+                auto block = blockMessage->GetBlock();
+
+                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
+
+                assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
+                for ( int i = 0; i < block->size(); ++i )
+                    assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
+
+                ++numMessagesReceived;
+
+                delete message;
+            }
+
+            if ( numMessagesReceived == NumMessagesSent )
+                break;
+
+            connection.Update( timeBase );
+
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+
+            timeBase.time += timeBase.deltaTime;
+
+            iteration++;
+        }
+
+        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
+    }
+    memory::shutdown();
+}
+
+void test_reliable_message_channel_mixture()
+{
+    printf( "test_reliable_message_channel_mixture\n" );
+
+    memory::initialize();
+    {
+        TestChannelStructure channelStructure;
+
+        PacketFactory packetFactory( &channelStructure );
+
+        const int MaxPacketSize = 256;
+
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.maxPacketSize = MaxPacketSize;
+        connectionConfig.packetFactory = &packetFactory;
+        connectionConfig.channelStructure = &channelStructure;
+
+        Connection connection( connectionConfig );
+
+        auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
+
+        const int NumMessagesSent = 256;
+
+        for ( int i = 0; i < NumMessagesSent; ++i )
+        {
+            if ( rand() % 10 )
+            {
+                auto message = new TestMessage();
+                message->sequence = i;
+                messageChannel->SendMessage( message );
             }
             else
             {
-                assert( message->GetType() == MESSAGE_Test );
-
-//                printf( "received message %d\n", message->GetId() );
-
-                auto testMessage = static_cast<TestMessage*>( message );
-
-                assert( testMessage->sequence == numMessagesReceived );
+                auto block = new Block( ( i + 1 ) * 8 + i );
+                for ( int j = 0; j < block->size(); ++j )
+                    (*block)[j] = ( i + j ) % 256;
+                messageChannel->SendBlock( block );
             }
-
-            ++numMessagesReceived;
-
-            delete message;
         }
 
-        if ( numMessagesReceived == NumMessagesSent )
-            break;
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.01f;
 
-        connection.Update( timeBase );
+        uint64_t numMessagesReceived = 0;
 
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+        int iteration = 0;
 
-        timeBase.time += timeBase.deltaTime;
+        Address address( "::1" );
 
-        iteration++;
+        NetworkSimulator simulator;
+        simulator.AddState( { 1.0f, 1.0f, 90 } );
+
+        while ( true )
+        {  
+            auto writePacket = connection.WritePacket();
+
+            uint8_t buffer[MaxPacketSize];
+
+            WriteStream writeStream( buffer, MaxPacketSize );
+            writePacket->SerializeWrite( writeStream );
+            writeStream.Flush();
+
+            delete writePacket;
+
+            ReadStream readStream( buffer, MaxPacketSize );
+            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            readPacket->SerializeRead( readStream );
+
+            simulator.SendPacket( address, readPacket );
+
+            simulator.Update( timeBase );
+
+            auto packet = simulator.ReceivePacket();
+
+            if ( packet )
+            {
+                connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
+                delete packet;
+            }
+            
+            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
+            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+
+            while ( true )
+            {
+                auto message = messageChannel->ReceiveMessage();
+
+                if ( !message )
+                    break;
+
+                assert( message->GetId() == numMessagesReceived );
+
+                if ( message->GetType() == MESSAGE_Block )
+                {
+                    assert( message->GetType() == MESSAGE_Block );
+
+                    auto blockMessage = static_cast<BlockMessage*>( message );
+
+                    auto block = blockMessage->GetBlock();
+
+    //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
+
+                    assert( block->size() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
+                    for ( int i = 0; i < block->size(); ++i )
+                        assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
+                }
+                else
+                {
+                    assert( message->GetType() == MESSAGE_Test );
+
+    //                printf( "received message %d\n", message->GetId() );
+
+                    auto testMessage = static_cast<TestMessage*>( message );
+
+                    assert( testMessage->sequence == numMessagesReceived );
+                }
+
+                ++numMessagesReceived;
+
+                delete message;
+            }
+
+            if ( numMessagesReceived == NumMessagesSent )
+                break;
+
+            connection.Update( timeBase );
+
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+
+            timeBase.time += timeBase.deltaTime;
+
+            iteration++;
+        }
+
+        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
     }
-
-    assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
+    memory::shutdown();
 }
 
 int main()

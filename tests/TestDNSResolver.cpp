@@ -1,6 +1,5 @@
 #include "DNSResolver.h"
 
-using namespace std;
 using namespace protocol;
 
 void test_dns_resolve()
@@ -12,7 +11,7 @@ void test_dns_resolve()
     int num_google_success_callbacks = 0;
     int num_google_failure_callbacks = 0;
 
-    string google_hostname( "google.com" );
+    std::string google_hostname( "google.com" );
 
 //    printf( "resolving %s\n", google_hostname.c_str() );
 
@@ -20,7 +19,7 @@ void test_dns_resolve()
 
     for ( int i = 0; i < num_google_iterations; ++i )
     {
-        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, ResolveResult * result ) 
+        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const std::string & name, ResolveResult * result ) 
         { 
             assert( name == google_hostname );
             assert( result );
@@ -37,7 +36,7 @@ void test_dns_resolve()
 
     double t = 0.0;
     double dt = 0.1f;
-    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
     for ( int i = 0; i < 50; ++i )
     {
@@ -46,7 +45,7 @@ void test_dns_resolve()
         if ( num_google_success_callbacks == num_google_iterations )
             break;
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         t += dt;
     }
@@ -75,7 +74,7 @@ void test_dns_resolve_with_port()
     int num_google_success_callbacks = 0;
     int num_google_failure_callbacks = 0;
 
-    string google_hostname( "google.com:5000" );
+    std::string google_hostname( "google.com:5000" );
 
 //    printf( "resolving %s\n", google_hostname.c_str() );
 
@@ -83,7 +82,7 @@ void test_dns_resolve_with_port()
 
     for ( int i = 0; i < num_google_iterations; ++i )
     {
-        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const string & name, ResolveResult * result ) 
+        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const std::string & name, ResolveResult * result ) 
         { 
             assert( name == google_hostname );
             assert( result );
@@ -100,7 +99,7 @@ void test_dns_resolve_with_port()
 
     double t = 0.0;
     double dt = 0.1f;
-    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
     for ( int i = 0; i < 50; ++i )
     {
@@ -109,7 +108,7 @@ void test_dns_resolve_with_port()
         if ( num_google_success_callbacks == num_google_iterations )
             break;
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         t += dt;
     }
@@ -137,11 +136,11 @@ void test_dns_resolve_failure()
 
     bool resolved = false;
 
-    string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
+    std::string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
 
 //    printf( "resolving garbage hostname: %s\n", garbage_hostname.c_str() );
 
-    resolver.Resolve( garbage_hostname, [&resolved, &garbage_hostname] ( const string & name, ResolveResult * result ) 
+    resolver.Resolve( garbage_hostname, [&resolved, &garbage_hostname] ( const std::string & name, ResolveResult * result ) 
     { 
         assert( name == garbage_hostname );
         assert( result == nullptr );
@@ -154,7 +153,7 @@ void test_dns_resolve_failure()
 
     double t = 0.0;
     double dt = 0.1f;
-    chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
     for ( int i = 0; i < 50; ++i )
     {
@@ -163,7 +162,7 @@ void test_dns_resolve_failure()
         if ( resolved )
             break;
 
-        this_thread::sleep_for( ms );
+        std::this_thread::sleep_for( ms );
 
         t += dt;
     }

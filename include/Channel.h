@@ -82,23 +82,23 @@ namespace protocol
 
     class ChannelStructure
     {
-        typedef function<Channel*()> CreateChannelFunction;
-        typedef function<ChannelData*()> CreateChannelDataFunction;
+        typedef std::function<Channel*()> CreateChannelFunction;
+        typedef std::function<ChannelData*()> CreateChannelDataFunction;
 
         struct ChannelEntry
         {
-            string name;
+            std::string name;
             CreateChannelFunction createChannel;
             CreateChannelDataFunction createChannelData;
         };
 
         bool m_locked = false;
 
-        vector<ChannelEntry> m_channelEntries;
+        std::vector<ChannelEntry> m_channelEntries;
 
     public:
 
-        void AddChannel( const string & name,
+        void AddChannel( const std::string & name,
                          CreateChannelFunction createChannel,
                          CreateChannelDataFunction createChannelData )
         {

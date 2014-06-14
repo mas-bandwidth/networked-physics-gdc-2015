@@ -66,7 +66,7 @@ namespace protocol
 
         bool m_open = true;
 
-        vector<ServerClientData> m_clients;
+        std::vector<ServerClientData> m_clients;
 
         Factory<Packet> * m_packetFactory;
 
@@ -359,6 +359,9 @@ namespace protocol
             assert( packet );
 
 //            printf( "server received connection request packet\n" );
+
+//            printf( "server received connection request packet: clientGuid = %llx\n", packet->clientGuid );
+
 
             if ( !m_open )
             {

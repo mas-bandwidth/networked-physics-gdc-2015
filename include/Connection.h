@@ -47,7 +47,7 @@ namespace protocol
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
-        vector<ChannelData*> channelData;
+        std::vector<ChannelData*> channelData;
         ChannelStructure * channelStructure;
 
         ConnectionPacket( int type, ChannelStructure * _channelStructure ) : Packet( type )
@@ -61,12 +61,13 @@ namespace protocol
         ~ConnectionPacket()
         {
 //            printf( "~ConnectionPacket\n" );
-            assert( channelStructure );     // double delete?
+            assert( channelStructure );
             channelStructure = nullptr;
             for ( int i = 0; i < channelData.size(); ++i )
             {
                 if ( channelData[i] )
                 {
+//                    printf( "connection packet delete channel data\n" );
                     delete channelData[i];
                     channelData[i] = nullptr;
                 }
@@ -114,8 +115,6 @@ namespace protocol
                     {
                         channelData[i] = channelStructure->CreateChannelData( i );
                         assert( channelData[i] );
-
-                        // todo: need a way to set an error indicating that serialization has failed    
                     }
                 }
             }
@@ -209,13 +208,6 @@ namespace protocol
 
     class Connection
     {
-        const ConnectionConfig m_config;                    // const configuration data
-        TimeBase m_timeBase;                                // network time base
-        SentPackets * m_sentPackets = nullptr;              // sliding window of recently sent packets
-        ReceivedPackets * m_receivedPackets = nullptr;      // sliding window of recently received packets
-        vector<Channel*> m_channels;                        // array of channels created according to channel structure
-        vector<uint64_t> m_counters;                        // counters for unit testing, stats etc.
-
     public:
 
         enum Counters
@@ -226,6 +218,17 @@ namespace protocol
             PacketsDiscarded,                       // number of read packets that we discarded (eg. not acked)
             NumCounters
         };
+
+    private:
+
+        const ConnectionConfig m_config;                    // const configuration data
+        TimeBase m_timeBase;                                // network time base
+        SentPackets * m_sentPackets = nullptr;              // sliding window of recently sent packets
+        ReceivedPackets * m_receivedPackets = nullptr;      // sliding window of recently received packets
+        std::vector<Channel*> m_channels;                   // array of channels created according to channel structure
+        uint64_t m_counters[NumCounters];                   // counters for unit testing, stats etc.
+
+    public:
 
         Connection( const ConnectionConfig & config ) : m_config( config )
         {
@@ -242,8 +245,6 @@ namespace protocol
                 m_channels[i] = config.channelStructure->CreateChannel( i );
                 assert( m_channels[i] );
             }
-
-            m_counters.resize( NumCounters, 0 );
 
             Reset();
         }
@@ -275,8 +276,7 @@ namespace protocol
             m_receivedPackets->Reset();
             for ( auto channel : m_channels )
                 channel->Reset();
-            for ( int i = 0; i < m_counters.size(); ++i )
-                m_counters[i] = 0;
+            memset( m_counters, 0, sizeof( m_counters ) );
         }
 
         void Update( const TimeBase & timeBase )
@@ -336,6 +336,9 @@ namespace protocol
                     continue;
 
                 auto result = m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
+
+                delete packet->channelData[i];
+                packet->channelData[i] = nullptr;
 
                 if ( !result )
                     discardPacket = true;

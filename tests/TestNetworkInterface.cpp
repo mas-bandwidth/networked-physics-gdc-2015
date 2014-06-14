@@ -1,6 +1,5 @@
 #include "NetworkInterface.h"
 
-using namespace std;
 using namespace protocol;
 
 class TestInterface : public NetworkInterface
@@ -21,11 +20,6 @@ public:
     {
         packet->SetAddress( address );
         packet_queue.push( packet );
-    }
-
-    virtual void SendPacket( const string & address, uint16_t port, Packet * packet )
-    {
-        assert( false );        // not supported
     }
 
     virtual Packet * ReceivePacket()
@@ -63,6 +57,7 @@ public:
     TestPacketA() : Packet( PACKET_A ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
+    void SerializeMeasure( MeasureStream & stream ) {}
 };
 
 class TestPacketB : public Packet
@@ -71,6 +66,7 @@ public:
     TestPacketB() : Packet( PACKET_B ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
+    void SerializeMeasure( MeasureStream & stream ) {}
 };
 
 class TestPacketC : public Packet
@@ -79,6 +75,7 @@ public:
     TestPacketC() : Packet( PACKET_C ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
+    void SerializeMeasure( MeasureStream & stream ) {}
 };
 
 void test_network_interface()

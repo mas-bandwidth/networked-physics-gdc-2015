@@ -1,26 +1,26 @@
 DONE:
 
-    Integrate the allocators from bitsquid engine.
-
-    Brought across basic allocator and helper functions.
-
-    Brought across temp allocator.
-
-    Bring across malloc backed allocator and the rest of it.
-
-    Bring across allocator tests.
-
-    Verify stuff is basically working.
-
 TODO:
 
-    Bring across array.
+    Now lets profile and see if it has made any improvement...
 
-    Bring across containers and supporting functionality.
+    --------------
 
-    Verify all tests pass.
+    Things that would have the most impact on the profiler:
 
-    Start cleaning up the code!
+    1. Rework the allocation and free of "fragments"
+       so they go through the scratch allocator instead. (DONE)
+
+    2. Remove the std::vector usage inside the reliable channel 
+       sliding windows and use scratch allocator instead.
+
+    3. Convert the actual messages themselves to be allocated 
+       via specific message allocator passed in to config
+       (initially make this the scratch...)
+
+    ------------------
+
+    TestBSDSockets.cpp is broken again now that I'm properly deleting packets!
 
     ------------------
 
@@ -81,12 +81,6 @@ TODO:
     ----------------------
 
     Add some macros to make defining serialization and messages easier.
-
-    ----------------------
-
-    DNSResolver is probably completely broken. Get it working and break
-    down tasks that would turn it into something that can be *pre-allocated*
-    and doesn't do allocations at runtime.
 
     ----------------------
 

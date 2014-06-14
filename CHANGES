@@ -1,3 +1,75 @@
+Friday Evening, June 13th, 2014:
+--------------------------------
+
+    Remove "use namespace stl" so I can have the new foundation
+    stuff co-existing with the STL during the transition.
+
+    Having some problems with the factory now. Not sure why.
+
+    TestBSDSockets.cpp fails with factory issue.
+
+    TestClientServer.cpp fails with some problem in the deny connect test.
+
+    It seems the packets are not getting through, eg. they are truncated.
+
+    The cause is the change I made to "GetBytesWritten" vs. GetTotalBytes.
+
+    Yes. The bytes written was off and was truncating packets.
+
+    Added a check at the end of packets to pick up truncates in future.
+
+    Search through for "std::" and find an easy place to start converting.
+
+    Well there is no reason to use std::vector for counters. They are static size!
+
+    Switched BSDSockets m_recieveBuffer to a normal pointer array allocated with new
+    (again, it does not need to be resized!)
+
+    Found a memory leak. Was not deleting packets on send inside BSDSockets.h
+
+    Converted fragments to use the scratch allocator. It's picking up leaks
+    on the large block test (when they are actually being used).
+
+    Rework fragment allocation to go through scratch.
+
+    Found another memory leak where the simulator wasn't going
+    out of scope, and was holding on to some packets which tripped
+    the memory leak check.
+
+
+Thursday Evening, June 12th, 2014:
+----------------------------------
+
+    Integrate the allocators from bitsquid engine.
+
+    Brought across basic allocator and helper functions.
+
+    Brought across temp allocator.
+
+    Bring across malloc backed allocator and the rest of it.
+
+    Bring across allocator tests.
+
+    Verify stuff is basically working.
+
+    Bring across array.
+
+    Added a #define NOSTL 1 that is handled in Common.h to
+    help with the transition away from STL
+
+    Bring across hash
+
+    Bring across murmur hash fn
+
+    Bring across queue
+
+    Bring across pointer arithmetic tests.
+
+    Bring across string stream.
+
+    Verify all tests pass.
+
+
 Thursday Morning, June 12th, 2014:
 ----------------------------------
 

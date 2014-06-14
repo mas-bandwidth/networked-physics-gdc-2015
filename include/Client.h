@@ -96,7 +96,7 @@ namespace protocol
         Connection * m_connection;
         ClientServerPacketFactory * m_packetFactory;
 
-        string m_hostname;
+        std::string m_hostname;
         Address m_address;
         ClientState m_state = CLIENT_STATE_Disconnected;
         uint64_t m_clientGuid = 0;
@@ -150,9 +150,11 @@ namespace protocol
             m_state = CLIENT_STATE_SendingConnectionRequest;
             m_address = address;
             m_clientGuid = GenerateGuid();
+
+//            printf( "connect: set client guid = %llx\n", m_clientGuid );
         }
 
-        void Connect( const string & hostname )
+        void Connect( const std::string & hostname )
         {
             Disconnect();
 
@@ -327,6 +329,7 @@ namespace protocol
                         auto packet = new ConnectionRequestPacket();
                         packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
+//                        printf( "send connection request packet: m_clientGuid = %llx\n", m_clientGuid );
                         m_config.networkInterface->SendPacket( m_address, packet );
                     }
                     break;
@@ -374,7 +377,9 @@ namespace protocol
                 if ( !packet )
                     break;
 
-                if ( packet->GetType() == PACKET_Disconnected )
+                const int type = packet->GetType();
+
+                if ( type == PACKET_Disconnected )
                 {
 //                    printf( "client received disconnected packet\n" );
                     ProcessDisconnected( static_cast<DisconnectedPacket*>( packet ) );
@@ -385,7 +390,7 @@ namespace protocol
                 {
                     case CLIENT_STATE_SendingConnectionRequest:
                     {
-                        if ( packet->GetType() == PACKET_ConnectionChallenge )
+                        if ( type == PACKET_ConnectionChallenge )
                         {
                             auto connectionChallengePacket = static_cast<ConnectionChallengePacket*>( packet );
 
@@ -399,7 +404,7 @@ namespace protocol
                                 m_lastPacketReceiveTime = m_timeBase.time;
                             }
                         }
-                        else if ( packet->GetType() == PACKET_ConnectionDenied )
+                        else if ( type == PACKET_ConnectionDenied )
                         {
                             auto connectionDeniedPacket = static_cast<ConnectionDeniedPacket*>( packet );
 
@@ -416,7 +421,7 @@ namespace protocol
 
                     case CLIENT_STATE_SendingChallengeResponse:
                     {
-                        if ( packet->GetType() == PACKET_RequestClientData )
+                        if ( type == PACKET_RequestClientData )
                         {
                             auto requestClientDataPacket = static_cast<RequestClientDataPacket*>( packet );
 
@@ -446,7 +451,7 @@ namespace protocol
                     case CLIENT_STATE_ReadyForConnection:
                     case CLIENT_STATE_Connected:
                     {
-                        if ( packet->GetType() == PACKET_Connection )
+                        if ( type == PACKET_Connection )
                         {
 //                            printf( "client received connection packet\n" );
 

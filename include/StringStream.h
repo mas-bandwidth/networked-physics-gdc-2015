@@ -1,14 +1,42 @@
-#pragma once
+#ifndef PROTOCOL_STRING_STREAM_H
+#define PROTOCOL_STRING_STREAM_H
 
-#include "collection_types.h"
-#include "array.h"
+#include "Array.h"
 
 #include <string.h>
 #include <stdio.h>
 
-#include "snprintf_msvc.h"
+#if defined(_MSC_VER)
 
-namespace foundation
+	#include <stdarg.h>
+	#include <stdio.h>
+
+	inline int vsnprintf_compat(char* buffer, size_t size, const char* format, va_list args)
+	{
+		int result = -1;
+		if (size > 0)
+			result = _vsnprintf_s(buffer, size, _TRUNCATE, format, args);
+		if (result == -1)
+			return _vscprintf(format, args);
+	
+		return result;	
+	}
+
+	inline int snprintf_compat(char* buffer, size_t size, const char* format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		int result = vsnprintf_compat(buffer, size, format, args);
+		va_end(args);
+		return result;
+	}
+
+	#define snprintf snprintf_compat
+	#define vsnprintf vsnprintf_compat
+	
+#endif
+
+namespace protocol
 {
 	/// Functions for operating on an Array<char> as a stream of characters,
 	/// useful for string formatting, etc.
@@ -106,4 +134,49 @@ namespace foundation
 			return array::begin(b);
 		}
 	}
+
+	namespace string_stream
+	{
+		Buffer & printf(Buffer &b, const char *format, ...)
+		{
+			va_list args;
+			
+			va_start(args, format);
+			int n = vsnprintf(NULL, 0, format, args);
+			va_end(args);
+
+			uint32_t end = array::size(b);
+			array::resize(b, end + n + 1);
+			
+			va_start(args, format);
+			vsnprintf(array::begin(b) + end, n + 1, format, args);
+			va_end(args);
+			
+			array::resize(b, end + n);
+
+			return b;
+		}
+
+		Buffer & tab(Buffer &b, uint32_t column)
+		{
+			uint32_t current_column = 0;
+			uint32_t i = array::size(b) - 1;
+			while (i != 0xffffffffu && b[i] != '\n' && b[i] != '\r') {
+				++current_column;
+				--i;
+			}
+			if (current_column < column)
+				repeat(b, column - current_column, ' ');
+			return b;
+		}
+
+		Buffer & repeat(Buffer &b, uint32_t count, char c)
+		{
+			for (uint32_t i=0; i<count; ++i)
+				array::push_back(b, c);
+			return b;
+		}
+	}
 }
+
+#endif

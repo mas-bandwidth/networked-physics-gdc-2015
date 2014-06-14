@@ -7,15 +7,19 @@
 #define PROTOCOL_COMMON_H
 
 #include <cassert>
+
+#if NOSTL == 0
 #include <string>
 #include <vector>
 #include <limits>
 #include <memory>
 #include <thread>
-#include <future>
 #include <queue>
 #include <chrono>
 #include <map>
+#endif
+
+#include <future>
 #include <unistd.h>
 #include <stdexcept>
 #include <string.h>
@@ -25,7 +29,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PLATFORM_WINDOWS  1
+#define PLATFORM_WINDOWS  1         // todo: profix all defines with PROTOCOL as to not pollute the namespace
 #define PLATFORM_MAC      2
 #define PLATFORM_UNIX     3
 
@@ -56,8 +60,6 @@
 
 namespace protocol
 {
-    using namespace std;
-
     template <uint32_t x> struct PopCount
     {
         enum {   a = x - ( ( x >> 1 )       & 0x55555555 ),
@@ -163,11 +165,13 @@ namespace protocol
         virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
     };
 
+#if !NOSTL
+
     template <typename T> class Factory
     {
     public:
 
-        typedef function<T*()> create_function;
+        typedef std::function<T*()> create_function;
         
         Factory()
         {
@@ -177,7 +181,7 @@ namespace protocol
         void Register( int type, create_function const & function )
         {
             create_map[type] = function;
-            max_type = max( type, max_type );
+            max_type = std::max( type, max_type );
         }
 
         bool TypeExists( int type )
@@ -205,8 +209,7 @@ namespace protocol
 
         int max_type;
         
-        // todo: need a replacement for map
-        map<int,create_function> create_map;
+        std::map<int,create_function> create_map;
     };
 
     template <typename T> class SlidingWindow
@@ -321,10 +324,10 @@ namespace protocol
 
         bool m_first_entry;
         uint16_t m_sequence;
-        vector<T> m_entries;
+        std::vector<T> m_entries;
     };
 
-    typedef vector<uint8_t> Block;
+    typedef std::vector<uint8_t> Block;
 
     template <typename T> void GenerateAckBits( const SlidingWindow<T> & packets, 
                                                 uint16_t & ack,
@@ -339,6 +342,8 @@ namespace protocol
                 ack_bits |= ( 1 << i );
         }
     }
+
+#endif
 
     inline uint64_t GenerateGuid()
     {
@@ -388,6 +393,59 @@ namespace protocol
     inline const void * pointer_sub( const void * p, uint32_t bytes )
     {
         return (const void*) ( (const char*)p - bytes );
+    }
+
+    uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed )
+    {
+        const uint64_t m = 0xc6a4a7935bd1e995ULL;
+        const uint32_t r = 47;
+
+        uint64_t h = seed ^ ( len * m );
+
+        const uint64_t * data = ( const uint64_t*) key;
+        const uint64_t * end = data + len / 8;
+
+        while ( data != end )
+        {
+            #ifdef PROTOCOL_BIG_ENDIAN
+                uint64 k = *data++;
+                uint8_t * p = (uint8_t*) &k;
+                uint8_t c;
+                c = p[0]; p[0] = p[7]; p[7] = c;
+                c = p[1]; p[1] = p[6]; p[6] = c;
+                c = p[2]; p[2] = p[5]; p[5] = c;
+                c = p[3]; p[3] = p[4]; p[4] = c;
+            #else
+                uint64_t k = *data++;
+            #endif
+
+            k *= m;
+            k ^= k >> r;
+            k *= m;
+            
+            h ^= k;
+            h *= m;
+        }
+
+        const uint8_t * data2 = (const uint8_t*) data;
+
+        switch ( len & 7 )
+        {
+            case 7: h ^= uint64_t( data2[6] ) << 48;
+            case 6: h ^= uint64_t( data2[5] ) << 40;
+            case 5: h ^= uint64_t( data2[4] ) << 32;
+            case 4: h ^= uint64_t( data2[3] ) << 24;
+            case 3: h ^= uint64_t( data2[2] ) << 16;
+            case 2: h ^= uint64_t( data2[1] ) << 8;
+            case 1: h ^= uint64_t( data2[0] );
+                    h *= m;
+        };
+        
+        h ^= h >> r;
+        h *= m;
+        h ^= h >> r;
+
+        return h;
     }
 }
 

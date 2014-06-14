@@ -161,12 +161,12 @@ namespace protocol
 
         int GetBytesWritten() const
         {
-            return m_wordIndex;
+            return m_wordIndex * 4;
         }
 
         int GetTotalBytes() const
         {
-            return m_wordIndex * 4;
+            return m_numWords * 4;
         }
 
         bool IsOverflow() const

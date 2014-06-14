@@ -6,7 +6,6 @@
 #include "ClientServerPackets.h"
 #include "ReliableMessageChannel.h"
 
-using namespace std;
 using namespace protocol;
 
 enum MessageType
@@ -45,6 +44,11 @@ struct TestMessage : public Message
         Serialize( stream );
     }
 
+    void SerializeMeasure( MeasureStream & stream )
+    {
+        Serialize( stream );
+    }
+
     uint16_t sequence;
 };
 
@@ -61,7 +65,7 @@ public:
 class TestChannelStructure : public ChannelStructure
 {
     MessageFactory m_messageFactory;
-    const ReliableMessageChannelConfig m_config;
+    ReliableMessageChannelConfig m_config;
 
 public:
 
@@ -169,7 +173,7 @@ void test_client_resolve_hostname_failure()
 
         timeBase.time += timeBase.deltaTime;
 
-        this_thread::sleep_for( chrono::milliseconds( 100 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     }
 
     assert( client.IsDisconnected() );
@@ -281,7 +285,7 @@ void test_client_resolve_hostname_success()
 
         timeBase.time += timeBase.deltaTime;
 
-        this_thread::sleep_for( chrono::milliseconds( 100 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
     }
 
     assert( !client.IsDisconnected() );
@@ -382,16 +386,16 @@ void test_client_connection_request_denied()
 
     server.Close();     // IMPORTANT: close the server so all connection requests are denied
 
+    assert( !server.IsOpen() );
+
     assert( client.IsConnecting() );
     assert( !client.IsDisconnected() );
     assert( !client.IsConnected() );
     assert( !client.HasError() );
     assert( client.GetState() == CLIENT_STATE_SendingConnectionRequest );
 
-    assert( !server.IsOpen() );
-
     TimeBase timeBase;
-    timeBase.deltaTime = 0.1f;
+    timeBase.deltaTime = 0.01f;
 
     for ( int i = 0; i < 256; ++i )
     {
@@ -402,10 +406,12 @@ void test_client_connection_request_denied()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
+
+//    printf( "client error: %d\n", client.GetError() );
 
     assert( client.IsDisconnected() );
     assert( !client.IsConnecting() );
@@ -474,7 +480,7 @@ void test_client_connection_challenge()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -548,7 +554,7 @@ void test_client_connection_challenge_response()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -621,7 +627,7 @@ void test_client_connection_established()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -694,7 +700,7 @@ void test_client_connection_messages()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -777,7 +783,7 @@ void test_client_connection_messages()
         if ( numMessagesReceivedOnClient == NumMessagesSent && numMessagesReceivedOnServer == NumMessagesSent )
             break;
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -841,7 +847,7 @@ void test_client_connection_disconnect()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -868,7 +874,7 @@ void test_client_connection_disconnect()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -915,7 +921,7 @@ void test_client_connection_server_full()
     // connect the maximum number of clients to the server
     // and wait until they are all fully connected.
 
-    vector<Client*> clients;
+    std::vector<Client*> clients;
 
     bsdSocketsConfig.port = 0;
 
@@ -961,7 +967,7 @@ void test_client_connection_server_full()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -1012,7 +1018,7 @@ void test_client_connection_server_full()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -1103,7 +1109,7 @@ void test_client_connection_timeout()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -1212,7 +1218,7 @@ void test_client_connection_already_connected()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -1240,7 +1246,7 @@ void test_client_connection_already_connected()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -1314,7 +1320,7 @@ void test_client_connection_reconnect()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -1344,7 +1350,7 @@ void test_client_connection_reconnect()
 
         server.Update( timeBase );
 
-        this_thread::sleep_for( chrono::milliseconds( 1 ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 
         timeBase.time += timeBase.deltaTime;
     }

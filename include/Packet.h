@@ -19,7 +19,7 @@ namespace protocol
 
     public:
         
-        Packet( int _type ) :type(_type) {}
+        Packet( int _type ) : type(_type) {}
 
         int GetType() const { return type; }
 
@@ -28,8 +28,7 @@ namespace protocol
         const Address & GetAddress() const { return address; }
     };
 
-    // todo: need a replacement for std::queue
-    typedef queue<Packet*> PacketQueue;
+    typedef std::queue<Packet*> PacketQueue;
 }
 
 #endif

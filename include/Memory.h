@@ -11,7 +11,7 @@ namespace protocol
 
 	namespace memory
 	{
-		void initialize( uint32_t scratch_buffer_size = 4*1024*1024 );
+		void initialize( uint32_t scratch_buffer_size = 4 * 1024 * 1024 );
 
 		Allocator & default_allocator();
 		
@@ -118,222 +118,208 @@ namespace protocol
 	typedef TempAllocator<2048> TempAllocator2048;
 	typedef TempAllocator<4096> TempAllocator4096;
 
-	// Header stored at the beginning of a memory allocation 
-	// to indicate the size of the allocated data.
 	struct Header 
 	{
 		uint32_t size;
 	};
 
-	// If we need to align the memory allocation we pad the header with this
-	// value after storing the size. That way we can 
-	const uint32_t HEADER_PAD_VALUE = 0xffffffffu;
+	const uint32_t HEADER_PAD_VALUE = 0xffffffff;
 
-	// Given a pointer to the header, returns a pointer to the data that follows it.
-	inline void *data_pointer(Header *header, uint32_t align) {
-		void *p = header + 1;
-		return align_forward(p, align);
-	}
-
-	// Given a pointer to the data, returns a pointer to the header before it.
-	inline Header *header(void *data)
+	inline void * data_pointer( Header * header, uint32_t align )
 	{
-		uint32_t *p = (uint32_t *)data;
-		while (p[-1] == HEADER_PAD_VALUE)
-			--p;
-		return (Header *)p - 1;
+		void * p = header + 1;
+		return align_forward( p, align );
 	}
 
-	// Stores the size in the header and pads with HEADER_PAD_VALUE up to the
-	// data pointer.
-	inline void fill(Header *header, void *data, uint32_t size)
+	inline Header * header( void * data )
+	{
+		uint32_t * p = (uint32_t*) data;
+		while ( p[-1] == HEADER_PAD_VALUE )
+			--p;
+		return (Header*)p - 1;
+	}
+
+	inline void fill( Header * header, void * data, uint32_t size )
 	{
 		header->size = size;
-		uint32_t *p = (uint32_t *)(header + 1);
-		while (p < data)
+		uint32_t * p = (uint32_t*) ( header + 1 );
+		while ( p < data )
 			*p++ = HEADER_PAD_VALUE;
 	}
 
-	/// An allocator that uses the default system malloc(). Allocations are
-	/// padded so that we can store the size of each allocation and align them
-	/// to the desired alignment.
-	///
-	/// (Note: An OS-specific allocator that can do alignment and tracks size
-	/// does need this padding and can thus be more efficient than the
-	/// MallocAllocator.)
 	class MallocAllocator : public Allocator
 	{
-		uint32_t _total_allocated;
+		uint32_t m_total_allocated;
 
-		// Returns the size to allocate from malloc() for a given size and align.		
-		static inline uint32_t size_with_padding(uint32_t size, uint32_t align) {
-			return size + align + sizeof(Header);
+		static inline uint32_t size_with_padding( uint32_t size, uint32_t align ) 
+		{
+			return size + align + sizeof( Header );
 		}
 
 	public:
-		MallocAllocator() : _total_allocated(0) {}
 
-		~MallocAllocator() {
-			// Check that we don't have any memory leaks when allocator is
-			// destroyed.
-			assert(_total_allocated == 0);
+		MallocAllocator() : m_total_allocated(0) {}
+
+		~MallocAllocator() 
+		{
+			assert( m_total_allocated == 0 );
 		}
 
-		virtual void * Allocate(uint32_t size, uint32_t align) {
-			const uint32_t ts = size_with_padding(size, align);
-			Header *h = (Header *)malloc(ts);
-			void *p = data_pointer(h, align);
-			fill(h, p, ts);
-			_total_allocated += ts;
+		void * Allocate( uint32_t size, uint32_t align )
+		{
+			const uint32_t ts = size_with_padding( size, align );
+			Header * h = (Header*) malloc( ts );
+			void * p = data_pointer( h, align );
+			fill( h, p, ts );
+			m_total_allocated += ts;
 			return p;
 		}
 
-		virtual void Deallocate(void *p) {
-			if (!p)
+		virtual void Deallocate( void * p ) 
+		{
+			if ( !p )
 				return;
-
-			Header *h = header(p);
-			_total_allocated -= h->size;
-			free(h);
+			Header * h = header( p );
+			m_total_allocated -= h->size;
+			free( h );
 		}
 
-		virtual uint32_t GetAllocatedSize(void *p) {
+		virtual uint32_t GetAllocatedSize( void * p )
+		{
 			return header(p)->size;
 		}
 
-		virtual uint32_t GetTotalAllocated() {
-			return _total_allocated;
+		virtual uint32_t GetTotalAllocated() 
+		{
+			return m_total_allocated;
 		}
 	};
 
-	/// An allocator used to allocate temporary "scratch" memory. The allocator
-	/// uses a fixed size ring buffer to services the requests.
-	///
-	/// Memory is always always allocated linearly. An allocation pointer is
-	/// advanced through the buffer as memory is allocated and wraps around at
-	/// the end of the buffer. Similarly, a free pointer is advanced as memory
-	/// is freed.
-	///
-	/// It is important that the scratch allocator is only used for short-lived
-	/// memory allocations. A long lived allocator will lock the "free" pointer
-	/// and prevent the "allocate" pointer from proceeding past it, which means
-	/// the ring buffer can't be used.
-	/// 
-	/// If the ring buffer is exhausted, the scratch allocator will use its backing
-	/// allocator to allocate memory instead.
 	class ScratchAllocator : public Allocator
 	{
-		Allocator &_backing;
+		Allocator & m_backing;
 		
-		// Start and end of the ring buffer.
-		char *_begin, *_end;
+		uint8_t * m_begin;
+		uint8_t * m_end;
 
-		// Pointers to where to allocate memory and where to free memory.
-		char *_allocate, *_free;
+		uint8_t * m_allocate;
+		uint8_t * m_free;
 		
 	public:
-		/// Creates a ScratchAllocator. The allocator will use the backing
-		/// allocator to create the ring buffer and to service any requests
-		/// that don't fit in the ring buffer.
-		///
-		/// size specifies the size of the ring buffer.
-		ScratchAllocator(Allocator &backing, uint32_t size) : _backing(backing) {
-			_begin = (char *)_backing.Allocate(size);
-			_end = _begin + size;
-			_allocate = _begin;
-			_free = _begin;
-		}
 
-		~ScratchAllocator() {
-			assert(_free == _allocate);
-			_backing.Deallocate(_begin);
-		}
-
-		bool in_use(void *p)
+		ScratchAllocator( Allocator & backing, uint32_t size ) : m_backing( backing )
 		{
-			if (_free == _allocate)
-				return false;
-			if (_allocate > _free)
-				return p >= _free && p < _allocate;
-			return p >= _free || p < _allocate;
+			m_begin = (uint8_t*) m_backing.Allocate( size );
+			m_end = m_begin + size;
+			m_allocate = m_begin;
+			m_free = m_begin;
 		}
 
-		virtual void * Allocate( uint32_t size, uint32_t align ) {
-			assert(align % 4 == 0);
-			size = ((size + 3)/4)*4;
+		~ScratchAllocator() 
+		{
+			assert( m_free == m_allocate );			// You leaked memory. Boo this man!
+			m_backing.Deallocate( m_begin );
+		}
 
-			char *p = _allocate;
-			Header *h = (Header *)p;
-			char *data = (char *)data_pointer(h, align);
+		bool IsAllocated( void * p )
+		{
+			if ( m_free == m_allocate )
+				return false;
+			if ( m_allocate > m_free )
+				return p >= m_free && p < m_allocate;
+			else
+				return p >= m_free || p < m_allocate;
+		}
+
+		void * Allocate( uint32_t size, uint32_t align ) 
+		{
+			assert( align % 4 == 0 );
+
+			size = ( ( size + 3 ) / 4 ) * 4;
+
+			uint8_t * p = m_allocate;
+			Header * h = (Header*) p;
+			uint8_t * data = (uint8_t*) data_pointer( h, align );
 			p = data + size;
 
 			// Reached the end of the buffer, wrap around to the beginning.
-			if (p > _end) {
-				h->size = (_end - (char *)h) | 0x80000000u;
+			if ( p > m_end )
+			{
+				h->size = ( m_end - (uint8_t*)h ) | 0x80000000u;
 				
-				p = _begin;
-				h = (Header *)p;
-				data = (char *)data_pointer(h, align);
+				p = m_begin;
+				h = (Header*) p;
+				data = (uint8_t*) data_pointer( h, align );
 				p = data + size;
 			}
 			
 			// If the buffer is exhausted use the backing allocator instead.
-			if (in_use(p))
-				return _backing.Allocate(size, align);
+			if ( IsAllocated( p ) )
+			{
+				printf( "dropping to backing allocator...\n" );
+				assert( false );
+				return m_backing.Allocate( size, align );
+			}
 
-			fill(h, data, p - (char *)h);
-			_allocate = p;
+			fill( h, data, p - (uint8_t*) h );
+			m_allocate = p;
 			return data;
 		}
 
-		virtual void Deallocate( void *p ) {
-			if (!p)
+		void Deallocate( void * p ) 
+		{
+			if ( !p )
 				return;
 
-			if (p < _begin || p >= _end) {
-				_backing.Deallocate(p);
+			if ( p < m_begin || p >= m_end )
+			{
+				m_backing.Deallocate( p );
 				return;
 			}
 
 			// Mark this slot as free
-			Header *h = header(p);
-			assert((h->size & 0x80000000u) == 0);
+			Header * h = header( p );
+			assert( (h->size & 0x80000000u ) == 0 );
 			h->size = h->size | 0x80000000u;
 
 			// Advance the free pointer past all free slots.
-			while (_free != _allocate) {
-				Header *h = (Header *)_free;
-				if ((h->size & 0x80000000u) == 0)
+			while ( m_free != m_allocate )
+			{
+				Header * h = (Header*) m_free;
+				if ( ( h->size & 0x80000000u ) == 0 )
 					break;
 
-				_free += h->size & 0x7fffffffu;
-				if (_free == _end)
-					_free = _begin;
+				m_free += h->size & 0x7fffffffu;
+				if ( m_free == m_end )
+					 m_free = m_begin ;
 			}
 		}
 
-		virtual uint32_t GetAllocatedSize(void *p) {
-			Header *h = header(p);
-			return h->size - ((char *)p - (char *)h);
+		uint32_t GetAllocatedSize( void * p )
+		{
+			Header * h = header( p );
+			return h->size - ( (uint8_t*)p - (uint8_t*) h );
 		}
 
-		virtual uint32_t GetTotalAllocated() {
-			return _end - _begin;
+		uint32_t GetTotalAllocated() 
+		{
+			return m_end - m_begin;
 		}
 	};
 
 	struct MemoryGlobals 
 	{
-		static const int ALLOCATOR_MEMORY = sizeof(MallocAllocator) + sizeof(ScratchAllocator);
-		char buffer[ALLOCATOR_MEMORY];
+		static const int ALLOCATOR_MEMORY = sizeof( MallocAllocator ) + sizeof( ScratchAllocator );
 
-		MallocAllocator *default_allocator;
-		ScratchAllocator *default_scratch_allocator;
+		uint8_t buffer[ALLOCATOR_MEMORY];
+
+		MallocAllocator * default_allocator;
+		ScratchAllocator * default_scratch_allocator;
 
 		MemoryGlobals() : default_allocator(0), default_scratch_allocator(0) {}
 	};
 
-	MemoryGlobals _memory_globals;
+	MemoryGlobals memory_globals;
 
 	// global implementation
 
@@ -341,27 +327,29 @@ namespace protocol
 	{
 		void initialize( uint32_t temporary_memory ) 
 		{
-			char *p = _memory_globals.buffer;
-			_memory_globals.default_allocator = new (p) MallocAllocator();
-			p += sizeof(MallocAllocator);
-			_memory_globals.default_scratch_allocator = new (p) ScratchAllocator(*_memory_globals.default_allocator, temporary_memory);
+			uint8_t * p = memory_globals.buffer;
+			memory_globals.default_allocator = new (p) MallocAllocator();
+			p += sizeof( MallocAllocator );
+			memory_globals.default_scratch_allocator = new (p) ScratchAllocator( *memory_globals.default_allocator, temporary_memory );
 		}
 
 		Allocator & default_allocator() 
 		{
-			return *_memory_globals.default_allocator;
+			assert( memory_globals.default_allocator );
+			return * memory_globals.default_allocator;
 		}
 
 		Allocator & default_scratch_allocator() 
 		{
-			return *_memory_globals.default_scratch_allocator;
+			assert( memory_globals.default_scratch_allocator );
+			return * memory_globals.default_scratch_allocator;
 		}
 
 		void shutdown() 
 		{
-			_memory_globals.default_scratch_allocator->~ScratchAllocator();
-			_memory_globals.default_allocator->~MallocAllocator();
-			_memory_globals = MemoryGlobals();
+			memory_globals.default_scratch_allocator->~ScratchAllocator();
+			memory_globals.default_allocator->~MallocAllocator();
+			memory_globals = MemoryGlobals();
 		}
 	}
 

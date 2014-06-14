@@ -1,6 +1,5 @@
 #include "Address.h"
 
-using namespace std;
 using namespace protocol;
 
 void test_address4()
@@ -13,8 +12,7 @@ void test_address4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 0 );
         assert( address.GetAddress4() == 0x100007f );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "127.0.0.1" );
+        assert( address.ToString() == "127.0.0.1" );
     }
 
     {
@@ -23,8 +21,7 @@ void test_address4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 1000 );
         assert( address.GetAddress4() == 0x100007f );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "127.0.0.1:1000" );
+        assert( address.ToString() == "127.0.0.1:1000" );
     }
 
     {
@@ -33,8 +30,7 @@ void test_address4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 0 );
         assert( address.GetAddress4() == 0x100007f );
-        // todo: fix once we have a std::string replacement
-        //assert( address.ToString() == "127.0.0.1" );
+        assert( address.ToString() == "127.0.0.1" );
     }
 
     {
@@ -43,8 +39,7 @@ void test_address4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 65535 );
         assert( address.GetAddress4() == 0x100007f );
-        // todo: fix once we have a std::string replacement
-        //assert( address.ToString() == "127.0.0.1:65535" );
+        assert( address.ToString() == "127.0.0.1:65535" );
     }
 
     {
@@ -53,8 +48,7 @@ void test_address4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 3000 );
         assert( address.GetAddress4() == 0xc0a8180a );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "10.24.168.192:3000" );
+        assert( address.ToString() == "10.24.168.192:3000" );
     }
 
     {
@@ -63,8 +57,7 @@ void test_address4()
         assert( address.GetType() == AddressType::IPv4 );
         assert( address.GetPort() == 65535 );
         assert( address.GetAddress4() == 0xffffffff );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "255.255.255.255:65535" );
+        assert( address.ToString() == "255.255.255.255:65535" );
     }
 }
 
@@ -87,9 +80,7 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        // todo: fix once we have a std::string replacement
-
-        //assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
+        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
     }
 
     {
@@ -104,9 +95,7 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        // todo: fix once we have a std::string replacement
-
-        //assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
+        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
     }
 
     {
@@ -121,9 +110,7 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        // todo: fix once we have a std::string replacement
-
-//        assert( address.ToString() == "::1" );
+        assert( address.ToString() == "::1" );
     }
 
     // same addresses but with port numbers
@@ -141,9 +128,7 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        // todo: fix once we have a std::string replacement
-
-//        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
+        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
     }
 
     {
@@ -158,8 +143,7 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
+        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
     }
 
     {
@@ -174,9 +158,7 @@ void test_address6()
         for ( int i = 0; i < 8; ++i )
             assert( htons( address6[i] ) == address.GetAddress6()[i] );
 
-        // todo: fix once we have a std::string replacement
-
-//        assert( address.ToString() == "[::1]:65535" );
+        assert( address.ToString() == "[::1]:65535" );
     }
 
     // parse addresses from strings (no ports)
@@ -186,8 +168,7 @@ void test_address6()
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
         assert( address.GetPort() == 0 );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
+        assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
     }
 
     {
@@ -195,8 +176,7 @@ void test_address6()
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
         assert( address.GetPort() == 0 );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "::1" );
+        assert( address.ToString() == "::1" );
     }
 
     // parse addresses from strings (with ports)
@@ -206,8 +186,7 @@ void test_address6()
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
         assert( address.GetPort() == 65535 );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
+        assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
     }
 
     {
@@ -215,8 +194,7 @@ void test_address6()
         assert( address.IsValid() );
         assert( address.GetType() == AddressType::IPv6 );
         assert( address.GetPort() == 65535 );
-        // todo: fix once we have a std::string replacement
-//        assert( address.ToString() == "[::1]:65535" );
+        assert( address.ToString() == "[::1]:65535" );
     }
 }
 

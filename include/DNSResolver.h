@@ -10,7 +10,7 @@
 
 namespace protocol
 {
-    static ResolveResult * DNSResolve_Blocking( string name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
+    static ResolveResult * DNSResolve_Blocking( std::string name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM )
     {
         struct addrinfo hints, *res, *p;
         memset( &hints, 0, sizeof hints );
@@ -53,7 +53,7 @@ namespace protocol
         return result;
     }
 
-    typedef map<string,ResolveEntry*> ResolveMap;
+    typedef std::map<std::string,ResolveEntry*> ResolveMap;
 
     class DNSResolver : public Resolver
     {
@@ -70,7 +70,7 @@ namespace protocol
             // todo: this class owns the entry pointers so it is responsible for deleting them
         }
 
-        virtual void Resolve( const string & name, ResolveCallback callback )
+        virtual void Resolve( const std::string & name, ResolveCallback callback )
         {
             auto itor = map.find( name );
             if ( itor != map.end() )
@@ -105,7 +105,7 @@ namespace protocol
             // my allocators will *not* be threadsafe by design, eg. only
             // to be used on one thread.
 
-            entry->future = async( launch::async, [name, family, socktype] () -> ResolveResult*
+            entry->future = async( std::launch::async, [name, family, socktype] () -> ResolveResult*
             { 
                 return DNSResolve_Blocking( name, family, socktype );
             } );
@@ -122,7 +122,7 @@ namespace protocol
                 auto name = itor->first;
                 auto entry = itor->second;
 
-                if ( entry->future.wait_for( chrono::seconds(0) ) == future_status::ready )
+                if ( entry->future.wait_for( std::chrono::seconds(0) ) == std::future_status::ready )
                 {
                     entry->result = entry->future.get();
                     entry->status = entry->result ? ResolveStatus::Succeeded : ResolveStatus::Failed;
@@ -140,7 +140,7 @@ namespace protocol
             map.clear();
         }
 
-        virtual ResolveEntry * GetEntry( const string & name )
+        virtual ResolveEntry * GetEntry( const std::string & name )
         {
             auto itor = map.find( name );
             if ( itor != map.end() )

@@ -1,6 +1,5 @@
 #include "BitPacker.h"
 
-using namespace std;
 using namespace protocol;
 
 void test_bitpacker()
@@ -14,7 +13,7 @@ void test_bitpacker()
     BitWriter writer( buffer, BufferSize );
 
     assert( writer.GetData() == buffer );
-    assert( writer.GetTotalBytes() == 0 );
+    assert( writer.GetTotalBytes() == BufferSize );
     assert( writer.GetBitsWritten() == 0 );
     assert( writer.GetBytesWritten() == 0 );
     assert( writer.GetBitsAvailable() == BufferSize * 8 );
@@ -30,7 +29,8 @@ void test_bitpacker()
 
     const int bitsWritten = 1 + 1 + 8 + 8 + 10 + 16 + 32;
 
-    assert( writer.GetTotalBytes() == 3 * 4 );
+    assert( writer.GetBytesWritten() == 3*4 );
+    assert( writer.GetTotalBytes() == BufferSize );
     assert( writer.GetBitsWritten() == bitsWritten );
     assert( writer.GetBitsAvailable() == BufferSize * 8 - bitsWritten );
 

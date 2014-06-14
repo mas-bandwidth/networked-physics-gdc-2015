@@ -21,8 +21,7 @@ namespace protocol
     {
         const ResolveWrapperConfig m_config;
 
-        // todo: need a replacement for std::map
-        map<string,PacketQueue*> m_resolve_send_queues;
+        std::map<std::string,PacketQueue*> m_resolve_send_queues;
 
     public:
 
@@ -45,14 +44,14 @@ namespace protocol
             m_config.networkInterface->SendPacket( address, packet );
         }
 
-        void SendPacket( const string & hostname, Packet * packet )
+        void SendPacket( const std::string & hostname, Packet * packet )
         {
             // Try to extract port from hostname string, eg: "localhost:10000"
 
             SendPacket( hostname, 0, packet );
         }
 
-        void SendPacket( const string & hostname, uint16_t port, Packet * packet )
+        void SendPacket( const std::string & hostname, uint16_t port, Packet * packet )
         {
             assert( packet );
 

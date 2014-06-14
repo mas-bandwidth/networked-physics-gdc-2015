@@ -7,6 +7,7 @@
 #define PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 
 #include "MessageChannel.h"    
+#include "Memory.h"
 #include <math.h>
 
 namespace protocol
@@ -50,30 +51,36 @@ namespace protocol
         const ReliableMessageChannelConfig & config;
 
         ReliableMessageChannelData( const ReliableMessageChannelData & other );
-        const ReliableMessageChannelData & operator = ( const ReliableMessageChannelData & other );
+        ReliableMessageChannelData & operator = ( const ReliableMessageChannelData & other );
 
     public:
 
-        vector<Message*> messages;             // array of messages. valid if *not* sending large block.
+        // todo: replace this! should be just a pointer to an array
+        std::vector<Message*> messages;        // array of messages. valid if *not* sending large block.
+
         uint64_t largeBlock : 1;               // true if currently sending a large block.
         uint64_t blockSize : 32;               // block size in bytes. valid if sending large block.
         uint64_t blockId : 16;                 // block id. valid if sending large block.
         uint64_t fragmentId : 16;              // fragment id. valid if sending large block.
         uint64_t releaseMessages : 1;          // 1 if this channel data should release the messages in destructor.
-        Block * fragment;                      // the actual fragment data. valid if sending large block.
+        uint8_t * fragment;                    // the actual fragment data. valid if sending large block.
 
         ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
             : config( _config ), largeBlock(0), blockSize(0), blockId(0), fragmentId(0), releaseMessages(0)
         {
+//            printf( "create reliable message channel data: %p\n", this );
             fragment = nullptr;
         }
 
         ~ReliableMessageChannelData()
         {
+//            printf( "destroy reliable message channel data: %p\n", this );
+
             if ( fragment )
             {
-                //printf( "delete fragment %p\n", fragment );
-                delete fragment;
+//                printf( "deallocate fragment %p (channel data dtor)\n", fragment );
+                Allocator & a = memory::default_scratch_allocator();
+                a.Deallocate( fragment );
                 fragment = nullptr;
             }
 
@@ -103,20 +110,21 @@ namespace protocol
                 if ( Stream::IsWriting )
                 {
                     assert( fragment );
-                    assert( fragment->size() == config.blockFragmentSize );
                 }
                 else
                 {
-                    fragment = new Block( config.blockFragmentSize );
+                    Allocator & a = memory::default_scratch_allocator();
+                    fragment = (uint8_t*) a.Allocate( config.blockFragmentSize );
+//                    printf( "allocate fragment %p (read stream)\n", fragment );
                 }
 
                 serialize_bits( stream, blockId, 16 );
                 serialize_bits( stream, fragmentId, 16 );
                 serialize_bits( stream, blockSize, 32 );
 
-                Block & data = *fragment;
+                // todo: this can be made a lot faster!!!
                 for ( int i = 0; i < config.blockFragmentSize; ++i )
-                    serialize_bits( stream, data[i], 8 );
+                    serialize_bits( stream, fragment[i], 8 );
             }
             else
             {
@@ -130,7 +138,8 @@ namespace protocol
                     assert( numMessages > 0 );
 
                 serialize_int( stream, numMessages, 0, config.maxMessagesPerPacket );
-                
+
+                // blegh!!!!                
                 if ( Stream::IsReading )
                     messages.resize( numMessages );
 
@@ -175,12 +184,6 @@ namespace protocol
                 {
                     if ( config.align )
                         stream.Align();
-
-                    if ( Stream::IsWriting )
-                    {
-                        if ( messageTypes[i] < 0 || messageTypes[i] > config.messageFactory->GetMaxType() )
-                            printf( "message type out of bounds? %d\n", messageTypes[i] );
-                    }
 
                     serialize_int( stream, messageTypes[i], 0, config.messageFactory->GetMaxType() );
 
@@ -234,7 +237,7 @@ namespace protocol
 
         struct SentPacketEntry
         {
-            vector<uint16_t> messageIds;
+            std::vector<uint16_t> messageIds;
             double timeSent;
             uint64_t sequence : 16;                      // this is the packet sequence #
             uint64_t acked : 1;
@@ -292,7 +295,7 @@ namespace protocol
             int numAckedFragments;                      // number of acked fragments in current block being sent
             int blockSize;                              // send block size in bytes
             uint16_t blockId;                           // the message id for the current large block being sent
-            vector<SendFragmentData> fragments;         // per-fragment data for send
+            std::vector<SendFragmentData> fragments;    // per-fragment data for send
         };
 
         struct ReceiveLargeBlockData
@@ -316,32 +319,9 @@ namespace protocol
             int numReceivedFragments;                   // number of fragments received.
             uint16_t blockId;                           // block id being currently received.
             uint32_t blockSize;                         // block size in bytes.
-            vector<ReceiveFragmentData> fragments;      // per-fragment data for receive
+            std::vector<ReceiveFragmentData> fragments; // per-fragment data for receive
             Block * block;                              // the block being received.
         };
-
-    private:
-
-        const ReliableMessageChannelConfig m_config;                        // constant configuration data
-
-        int m_maxBlockFragments;                                            // maximum number of fragments per-block
-        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
-
-        TimeBase m_timeBase;                                                // current time base from last update
-        uint16_t m_sendMessageId;                                           // id for next message added to send queue
-        uint16_t m_receiveMessageId;                                        // id for next message to be received
-        uint16_t m_oldestUnackedMessageId;                                  // id for oldest unacked message in send queue
-
-        SlidingWindow<SendQueueEntry> * m_sendQueue;                        // message send queue
-        SlidingWindow<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
-        SlidingWindow<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
-
-        vector<uint64_t> m_counters;                                        // counters used for unit testing and validation
-
-        SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
-        ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received
-
-        // todo: need to disable copy constructor etc.
 
     public:
 
@@ -374,6 +354,32 @@ namespace protocol
             int numReceivedFragments;
         };
 
+    private:
+
+        const ReliableMessageChannelConfig m_config;                        // constant configuration data
+
+        int m_maxBlockFragments;                                            // maximum number of fragments per-block
+        int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
+
+        TimeBase m_timeBase;                                                // current time base from last update
+        uint16_t m_sendMessageId;                                           // id for next message added to send queue
+        uint16_t m_receiveMessageId;                                        // id for next message to be received
+        uint16_t m_oldestUnackedMessageId;                                  // id for oldest unacked message in send queue
+
+        SlidingWindow<SendQueueEntry> * m_sendQueue;                        // message send queue
+        SlidingWindow<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
+        SlidingWindow<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
+
+        SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
+        ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received
+
+        uint64_t m_counters[NumCounters];                                   // counters used for unit testing and validation
+
+        ReliableMessageChannel( const ReliableMessageChannel & other );
+        ReliableMessageChannel & operator = ( const ReliableMessageChannel & other );
+
+    public:
+
         ReliableMessageChannel( const ReliableMessageChannelConfig & config ) : m_config( config )
         {
             assert( config.messageFactory );
@@ -382,8 +388,6 @@ namespace protocol
             m_sendQueue = new SlidingWindow<SendQueueEntry>( m_config.sendQueueSize );
             m_sentPackets = new SlidingWindow<SentPacketEntry>( m_config.sentPacketsSize );
             m_receiveQueue = new SlidingWindow<ReceiveQueueEntry>( m_config.receiveQueueSize );
-
-            m_counters.resize( NumCounters, 0 );
 
             const int MessageIdBits = 16;
             const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
@@ -401,7 +405,8 @@ namespace protocol
 
         ~ReliableMessageChannel()
         {
-            // todo: if there are any messages in the send queue or receive queue they need to be deleted now
+            // todo: if there are any messages in the send queue or receive queue they need to be released
+            // and deleted if their ref count has reached zero.
 
             assert( m_sendQueue );
             assert( m_sentPackets );
@@ -426,8 +431,7 @@ namespace protocol
             m_sentPackets->Reset();
             m_receiveQueue->Reset();
 
-            for ( int i = 0; i < m_counters.size(); ++i )
-                m_counters[i] = 0;
+            memset( m_counters, 0, sizeof( m_counters ) );
 
             m_timeBase = TimeBase();
 
@@ -487,7 +491,7 @@ namespace protocol
             {
                 typedef MeasureStream Stream;
                 const int SmallBlockOverhead = 8;
-                MeasureStream measureStream( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
+                MeasureStream measureStream( std::max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
                 message->SerializeMeasure( measureStream );
                 if ( measureStream.IsOverflow() )
                 {
@@ -611,7 +615,9 @@ namespace protocol
                 data->blockSize = block->size();
                 data->blockId = m_oldestUnackedMessageId;
                 data->fragmentId = fragmentId;
-                data->fragment = new Block( m_config.blockFragmentSize );
+                Allocator & a = memory::default_scratch_allocator();
+                data->fragment = (uint8_t*) a.Allocate( m_config.blockFragmentSize );
+//                printf( "allocate fragment %p (send fragment)\n", data->fragment );
 
                 //printf( "create fragment %p\n", data->fragment );
 
@@ -623,7 +629,7 @@ namespace protocol
                 assert( fragmentBytes >= 0 );
                 assert( fragmentBytes <= m_config.blockFragmentSize );
                 uint8_t * src = &( (*block)[fragmentId*m_config.blockFragmentSize] );
-                uint8_t * dst = &( (*data->fragment)[0] );
+                uint8_t * dst = data->fragment;
                 memcpy( dst, src, fragmentBytes );
 
                 auto sentPacketData = m_sentPackets->InsertFast( sequence );
@@ -863,7 +869,7 @@ namespace protocol
 
                     assert( fragmentBytes >= 0 );
                     assert( fragmentBytes <= m_config.blockFragmentSize );
-                    uint8_t * src = &( (*data->fragment)[0] );
+                    uint8_t * src = data->fragment;
                     uint8_t * dst = &( (*block)[data->fragmentId*m_config.blockFragmentSize] );
                     memcpy( dst, src, fragmentBytes );
 

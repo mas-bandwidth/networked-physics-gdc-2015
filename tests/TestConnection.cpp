@@ -1,6 +1,5 @@
 #include "Connection.h"
 
-using namespace std;
 using namespace protocol;
 
 enum { PACKET_Connection = 0 };
@@ -68,9 +67,10 @@ void test_connection()
 class AckChannel : public ChannelAdapter
 {
 public:
-    vector<bool> & ackedPackets;
 
-    AckChannel( vector<bool> & _ackedPackets )
+    std::vector<bool> & ackedPackets;
+
+    AckChannel( std::vector<bool> & _ackedPackets )
         : ackedPackets( _ackedPackets ) {}
 
     bool ProcessData( uint16_t sequence, ChannelData * data )
@@ -88,7 +88,7 @@ public:
 class AckChannelStructure : public ChannelStructure
 {
 public:
-    AckChannelStructure( vector<bool> & ackedPackets )
+    AckChannelStructure( std::vector<bool> & ackedPackets )
     {
         AddChannel( "ack channel", [&ackedPackets] { return new AckChannel( ackedPackets ); }, [] { return nullptr; } );
         Lock();
@@ -101,8 +101,8 @@ void test_acks()
 
     const int NumIterations = 10*1024;
 
-    vector<bool> receivedPackets;
-    vector<bool> ackedPackets;
+    std::vector<bool> receivedPackets;
+    std::vector<bool> ackedPackets;
 
     receivedPackets.resize( NumIterations );
     ackedPackets.resize( NumIterations );

@@ -1,6 +1,5 @@
 #include "Stream.h"
 
-using namespace std;
 using namespace protocol;
 
 const int MaxItems = 16;
@@ -65,6 +64,11 @@ struct TestObject : public Object
     }
 
     void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeMeasure( MeasureStream & stream )
     {
         Serialize( stream );
     }
