@@ -14,19 +14,19 @@ namespace protocol
 {
     enum ConnectionRequestDenyReason
     {
-        CONNECTION_REQUEST_DENIED_ServerClosed,                 // server is closed. all connection requests are denied.
-        CONNECTION_REQUEST_DENIED_ServerFull,                   // server is full. no free slots for a connecting client.
-        CONNECTION_REQUEST_DENIED_AlreadyConnected              // client is already connected to the server by address but with different guids.
+        CONNECTION_REQUEST_DENIED_SERVER_CLOSED,                // server is closed. all connection requests are denied.
+        CONNECTION_REQUEST_DENIED_SERVER_FULL,                  // server is full. no free slots for a connecting client.
+        CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED             // client is already connected to the server by address but with different guids.
     };
 
     enum ServerClientState
     {
-        SERVER_CLIENT_Disconnected,                             // client is disconnected. default state.
-        SERVER_CLIENT_SendingChallenge,                         // responding with connection challenge waiting for challenge response
-        SERVER_CLIENT_SendingServerData,                        // sending server data to client
-        SERVER_CLIENT_RequestingClientData,                     // requesting client data
-        SERVER_CLIENT_ReceivingClientData,                      // receiving client data
-        SERVER_CLIENT_Connected                                 // client is fully connected. connection packets are now exchanged.
+        SERVER_CLIENT_STATE_DISCONNECTED,                       // client is disconnected. default state.
+        SERVER_CLIENT_STATE_SENDING_CHALLENGE,                  // responding with connection challenge waiting for challenge response
+        SERVER_CLIENT_STATE_SENDING_SERVER_DATA,                // sending server data to client
+        SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA,             // requesting client data
+        SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA,              // receiving client data
+        SERVER_CLIENT_STATE_CONNECTED                           // client is fully connected. connection packets are now exchanged.
     };
 
     struct ServerClientData
@@ -86,7 +86,7 @@ namespace protocol
             m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
 
             ConnectionConfig connectionConfig;
-            connectionConfig.packetType = PACKET_Connection;
+            connectionConfig.packetType = PACKET_CONNECTION;
             connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
             connectionConfig.channelStructure = m_config.channelStructure;
             connectionConfig.packetFactory = m_packetFactory;
@@ -142,7 +142,7 @@ namespace protocol
 
             auto & client = m_clients[clientIndex];
 
-            if ( client.state == SERVER_CLIENT_Disconnected )
+            if ( client.state == SERVER_CLIENT_STATE_DISCONNECTED )
                 return;
 
 //            printf( "sent disconnected packet to client\n" );
@@ -180,23 +180,23 @@ namespace protocol
             {
                 switch ( m_clients[i].state )
                 {
-                    case SERVER_CLIENT_SendingChallenge: 
+                    case SERVER_CLIENT_STATE_SENDING_CHALLENGE:
                         UpdateSendingChallenge( i );
                         break;
 
-                    case SERVER_CLIENT_SendingServerData:
+                    case SERVER_CLIENT_STATE_SENDING_SERVER_DATA:
                         UpdateSendingServerData( i );
                         break;
 
-                    case SERVER_CLIENT_RequestingClientData:
+                    case SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA:
                         UpdateRequestingClientData( i );
                         break;
 
-                    case SERVER_CLIENT_ReceivingClientData:
+                    case SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA:
                         UpdateReceivingClientData( i );
                         break;
 
-                    case SERVER_CLIENT_Connected:
+                    case SERVER_CLIENT_STATE_CONNECTED:
                         UpdateConnected( i );
                         break;
 
@@ -212,7 +212,7 @@ namespace protocol
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_SendingChallenge );
+            assert( client.state == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
 
             if ( client.accumulator > 1.0 / m_config.connectingSendRate )
             {
@@ -232,7 +232,7 @@ namespace protocol
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_SendingServerData );
+            assert( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
             // todo: not implemented yet
             assert( false );
@@ -242,7 +242,7 @@ namespace protocol
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_RequestingClientData );
+            assert( client.state == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
 
             if ( client.accumulator > 1.0 / m_config.connectingSendRate )
             {
@@ -264,7 +264,7 @@ namespace protocol
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_ReceivingClientData );
+            assert( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
 
             // todo: not implemented yet
             assert( false );
@@ -274,11 +274,18 @@ namespace protocol
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            assert( client.state == SERVER_CLIENT_Connected );
+            assert( client.state == SERVER_CLIENT_STATE_CONNECTED );
 
             assert( client.connection );
 
             client.connection->Update( m_timeBase );
+
+            if ( client.connection->GetError() != CONNECTION_ERROR_NONE )
+            {
+                printf( "client connection is in error state\n" );
+                ResetClientSlot( clientIndex );
+                return;
+            }
 
             if ( client.accumulator > 1.0 / m_config.connectedSendRate )
             {
@@ -296,12 +303,12 @@ namespace protocol
         {
             ServerClientData & client = m_clients[clientIndex];
 
-            if ( client.state == SERVER_CLIENT_Disconnected )
+            if ( client.state == SERVER_CLIENT_STATE_DISCONNECTED )
                 return;
 
             client.accumulator += m_timeBase.deltaTime;
 
-            const float timeout = client.state == SERVER_CLIENT_Connected ? m_config.connectedTimeOut : m_config.connectingTimeOut;
+            const float timeout = client.state == SERVER_CLIENT_STATE_CONNECTED ? m_config.connectedTimeOut : m_config.connectingTimeOut;
 
             if ( client.lastPacketTime + timeout < m_timeBase.time )
             {
@@ -330,19 +337,19 @@ namespace protocol
 
                 switch ( packet->GetType() )
                 {
-                    case PACKET_ConnectionRequest:
+                    case PACKET_CONNECTION_REQUEST:
                         ProcessConnectionRequestPacket( static_cast<ConnectionRequestPacket*>( packet ) );
                         break;
 
-                    case PACKET_ChallengeResponse:
+                    case PACKET_CHALLENGE_RESPONSE:
                         ProcessChallengeResponsePacket( static_cast<ChallengeResponsePacket*>( packet ) );
                         break;
 
-                    case PACKET_ReadyForConnection:
+                    case PACKET_READY_FOR_CONNECTION:
                         ProcessReadyForConnectionPacket( static_cast<ReadyForConnectionPacket*>( packet ) );
                         break;
 
-                    case PACKET_Connection:
+                    case PACKET_CONNECTION:
                         ProcessConnectionPacket( static_cast<ConnectionPacket*>( packet ) );
                         break;
 
@@ -370,7 +377,7 @@ namespace protocol
                 auto connectionDeniedPacket = new ConnectionDeniedPacket();
                 connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
-                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ServerClosed;
+                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
 
                 m_config.networkInterface->SendPacket( packet->GetAddress(), connectionDeniedPacket );
 
@@ -392,7 +399,7 @@ namespace protocol
                 auto connectionDeniedPacket = new ConnectionDeniedPacket();
                 connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
-                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_AlreadyConnected;
+                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
                 m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
             }
 
@@ -403,7 +410,7 @@ namespace protocol
                 auto connectionDeniedPacket = new ConnectionDeniedPacket();
                 connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
-                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ServerFull;
+                connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
                 m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
             }
 
@@ -415,7 +422,7 @@ namespace protocol
             client.clientGuid = packet->clientGuid;
             client.serverGuid = GenerateGuid();
             client.lastPacketTime = m_timeBase.time;
-            client.state = SERVER_CLIENT_SendingChallenge;
+            client.state = SERVER_CLIENT_STATE_SENDING_CHALLENGE;
         }
 
         void ProcessChallengeResponsePacket( ChallengeResponsePacket * packet )
@@ -439,7 +446,7 @@ namespace protocol
                 return;
             }
 
-            if ( client.state != SERVER_CLIENT_SendingChallenge )
+            if ( client.state != SERVER_CLIENT_STATE_SENDING_CHALLENGE )
             {
 //                printf( "ignoring because client slot is not in sending challenge state\n" );
                 return;
@@ -447,7 +454,7 @@ namespace protocol
 
             client.accumulator = 0.0;
             client.lastPacketTime = m_timeBase.time;
-            client.state = m_config.block ? SERVER_CLIENT_SendingServerData : SERVER_CLIENT_RequestingClientData;
+            client.state = m_config.block ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA;
         }
 
         void ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet )
@@ -473,7 +480,7 @@ namespace protocol
 
             // todo: should also transition here from received client data state
 
-            if ( client.state != SERVER_CLIENT_RequestingClientData )
+            if ( client.state != SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA )
             {
 //                printf( "ignoring because client slot is not in correct state\n" );
                 return;
@@ -481,7 +488,7 @@ namespace protocol
 
             client.accumulator = 0.0;
             client.lastPacketTime = m_timeBase.time;
-            client.state = SERVER_CLIENT_Connected;
+            client.state = SERVER_CLIENT_STATE_CONNECTED;
         }
 
         void ProcessConnectionPacket( ConnectionPacket * packet )
@@ -498,7 +505,7 @@ namespace protocol
             }
 
             ServerClientData & client = m_clients[clientIndex];
-            if ( client.state != SERVER_CLIENT_Connected )
+            if ( client.state != SERVER_CLIENT_STATE_CONNECTED )
             {
 //                printf( "ignoring because client slot is not in correct state\n" );
                 return;
@@ -513,12 +520,12 @@ namespace protocol
         {
             for ( int i = 0; i < m_clients.size(); ++i )
             {
-                if ( m_clients[i].state == SERVER_CLIENT_Disconnected )
+                if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
                     continue;
                 
                 if ( m_clients[i].address == address )
                 {
-                    assert( m_clients[i].state != SERVER_CLIENT_Disconnected );
+                    assert( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
                     return i;
                 }
             }
@@ -529,12 +536,12 @@ namespace protocol
         {
             for ( int i = 0; i < m_clients.size(); ++i )
             {
-                if ( m_clients[i].state == SERVER_CLIENT_Disconnected )
+                if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
                     continue;
                 
                 if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid )
                 {
-                    assert( m_clients[i].state != SERVER_CLIENT_Disconnected );
+                    assert( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
                     return i;
                 }
             }
@@ -545,7 +552,7 @@ namespace protocol
         {
             for ( int i = 0; i < m_clients.size(); ++i )
             {
-                if ( m_clients[i].state == SERVER_CLIENT_Disconnected )
+                if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
                     return i;
             }
             return -1;
@@ -557,7 +564,7 @@ namespace protocol
 
             ServerClientData & client = m_clients[clientIndex];
 
-            client.state = SERVER_CLIENT_Disconnected;
+            client.state = SERVER_CLIENT_STATE_DISCONNECTED;
             client.address = Address();
             client.accumulator = 0.0;
             client.lastPacketTime = 0.0;

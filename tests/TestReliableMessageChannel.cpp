@@ -6,18 +6,18 @@ using namespace protocol;
 
 enum PacketType
 {
-    PACKET_Connection
+    PACKET_CONNECTION
 };
 
 enum MessageType
 {
-    MESSAGE_Block = BlockMessageType,
-    MESSAGE_Test
+    MESSAGE_BLOCK = BlockMessageType,
+    MESSAGE_TEST
 };
 
 struct TestMessage : public Message
 {
-    TestMessage() : Message( MESSAGE_Test )
+    TestMessage() : Message( MESSAGE_TEST )
     {
         sequence = 0;
     }
@@ -59,8 +59,8 @@ class MessageFactory : public Factory<Message>
 public:
     MessageFactory()
     {
-        Register( MESSAGE_Block, [] { return new BlockMessage(); } );
-        Register( MESSAGE_Test,  [] { return new TestMessage();  } );
+        Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
+        Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
     }
 };
 
@@ -103,7 +103,7 @@ public:
 
     PacketFactory( ChannelStructure * channelStructure )
     {
-        Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
+        Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
     }
 };
 
@@ -120,7 +120,7 @@ void test_reliable_message_channel_messages()
         const int MaxPacketSize = 256;
 
         ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -163,7 +163,7 @@ void test_reliable_message_channel_messages()
             delete writePacket;
 
             ReadStream readStream( buffer, MaxPacketSize );
-            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
             readPacket->SerializeRead( readStream );
 
             simulator.SendPacket( address, readPacket );
@@ -190,7 +190,7 @@ void test_reliable_message_channel_messages()
                     break;
 
                 assert( message->GetId() == numMessagesReceived );
-                assert( message->GetType() == MESSAGE_Test );
+                assert( message->GetType() == MESSAGE_TEST );
 
                 auto testMessage = static_cast<TestMessage*>( message );
 
@@ -236,7 +236,7 @@ void test_reliable_message_channel_small_blocks()
         const int MaxPacketSize = 256;
 
         ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -282,7 +282,7 @@ void test_reliable_message_channel_small_blocks()
             delete writePacket;
 
             ReadStream readStream( buffer, MaxPacketSize );
-            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
             readPacket->SerializeRead( readStream );
 
             simulator.SendPacket( address, readPacket );
@@ -309,7 +309,7 @@ void test_reliable_message_channel_small_blocks()
                     break;
 
                 assert( message->GetId() == numMessagesReceived );
-                assert( message->GetType() == MESSAGE_Block );
+                assert( message->GetType() == MESSAGE_BLOCK );
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
@@ -357,7 +357,7 @@ void test_reliable_message_channel_large_blocks()
         const int MaxPacketSize = 256;
 
         ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -401,7 +401,7 @@ void test_reliable_message_channel_large_blocks()
             delete writePacket;
 
             ReadStream readStream( buffer, MaxPacketSize );
-            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
             readPacket->SerializeRead( readStream );
 
             simulator.SendPacket( address, readPacket );
@@ -429,7 +429,7 @@ void test_reliable_message_channel_large_blocks()
                     break;
 
                 assert( message->GetId() == numMessagesReceived );
-                assert( message->GetType() == MESSAGE_Block );
+                assert( message->GetType() == MESSAGE_BLOCK );
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
@@ -478,7 +478,7 @@ void test_reliable_message_channel_mixture()
         const int MaxPacketSize = 256;
 
         ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_Connection;
+        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -531,7 +531,7 @@ void test_reliable_message_channel_mixture()
             delete writePacket;
 
             ReadStream readStream( buffer, MaxPacketSize );
-            auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+            auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
             readPacket->SerializeRead( readStream );
 
             simulator.SendPacket( address, readPacket );
@@ -559,9 +559,9 @@ void test_reliable_message_channel_mixture()
 
                 assert( message->GetId() == numMessagesReceived );
 
-                if ( message->GetType() == MESSAGE_Block )
+                if ( message->GetType() == MESSAGE_BLOCK )
                 {
-                    assert( message->GetType() == MESSAGE_Block );
+                    assert( message->GetType() == MESSAGE_BLOCK );
 
                     auto blockMessage = static_cast<BlockMessage*>( message );
 
@@ -575,7 +575,7 @@ void test_reliable_message_channel_mixture()
                 }
                 else
                 {
-                    assert( message->GetType() == MESSAGE_Test );
+                    assert( message->GetType() == MESSAGE_TEST );
 
     //                printf( "received message %d\n", message->GetId() );
 

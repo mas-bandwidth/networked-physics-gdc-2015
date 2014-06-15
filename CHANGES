@@ -1,3 +1,42 @@
+Sunday Morning, June 15th, 2014:
+--------------------------------
+
+    Removed std::vector usage from channel structure.
+
+    Add Constants.h and put stuff there that are static constants defining library max
+
+    Set MaxChannels = 8.
+
+    Replace with static array of size MaxChannels
+
+    Remove the dynamic allocation of per-channel data in ConnectionPacket etc.
+
+    Remove the dynamic per-channel allocation in Connection class.
+
+    Clean up the "Reset" inside 
+
+    Added "GetError" int to Channel so a channel can indicate they are in an error condition,
+    back to the connection on update.
+
+    Make sure channel clears error on reset.
+
+    If any channel is in error, tear down the connection and go into an error state.
+
+    If client notices connection is in error, disconnect and set error.
+
+    If server notices connection is in error, disconnect and set error.
+
+    Standardize enums to all caps, eg. CLIENT_ERROR_NONE, not CLIENT_ERROR_None
+
+    Fixed various breakage in Address.h and BSDSockets.h that I added.
+
+    Run across all unit tests and fix.
+
+    TestClientServer.cpp is broken because it's not allocating foundation memory for tests.
+
+    Fixed. All tests pass now.
+
+
 Saturday Afternoon, June 14th, 2014:
 ------------------------------------
 

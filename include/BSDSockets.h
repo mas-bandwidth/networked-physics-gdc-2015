@@ -45,12 +45,12 @@ namespace protocol
 
     enum BSDSocketError
     {
-        BSD_SOCKET_ERROR_NONE,
-        BSD_SOCKET_CREATE_FAILED,
-        BSD_SOCKET_SOCKOPT_IPV6_ONLY_FAILED,
-        BSD_SOCKET_BIND_IPV6_FAILED,
-        BSD_SOCKET_BIND_IPV4_FAILED,
-        BSD_SOCKET_SET_NON_BLOCKING_FAILED
+        BSD_SOCKET_ERROR_NONE = 0,
+        BSD_SOCKET_ERROR_CREATE_FAILED,
+        BSD_SOCKET_ERROR_SOCKOPT_IPV6_ONLY_FAILED,
+        BSD_SOCKET_ERROR_BIND_IPV6_FAILED,
+        BSD_SOCKET_ERROR_BIND_IPV4_FAILED,
+        BSD_SOCKET_ERROR_SET_NON_BLOCKING_FAILED
     };
 
     class BSDSockets : public NetworkInterface
@@ -59,6 +59,8 @@ namespace protocol
 
         enum Counters
         {
+            // todo: move outside class and standardize to CAPS_CAPS
+
             PacketsSent,                            // number of packets sent (eg. added to send queue)
             PacketsReceived,                        // number of packets received (eg. added to recv queue)
             SendFailures,                           // number of packets lost due to sendto failure
@@ -102,7 +104,7 @@ namespace protocol
             if ( m_socket <= 0 )
             {
                 printf( "create socket failed: %s\n", strerror( errno ) );
-                m_error = BSD_SOCKET_CREATE_FAILED;
+                m_error = BSD_SOCKET_ERROR_CREATE_FAILED;
                 return;
             }
 
@@ -114,7 +116,7 @@ namespace protocol
                 if ( setsockopt( m_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&yes, sizeof(yes) ) != 0 )
                 {
                     printf( "failed to set ipv6 only sockopt\n" );
-                    m_error = BSD_SOCKET_SOCKOPT_IPV6_ONLY_FAILED;
+                    m_error = BSD_SOCKET_ERROR_SOCKOPT_IPV6_ONLY_FAILED;
                     return;
                 }
             }
@@ -133,7 +135,7 @@ namespace protocol
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
                     printf( "bind socket failed (ipv6): %s\n", strerror( errno ) );
-                    m_socket = BSD_SOCKET_BIND_IPV6_FAILED;
+                    m_socket = BSD_SOCKET_ERROR_BIND_IPV6_FAILED;
                     return;
                 }
             }
@@ -149,7 +151,7 @@ namespace protocol
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
                     printf( "bind socket failed (ipv4): %s\n", strerror( errno ) );
-                    m_error = BSD_SOCKET_BIND_IPV4_FAILED;
+                    m_error = BSD_SOCKET_ERROR_BIND_IPV4_FAILED;
                     return;
                 }
             }
@@ -162,7 +164,7 @@ namespace protocol
                 if ( fcntl( m_socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
                 {
                     printf( "failed to make socket non-blocking\n" );
-                    m_error = BSD_SOCKET_SET_NON_BLOCKING_FAILED;
+                    m_error = BSD_SOCKET_ERROR_SET_NON_BLOCKING_FAILED;
                     return;
                 }
             
@@ -172,7 +174,7 @@ namespace protocol
                 if ( ioctlsocket( m_socket, FIONBIO, &nonBlocking ) != 0 )
                 {
                     printf( "failed to make socket non-blocking\n" );
-                    m_error = BSD_SOCKET_SET_NON_BLOCKING_FAILED;
+                    m_error = BSD_SOCKET_ERROR_SET_NON_BLOCKING_FAILED;
                     return;
                 }
 
@@ -367,7 +369,7 @@ namespace protocol
 
             m_counters[PacketsSent]++;
 
-            if ( address.GetType() == AddressType::IPv6 )
+            if ( address.GetType() == ADDRESS_IPV6 )
             {
 //                printf( "ipv6 packet\n" );
                 sockaddr_in6 s_addr;
@@ -377,7 +379,7 @@ namespace protocol
                 const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in6) );
                 result = sent_bytes == bytes;
             }
-            else if ( address.GetType() == AddressType::IPv4 )
+            else if ( address.GetType() == ADDRESS_IPV4 )
             {
 //                printf( "sent ipv4 packet\n" );
                 sockaddr_in s_addr;

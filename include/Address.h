@@ -10,13 +10,13 @@
 
 namespace protocol
 {
-    enum class AddressType : uint8_t
+    enum AddressType
     {
-        Undefined,
-        IPv4,
-        IPv6
+        ADDRESS_UNDEFINED,
+        ADDRESS_IPV4,
+        ADDRESS_IPV6
     };
-
+    
     class Address
     {
     public:
@@ -28,14 +28,14 @@ namespace protocol
 
         Address( uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint16_t _port = 0 )
         {
-            type = AddressType::IPv4;
+            type = ADDRESS_IPV4;
             address4 = uint32_t(a) | (uint32_t(b)<<8) | (uint32_t(c)<<16) | (uint32_t(d)<<24);
             port = _port;
         }
 
         explicit Address( uint32_t address, int16_t _port = 0 )
         {
-            type = AddressType::IPv4;
+            type = ADDRESS_IPV4;
             address4 = htonl( address );        // IMPORTANT: stored in network byte order. eg. big endian!
             port = _port;
         }
@@ -44,7 +44,7 @@ namespace protocol
                           uint16_t e, uint16_t f, uint16_t g, uint16_t h,
                           uint16_t _port = 0 )
         {
-            type = AddressType::IPv6;
+            type = ADDRESS_IPV6;
             address6[0] = htons( a );
             address6[1] = htons( b );
             address6[2] = htons( c );
@@ -58,7 +58,7 @@ namespace protocol
 
         explicit Address( const uint16_t _address[], uint16_t _port = 0 )
         {
-            type = AddressType::IPv6;
+            type = ADDRESS_IPV6;
             for ( int i = 0; i < 8; ++i )
                 address6[i] = htons( _address[i] );
             port = _port;
@@ -69,14 +69,14 @@ namespace protocol
             if ( addr.ss_family == AF_INET )
             {
                 const sockaddr_in & addr_ipv4 = reinterpret_cast<const sockaddr_in&>( addr );
-                type = AddressType::IPv4;
+                type = ADDRESS_IPV4;
                 address4 = addr_ipv4.sin_addr.s_addr;
                 port = ntohs( addr_ipv4.sin_port );
             }
             else if ( addr.ss_family == AF_INET6 )
             {
                 const sockaddr_in6 & addr_ipv6 = reinterpret_cast<const sockaddr_in6&>( addr );
-                type = AddressType::IPv6;
+                type = ADDRESS_IPV6;
                 memcpy( address6, &addr_ipv6.sin6_addr, 16 );
                 port = ntohs( addr_ipv6.sin6_port );
             }
@@ -88,7 +88,7 @@ namespace protocol
 
         explicit Address( const sockaddr_in6 & addr_ipv6 )
         {
-            type = AddressType::IPv6;
+            type = ADDRESS_IPV6;
             memcpy( address6, &addr_ipv6.sin6_addr, 16 );
             port = ntohs( addr_ipv6.sin6_port );
         }
@@ -98,14 +98,14 @@ namespace protocol
             port = 0;
             if ( p->ai_family == AF_INET )
             { 
-                type = AddressType::IPv4;
+                type = ADDRESS_IPV4;
                 struct sockaddr_in * ipv4 = (struct sockaddr_in *)p->ai_addr;
                 address4 = ipv4->sin_addr.s_addr;
                 port = ntohs( ipv4->sin_port );
             } 
             else if ( p->ai_family == AF_INET6 )
             { 
-                type = AddressType::IPv6;
+                type = ADDRESS_IPV6;
                 struct sockaddr_in6 * ipv6 = (struct sockaddr_in6 *)p->ai_addr;
                 memcpy( address6, &ipv6->sin6_addr, 16 );
                 port = ntohs( ipv6->sin6_port );
@@ -141,7 +141,7 @@ namespace protocol
             if ( inet_pton( AF_INET6, address.c_str(), &sockaddr6 ) == 1 )
             {
                 memcpy( address6, &sockaddr6, 16 );
-                type = AddressType::IPv6;
+                type = ADDRESS_IPV6;
                 return;
             }
 
@@ -164,7 +164,7 @@ namespace protocol
             struct sockaddr_in sockaddr4;
             if ( inet_pton( AF_INET, address.c_str(), &sockaddr4.sin_addr ) == 1 )
             {
-                type = AddressType::IPv4;
+                type = ADDRESS_IPV4;
                 address4 = sockaddr4.sin_addr.s_addr;
             }
             else
@@ -176,20 +176,20 @@ namespace protocol
 
         void Clear()
         {
-            type = AddressType::Undefined;
+            type = ADDRESS_UNDEFINED;
             memset( address6, 0, sizeof( address6 ) );
             port = 0;
         }
 
         const uint32_t GetAddress4() const
         {
-            assert( type == AddressType::IPv4 );
+            assert( type == ADDRESS_IPV4 );
             return address4;
         }
 
         const uint16_t * GetAddress6() const
         {
-            assert( type == AddressType::IPv6 );
+            assert( type == ADDRESS_IPV6 );
             return address6;
         }
 
@@ -210,7 +210,7 @@ namespace protocol
 
         std::string ToString() const
         {
-            if ( type == AddressType::IPv4 )
+            if ( type == ADDRESS_IPV4 )
             {
                 const uint8_t a = address4 & 0xff;
                 const uint8_t b = (address4>>8) & 0xff;
@@ -223,7 +223,7 @@ namespace protocol
                     sprintf( buffer, "%d.%d.%d.%d", a, b, c, d );
                 return buffer;
             }
-            else if ( type == AddressType::IPv6 )
+            else if ( type == ADDRESS_IPV6 )
             {
                 char addressString[INET6_ADDRSTRLEN];
                 inet_ntop( AF_INET6, &address6, addressString, INET6_ADDRSTRLEN );
@@ -244,7 +244,7 @@ namespace protocol
 
         bool IsValid() const
         {
-            return type != AddressType::Undefined;
+            return type != ADDRESS_UNDEFINED;
         }
 
         bool operator ==( const Address & other ) const
@@ -253,9 +253,9 @@ namespace protocol
                 return false;
             if ( port != other.port )
                 return false;
-            if ( type == AddressType::IPv4 && address4 == other.address4 )
+            if ( type == ADDRESS_IPV4 && address4 == other.address4 )
                 return true;
-            else if ( type == AddressType::IPv6 && memcmp( address6, other.address6, sizeof( address6 ) ) == 0 )
+            else if ( type == ADDRESS_IPV6 && memcmp( address6, other.address6, sizeof( address6 ) ) == 0 )
                 return true;
             else
                 return false;

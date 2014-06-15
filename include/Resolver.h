@@ -16,11 +16,11 @@ namespace protocol
         std::vector<Address> addresses;
     };
 
-    enum class ResolveStatus
+    enum ResolveStatus
     {
-        InProgress,
-        Succeeded,
-        Failed
+        RESOLVE_IN_PROGRESS,
+        RESOLVE_SUCCEEDED,
+        RESOLVE_FAILED
     };
 
     typedef std::function< void( const std::string & name, ResolveResult * result ) > ResolveCallback;

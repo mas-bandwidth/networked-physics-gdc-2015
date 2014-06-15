@@ -9,7 +9,7 @@ void test_address4()
     {
         Address address( 127, 0, 0, 1 );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetType() == ADDRESS_IPV4 );
         assert( address.GetPort() == 0 );
         assert( address.GetAddress4() == 0x100007f );
         assert( address.ToString() == "127.0.0.1" );
@@ -18,7 +18,7 @@ void test_address4()
     {
         Address address( 127, 0, 0, 1, 1000 );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetType() == ADDRESS_IPV4 );
         assert( address.GetPort() == 1000 );
         assert( address.GetAddress4() == 0x100007f );
         assert( address.ToString() == "127.0.0.1:1000" );
@@ -27,7 +27,7 @@ void test_address4()
     {
         Address address( "127.0.0.1" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetType() == ADDRESS_IPV4 );
         assert( address.GetPort() == 0 );
         assert( address.GetAddress4() == 0x100007f );
         assert( address.ToString() == "127.0.0.1" );
@@ -36,7 +36,7 @@ void test_address4()
     {
         Address address( "127.0.0.1:65535" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetType() == ADDRESS_IPV4 );
         assert( address.GetPort() == 65535 );
         assert( address.GetAddress4() == 0x100007f );
         assert( address.ToString() == "127.0.0.1:65535" );
@@ -45,7 +45,7 @@ void test_address4()
     {
         Address address( "10.24.168.192:3000" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetType() == ADDRESS_IPV4 );
         assert( address.GetPort() == 3000 );
         assert( address.GetAddress4() == 0xc0a8180a );
         assert( address.ToString() == "10.24.168.192:3000" );
@@ -54,7 +54,7 @@ void test_address4()
     {
         Address address( "255.255.255.255:65535" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv4 );
+        assert( address.GetType() == ADDRESS_IPV4 );
         assert( address.GetPort() == 65535 );
         assert( address.GetAddress4() == 0xffffffff );
         assert( address.ToString() == "255.255.255.255:65535" );
@@ -74,7 +74,7 @@ void test_address6()
                          address6[4], address6[5], address6[6], address6[7] );
 
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 0 );
 
         for ( int i = 0; i < 8; ++i )
@@ -89,7 +89,7 @@ void test_address6()
         Address address( address6 );
 
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 0 );
 
         for ( int i = 0; i < 8; ++i )
@@ -104,7 +104,7 @@ void test_address6()
         Address address( address6 );
 
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 0 );
 
         for ( int i = 0; i < 8; ++i )
@@ -122,7 +122,7 @@ void test_address6()
                          address6[4], address6[5], address6[6], address6[7], 65535 );
 
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 65535 );
 
         for ( int i = 0; i < 8; ++i )
@@ -137,7 +137,7 @@ void test_address6()
         Address address( address6, 65535 );
 
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 65535 );
 
         for ( int i = 0; i < 8; ++i )
@@ -152,7 +152,7 @@ void test_address6()
         Address address( address6, 65535 );
 
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 65535 );
 
         for ( int i = 0; i < 8; ++i )
@@ -166,7 +166,7 @@ void test_address6()
     {
         Address address( "fe80::202:b3ff:fe1e:8329" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 0 );
         assert( address.ToString() == "fe80::202:b3ff:fe1e:8329" );
     }
@@ -174,7 +174,7 @@ void test_address6()
     {
         Address address( "::1" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 0 );
         assert( address.ToString() == "::1" );
     }
@@ -184,7 +184,7 @@ void test_address6()
     {
         Address address( "[fe80::202:b3ff:fe1e:8329]:65535" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 65535 );
         assert( address.ToString() == "[fe80::202:b3ff:fe1e:8329]:65535" );
     }
@@ -192,7 +192,7 @@ void test_address6()
     {
         Address address( "[::1]:65535" );
         assert( address.IsValid() );
-        assert( address.GetType() == AddressType::IPv6 );
+        assert( address.GetType() == ADDRESS_IPV6 );
         assert( address.GetPort() == 65535 );
         assert( address.ToString() == "[::1]:65535" );
     }

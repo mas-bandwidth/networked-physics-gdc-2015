@@ -2,6 +2,7 @@
 
 using namespace protocol;
 
+// todo: standardize to CAPS_CAPS
 enum { PACKET_Connection = 0 };
 
 class TestChannel : public ChannelAdapter 

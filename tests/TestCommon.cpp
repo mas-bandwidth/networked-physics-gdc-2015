@@ -104,6 +104,7 @@ void test_generate_ack_bits()
     assert( ack_bits == ( 1 | (1<<(11-9)) | (1<<(11-5)) | (1<<(11-1)) ) );
 }
 
+// todo: standardize to CAPS_CAPS
 enum PacketType
 {
     PACKET_Connect,

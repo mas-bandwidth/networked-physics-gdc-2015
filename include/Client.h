@@ -15,29 +15,29 @@ namespace protocol
 {
     enum ClientState
     {
-        CLIENT_STATE_Disconnected,                            // client is not connected. this is the initial client state.
-        CLIENT_STATE_ResolvingHostname,                       // client is resolving hostname to address using the supplied resolver.
-        CLIENT_STATE_SendingConnectionRequest,                // client is sending connection request packets to the server address.
-        CLIENT_STATE_SendingChallengeResponse,                // client has received a connection challenge from server and is sending response packets.
-        CLIENT_STATE_ReceivingServerData,                     // client is receiving a data block from the server.
-        CLIENT_STATE_SendingClientData,                       // client is sending their own data block up to the server.
-        CLIENT_STATE_ReadyForConnection,                      // client is ready for the server to start sending connection packets.
-        CLIENT_STATE_Connected,                               // client is fully connected to the server. connection packets may now be processed.
-        CLIENT_STATE_NumStates
+        CLIENT_STATE_DISCONNECTED,                            // client is not connected. this is the initial client state.
+        CLIENT_STATE_RESOLVING_HOSTNAME,                      // client is resolving hostname to address using the supplied resolver.
+        CLIENT_STATE_SENDING_CONNECTION_REQUEST,              // client is sending connection request packets to the server address.
+        CLIENT_STATE_SENDING_CHALLENGE_RESPONSE,              // client has received a connection challenge from server and is sending response packets.
+        CLIENT_STATE_RECEIVING_SERVER_DATA,                   // client is receiving a data block from the server.
+        CLIENT_STATE_SENDING_CLIENT_DATA,                     // client is sending their own data block up to the server.
+        CLIENT_STATE_READY_FOR_CONNECTION,                    // client is ready for the server to start sending connection packets.
+        CLIENT_STATE_CONNECTED,                               // client is fully connected to the server. connection packets may now be processed.
+        CLIENT_STATE_COUNT
     };
 
     const char * GetClientStateName( int clientState )
     {
         switch ( clientState )
         {
-            case CLIENT_STATE_Disconnected:                     return "disconnected";
-            case CLIENT_STATE_ResolvingHostname:                return "resolving hostname";
-            case CLIENT_STATE_SendingConnectionRequest:         return "sending connection request";
-            case CLIENT_STATE_SendingChallengeResponse:         return "sending challenge response";
-            case CLIENT_STATE_ReceivingServerData:              return "receiving server data";
-            case CLIENT_STATE_SendingClientData:                return "sending client data";
-            case CLIENT_STATE_ReadyForConnection:               return "ready for connection";
-            case CLIENT_STATE_Connected:                        return "connected";
+            case CLIENT_STATE_DISCONNECTED:                     return "disconnected";
+            case CLIENT_STATE_RESOLVING_HOSTNAME:               return "resolving hostname";
+            case CLIENT_STATE_SENDING_CONNECTION_REQUEST:       return "sending connection request";
+            case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:       return "sending challenge response";
+            case CLIENT_STATE_RECEIVING_SERVER_DATA:            return "receiving server data";
+            case CLIENT_STATE_SENDING_CLIENT_DATA:              return "sending client data";
+            case CLIENT_STATE_READY_FOR_CONNECTION:             return "ready for connection";
+            case CLIENT_STATE_CONNECTED:                        return "connected";
             default: 
                 assert( 0 );
                 return "???";
@@ -46,23 +46,25 @@ namespace protocol
 
     enum ClientError
     {
-        CLIENT_ERROR_None,                                    // client is not in an error state.
-        CLIENT_ERROR_ResolveHostnameFailed,                   // client failed to resolve hostname, eg. DNS said nope.
-        CLIENT_ERROR_ConnectionRequestDenied,                 // connection request was denied.
-        CLIENT_ERROR_DisconnectedFromServer,                  // client was fully connected to the server, then received a disconnect packet.
-        CLIENT_ERROR_ConnectionTimedOut,                      // client connection timed out (eg. server stopped responding with packets)
-        CLIENT_ERROR_NumStates
+        CLIENT_ERROR_NONE,                                    // client is not in an error state.
+        CLIENT_ERROR_RESOLVE_HOSTNAME_FAILED,                 // client failed to resolve hostname, eg. DNS said nope.
+        CLIENT_ERROR_CONNECTION_REQUEST_DENIED,               // connection request was denied.
+        CLIENT_ERROR_DISCONNECTED_FROM_SERVER,                // client was fully connected to the server, then received a disconnect packet.
+        CLIENT_ERROR_CONNECTION_TIMED_OUT,                    // client connection timed out (eg. server stopped responding with packets)
+        CLIENT_ERROR_CONNECTION_ERROR,                        // client connection is in error state. see CONNECTION_ERROR_*
+        CLIENT_ERROR_COUNT
     };
 
     const char * GetClientErrorString( int clientError )
     {
         switch ( clientError )
         {
-            case CLIENT_ERROR_None:                             return "no error";
-            case CLIENT_ERROR_ResolveHostnameFailed:            return "resolve hostname failed";
-            case CLIENT_ERROR_ConnectionRequestDenied:          return "connection request denied";
-            case CLIENT_ERROR_DisconnectedFromServer:           return "disconnected from server";
-            case CLIENT_ERROR_ConnectionTimedOut:               return "connection timed out";
+            case CLIENT_ERROR_NONE:                             return "no error";
+            case CLIENT_ERROR_RESOLVE_HOSTNAME_FAILED:          return "resolve hostname failed";
+            case CLIENT_ERROR_CONNECTION_REQUEST_DENIED:        return "connection request denied";
+            case CLIENT_ERROR_DISCONNECTED_FROM_SERVER:         return "disconnected from server";
+            case CLIENT_ERROR_CONNECTION_TIMED_OUT:             return "connection timed out";
+            case CLIENT_ERROR_CONNECTION_ERROR:                 return "connection error";
             default:
                 assert( false );
                 return "???";
@@ -98,12 +100,12 @@ namespace protocol
 
         std::string m_hostname;
         Address m_address;
-        ClientState m_state = CLIENT_STATE_Disconnected;
+        ClientState m_state = CLIENT_STATE_DISCONNECTED;
         uint64_t m_clientGuid = 0;
         uint64_t m_serverGuid = 0;
         double m_accumulator = 0.0;
         double m_lastPacketReceiveTime = 0.0;
-        ClientError m_error = CLIENT_ERROR_None;
+        ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
 
         Client( const Client & other );
@@ -120,7 +122,7 @@ namespace protocol
             m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
 
             ConnectionConfig connectionConfig;
-            connectionConfig.packetType = PACKET_Connection;
+            connectionConfig.packetType = PACKET_CONNECTION;
             connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
             connectionConfig.channelStructure = m_config.channelStructure;
             connectionConfig.packetFactory = m_packetFactory;
@@ -148,7 +150,7 @@ namespace protocol
 
 //            printf( "client connect by address: %s\n", address.ToString().c_str() );
 
-            m_state = CLIENT_STATE_SendingConnectionRequest;
+            m_state = CLIENT_STATE_SENDING_CONNECTION_REQUEST;
             m_address = address;
             m_clientGuid = GenerateGuid();
 
@@ -178,7 +180,7 @@ namespace protocol
 
             m_config.resolver->Resolve( hostname );
             
-            m_state = CLIENT_STATE_ResolvingHostname;
+            m_state = CLIENT_STATE_RESOLVING_HOSTNAME;
             m_hostname = hostname;
             m_lastPacketReceiveTime = m_timeBase.time;
         }
@@ -194,22 +196,22 @@ namespace protocol
 
             ClearStateData();
             
-            m_state = CLIENT_STATE_Disconnected;
+            m_state = CLIENT_STATE_DISCONNECTED;
         }
 
         bool IsDisconnected() const
         {
-            return m_state == CLIENT_STATE_Disconnected;
+            return m_state == CLIENT_STATE_DISCONNECTED;
         }
 
         bool IsConnected() const
         {
-            return m_state == CLIENT_STATE_Connected;
+            return m_state == CLIENT_STATE_CONNECTED;
         }
 
         bool IsConnecting() const
         {
-            return m_state > CLIENT_STATE_Disconnected && m_state < CLIENT_STATE_Connected;
+            return m_state > CLIENT_STATE_DISCONNECTED && m_state < CLIENT_STATE_CONNECTED;
         }
 
         ClientState GetState() const
@@ -219,7 +221,7 @@ namespace protocol
 
         bool HasError() const
         {
-            return m_error != CLIENT_ERROR_None;
+            return m_error != CLIENT_ERROR_NONE;
         }
 
         ClientError GetError() const
@@ -276,21 +278,21 @@ namespace protocol
             if ( m_config.resolver )
                 m_config.resolver->Update( m_timeBase );
 
-            if ( m_state != CLIENT_STATE_ResolvingHostname )
+            if ( m_state != CLIENT_STATE_RESOLVING_HOSTNAME )
                 return;
 
             auto entry = m_config.resolver->GetEntry( m_hostname );
 
 //            printf( "update resolve hostname\n" );
 
-            if ( !entry || entry->status == ResolveStatus::Failed )
+            if ( !entry || entry->status == RESOLVE_FAILED )
             {
 //                printf( "resolve hostname failed\n" );
-                DisconnectAndSetError( CLIENT_ERROR_ResolveHostnameFailed );
+                DisconnectAndSetError( CLIENT_ERROR_RESOLVE_HOSTNAME_FAILED );
                 return;
             }
 
-            if ( entry->status == ResolveStatus::Succeeded )
+            if ( entry->status == RESOLVE_SUCCEEDED )
             {
 //                printf( "resolve hostname succeeded: %s\n", entry->result->addresses[0].ToString().c_str() );
 
@@ -305,13 +307,21 @@ namespace protocol
 
         void UpdateConnection()
         {
-            if ( m_state == CLIENT_STATE_Connected )
+            if ( m_state == CLIENT_STATE_CONNECTED )
+            {
                 m_connection->Update( m_timeBase );
+
+                if ( m_connection->GetError() != CONNECTION_ERROR_NONE )
+                {
+                    DisconnectAndSetError( CLIENT_ERROR_CONNECTION_ERROR );
+                    return;
+                }
+            }
         }
 
         void UpdateSendPackets()
         {
-            if ( m_state < CLIENT_STATE_SendingConnectionRequest )
+            if ( m_state < CLIENT_STATE_SENDING_CONNECTION_REQUEST )
                 return;
 
             m_accumulator += m_timeBase.deltaTime;
@@ -324,7 +334,7 @@ namespace protocol
 
                 switch ( m_state )
                 {
-                    case CLIENT_STATE_SendingConnectionRequest:
+                    case CLIENT_STATE_SENDING_CONNECTION_REQUEST:
                     {
 //                        printf( "client sent connection request packet\n" );
                         auto packet = new ConnectionRequestPacket();
@@ -335,7 +345,7 @@ namespace protocol
                     }
                     break;
 
-                    case CLIENT_STATE_SendingChallengeResponse:
+                    case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:
                     {
 //                        printf( "client sent challenge response packet\n" );
                         auto packet = new ChallengeResponsePacket();
@@ -346,7 +356,7 @@ namespace protocol
                     }
                     break;
 
-                    case CLIENT_STATE_ReadyForConnection:
+                    case CLIENT_STATE_READY_FOR_CONNECTION:
                     {
                         auto packet = new ReadyForConnectionPacket();
                         packet->protocolId = m_config.protocolId;
@@ -356,7 +366,7 @@ namespace protocol
                     }
                     break;
 
-                    case CLIENT_STATE_Connected:
+                    case CLIENT_STATE_CONNECTED:
                     {
 //                        printf( "client sent connection packet\n" );
                         auto packet = m_connection->WritePacket();
@@ -380,7 +390,7 @@ namespace protocol
 
                 const int type = packet->GetType();
 
-                if ( type == PACKET_Disconnected )
+                if ( type == PACKET_DISCONNECTED )
                 {
 //                    printf( "client received disconnected packet\n" );
                     ProcessDisconnected( static_cast<DisconnectedPacket*>( packet ) );
@@ -389,9 +399,9 @@ namespace protocol
 
                 switch ( m_state )
                 {
-                    case CLIENT_STATE_SendingConnectionRequest:
+                    case CLIENT_STATE_SENDING_CONNECTION_REQUEST:
                     {
-                        if ( type == PACKET_ConnectionChallenge )
+                        if ( type == PACKET_CONNECTION_CHALLENGE )
                         {
                             auto connectionChallengePacket = static_cast<ConnectionChallengePacket*>( packet );
 
@@ -400,12 +410,12 @@ namespace protocol
                             {
 //                                printf( "received connection challenge packet from server\n" );
 
-                                m_state = CLIENT_STATE_SendingChallengeResponse;
+                                m_state = CLIENT_STATE_SENDING_CHALLENGE_RESPONSE;
                                 m_serverGuid = connectionChallengePacket->serverGuid;
                                 m_lastPacketReceiveTime = m_timeBase.time;
                             }
                         }
-                        else if ( type == PACKET_ConnectionDenied )
+                        else if ( type == PACKET_CONNECTION_DENIED )
                         {
                             auto connectionDeniedPacket = static_cast<ConnectionDeniedPacket*>( packet );
 
@@ -414,15 +424,15 @@ namespace protocol
                             {
 //                                printf( "received connection denied packet from server\n" );
 
-                                DisconnectAndSetError( CLIENT_ERROR_ConnectionRequestDenied, connectionDeniedPacket->reason );
+                                DisconnectAndSetError( CLIENT_ERROR_CONNECTION_REQUEST_DENIED, connectionDeniedPacket->reason );
                             }
                         }
                     }
                     break;
 
-                    case CLIENT_STATE_SendingChallengeResponse:
+                    case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:
                     {
-                        if ( type == PACKET_RequestClientData )
+                        if ( type == PACKET_REQUEST_CLIENT_DATA )
                         {
                             auto requestClientDataPacket = static_cast<RequestClientDataPacket*>( packet );
 
@@ -436,7 +446,7 @@ namespace protocol
                                 {
 //                                    printf( "client is ready for connection\n" );
 
-                                    m_state = CLIENT_STATE_ReadyForConnection;
+                                    m_state = CLIENT_STATE_READY_FOR_CONNECTION;
                                     m_lastPacketReceiveTime = m_timeBase.time;
                                 }
                                 else
@@ -449,18 +459,18 @@ namespace protocol
                     }
                     break;
 
-                    case CLIENT_STATE_ReadyForConnection:
-                    case CLIENT_STATE_Connected:
+                    case CLIENT_STATE_READY_FOR_CONNECTION:
+                    case CLIENT_STATE_CONNECTED:
                     {
-                        if ( type == PACKET_Connection )
+                        if ( type == PACKET_CONNECTION )
                         {
 //                            printf( "client received connection packet\n" );
 
-                            if ( m_state == CLIENT_STATE_ReadyForConnection )
+                            if ( m_state == CLIENT_STATE_READY_FOR_CONNECTION )
                             {
 //                                printf( "client transitioned to connected state\n" );
 
-                                m_state = CLIENT_STATE_Connected;
+                                m_state = CLIENT_STATE_CONNECTED;
                             }
 
                             const bool result = m_connection->ReadPacket( static_cast<ConnectionPacket*>( packet ) );
@@ -491,7 +501,7 @@ namespace protocol
             if ( packet->serverGuid != m_serverGuid )
                 return;
 
-            DisconnectAndSetError( CLIENT_ERROR_DisconnectedFromServer );
+            DisconnectAndSetError( CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
         }
 
         void UpdateTimeout()
@@ -504,7 +514,7 @@ namespace protocol
             if ( m_lastPacketReceiveTime + timeout < m_timeBase.time )
             {
 //                printf( "client timed out\n" );
-                DisconnectAndSetError( CLIENT_ERROR_ConnectionTimedOut, m_state );
+                DisconnectAndSetError( CLIENT_ERROR_CONNECTION_TIMED_OUT, m_state );
             }
         }
 
@@ -520,7 +530,7 @@ namespace protocol
 
         void ClearError()
         {
-            m_error = CLIENT_ERROR_None;
+            m_error = CLIENT_ERROR_NONE;
             m_extendedError = 0;
         }
 

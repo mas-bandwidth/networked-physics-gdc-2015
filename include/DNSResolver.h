@@ -79,13 +79,13 @@ namespace protocol
                 auto entry = itor->second;
                 switch ( entry->status )
                 {
-                    case ResolveStatus::InProgress:
+                    case RESOLVE_IN_PROGRESS:
                         if ( callback )
                             entry->callbacks.push_back( callback );
                         break;
 
-                    case ResolveStatus::Succeeded:
-                    case ResolveStatus::Failed:             // note: result is nullptr if resolve failed
+                    case RESOLVE_SUCCEEDED:
+                    case RESOLVE_FAILED:             // note: result is nullptr if resolve failed
                         if ( callback )
                             callback( name, entry->result );      
                         break;
@@ -94,7 +94,7 @@ namespace protocol
             }
 
             auto entry = new ResolveEntry();
-            entry->status = ResolveStatus::InProgress;
+            entry->status = RESOLVE_IN_PROGRESS;
             if ( callback != nullptr )
                 entry->callbacks.push_back( callback );
             const int family = m_family;
@@ -125,7 +125,7 @@ namespace protocol
                 if ( entry->future.wait_for( std::chrono::seconds(0) ) == std::future_status::ready )
                 {
                     entry->result = entry->future.get();
-                    entry->status = entry->result ? ResolveStatus::Succeeded : ResolveStatus::Failed;
+                    entry->status = entry->result ? RESOLVE_SUCCEEDED : RESOLVE_FAILED;
                     for ( auto callback : entry->callbacks )
                         callback( name, entry->result );
                     in_progress.erase( itor++ );

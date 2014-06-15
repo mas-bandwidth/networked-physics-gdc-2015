@@ -341,6 +341,8 @@ namespace protocol
 
     public:
 
+        // todo: move outside class. standardize to CAPS_CAPS
+
         enum Counters
         {
             MessagesSent,
@@ -448,6 +450,8 @@ namespace protocol
 
         void Reset()
         {
+            m_error = 0;
+
             m_sendMessageId = 0;
             m_receiveMessageId = 0;
             m_oldestUnackedMessageId = 0;
@@ -499,6 +503,8 @@ namespace protocol
 
         void SendMessage( Message * message )
         {
+            assert( message );
+
 //            printf( "queue message for send: %d\n", m_sendMessageId );
 
             assert( CanSendMessage() );
@@ -566,6 +572,8 @@ namespace protocol
 //            printf( "send block: %d bytes\n", block->size() );
 
             auto blockMessage = new BlockMessage( block );
+
+            assert( blockMessage );
 
             SendMessage( blockMessage );
         }        

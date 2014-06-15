@@ -32,7 +32,7 @@ void test_dns_resolve()
 
     auto google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
-    assert( google_entry->status == ResolveStatus::InProgress );
+    assert( google_entry->status == RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -55,7 +55,7 @@ void test_dns_resolve()
 
     google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
-    assert( google_entry->status == ResolveStatus::Succeeded );
+    assert( google_entry->status == RESOLVE_SUCCEEDED );
     assert( google_entry->result->addresses.size() );
 
     /*
@@ -95,7 +95,7 @@ void test_dns_resolve_with_port()
 
     auto google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
-    assert( google_entry->status == ResolveStatus::InProgress );
+    assert( google_entry->status == RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -118,7 +118,7 @@ void test_dns_resolve_with_port()
 
     google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
-    assert( google_entry->status == ResolveStatus::Succeeded );
+    assert( google_entry->status == RESOLVE_SUCCEEDED );
     assert( google_entry->result->addresses.size() );
 
     /*
@@ -149,7 +149,7 @@ void test_dns_resolve_failure()
 
     auto entry = resolver.GetEntry( garbage_hostname );
     assert( entry );
-    assert( entry->status == ResolveStatus::InProgress );
+    assert( entry->status == RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -169,7 +169,7 @@ void test_dns_resolve_failure()
 
     entry = resolver.GetEntry( garbage_hostname );
     assert( entry );
-    assert( entry->status == ResolveStatus::Failed );
+    assert( entry->status == RESOLVE_FAILED );
     assert( entry->result == nullptr );
 }
 

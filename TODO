@@ -1,31 +1,57 @@
 DONE:
 
-    Removed std::vector usage from channel structure.
+TODO:    
 
-    Add Constants.h and put stuff there that are static constants defining library max
+    There is an assert in SoakTest.cpp to do with block receive.
 
-    Set MaxChannels = 8.
+    Seems that block size on receive might be off. I probably broke it.
 
-    Replace with static array of size MaxChannels
+    ------------------
 
-    Remove the dynamic allocation of per-channel data in ConnectionPacket etc.
+    Standardize counters to BSD_SOCKETS_COUNTER_... etc.
 
-    Remove the dynamic per-channel allocation in Connection class.
+    Move all enums to Enums.h
 
-    Clean up the "Reset" inside 
+    Move all config types into Config.h
 
-    Added "GetError" int to Channel so a channel can indicate they are in an error condition,
-    back to the connection on update.
+    Common.h is really more of a Util.h right now
 
-TODO:
 
-    If any channel is in error, tear down the connection and go into an error state.
-    
-    ---------------
+    --------------------
 
-    TestClientServer.cpp is broken because it's not allocating foundation memory for tests.
+    Try to get valgrind running again, eg. with "-g"
 
-    Pass over remaining todos and fix them.
+    Can it find any leaks now?
+
+    --------------------
+
+    Move protocol id handling entirely to the interface layer
+
+    Remove protocol id concept from Client.h, Server.h and ClientServerPackets.h
+
+    If a packet comes in over the interface with wrong protocol id, discard it
+    immediately without even trying to create a packet of type.
+
+    This allows different interfaces to handle protocol id, whether they
+    need it or not (some will not!).
+
+    Plus reduces cost of processing packets dramatically, if a stray
+    packet comes in it is read, and discarded immediately before any
+    serialization is done.
+
+    ---------------------
+
+    Convert to .h / .cpp split.
+
+    Makefile or premake? Premake is probably the best bet at this point.
+
+    Rakefile is another option.
+
+    Do I care about Win64 Visual studio project generation? Yes I do.
+
+    Probably best to stick with premake.
+
+    ---------------------
 
     Pass over remaining std::vector and see if they can be removed easily.
 
@@ -68,38 +94,18 @@ TODO:
 
 
 
-
-
-
-
-
-
-
     ----------------------
 
-    TestBSDSockets is broken. I think the sent packets are getting
-    deleted before they can be compared with the received packets?
+    Unit tests to add:
+
+    Verify that channel error percolates down and makes the server disconnect client,
+    *and* on client side, makes the client disconnect from server.
+
+    Make sure error is properly cleared on reset.
+
+    Make sure we don't leak memory on connection reset (client reconnect should do this)
 
     ----------------------
-
-    Add some macros to make defining serialization and messages easier.
-
-    ----------------------
-
-    Basic logging. Just start with a "Log" macro that can be redirected
-    to a "Logger" interface via virtual fn. 
-
-    Of course, this is disabled in release build (NDEBUG) but it is 
-    the easiest way to make sure the library can output logs to the
-    appropriate place (console, TTY, file, whatever...)
-
-    Should logs include the "\n" at the end?
-
-    It would be nice if they didn't have to. It's easy to forget.
-
-    ----------------------
-
-
 
 
 
@@ -192,6 +198,23 @@ TODO:
 
 
 WOULD BE NICE:
+
+    ----------------------
+
+    Add some macros to make defining serialization and messages easier.
+
+    ----------------------
+
+    Basic logging. Just start with a "Log" macro that can be redirected
+    to a "Logger" interface via virtual fn. 
+
+    Of course, this is disabled in release build (NDEBUG) but it is 
+    the easiest way to make sure the library can output logs to the
+    appropriate place (console, TTY, file, whatever...)
+
+    Should logs include the "\n" at the end?
+
+    It would be nice if they didn't have to. It's easy to forget.
 
     --------------------
 

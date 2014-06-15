@@ -13,6 +13,12 @@
 
 namespace protocol
 {
+    enum ConnectionError
+    {
+        CONNECTION_ERROR_NONE = 0,
+        CONNECTION_ERROR_CHANNEL
+    };
+
     struct SentPacketData
     {
         SentPacketData()
@@ -214,6 +220,8 @@ namespace protocol
     {
     public:
 
+        // todo: move outside class, standardize to CAPS_CAPS
+        
         enum Counters
         {
             PacketsRead,                            // number of packets read
@@ -224,6 +232,8 @@ namespace protocol
         };
 
     private:
+
+        ConnectionError m_error = CONNECTION_ERROR_NONE;
 
         const ConnectionConfig m_config;                    // const configuration data
         TimeBase m_timeBase;                                // network time base
@@ -281,8 +291,10 @@ namespace protocol
 
         void Reset()
         {
+            m_error = CONNECTION_ERROR_NONE;
+
             m_timeBase = TimeBase();
-            
+
             m_sentPackets->Reset();
             m_receivedPackets->Reset();
 
@@ -294,18 +306,33 @@ namespace protocol
 
         void Update( const TimeBase & timeBase )
         {
+            if ( m_error != CONNECTION_ERROR_NONE )
+                return;
+
             m_timeBase = timeBase;
+
             for ( int i = 0; i < m_numChannels; ++i )
             {
                 m_channels[i]->Update( timeBase );
+
                 if ( m_channels[i]->GetError() != 0 )
                 {
-                    // todo: handle channel error here -- eg. set own error state
-                    // that the client/server owner are going to check and decide
-                    // to disconnect that client.
-                    break;
+                    m_error = CONNECTION_ERROR_CHANNEL;
+                    return;
                 }
             }
+        }
+
+        ConnectionError GetError() const
+        {
+            return m_error;
+        }
+
+        int GetChannelError( int channelIndex ) const
+        {
+            assert( channelIndex >= 0 );
+            assert( channelIndex < m_numChannels );
+            return m_channels[channelIndex]->GetError();
         }
 
         const TimeBase & GetTimeBase() const
@@ -315,6 +342,9 @@ namespace protocol
 
         ConnectionPacket * WritePacket()
         {
+            if ( m_error != CONNECTION_ERROR_NONE )
+                return nullptr;
+
             auto packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( m_config.packetType ) );
 
             packet->protocolId = m_config.protocolId;
@@ -334,6 +364,9 @@ namespace protocol
 
         bool ReadPacket( ConnectionPacket * packet )
         {
+            if ( m_error != CONNECTION_ERROR_NONE )
+                return false;
+
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
             assert( packet->numChannels == m_numChannels );

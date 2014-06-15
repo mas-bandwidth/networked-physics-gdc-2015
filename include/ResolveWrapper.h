@@ -67,7 +67,7 @@ namespace protocol
             {
                 switch ( resolveEntry->status )
                 {
-                    case ResolveStatus::Succeeded:
+                    case RESOLVE_SUCCEEDED:
                     {
                         assert( resolveEntry->result->addresses.size() >= 1 );
                         Address address = resolveEntry->result->addresses[0];
@@ -78,7 +78,7 @@ namespace protocol
                     }
                     break;
 
-                    case ResolveStatus::InProgress:
+                    case RESOLVE_IN_PROGRESS:
                     {
                         //printf( "resolve in progress: buffering packet\n" );
                         auto resolve_send_queue = m_resolve_send_queues[hostname];
@@ -87,7 +87,7 @@ namespace protocol
                     }
                     break;
 
-                    case ResolveStatus::Failed:
+                    case RESOLVE_FAILED:
                     {
                         //printf( "resolve failed: discarding packet for \"%s\"\n", hostname.c_str() );
                     }
@@ -122,9 +122,9 @@ namespace protocol
 
                 auto entry = m_config.resolver->GetEntry( hostname );
                 assert( entry );
-                if ( entry->status != ResolveStatus::InProgress )
+                if ( entry->status != RESOLVE_IN_PROGRESS )
                 {
-                    if ( entry->status == ResolveStatus::Succeeded )
+                    if ( entry->status == RESOLVE_SUCCEEDED )
                     {
                         assert( entry->result->addresses.size() > 0 );
                         auto address = entry->result->addresses[0];
@@ -142,7 +142,7 @@ namespace protocol
                         }
                         m_resolve_send_queues.erase( itor++ );
                     }
-                    else if ( entry->status == ResolveStatus::Failed )
+                    else if ( entry->status == RESOLVE_FAILED )
                     {
                         //printf( "failed to resolve \"%s\". discarding %d packets\n", hostname.c_str(), resolve_send_queue->size() );
                         m_resolve_send_queues.erase( itor++ );

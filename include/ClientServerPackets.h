@@ -17,20 +17,20 @@ namespace protocol
     { 
         // client -> server
 
-        PACKET_ConnectionRequest,                               // client is requesting a connection.
-        PACKET_ChallengeResponse,                               // client response to server connection challenge.
-        PACKET_ReadyForConnection,                              // client is ready for connection packets
+        PACKET_CONNECTION_REQUEST,                              // client is requesting a connection.
+        PACKET_CHALLENGE_RESPONSE,                              // client response to server connection challenge.
+        PACKET_READY_FOR_CONNECTION,                            // client is ready for connection packets
 
         // server -> client
 
-        PACKET_ConnectionDenied,                                // server denies request for connection. contains reason int, eg. full, closed etc.
-        PACKET_ConnectionChallenge,                             // server response to client connection request.
-        PACKET_RequestClientData,                               // server is ready for the client to start sending data to it.
-        PACKET_Disconnected,                                    // courtesy packet from server to tell the client they have been disconnected. sent for one second after server-side disconnect
+        PACKET_CONNECTION_DENIED,                               // server denies request for connection. contains reason int, eg. full, closed etc.
+        PACKET_CONNECTION_CHALLENGE,                            // server response to client connection request.
+        PACKET_REQUEST_CLIENT_DATA,                             // server is ready for the client to start sending data to it.
+        PACKET_DISCONNECTED,                                    // courtesy packet from server to tell the client they have been disconnected. sent for one second after server-side disconnect
 
         // bidirectional
 
-        PACKET_Connection
+        PACKET_CONNECTION
     };
 
     struct ConnectionRequestPacket : public Packet
@@ -38,7 +38,7 @@ namespace protocol
         uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
 
-        ConnectionRequestPacket() : Packet( PACKET_ConnectionRequest ) {}
+        ConnectionRequestPacket() : Packet( PACKET_CONNECTION_REQUEST ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -68,7 +68,7 @@ namespace protocol
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
-        ChallengeResponsePacket() : Packet( PACKET_ChallengeResponse ) {}
+        ChallengeResponsePacket() : Packet( PACKET_CHALLENGE_RESPONSE ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -99,7 +99,7 @@ namespace protocol
         uint64_t clientGuid = 0;
         uint32_t reason = 0;
 
-        ConnectionDeniedPacket() : Packet( PACKET_ConnectionDenied ) {}
+        ConnectionDeniedPacket() : Packet( PACKET_CONNECTION_DENIED ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -130,7 +130,7 @@ namespace protocol
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
-        ConnectionChallengePacket() : Packet( PACKET_ConnectionChallenge ) {}
+        ConnectionChallengePacket() : Packet( PACKET_CONNECTION_CHALLENGE ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -161,7 +161,7 @@ namespace protocol
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
-        RequestClientDataPacket() : Packet( PACKET_RequestClientData ) {}
+        RequestClientDataPacket() : Packet( PACKET_REQUEST_CLIENT_DATA ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -192,7 +192,7 @@ namespace protocol
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
-        ReadyForConnectionPacket() : Packet( PACKET_ReadyForConnection ) {}
+        ReadyForConnectionPacket() : Packet( PACKET_READY_FOR_CONNECTION ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -223,7 +223,7 @@ namespace protocol
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
-        DisconnectedPacket() : Packet( PACKET_Disconnected ) {}
+        DisconnectedPacket() : Packet( PACKET_DISCONNECTED ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -256,19 +256,16 @@ namespace protocol
         {
             assert( channelStructure );
 
-            // client -> server packets
-            Register( PACKET_ConnectionRequest,  [] { return new ConnectionRequestPacket();  } );
-            Register( PACKET_ChallengeResponse,  [] { return new ChallengeResponsePacket();  } );
-            Register( PACKET_ReadyForConnection, [] { return new ReadyForConnectionPacket(); } );
+            Register( PACKET_CONNECTION_REQUEST,   [] { return new ConnectionRequestPacket();  } );
+            Register( PACKET_CHALLENGE_RESPONSE,   [] { return new ChallengeResponsePacket();  } );
+            Register( PACKET_READY_FOR_CONNECTION, [] { return new ReadyForConnectionPacket(); } );
 
-            // server -> client packets
-            Register( PACKET_ConnectionDenied, [] { return new ConnectionDeniedPacket(); } );
-            Register( PACKET_ConnectionChallenge, [] { return new ConnectionChallengePacket(); } );
-            Register( PACKET_RequestClientData, [] { return new RequestClientDataPacket(); } );
-            Register( PACKET_Disconnected, [] { return new DisconnectedPacket(); } );
+            Register( PACKET_CONNECTION_DENIED,    [] { return new ConnectionDeniedPacket(); } );
+            Register( PACKET_CONNECTION_CHALLENGE, [] { return new ConnectionChallengePacket(); } );
+            Register( PACKET_REQUEST_CLIENT_DATA,  [] { return new RequestClientDataPacket(); } );
+            Register( PACKET_DISCONNECTED,         [] { return new DisconnectedPacket(); } );
 
-            // bidirectional packets
-            Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
+            Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
         }
     };
 }

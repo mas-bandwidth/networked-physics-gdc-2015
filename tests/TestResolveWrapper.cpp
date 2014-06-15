@@ -6,16 +6,16 @@ using namespace protocol;
 
 enum PacketType
 {
-    PACKET_Connect = 1,
-    PACKET_Update,
-    PACKET_Disconnect
+    PACKET_CONNECT = 1,
+    PACKET_UPDATE,
+    PACKET_DISCONNECT
 };
 
 struct ConnectPacket : public Packet
 {
     int a,b,c;
 
-    ConnectPacket() : Packet( PACKET_Connect )
+    ConnectPacket() : Packet( PACKET_CONNECT )
     {
         a = 1;
         b = 2;
@@ -59,7 +59,7 @@ struct UpdatePacket : public Packet
 {
     uint16_t timestamp;
 
-    UpdatePacket() : Packet( PACKET_Update )
+    UpdatePacket() : Packet( PACKET_UPDATE )
     {
         timestamp = 0;
     }
@@ -99,7 +99,7 @@ struct DisconnectPacket : public Packet
 {
     int x;
 
-    DisconnectPacket() : Packet( PACKET_Disconnect ) 
+    DisconnectPacket() : Packet( PACKET_DISCONNECT )
     {
         x = 2;
     }
@@ -140,9 +140,9 @@ class PacketFactory : public Factory<Packet>
 public:
     PacketFactory()
     {
-        Register( PACKET_Connect,    [] { return new ConnectPacket();    } );
-        Register( PACKET_Update,     [] { return new UpdatePacket();     } );
-        Register( PACKET_Disconnect, [] { return new DisconnectPacket(); } );
+        Register( PACKET_CONNECT,    [] { return new ConnectPacket();    } );
+        Register( PACKET_UPDATE,     [] { return new UpdatePacket();     } );
+        Register( PACKET_DISCONNECT, [] { return new DisconnectPacket(); } );
     }
 };
 
@@ -173,7 +173,7 @@ void test_resolve_wrapper_send_to_hostname()
 
     for ( int i = 0; i < numPackets; ++i )
     {
-        auto packet = packetFactory.Create( PACKET_Connect );
+        auto packet = packetFactory.Create( PACKET_CONNECT );
 
         interface->SendPacket( "localhost", config.port, packet );
     }
@@ -229,7 +229,7 @@ void test_resolve_wrapper_send_to_hostname_port()
 
     for ( int i = 0; i < numPackets; ++i )
     {
-        auto packet = packetFactory.Create( PACKET_Connect );
+        auto packet = packetFactory.Create( PACKET_CONNECT );
 
         interface->SendPacket( "localhost:10000", packet );
     }

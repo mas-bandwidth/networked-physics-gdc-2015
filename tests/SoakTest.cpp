@@ -7,8 +7,8 @@ using namespace protocol;
 
 enum MessageType
 {
-    MESSAGE_Block = BlockMessageType,
-    MESSAGE_Test
+    MESSAGE_BLOCK = BlockMessageType,
+    MESSAGE_TEST
 };
 
 static int messageBitsArray[] = { 1, 320, 120, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8, 512, 5, 3, 7, 50 };
@@ -22,7 +22,7 @@ int GetNumBitsForMessage( uint16_t sequence )
 
 struct TestMessage : public Message
 {
-    TestMessage() : Message( MESSAGE_Test )
+    TestMessage() : Message( MESSAGE_TEST )
     {
         sequence = 0;
         dummy = 0;
@@ -68,15 +68,15 @@ public:
 
     MessageFactory()
     {
-        Register( MESSAGE_Block, [] { return new BlockMessage(); } );
-        Register( MESSAGE_Test,  [] { return new TestMessage();  } );
+        Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
+        Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
     }
 };
 
 enum 
 { 
-    PACKET_Connection = 0,
-    PACKET_Dummy
+    PACKET_CONNECTION = 0,
+    PACKET_DUMMY
 };
 
 class TestChannelStructure : public ChannelStructure
@@ -126,8 +126,8 @@ public:
 
     PacketFactory( ChannelStructure * channelStructure )
     {
-        Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
-        Register( PACKET_Dummy, [] { return nullptr; } );
+        Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
+        Register( PACKET_DUMMY, [] { return nullptr; } );
     }
 };
 
@@ -159,7 +159,7 @@ void soak_test()
     Address address( "::1" );
 
     ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
+    connectionConfig.packetType = PACKET_CONNECTION;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = &packetFactory;
     connectionConfig.slidingWindowSize = 1024;
@@ -179,8 +179,8 @@ void soak_test()
     timeBase.time = 0.0;
     timeBase.deltaTime = 0.01;
 
+//    for ( int i = 0; i < 10; ++i )
     while ( true )
-//    for ( int i = 0; i < 100; ++i )
     {
         const int maxMessagesToSend = 1 + rand() % 32;
 
@@ -191,11 +191,11 @@ void soak_test()
 
             int value = rand() % 10000;
 
-            /*
             if ( value < 5000 )
             {
                 // bitpacked message
                 auto message = new TestMessage();
+                assert( message );
 //                printf( "allocate message %p (send)\n", message );
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
@@ -205,22 +205,21 @@ void soak_test()
                 // small block
                 int index = sendMessageId % 32;
                 auto block = new Block( index + 1 );
+                assert( block );
                 for ( int i = 0; i < block->size(); ++i )
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
-            else
-            */
-            if ( value % 10000 == 0 )
+            else if ( value % 10000 == 0 )
             {
                 // large block
                 int index = sendMessageId % 4;
                 auto block = new Block( (index+1) * 1024 * 1000 + index );
+                assert( block );
                 for ( int i = 0; i < block->size(); ++i )
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
-            //
             
             sendMessageId++;
             numMessagesSent++;
@@ -246,7 +245,7 @@ void soak_test()
 //        printf( "before read packet\n" );
 
         ReadStream readStream( buffer, MaxPacketSize );
-        auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
+        auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
         readPacket->SerializeRead( readStream );
         assert( !readStream.IsOverflow() );
 
@@ -268,9 +267,9 @@ void soak_test()
                 break;
 
             assert( message->GetId() == numMessagesReceived % 65536 );
-            assert( message->GetType() == MESSAGE_Block || message->GetType() == MESSAGE_Test );
+            assert( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
 
-            if ( message->GetType() == MESSAGE_Test )
+            if ( message->GetType() == MESSAGE_TEST )
             {
 #if !PROFILE
                 printf( "%09.2f - received message %d - test message\n", timeBase.time, message->GetId() );
@@ -331,7 +330,7 @@ void soak_test()
 
 int main()
 {
-    srand( time( nullptr 4) );
+    srand( time( nullptr ) );
 
     if ( !InitializeSockets() )
     {

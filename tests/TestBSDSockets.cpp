@@ -4,16 +4,16 @@ using namespace protocol;
 
 enum PacketType
 {
-    PACKET_Connect = 1,
-    PACKET_Update,
-    PACKET_Disconnect
+    PACKET_CONNECT = 1,
+    PACKET_UPDATE,
+    PACKET_DISCONNECT
 };
 
 struct ConnectPacket : public Packet
 {
     int a,b,c;
 
-    ConnectPacket() : Packet( PACKET_Connect )
+    ConnectPacket() : Packet( PACKET_CONNECT )
     {
         a = 1;
         b = 2;
@@ -57,7 +57,7 @@ struct UpdatePacket : public Packet
 {
     uint16_t timestamp;
 
-    UpdatePacket() : Packet( PACKET_Update )
+    UpdatePacket() : Packet( PACKET_UPDATE )
     {
         timestamp = 0;
     }
@@ -97,7 +97,7 @@ struct DisconnectPacket : public Packet
 {
     int x;
 
-    DisconnectPacket() : Packet( PACKET_Disconnect ) 
+    DisconnectPacket() : Packet( PACKET_DISCONNECT )
     {
         x = 2;
     }
@@ -138,9 +138,9 @@ class PacketFactory : public Factory<Packet>
 public:
     PacketFactory()
     {
-        Register( PACKET_Connect,    [] { return new ConnectPacket();    } );
-        Register( PACKET_Update,     [] { return new UpdatePacket();     } );
-        Register( PACKET_Disconnect, [] { return new DisconnectPacket(); } );
+        Register( PACKET_CONNECT,    [] { return new ConnectPacket();    } );
+        Register( PACKET_UPDATE,     [] { return new UpdatePacket();     } );
+        Register( PACKET_DISCONNECT, [] { return new DisconnectPacket(); } );
     }
 };
 
@@ -215,7 +215,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
 
             switch ( packet->GetType() )
             {
-                case PACKET_Connect:
+                case PACKET_CONNECT:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == connectPacketTemplate );
@@ -223,7 +223,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
                 }
                 break;
 
-                case PACKET_Update:
+                case PACKET_UPDATE:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == updatePacketTemplate );
@@ -231,7 +231,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
                 }
                 break;
 
-                case PACKET_Disconnect:
+                case PACKET_DISCONNECT:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == disconnectPacketTemplate );
@@ -321,7 +321,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
 
             switch ( packet->GetType() )
             {
-                case PACKET_Connect:
+                case PACKET_CONNECT:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == connectPacketTemplate );
@@ -329,7 +329,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
                 }
                 break;
 
-                case PACKET_Update:
+                case PACKET_UPDATE:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == updatePacketTemplate );
@@ -337,7 +337,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
                 }
                 break;
 
-                case PACKET_Disconnect:
+                case PACKET_DISCONNECT:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == disconnectPacketTemplate );
@@ -435,7 +435,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
 
             switch ( packet->GetType() )
             {
-                case PACKET_Connect:
+                case PACKET_CONNECT:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == connectPacketTemplate );
@@ -443,7 +443,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
                 }
                 break;
 
-                case PACKET_Update:
+                case PACKET_UPDATE:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == updatePacketTemplate );
@@ -451,7 +451,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
                 }
                 break;
 
-                case PACKET_Disconnect:
+                case PACKET_DISCONNECT:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == disconnectPacketTemplate );
@@ -549,7 +549,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
 
             switch ( packet->GetType() )
             {
-                case PACKET_Connect:
+                case PACKET_CONNECT:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
                     assert( *recv_connectPacket == connectPacketTemplate );
@@ -557,7 +557,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
                 }
                 break;
 
-                case PACKET_Update:
+                case PACKET_UPDATE:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
                     assert( *recv_updatePacket == updatePacketTemplate );
@@ -565,7 +565,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
                 }
                 break;
 
-                case PACKET_Disconnect:
+                case PACKET_DISCONNECT:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
                     assert( *recv_disconnectPacket == disconnectPacketTemplate );

@@ -338,8 +338,6 @@ namespace protocol
         std::vector<T> m_entries;
     };
 
-    typedef std::vector<uint8_t> Block;
-
     template <typename T> void GenerateAckBits( const SlidingWindow<T> & packets, 
                                                 uint16_t & ack,
                                                 uint32_t & ack_bits )
@@ -353,6 +351,8 @@ namespace protocol
                 ack_bits |= ( 1 << i );
         }
     }
+
+    typedef std::vector<uint8_t> Block;
 
 #endif
 
