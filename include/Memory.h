@@ -217,7 +217,8 @@ namespace protocol
 
 		~ScratchAllocator() 
 		{
-			assert( m_free == m_allocate );			// You leaked memory. Boo this man!
+			assert( m_free == m_allocate );			// You leaked memory!
+
 			m_backing.Deallocate( m_begin );
 		}
 
@@ -256,7 +257,7 @@ namespace protocol
 			// If the buffer is exhausted use the backing allocator instead.
 			if ( IsAllocated( p ) )
 			{
-				printf( "dropping to backing allocator...\n" );
+				// hack: I want to know if this happens!
 				assert( false );
 				return m_backing.Allocate( size, align );
 			}
@@ -273,6 +274,8 @@ namespace protocol
 
 			if ( p < m_begin || p >= m_end )
 			{
+				// hack: I want to know if this happens!
+				assert( false );
 				m_backing.Deallocate( p );
 				return;
 			}
@@ -283,8 +286,12 @@ namespace protocol
 			h->size = h->size | 0x80000000u;
 
 			// Advance the free pointer past all free slots.
+			int iterations = 0;
 			while ( m_free != m_allocate )
 			{
+				// todo: this is O(n) on the number of blocks
+				// potentially quite expensive -- log the # of iterations
+
 				Header * h = (Header*) m_free;
 				if ( ( h->size & 0x80000000u ) == 0 )
 					break;
@@ -292,7 +299,13 @@ namespace protocol
 				m_free += h->size & 0x7fffffffu;
 				if ( m_free == m_end )
 					 m_free = m_begin ;
+
+				iterations++;
 			}
+			/*
+			if ( iterations > 32 )
+				printf( "scratch deallocate lots of iterations: %d\n", iterations );
+				*/
 		}
 
 		uint32_t GetAllocatedSize( void * p )
@@ -314,7 +327,7 @@ namespace protocol
 		uint8_t buffer[ALLOCATOR_MEMORY];
 
 		MallocAllocator * default_allocator;
-		ScratchAllocator * default_scratch_allocator;
+		MallocAllocator * default_scratch_allocator;//ScratchAllocator * default_scratch_allocator;
 
 		MemoryGlobals() : default_allocator(0), default_scratch_allocator(0) {}
 	};
@@ -330,7 +343,7 @@ namespace protocol
 			uint8_t * p = memory_globals.buffer;
 			memory_globals.default_allocator = new (p) MallocAllocator();
 			p += sizeof( MallocAllocator );
-			memory_globals.default_scratch_allocator = new (p) ScratchAllocator( *memory_globals.default_allocator, temporary_memory );
+			memory_globals.default_scratch_allocator = new (p) MallocAllocator();// ScratchAllocator( *memory_globals.default_allocator, temporary_memory );
 		}
 
 		Allocator & default_allocator() 
@@ -347,7 +360,8 @@ namespace protocol
 
 		void shutdown() 
 		{
-			memory_globals.default_scratch_allocator->~ScratchAllocator();
+			//memory_globals.default_scratch_allocator->~ScratchAllocator();
+			memory_globals.default_scratch_allocator->~MallocAllocator();
 			memory_globals.default_allocator->~MallocAllocator();
 			memory_globals = MemoryGlobals();
 		}

@@ -253,8 +253,7 @@ namespace protocol
             }
 
             const int index = entry.sequence % m_entries.size();
-            assert( index >= 0 );
-            assert( index < m_entries.size() );
+
             m_entries[index] = entry;
 
             return true;
@@ -277,8 +276,6 @@ namespace protocol
             }
 
             const int index = sequence % m_entries.size();
-            assert( index >= 0 );
-            assert( index < m_entries.size() );
             auto entry = &m_entries[index];
             entry->valid = 1;
             entry->sequence = sequence;
@@ -288,16 +285,18 @@ namespace protocol
         bool HasSlotAvailable( uint16_t sequence ) const
         {
             const int index = sequence % m_entries.size();
-            assert( index >= 0 );
-            assert( index < m_entries.size() );
             return !m_entries[index].valid;
+        }
+
+        int GetIndex( uint16_t sequence ) const
+        {
+            const int index = sequence % m_entries.size();
+            return index;
         }
 
         const T * Find( uint16_t sequence ) const
         {
             const int index = sequence % m_entries.size();
-            assert( index >= 0 );
-            assert( index < m_entries.size() );
             if ( m_entries[index].valid && m_entries[index].sequence == sequence )
                 return &m_entries[index];
             else
@@ -307,8 +306,6 @@ namespace protocol
         T * Find( uint16_t sequence )
         {
             const int index = sequence % m_entries.size();
-            assert( index >= 0 );
-            assert( index < m_entries.size() );
             if ( m_entries[index].valid && m_entries[index].sequence == sequence )
                 return &m_entries[index];
             else

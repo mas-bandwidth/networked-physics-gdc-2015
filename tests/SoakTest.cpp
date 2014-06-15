@@ -143,6 +143,7 @@ void soak_test()
 
     const int MaxPacketSize = 4096;
 
+#if !PROFILE
     NetworkSimulator simulator;
     simulator.AddState( { 0.0f, 0.0f, 0.0f } );
     simulator.AddState( { 0.0f, 0.0f, 0.0f } );
@@ -153,6 +154,7 @@ void soak_test()
     simulator.AddState( { 0.5f, 0.25f, 25.0f } );
     simulator.AddState( { 1.0f, 0.50f, 50.0f } );
     simulator.AddState( { 1.0f, 1.00f, 100.0f } );
+#endif
 
     Address address( "::1" );
 
@@ -178,7 +180,7 @@ void soak_test()
     timeBase.deltaTime = 0.01;
 
     while ( true )
-    //for ( int i = 0; i < 1000; ++i )
+//    for ( int i = 0; i < 100; ++i )
     {
         const int maxMessagesToSend = 1 + rand() % 32;
 
@@ -187,15 +189,17 @@ void soak_test()
             if ( !messageChannel->CanSendMessage() )
                 break;
 
-            int value = rand() % 10000;
+            //int value = rand() % 10000;
 
-            if ( value < 5000 )
+            //if ( value < 5000 )
             {
                 // bitpacked message
                 auto message = new TestMessage();
+//                printf( "allocate message %p (send)\n", message );
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
+            /*
             else if ( value < 9999 )
             {
                 // small block
@@ -214,12 +218,17 @@ void soak_test()
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
+            */
             
             sendMessageId++;
             numMessagesSent++;
         }
 
+//        printf( "before write packet\n" );
+
         ConnectionPacket * writePacket = connection.WritePacket();
+
+//        printf( "after write packet\n" );
 
         uint8_t buffer[MaxPacketSize];
 
@@ -230,6 +239,10 @@ void soak_test()
 
         delete writePacket;
 
+//        printf( "deleted writePacket\n" );
+
+//        printf( "before read packet\n" );
+
         ReadStream readStream( buffer, MaxPacketSize );
         auto readPacket = new ConnectionPacket( PACKET_Connection, &channelStructure );
         readPacket->SerializeRead( readStream );
@@ -237,7 +250,11 @@ void soak_test()
 
         connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
 
+//        printf( "after read packet\n" );
+
         delete readPacket;
+
+//        printf( "deleted read packet\n" );
 
         connection.Update( timeBase );
 
@@ -286,6 +303,8 @@ void soak_test()
             }
 
             numMessagesReceived++;
+
+//            printf( "deallocater message %p (received)\n", message );
 
             delete message;
         }

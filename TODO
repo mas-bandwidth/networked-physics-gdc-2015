@@ -2,9 +2,35 @@ DONE:
 
 TODO:
 
-    Now lets profile and see if it has made any improvement...
+    ------------------
 
-    --------------
+    Could a more cache efficient data structure make this
+    a faster? Almost certainly. For example, if CanSendMessage
+    is slow, then perhaps its walking a lot of memory to query
+    a single bool, and having that as a bit array (hot-cold split)
+    could be a good idea.
+
+    See if a hot cold split for the sliding window makes perf issues go away.
+
+    I'm thinking a 32bit sequence + flags header, separate from the actual
+    data which is in a different struct. Seems like a good idea!!!
+
+    ------------------
+
+
+
+
+    ------------------
+
+    My suspicion is that the GetData is actually walking across
+    almost the entirety of the fragment data structure on each
+    write looking for fragments to send, and oldest fragment
+    and that this is the primary cost right now.
+
+    If I fix this it should normalize so the serialize read/write
+    are the most expensive again.
+
+    ------------------
 
     Things that would have the most impact on the profiler:
 
@@ -12,11 +38,25 @@ TODO:
        so they go through the scratch allocator instead. (DONE)
 
     2. Remove the std::vector usage inside the reliable channel 
-       sliding windows and use scratch allocator instead.
+       sliding windows and use scratch allocator instead (DONE)
+
+*** 2.5. Don't be stupid about how iteration across fragments is performed. ***
 
     3. Convert the actual messages themselves to be allocated 
        via specific message allocator passed in to config
        (initially make this the scratch...)
+
+    4. Move the block itself to be a raw pointer instead of a vector.
+       Should we have a standardized block allocator? standard message
+       allocator, or should this be a config thing? Can a block message
+       take the block allocator pointer with it? Sure...
+
+    ------------------
+
+    I really need to create a pool allocator, then use this for the blocks
+
+    This way I can completely remove the malloc/free from the profile SoakTest
+    and verify that everything is actually working correctly.
 
     ------------------
 

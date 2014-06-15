@@ -293,6 +293,11 @@ namespace protocol
                 value = (decltype(value)) uint32_value;         \
         } while (0)
 
+    template <typename Stream> void serialize_bytes( Stream & stream, uint8_t * data, int bytes )
+    {
+        stream.SerializeBytes( data, bytes );        
+    }
+
     template <typename Stream> void serialize_bool( Stream & stream, bool & value )
     {
         serialize_bits( stream, value, 1 );

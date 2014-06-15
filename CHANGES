@@ -1,3 +1,201 @@
+Saturday Afternoon, June 14th, 2014:
+------------------------------------
+
+    My guess is that we may not be deleting *sent* messages
+
+    How can I determine if this is the case? Log the messages
+    allocated for send, and the deletes of messages via the
+    destructor in the packet.
+
+    Do they match up? :)
+
+    Not at all. It appears that sent messages are not being deleted!
+
+    It seems I'm just not setting the "releaseMessages" flag.
+
+    It appears the memory leak has gone away.
+
+    Will the random hang go away as well?
+
+    No. Looks like the random hang is actually in the scratch allocator.
+
+    Replace scratch with malloc allocator, and see if the bug goes away.
+
+    Yes. That fixed it. My guess is that there is either a bug
+    in the scratch allocator, or a memory trash that is benign
+    for malloc, but for scratch is fatal.
+
+    Profile results with #define PROFILE 1 (no printf)
+
+        22.3% - Connection::ReadPacket
+        19.4% - ConnectionPacket::SerializeRead
+        12.6% - Connection::WritePacket
+         8.0% - ConnectionPacket::SerializeWrite
+         7.7% - ReliableMessageChannel::SendMessage
+         3.0% - ConnectionPacket::~ConnectionPacket
+         2.6% - ReliableMessageChannel::ReceiveMessage
+         2.3% - ReliableMessageChannel::CanSendMessage
+         0.5% - std::vector<ChannelData*> <--- REMOVE THIS BS.
+
+    Basically it's looking pretty good. Perhaps the ReadPacket
+    which calls into "ProcessAcks" is a bit slower than it could
+    be, but then again, it's doing *actual work*.
+
+    And if "CanSendMessage" which is basically a mod operation
+    and a single memory lookup is 2.3% -- then something that
+    is 10X as expensive as a function that does *no work at all*
+    is probably not that bad.
+
+    It's curious why the ReadPacket and Write packet are slower
+    but it's clear that the majority of the cost here is probably
+    cache misses.
+
+
+Saturday Morning, June 14th, 2014:
+----------------------------------
+
+    Now lets profile and see if it has made any improvement...
+
+    It seems a lot of the cost is still there.
+
+    My guess is that the std::vector of messages inside the
+    sliding window POD struct is actually the cause.
+
+    Replace this with a standard pointer.
+
+    Done. Lets see how the performance has changed...
+
+        91.0% - Connection::ReadPacket -> ~ReliableMessageChannelData -> ScratchAllocator::Free (???!)
+         2.9% - ConnectionPacket::SerializeRead
+         2.2% - ConnectionPacket::SerializeWrite
+         0.8% - std::vector block allocate
+         0.8% - BlockMessage::~BlockMessage
+         0.2% - Connection::WritePacket
+
+    It seems that the memory leak has been fixed.
+
+    But the result above doesn't make a lot of sense -- the scratch allocator
+    just *cannot* be that slow...
+
+    I'm suspecting that we have an actual problem with the profiler here.
+
+    Nope. It's a problem with the soak test. It's getting *STUCK*
+    at a certain point, and when it gets stuck here packets stop
+    being written/read as far as I can tell... hence the result.
+
+    Need to debug this!
+
+    Definitely having some problem with scratch allocator being slow.
+
+    It's O(n) and seems to under normal usage have a lot of iterations
+    updating the scratch pointer, eg. > 32 iterations.
+
+    Is this legitimately a problem? It's probably better to not
+    perform *any* scratch allocation work for the message ids in 
+    the channel data, eg. we could have a pool allocator for the
+    fragments, and a flat array indexed by sliding window index
+    for the message ids.
+
+    Would this improve performance? Probably.
+
+    Scratch should only be used for things which are typically
+    freed in the same frame, in my opinion, eg. temp data.
+
+    Tried the microallocator from Jon Ratcliff
+
+    https://code.google.com/p/microallocator/
+
+    It appears to be slower than normal alloc?!
+
+    Seems that the most important thing for me to do is to NOT
+    perform any runtime allocations or work at all, for normal
+    operation of the reliable message channel, if I can avoid it.
+
+    This wil be the absolute fastest, at the cost of memory, which
+    I have a lot of anyway!
+
+    Remove the std::vector used for sent packet data!!! It's really slow.
+
+    Here is the actual cost, before the bug hits, with -O3, scratch memory is a red herring...
+
+        (printf taking up rest...)
+        27.4% - Connection::ReadPacket (most of which is allocations/frees etc...)
+        10.8% - ConnectionPacket::SerializeRead
+         9.9% - Connection::WritePacket
+         1.9% - ConnectionPacket::SerializeWrite
+         1.8% - BlockMessage::~BlockMessage
+         1.1% - ReliableMessageChannel::SendMessage
+         1.0% - ReliableMessageChannel::SendBlock
+         0.6% - ConnectionPacket::~ConnectionPacket
+         0.5% - ReliableMessageChannel::CanSendMessage
+         0.5% - ReliableMessageChannel::ReceiveMessage
+         0.1% - std::vector<ChannelData> alloc
+
+    Now normalizing to get back to 100%:
+
+        Total is 55.6%, so to normalize, multiply by 100.0/55.6:
+
+        49.3% - Connection::ReadPacket (seems a lot!!!!)
+        19.4% - ConnectionPacket::SerializeRead
+        17.8% - Connection::WritePacket
+         3.4% - ConnectionPacket::SerializeWrite
+         etc.
+
+    So basically the important thing is to try to work out why
+    Connection::ReadPacket is so slow. I don't think it's doing
+    enough work to justify being several times the cost of the
+    other things.
+
+    Tried disabling mutex for micro allocation. It's now significantly
+    faster than the normal malloc -- eg. 777ms compared to 2500ms malloc.
+
+    Added MicroAlloc licence to LICENCE
+
+    Convert remaining parts of reliable message channel to not use 
+    allocations or std::vector, eg. sent packets.
+
+    Converted the messageIds std::vector inside SentPacketData
+    to be a pointer to worst case allocated flat array of uint16_t
+
+    Now profile again:
+
+        12.9% - Connection::ReadPacket
+        11.3% - ConnectionPacket::~ConnectionPacket (???!)    --- scratch deallocate
+         5.3% - ConnectionPacket::SerializeRead
+         4.4% - Connection::WritePacket
+         2.1% - ConnectionPacket::SerializeWrite
+         1.8% - BlockMessage::~BlockMessage
+         1.5% - ReliableMessageChannel::SendMessage
+         etc...
+
+    ~ConnectionPacket now seems excessively high?
+
+    My guess is that performance *may* be depending on the particular mix
+    of fragments vs. message serialization I'm getting. Might be a good idea
+    to drop down exclusively to message serialization and profile that.
+
+    At least can see the baseline without fragment silly memory walk cost.
+
+    Yep. With just messages it's looking totally reasonable.
+
+    Suspicion confirmed. It's the fragment walk that is expensive.
+
+    Here is the profile with just messages being sent:
+
+        6.1% - Connection::ReadPacket
+        4.1% - ConnectionPacket::SerializeRead
+        2.8% - Connection::WritePacket
+        1.8% - ConnectionPacket::SerializeWrite
+        1.3% - ConnectionPacket::SendMessage
+        0.5% - ReliableMessageChannel::ReceiveMessage
+        0.4% - ConnectionPacket::~ConnectionPacket
+        0.3% - ReliableMessageChannel::CanSendMessage
+
+    Note that we still seem to have a memory leak. What could it be?
+
+    Also, the random stall still happens when just sending messages.
+
+
 Friday Evening, June 13th, 2014:
 --------------------------------
 
