@@ -11,9 +11,6 @@
 
 namespace protocol
 {
-    const int BlockMessageType = 0;
-    const int MaxSmallBlockSize = 256;
-
     class Message : public Object
     {
     public:

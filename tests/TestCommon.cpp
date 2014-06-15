@@ -167,7 +167,7 @@ void test_factory()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_sequence();
     test_sliding_window();

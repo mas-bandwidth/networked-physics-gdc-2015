@@ -175,7 +175,7 @@ void test_dns_resolve_failure()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_dns_resolve();
     test_dns_resolve_with_port();

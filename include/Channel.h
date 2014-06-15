@@ -39,6 +39,8 @@ namespace protocol
 
         virtual void Reset() = 0;
 
+        virtual int GetError() const = 0;
+
         virtual ChannelData * GetData( uint16_t sequence ) = 0;
 
         virtual bool ProcessData( uint16_t sequence, ChannelData * data ) = 0;
@@ -59,6 +61,8 @@ namespace protocol
     public:
 
         void Reset() {}
+
+        int GetError() const { return 0; }
 
         ChannelData * GetData( uint16_t sequence ) { return nullptr; }
 
@@ -93,8 +97,8 @@ namespace protocol
         };
 
         bool m_locked = false;
-
-        std::vector<ChannelEntry> m_channelEntries;
+        int m_numChannels = 0;
+        ChannelEntry m_channelEntries[MaxChannels];
 
     public:
 
@@ -106,12 +110,15 @@ namespace protocol
             if ( m_locked )
                 return;
 
-            ChannelEntry entry;
+            assert( m_numChannels < MaxChannels - 1 );
+
+            ChannelEntry & entry = m_channelEntries[m_numChannels];
+
             entry.name = name;
             entry.createChannel = createChannel;
             entry.createChannelData = createChannelData;
-            
-            m_channelEntries.push_back( entry );
+
+            m_numChannels++;
         }
 
         void Lock()
@@ -126,14 +133,14 @@ namespace protocol
 
         int GetNumChannels()
         {
-            return m_channelEntries.size();
+            return m_numChannels;
         }
 
         Channel * CreateChannel( int channelIndex )
         {
             assert( m_locked );
             assert( channelIndex >= 0 );
-            assert( channelIndex < m_channelEntries.size() );
+            assert( channelIndex < m_numChannels );
             return m_channelEntries[channelIndex].createChannel();
         }
 
@@ -141,7 +148,7 @@ namespace protocol
         {
             assert( m_locked );
             assert( channelIndex >= 0 );
-            assert( channelIndex < m_channelEntries.size() );
+            assert( channelIndex < m_numChannels );
             return m_channelEntries[channelIndex].createChannelData();
         }
     };

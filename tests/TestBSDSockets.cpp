@@ -173,6 +173,18 @@ void test_bsd_sockets_send_and_receive_ipv4()
 
     int iterations = 0;
 
+    ConnectPacket connectPacketTemplate;
+    UpdatePacket updatePacketTemplate;
+    DisconnectPacket disconnectPacketTemplate;
+
+    connectPacketTemplate.a = 2;
+    connectPacketTemplate.b = 6;
+    connectPacketTemplate.c = -1;
+
+    updatePacketTemplate.timestamp = 500;
+
+    disconnectPacketTemplate.x = -100;
+
     while ( true )
     {
         assert ( iterations++ < 10 );
@@ -181,13 +193,9 @@ void test_bsd_sockets_send_and_receive_ipv4()
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();
 
-        connectPacket->a = 2;
-        connectPacket->b = 6;
-        connectPacket->c = -1;
-
-        updatePacket->timestamp = 500;
-
-        disconnectPacket->x = -100;
+        *connectPacket = connectPacketTemplate;
+        *updatePacket = updatePacketTemplate;
+        *disconnectPacket = disconnectPacketTemplate;
 
         interface.SendPacket( address, connectPacket );
         interface.SendPacket( address, updatePacket );
@@ -210,7 +218,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
                 case PACKET_Connect:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                    assert( *recv_connectPacket == *connectPacket );
+                    assert( *recv_connectPacket == connectPacketTemplate );
                     receivedConnectPacket = true;
                 }
                 break;
@@ -218,7 +226,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
                 case PACKET_Update:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                    assert( *recv_updatePacket == *updatePacket );
+                    assert( *recv_updatePacket == updatePacketTemplate );
                     receivedUpdatePacket = true;
                 }
                 break;
@@ -226,7 +234,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
                 case PACKET_Disconnect:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                    assert( *recv_disconnectPacket == *disconnectPacket );
+                    assert( *recv_disconnectPacket == disconnectPacketTemplate );
                     receivedDisconnectPacket = true;
                 }
                 break;
@@ -269,6 +277,18 @@ void test_bsd_sockets_send_and_receive_ipv6()
     bool receivedUpdatePacket = false;
     bool receivedDisconnectPacket = false;
 
+    ConnectPacket connectPacketTemplate;
+    UpdatePacket updatePacketTemplate;
+    DisconnectPacket disconnectPacketTemplate;
+
+    connectPacketTemplate.a = 2;
+    connectPacketTemplate.b = 6;
+    connectPacketTemplate.c = -1;
+
+    updatePacketTemplate.timestamp = 500;
+
+    disconnectPacketTemplate.x = -100;
+
     int iterations = 0;
 
     while ( true )
@@ -279,13 +299,9 @@ void test_bsd_sockets_send_and_receive_ipv6()
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();
 
-        connectPacket->a = 2;
-        connectPacket->b = 6;
-        connectPacket->c = -1;
-
-        updatePacket->timestamp = 500;
-
-        disconnectPacket->x = -100;
+        *connectPacket = connectPacketTemplate;
+        *updatePacket = updatePacketTemplate;
+        *disconnectPacket = disconnectPacketTemplate;
 
         interface.SendPacket( address, connectPacket );
         interface.SendPacket( address, updatePacket );
@@ -308,7 +324,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
                 case PACKET_Connect:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                    assert( *recv_connectPacket == *connectPacket );
+                    assert( *recv_connectPacket == connectPacketTemplate );
                     receivedConnectPacket = true;
                 }
                 break;
@@ -316,7 +332,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
                 case PACKET_Update:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                    assert( *recv_updatePacket == *updatePacket );
+                    assert( *recv_updatePacket == updatePacketTemplate );
                     receivedUpdatePacket = true;
                 }
                 break;
@@ -324,7 +340,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
                 case PACKET_Disconnect:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                    assert( *recv_disconnectPacket == *disconnectPacket );
+                    assert( *recv_disconnectPacket == disconnectPacketTemplate );
                     receivedDisconnectPacket = true;
                 }
                 break;
@@ -374,6 +390,18 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
     bool receivedUpdatePacket = false;
     bool receivedDisconnectPacket = false;
 
+    ConnectPacket connectPacketTemplate;
+    UpdatePacket updatePacketTemplate;
+    DisconnectPacket disconnectPacketTemplate;
+
+    connectPacketTemplate.a = 2;
+    connectPacketTemplate.b = 6;
+    connectPacketTemplate.c = -1;
+
+    updatePacketTemplate.timestamp = 500;
+
+    disconnectPacketTemplate.x = -100;
+
     int iterations = 0;
 
     while ( true )
@@ -384,13 +412,9 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();
 
-        connectPacket->a = 2;
-        connectPacket->b = 6;
-        connectPacket->c = -1;
-
-        updatePacket->timestamp = 500;
-
-        disconnectPacket->x = -100;
+        *connectPacket = connectPacketTemplate;
+        *updatePacket = updatePacketTemplate;
+        *disconnectPacket = disconnectPacketTemplate;
 
         interface_sender.SendPacket( receiver_address, connectPacket );
         interface_sender.SendPacket( receiver_address, updatePacket );
@@ -414,7 +438,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
                 case PACKET_Connect:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                    assert( *recv_connectPacket == *connectPacket );
+                    assert( *recv_connectPacket == connectPacketTemplate );
                     receivedConnectPacket = true;
                 }
                 break;
@@ -422,7 +446,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
                 case PACKET_Update:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                    assert( *recv_updatePacket == *updatePacket );
+                    assert( *recv_updatePacket == updatePacketTemplate );
                     receivedUpdatePacket = true;
                 }
                 break;
@@ -430,7 +454,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
                 case PACKET_Disconnect:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                    assert( *recv_disconnectPacket == *disconnectPacket );
+                    assert( *recv_disconnectPacket == disconnectPacketTemplate );
                     receivedDisconnectPacket = true;
                 }
                 break;
@@ -480,6 +504,18 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
     bool receivedUpdatePacket = false;
     bool receivedDisconnectPacket = false;
 
+    ConnectPacket connectPacketTemplate;
+    UpdatePacket updatePacketTemplate;
+    DisconnectPacket disconnectPacketTemplate;
+
+    connectPacketTemplate.a = 2;
+    connectPacketTemplate.b = 6;
+    connectPacketTemplate.c = -1;
+
+    updatePacketTemplate.timestamp = 500;
+
+    disconnectPacketTemplate.x = -100;
+
     int iterations = 0;
 
     while ( true )
@@ -490,13 +526,9 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
         auto updatePacket = new UpdatePacket();
         auto disconnectPacket = new DisconnectPacket();
 
-        connectPacket->a = 2;
-        connectPacket->b = 6;
-        connectPacket->c = -1;
-
-        updatePacket->timestamp = 500;
-
-        disconnectPacket->x = -100;
+        *connectPacket = connectPacketTemplate;
+        *updatePacket = updatePacketTemplate;
+        *disconnectPacket = disconnectPacketTemplate;
 
         interface_sender.SendPacket( receiver_address, connectPacket );
         interface_sender.SendPacket( receiver_address, updatePacket );
@@ -520,7 +552,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
                 case PACKET_Connect:
                 {
                     auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                    assert( *recv_connectPacket == *connectPacket );
+                    assert( *recv_connectPacket == connectPacketTemplate );
                     receivedConnectPacket = true;
                 }
                 break;
@@ -528,7 +560,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
                 case PACKET_Update:
                 {
                     auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                    assert( *recv_updatePacket == *updatePacket );
+                    assert( *recv_updatePacket == updatePacketTemplate );
                     receivedUpdatePacket = true;
                 }
                 break;
@@ -536,7 +568,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
                 case PACKET_Disconnect:
                 {
                     auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                    assert( *recv_disconnectPacket == *disconnectPacket );
+                    assert( *recv_disconnectPacket == disconnectPacketTemplate );
                     receivedDisconnectPacket = true;
                 }
                 break;
@@ -554,7 +586,7 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     if ( !InitializeSockets() )
     {

@@ -12,6 +12,12 @@
 
 namespace protocol
 {
+    enum
+    {
+        RELIABLE_MESSAGE_CHANNEL_NO_ERROR = 0,
+        RELIABLE_MESSAGE_CHANNEL_ERROR_SEND_QUEUE_FULL
+    };
+
     struct ReliableMessageChannelConfig
     {
         ReliableMessageChannelConfig()
@@ -48,24 +54,24 @@ namespace protocol
 
     class ReliableMessageChannelData : public ChannelData
     {
-        const ReliableMessageChannelConfig & config;
-
         ReliableMessageChannelData( const ReliableMessageChannelData & other );
         ReliableMessageChannelData & operator = ( const ReliableMessageChannelData & other );
 
     public:
 
+        const ReliableMessageChannelConfig & config;
+
         Message ** messages = nullptr;         // array of messages.
         uint8_t * fragment = nullptr;          // the  fragment data. only valid if sending large block.
         uint64_t numMessages : 16;             // number of messages in array.
-        uint64_t largeBlock : 1;               // true if currently sending a large block.
+        uint64_t fragmentId : 16;              // fragment id. valid if sending large block.
         uint64_t blockSize : 32;               // block size in bytes. valid if sending large block.
         uint64_t blockId : 16;                 // block id. valid if sending large block.
-        uint64_t fragmentId : 16;              // fragment id. valid if sending large block.
+        uint64_t largeBlock : 1;               // true if currently sending a large block.
         uint64_t releaseMessages : 1;          // 1 if this channel data should release the messages in destructor.
 
         ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
-            : config( _config ), numMessages(0), largeBlock(0), blockSize(0), blockId(0), fragmentId(0), releaseMessages(0)
+            : config( _config ), numMessages(0), fragmentId(0), blockSize(0), blockId(0), largeBlock(0), releaseMessages(0)
         {
 //            printf( "create reliable message channel data: %p\n", this );
         }
@@ -142,9 +148,10 @@ namespace protocol
                 {
                     Allocator & a = memory::default_scratch_allocator();
                     messages = (Message**) a.Allocate( numMessages * sizeof( Message* ) );
-                    assert( messages );
 //                    printf( "allocate messages %p (serialize read)\n", messages );
                 }
+
+                assert( messages );
 
                 int messageTypes[numMessages];
                 uint16_t messageIds[numMessages];
@@ -201,6 +208,7 @@ namespace protocol
                         messages[i]->SetId( messageIds[i] );
                     }
 
+                    assert( messages[i] );
                     serialize_object( stream, *messages[i] );
                 }
             }
@@ -244,11 +252,11 @@ namespace protocol
             uint16_t * messageIds;
             uint64_t numMessageIds : 16;                 // number of messages in this packet
             uint64_t sequence : 16;                      // this is the packet sequence #
-            uint64_t acked : 1;                          // 1 if this sent packet has been acked
-            uint64_t valid : 1;
-            uint64_t largeBlock : 1;                     // if 1 then this sent packet contains a large block fragment
             uint64_t blockId : 16;                       // block id. valid only when sending large block.
             uint64_t fragmentId : 16;                    // fragment id. valid only when sending large block.
+            uint64_t acked : 1;                          // 1 if this sent packet has been acked
+            uint64_t valid : 1;                          // 1 if this entry is valid in the sliding window
+            uint64_t largeBlock : 1;                     // 1 if this sent packet contains a large block fragment
             SentPacketEntry() : valid(0) {}
         };
 
@@ -300,6 +308,8 @@ namespace protocol
             int blockSize;                              // send block size in bytes
             uint16_t blockId;                           // the message id for the current large block being sent
             // todo: replace std::vector usage here
+            // and make sure we allocate something large enough
+            // for the maximum potential # fragments.
             std::vector<SendFragmentData> fragments;    // per-fragment data for send
         };
 
@@ -364,6 +374,8 @@ namespace protocol
 
         const ReliableMessageChannelConfig m_config;                        // constant configuration data
 
+        int m_error = 0;                                                    // current error state. set to non-zero if an error occurs.
+
         int m_maxBlockFragments;                                            // maximum number of fragments per-block
         int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
 
@@ -416,9 +428,8 @@ namespace protocol
 
         ~ReliableMessageChannel()
         {
-            // todo: if there are any messages in the send queue or receive queue 
-            // they need to be released and deleted if their ref count has reached zero!
-
+            Reset();
+            
             assert( m_sendQueue );
             assert( m_sentPackets );
             assert( m_receiveQueue );
@@ -440,6 +451,34 @@ namespace protocol
             m_sendMessageId = 0;
             m_receiveMessageId = 0;
             m_oldestUnackedMessageId = 0;
+
+            for ( int i = 0; i < m_sendQueue->GetSize(); ++i )
+            {
+                auto entry = m_sendQueue->GetAtIndex( i );
+                if ( entry && entry->message )
+                {
+                    entry->message->Release();
+                    if ( entry->message->GetRefCount() == 0 )
+                    {
+//                      printf( "deallocate message %p (reset send queue)\n", entry->message );
+                        delete entry->message;
+                    }
+                }
+            }
+
+            for ( int i = 0; i < m_receiveQueue->GetSize(); ++i )
+            {
+                auto entry = m_receiveQueue->GetAtIndex( i );
+                if ( entry && entry->message )
+                {
+                    entry->message->Release();
+                    if ( entry->message->GetRefCount() == 0 )
+                    {
+//                      printf( "deallocate message %p (reset receive queue)\n", entry->message );
+                        delete entry->message;
+                    }
+                }
+            }
 
             m_sendQueue->Reset();
             m_sentPackets->Reset();
@@ -466,9 +505,8 @@ namespace protocol
 
             if ( !CanSendMessage() )
             {
-                // todo: we need a way to set a fatal error here
-                // the connection must be torn down at this point
-                // we cannot continue any further.
+                printf( "reliable message send queue overflow\n" );
+                m_error = RELIABLE_MESSAGE_CHANNEL_ERROR_SEND_QUEUE_FULL;
                 delete message;
                 return;
             }
@@ -559,6 +597,11 @@ namespace protocol
             return message;
         }
 
+        int GetError() const 
+        {
+            return m_error;
+        }
+
         ChannelData * CreateData()
         {
             return new ReliableMessageChannelData( m_config );
@@ -599,8 +642,7 @@ namespace protocol
                     assert( m_sendLargeBlock.numFragments >= 0 );
                     assert( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
 
-                    for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
-                        m_sendLargeBlock.fragments[i] = SendFragmentData();
+                    memset( &m_sendLargeBlock.fragments[0], 0, sizeof( SendFragmentData ) * m_sendLargeBlock.numFragments );
                 }
 
                 assert( m_sendLargeBlock.active );
@@ -839,8 +881,7 @@ namespace protocol
                     m_receiveLargeBlock.blockSize = data->blockSize;
                     m_receiveLargeBlock.block = new Block( m_receiveLargeBlock.blockSize );
                     
-                    for ( int i = 0; i < numFragments; ++i )
-                        m_receiveLargeBlock.fragments[i] = ReceiveFragmentData();
+                    memset( &m_receiveLargeBlock.fragments[0], 0, sizeof( ReceiveFragmentData ) * numFragments );
                 }
 
                 assert( m_receiveLargeBlock.active );

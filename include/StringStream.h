@@ -142,7 +142,7 @@ namespace protocol
 			va_list args;
 			
 			va_start(args, format);
-			int n = vsnprintf(NULL, 0, format, args);
+			int n = vsnprintf( nullptr, 0, format, args );
 			va_end(args);
 
 			uint32_t end = array::size(b);

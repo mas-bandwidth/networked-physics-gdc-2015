@@ -163,7 +163,7 @@ void test_acks()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_connection();
     test_acks();

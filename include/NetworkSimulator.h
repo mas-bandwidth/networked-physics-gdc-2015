@@ -102,13 +102,11 @@ namespace protocol
 
             const int index = m_packetNumber % m_config.numPackets;
 
-            // todo: what the fuck? packet loss is disabled?!
-
-//            if ( random_int( 0, 100 ) <= m_config.packetLoss )
-//            {
-//                delete packet;
-//                return;
-//            }
+            if ( random_int( 0, 100 ) <= m_state.packetLoss )
+            {
+                delete packet;
+                return;
+            }
 
             const float delay = m_state.latency + random_float( -m_state.jitter, +m_state.jitter );
 

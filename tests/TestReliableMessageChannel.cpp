@@ -11,7 +11,7 @@ enum PacketType
 
 enum MessageType
 {
-    MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
+    MESSAGE_Block = BlockMessageType,
     MESSAGE_Test
 };
 
@@ -610,7 +610,7 @@ void test_reliable_message_channel_mixture()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_reliable_message_channel_messages();
     test_reliable_message_channel_small_blocks();

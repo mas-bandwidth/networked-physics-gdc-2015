@@ -43,6 +43,16 @@ namespace protocol
         Factory<Packet> * packetFactory;            // packet factory (required)
     };
 
+    enum BSDSocketError
+    {
+        BSD_SOCKET_ERROR_NONE,
+        BSD_SOCKET_CREATE_FAILED,
+        BSD_SOCKET_SOCKOPT_IPV6_ONLY_FAILED,
+        BSD_SOCKET_BIND_IPV6_FAILED,
+        BSD_SOCKET_BIND_IPV4_FAILED,
+        BSD_SOCKET_SET_NON_BLOCKING_FAILED
+    };
+
     class BSDSockets : public NetworkInterface
     {
     public:
@@ -62,6 +72,7 @@ namespace protocol
         const BSDSocketsConfig m_config;
 
         int m_socket;
+        BSDSocketError m_error;
         PacketQueue m_send_queue;
         PacketQueue m_receive_queue;
         uint8_t * m_receiveBuffer;
@@ -80,7 +91,7 @@ namespace protocol
 
             m_receiveBuffer = new uint8_t[m_config.maxPacketSize];
 
-//            printf( "creating bsd sockets interface on port %d\n", m_config.port );
+            m_error = BSD_SOCKET_ERROR_NONE;
 
             // create socket
 
@@ -90,18 +101,22 @@ namespace protocol
 
             if ( m_socket <= 0 )
             {
-                //printf( "create socket failed: %s\n", strerror( errno ) );
-
-                // todo: set an error flag
-                assert( false );
-           }
+                printf( "create socket failed: %s\n", strerror( errno ) );
+                m_error = BSD_SOCKET_CREATE_FAILED;
+                return;
+            }
 
             // force IPv6 only if necessary
 
             if ( m_config.family == AF_INET6 )
             {
                 int yes = 1;
-                setsockopt( m_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&yes, sizeof(yes) );
+                if ( setsockopt( m_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&yes, sizeof(yes) ) != 0 )
+                {
+                    printf( "failed to set ipv6 only sockopt\n" );
+                    m_error = BSD_SOCKET_SOCKOPT_IPV6_ONLY_FAILED;
+                    return;
+                }
             }
 
             // bind to port
@@ -117,10 +132,9 @@ namespace protocol
 
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
-                    printf( "bind socket failed: %s\n", strerror( errno ) );
-
-                    // todo: set an error flag
-                    assert( false );
+                    printf( "bind socket failed (ipv6): %s\n", strerror( errno ) );
+                    m_socket = BSD_SOCKET_BIND_IPV6_FAILED;
+                    return;
                 }
             }
             else if ( m_config.family == AF_INET )
@@ -134,10 +148,9 @@ namespace protocol
 
                 if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
                 {
-                    printf( "bind socket failed: %s\n", strerror( errno ) );
-                    
-                    // todo: set an error flag
-                    assert( false );
+                    printf( "bind socket failed (ipv4): %s\n", strerror( errno ) );
+                    m_error = BSD_SOCKET_BIND_IPV4_FAILED;
+                    return;
                 }
             }
 
@@ -148,10 +161,9 @@ namespace protocol
                 int nonBlocking = 1;
                 if ( fcntl( m_socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
                 {
-                    //printf( "failed to make socket non-blocking\n" );
-
-                    // todo: set an error flag
-                    assert( false );
+                    printf( "failed to make socket non-blocking\n" );
+                    m_error = BSD_SOCKET_SET_NON_BLOCKING_FAILED;
+                    return;
                 }
             
             #elif PLATFORM == PLATFORM_WINDOWS
@@ -159,10 +171,9 @@ namespace protocol
                 DWORD nonBlocking = 1;
                 if ( ioctlsocket( m_socket, FIONBIO, &nonBlocking ) != 0 )
                 {
-                    //printf( "failed to make socket non-blocking\n" );
-
-                    // todo: set an error flag
-                    assert( false );
+                    printf( "failed to make socket non-blocking\n" );
+                    m_error = BSD_SOCKET_SET_NON_BLOCKING_FAILED;
+                    return;
                 }
 
             #else
@@ -174,8 +185,11 @@ namespace protocol
 
         ~BSDSockets()
         {
-            assert( m_receiveBuffer );
-            delete [] m_receiveBuffer;
+            if ( m_receiveBuffer )
+            {
+                delete [] m_receiveBuffer;
+                m_receiveBuffer = nullptr;
+            }
 
             if ( m_socket != 0 )
             {
@@ -190,8 +204,20 @@ namespace protocol
             }
         }
 
+        bool IsError() const
+        {
+            return m_error != BSD_SOCKET_ERROR_NONE;
+        }
+
+        bool GetError() const
+        {
+            return m_error;
+        }
+
         void SendPacket( const Address & address, Packet * packet )
         {
+            if ( m_error )
+                return;
             assert( packet );
             assert( address.IsValid() );
             packet->SetAddress( address );
@@ -200,6 +226,8 @@ namespace protocol
 
         Packet * ReceivePacket()
         {
+            if ( m_error )
+                return nullptr;
             if ( m_receive_queue.empty() )
                 return nullptr;
             auto packet = m_receive_queue.front();
@@ -209,6 +237,9 @@ namespace protocol
 
         void Update( const TimeBase & timeBase )
         {
+            if ( m_error )
+                return;
+
             SendPackets();
 
             ReceivePackets();
@@ -290,9 +321,6 @@ namespace protocol
 //                printf( "received bytes: %d\n", received_bytes );
 
                 typedef ReadStream Stream;
-
-                // todo: we should move read protocol id check *here*
-                // this way we can do any work if a stray UDP packet comes our way
 
                 Stream stream( m_receiveBuffer, m_config.maxPacketSize );
 

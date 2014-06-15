@@ -116,7 +116,7 @@ void test_stream()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_stream();
 

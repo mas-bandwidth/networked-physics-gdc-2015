@@ -1,66 +1,55 @@
 DONE:
 
+    Removed std::vector usage from channel structure.
+
+    Add Constants.h and put stuff there that are static constants defining library max
+
+    Set MaxChannels = 8.
+
+    Replace with static array of size MaxChannels
+
+    Remove the dynamic allocation of per-channel data in ConnectionPacket etc.
+
+    Remove the dynamic per-channel allocation in Connection class.
+
+    Clean up the "Reset" inside 
+
+    Added "GetError" int to Channel so a channel can indicate they are in an error condition,
+    back to the connection on update.
+
 TODO:
 
-    ------------------
+    If any channel is in error, tear down the connection and go into an error state.
+    
+    ---------------
 
-    Could a more cache efficient data structure make this
-    a faster? Almost certainly. For example, if CanSendMessage
-    is slow, then perhaps its walking a lot of memory to query
-    a single bool, and having that as a bit array (hot-cold split)
-    could be a good idea.
+    TestClientServer.cpp is broken because it's not allocating foundation memory for tests.
 
-    See if a hot cold split for the sliding window makes perf issues go away.
+    Pass over remaining todos and fix them.
 
-    I'm thinking a 32bit sequence + flags header, separate from the actual
-    data which is in a different struct. Seems like a good idea!!!
+    Pass over remaining std::vector and see if they can be removed easily.
 
-    ------------------
+    -------------------
 
+    Work out how to best replace existing new/delete with foundation allocators.
 
+    Look for runtime allocations, that can't easily be moved to pools etc.
 
+    Do not allocate at runtime!
 
-    ------------------
+    Don't do additional allocations for packets, so consider
+    setting a maximum # of channels per-connection, eg. 16
+    and hardcode the channel data inside the packet? Simpler.
 
-    My suspicion is that the GetData is actually walking across
-    almost the entirety of the fragment data structure on each
-    write looking for fragments to send, and oldest fragment
-    and that this is the primary cost right now.
+    Work towards getting packets allocated via allocator
+    passed in to the connection, eg. this will allow
+    a specific pool strategy for packet allocation.
 
-    If I fix this it should normalize so the serialize read/write
-    are the most expensive again.
+    Work towards getting messages allocated using an
+    custom allocator instance specified in config.
 
-    ------------------
-
-    Things that would have the most impact on the profiler:
-
-    1. Rework the allocation and free of "fragments"
-       so they go through the scratch allocator instead. (DONE)
-
-    2. Remove the std::vector usage inside the reliable channel 
-       sliding windows and use scratch allocator instead (DONE)
-
-*** 2.5. Don't be stupid about how iteration across fragments is performed. ***
-
-    3. Convert the actual messages themselves to be allocated 
-       via specific message allocator passed in to config
-       (initially make this the scratch...)
-
-    4. Move the block itself to be a raw pointer instead of a vector.
-       Should we have a standardized block allocator? standard message
-       allocator, or should this be a config thing? Can a block message
-       take the block allocator pointer with it? Sure...
-
-    ------------------
-
-    I really need to create a pool allocator, then use this for the blocks
-
-    This way I can completely remove the malloc/free from the profile SoakTest
-    and verify that everything is actually working correctly.
-
-    ------------------
-
-    TestBSDSockets.cpp is broken again now that I'm properly deleting packets!
+    Work towards getting blocks allocated from the heap,
+    and limit the # of blocks allocated at a time.
 
     ------------------
 
@@ -70,33 +59,6 @@ TODO:
 
     Use the bitsquid allocators to track down memory leaks, eg.
     make sure each individual unit test checks for leaks.
-
-    --------------------
-
-
-
-
-
-
-
-
-    --------------------
-
-    Optimization for fragments, track oldest unacked fragment id, and start there
-    and go left to right to search for fragments to send.
-
-    --------------------
-
-    Add a new fragmentSendWindow config, eg. 64 and only look this far past
-    the oldest unacked fragment. Should save unnecessary scans for large block
-    sizes.
-
-    --------------------
-
-    Could save a bit of memory and maybe gain some speed by switching 
-    the received fragment data to a bitfield
-
-    We only need one bit per-fragment, "has it been received?"
 
     --------------------
 
@@ -230,6 +192,33 @@ TODO:
 
 
 WOULD BE NICE:
+
+    --------------------
+
+    Protocol id belongs inside the BSD socket layer,
+    rather than inside the protocol itself. This allows
+    me to choose how to serialize the packet, and omit
+    the protocol id for interfaces that don't need it.
+
+    --------------------
+
+    Optimization for fragments, track oldest unacked fragment id, and start there
+    and go left to right to search for fragments to send.
+
+    --------------------
+
+    Add a new fragmentSendWindow config, eg. 64 and only look this far past
+    the oldest unacked fragment. Should save unnecessary scans for large block
+    sizes.
+
+    --------------------
+
+    Could save a bit of memory and maybe gain some speed by switching 
+    the received fragment data to a bitfield
+
+    We only need one bit per-fragment, "has it been received?"
+
+    -----------------
 
     Might be a good idea to consolidate bitpacker into stream class.
 

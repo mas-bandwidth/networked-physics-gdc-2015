@@ -106,7 +106,8 @@ namespace protocol
         ClientError m_error = CLIENT_ERROR_None;
         uint32_t m_extendedError = 0;
 
-        // todo: need to disable copy constructor etc.
+        Client( const Client & other );
+        Client & operator = ( const Client & other );
 
     public:
 

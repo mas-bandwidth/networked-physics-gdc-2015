@@ -289,9 +289,6 @@ namespace protocol
 			int iterations = 0;
 			while ( m_free != m_allocate )
 			{
-				// todo: this is O(n) on the number of blocks
-				// potentially quite expensive -- log the # of iterations
-
 				Header * h = (Header*) m_free;
 				if ( ( h->size & 0x80000000u ) == 0 )
 					break;

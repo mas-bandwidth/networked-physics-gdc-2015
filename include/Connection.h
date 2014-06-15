@@ -47,23 +47,26 @@ namespace protocol
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
-        std::vector<ChannelData*> channelData;
-        ChannelStructure * channelStructure;
+        int numChannels = 0;
+        ChannelData * channelData[MaxChannels];
+        ChannelStructure * channelStructure = nullptr;
 
         ConnectionPacket( int type, ChannelStructure * _channelStructure ) : Packet( type )
         {
 //            printf( "ConnectionPacket\n" );
             assert( _channelStructure );
             channelStructure = _channelStructure;
-            channelData.resize( channelStructure->GetNumChannels() );
+            numChannels = channelStructure->GetNumChannels();
+            memset( channelData, 0, sizeof( ChannelData* ) * numChannels );
         }
 
         ~ConnectionPacket()
         {
 //            printf( "~ConnectionPacket\n" );
+
             assert( channelStructure );
-            channelStructure = nullptr;
-            for ( int i = 0; i < channelData.size(); ++i )
+
+            for ( int i = 0; i < numChannels; ++i )
             {
                 if ( channelData[i] )
                 {
@@ -72,7 +75,8 @@ namespace protocol
                     channelData[i] = nullptr;
                 }
             }
-            channelData.clear();
+
+            channelStructure = nullptr;
         }
 
         template <typename Stream> void Serialize( Stream & stream )
@@ -99,15 +103,15 @@ namespace protocol
 
             if ( Stream::IsWriting )
             {
-                for ( auto data : channelData )
+                for ( int i = 0; i < numChannels; ++i )
                 {
-                    bool has_data = data != nullptr;
+                    bool has_data = channelData[i] != nullptr;
                     serialize_bool( stream, has_data );
                 }
             }
             else                
             {
-                for ( int i = 0; i < channelData.size(); ++i )
+                for ( int i = 0; i < numChannels; ++i )
                 {
                     bool has_data;
                     serialize_bool( stream, has_data );
@@ -151,7 +155,7 @@ namespace protocol
 
             // now serialize per-channel data
 
-            for ( int i = 0; i < channelData.size(); ++i )
+            for ( int i = 0; i < numChannels; ++i )
             {
                 if ( channelData[i] )
                 {
@@ -225,7 +229,8 @@ namespace protocol
         TimeBase m_timeBase;                                // network time base
         SentPackets * m_sentPackets = nullptr;              // sliding window of recently sent packets
         ReceivedPackets * m_receivedPackets = nullptr;      // sliding window of recently received packets
-        std::vector<Channel*> m_channels;                   // array of channels created according to channel structure
+        int m_numChannels = 0;                              // cached number of channels
+        Channel * m_channels[MaxChannels];                  // array of channels created according to channel structure
         uint64_t m_counters[NumCounters];                   // counters for unit testing, stats etc.
 
     public:
@@ -238,9 +243,8 @@ namespace protocol
             m_sentPackets = new SentPackets( m_config.slidingWindowSize );
             m_receivedPackets = new ReceivedPackets( m_config.slidingWindowSize );
 
-            const int numChannels = config.channelStructure->GetNumChannels();
-            m_channels.resize( numChannels );
-            for ( int i = 0; i < numChannels; ++i )
+            m_numChannels = config.channelStructure->GetNumChannels();
+            for ( int i = 0; i < m_numChannels; ++i )
             {
                 m_channels[i] = config.channelStructure->CreateChannel( i );
                 assert( m_channels[i] );
@@ -253,6 +257,13 @@ namespace protocol
         {
             assert( m_sentPackets );
             assert( m_receivedPackets );
+            assert( m_channels );
+
+            for ( int i = 0; i < m_numChannels; ++i )
+            {
+                assert( m_channels[i] );
+                delete m_channels[i];
+            }
 
             delete m_sentPackets;
             delete m_receivedPackets;
@@ -263,27 +274,38 @@ namespace protocol
 
         Channel * GetChannel( int index )
         {
-            if ( index >= 0 && index < m_channels.size() )
-                return m_channels[index];
-            else
-                return nullptr;
+            assert( index >= 0 );
+            assert( index < m_numChannels );
+            return m_channels[index];
         }
 
         void Reset()
         {
             m_timeBase = TimeBase();
+            
             m_sentPackets->Reset();
             m_receivedPackets->Reset();
-            for ( auto channel : m_channels )
-                channel->Reset();
+
+            for ( int i = 0; i < m_numChannels; ++i )
+                m_channels[i]->Reset();
+
             memset( m_counters, 0, sizeof( m_counters ) );
         }
 
         void Update( const TimeBase & timeBase )
         {
             m_timeBase = timeBase;
-            for ( auto channel : m_channels )
-                channel->Update( timeBase );
+            for ( int i = 0; i < m_numChannels; ++i )
+            {
+                m_channels[i]->Update( timeBase );
+                if ( m_channels[i]->GetError() != 0 )
+                {
+                    // todo: handle channel error here -- eg. set own error state
+                    // that the client/server owner are going to check and decide
+                    // to disconnect that client.
+                    break;
+                }
+            }
         }
 
         const TimeBase & GetTimeBase() const
@@ -300,7 +322,7 @@ namespace protocol
 
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
 
-            for ( int i = 0; i < m_channels.size(); ++i )
+            for ( int i = 0; i < m_numChannels; ++i )
                 packet->channelData[i] = m_channels[i]->GetData( packet->sequence );
 
             m_sentPackets->Insert( packet->sequence );
@@ -314,9 +336,9 @@ namespace protocol
         {
             assert( packet );
             assert( packet->GetType() == m_config.packetType );
-            assert( packet->channelData.size() == m_channels.size() );
+            assert( packet->numChannels == m_numChannels );
 
-            if ( packet->channelData.size() != m_channels.size() )
+            if ( packet->numChannels != m_numChannels )
                 return false;
 
             if ( packet->protocolId != m_config.protocolId )
@@ -330,7 +352,7 @@ namespace protocol
 
             bool discardPacket = false;
 
-            for ( int i = 0; i < packet->channelData.size(); ++i )
+            for ( int i = 0; i < packet->numChannels; ++i )
             {
                 if ( !packet->channelData[i] )
                     continue;
@@ -387,8 +409,8 @@ namespace protocol
 //            printf( "packet %d acked\n", (int) sequence );
 
             m_counters[PacketsAcked]++;
-            for ( auto channel : m_channels )
-                channel->ProcessAck( sequence );
+            for ( int i = 0; i < m_numChannels; ++i )
+                m_channels[i]->ProcessAck( sequence );
         }
     };
 }

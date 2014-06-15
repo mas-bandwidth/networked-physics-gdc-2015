@@ -35,7 +35,7 @@ Saturday Afternoon, June 14th, 2014:
          3.0% - ConnectionPacket::~ConnectionPacket
          2.6% - ReliableMessageChannel::ReceiveMessage
          2.3% - ReliableMessageChannel::CanSendMessage
-         0.5% - std::vector<ChannelData*> <--- REMOVE THIS BS.
+         0.5% - std::vector<ChannelData*> <--- REMOVE THIS BS. (DONE)
 
     Basically it's looking pretty good. Perhaps the ReadPacket
     which calls into "ProcessAcks" is a bit slower than it could
@@ -49,6 +49,32 @@ Saturday Afternoon, June 14th, 2014:
     It's curious why the ReadPacket and Write packet are slower
     but it's clear that the majority of the cost here is probably
     cache misses.
+
+    See if a hot cold split for the sliding window makes perf issues go away.
+
+    I'm thinking a 32bit sequence + flags header, separate from the actual
+    data which is in a different struct. Seems like a good idea!!!
+
+    Looking at the structs inside the sliding windows, it does not seem
+    that a hot cold split would be a good idea, unless I can somehow
+    reserve one of the 16bit values (eg. zero) as "not valid", but then
+    I'd have to add logic everywhere to special case the sequence.
+
+    Removed std::vector usage from Connection.h
+
+    I need to regroup and get everything in a solid state again.
+
+    Stop optimizing for now, it's "good enough" for both cases.
+
+    Take stock of remaining allocation that needs to be converted over.
+
+    Cleaned up error handling for BSD socket interface creation.
+
+    TestBSDSockets.cpp is broken again now that I'm properly deleting packets.
+
+    Fixed by adding template packets on the stack that can be compared
+    against, so we don't use the deleted packets to check if the received
+    packet value is the same as sent.
 
 
 Saturday Morning, June 14th, 2014:

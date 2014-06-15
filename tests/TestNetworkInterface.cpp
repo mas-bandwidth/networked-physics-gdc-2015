@@ -13,7 +13,12 @@ public:
 
     ~TestInterface()
     {
-        // todo: delete any packets still in the packet_queue
+        while ( !packet_queue.empty() )
+        {
+            auto packet = packet_queue.front();
+            packet_queue.pop();
+            delete packet;
+        }
     }
 
     virtual void SendPacket( const Address & address, Packet * packet )
@@ -112,7 +117,7 @@ void test_network_interface()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_network_interface();
 

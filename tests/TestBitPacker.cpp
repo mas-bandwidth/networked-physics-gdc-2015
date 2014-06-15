@@ -61,7 +61,7 @@ void test_bitpacker()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
     
     test_bitpacker();
 

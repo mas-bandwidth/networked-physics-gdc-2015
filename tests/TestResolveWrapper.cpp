@@ -260,7 +260,7 @@ void test_resolve_wrapper_send_to_hostname_port()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     if ( !InitializeSockets() )
     {

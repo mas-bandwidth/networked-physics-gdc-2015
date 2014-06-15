@@ -6,6 +6,8 @@
 #ifndef PROTOCOL_COMMON_H
 #define PROTOCOL_COMMON_H
 
+#include "Constants.h"
+
 #include <cassert>
 
 #if NOSTL == 0
@@ -29,7 +31,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PLATFORM_WINDOWS  1         // todo: profix all defines with PROTOCOL as to not pollute the namespace
+#define PLATFORM_WINDOWS  1
 #define PLATFORM_MAC      2
 #define PLATFORM_UNIX     3
 
@@ -300,7 +302,7 @@ namespace protocol
             if ( m_entries[index].valid && m_entries[index].sequence == sequence )
                 return &m_entries[index];
             else
-                return NULL;
+                return nullptr;
         }
 
         T * Find( uint16_t sequence )
@@ -309,12 +311,24 @@ namespace protocol
             if ( m_entries[index].valid && m_entries[index].sequence == sequence )
                 return &m_entries[index];
             else
-                return NULL;
+                return nullptr;
+        }
+
+        T * GetAtIndex( int index )
+        {
+            assert( index >= 0 );
+            assert( index < m_entries.size() );
+            return m_entries[index].valid ? &m_entries[index] : nullptr;
         }
 
         uint16_t GetSequence() const 
         {
             return m_sequence;
+        }
+
+        int GetSize() const
+        {
+            return m_entries.size();
         }
 
     private:
@@ -344,7 +358,7 @@ namespace protocol
 
     inline uint64_t GenerateGuid()
     {
-        return ( uint64_t(rand()) << 32 ) | time( NULL );
+        return ( uint64_t(rand()) << 32 ) | time( nullptr );
     }
 
     inline int random_int( int min, int max )

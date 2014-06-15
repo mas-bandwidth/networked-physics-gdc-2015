@@ -200,7 +200,7 @@ void test_address6()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_address4();
     test_address6();

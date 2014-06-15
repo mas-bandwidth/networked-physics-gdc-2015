@@ -10,7 +10,7 @@ using namespace protocol;
 
 enum MessageType
 {
-    MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
+    MESSAGE_Block = BlockMessageType,
     MESSAGE_Test
 };
 
@@ -922,19 +922,18 @@ void test_client_connection_server_full()
     // and wait until they are all fully connected.
 
     std::vector<Client*> clients;
+    std::vector<NetworkInterface*> clientInterface;
 
     bsdSocketsConfig.port = 0;
 
     for ( int i = 0; i < serverConfig.maxClients; ++i )
     {
-        // todo: we need to keep an array of these so we can delete them later
         auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = clientNetworkInterface;
 
-        // todo: need to remember to delete this guy
         auto client = new Client( clientConfig );
 
         client->Connect( "[::1]:10000" );
@@ -946,6 +945,7 @@ void test_client_connection_server_full()
         assert( client->GetState() == CLIENT_STATE_SendingConnectionRequest );
 
         clients.push_back( client );
+        clientInterface.push_back( clientNetworkInterface );
     }
 
     TimeBase timeBase;
@@ -1049,7 +1049,10 @@ void test_client_connection_server_full()
     delete serverNetworkInterface;
     delete extraClient;
     for ( int i = 0; i < clients.size(); ++i )
+    {
         delete clients[i];
+        delete clientInterface[i];
+    }
 }
 
 void test_client_connection_timeout()
@@ -1370,7 +1373,7 @@ void test_client_connection_reconnect()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_client_initial_state();
     test_client_resolve_hostname_failure();

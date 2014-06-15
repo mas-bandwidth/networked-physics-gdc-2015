@@ -7,7 +7,7 @@ using namespace protocol;
 
 enum MessageType
 {
-    MESSAGE_Block = 0,           // IMPORTANT: 0 is reserved for block messages
+    MESSAGE_Block = BlockMessageType,
     MESSAGE_Test
 };
 
@@ -189,9 +189,10 @@ void soak_test()
             if ( !messageChannel->CanSendMessage() )
                 break;
 
-            //int value = rand() % 10000;
+            int value = rand() % 10000;
 
-            //if ( value < 5000 )
+            /*
+            if ( value < 5000 )
             {
                 // bitpacked message
                 auto message = new TestMessage();
@@ -199,7 +200,6 @@ void soak_test()
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
-            /*
             else if ( value < 9999 )
             {
                 // small block
@@ -210,6 +210,8 @@ void soak_test()
                 messageChannel->SendBlock( block );
             }
             else
+            */
+            if ( value % 10000 == 0 )
             {
                 // large block
                 int index = sendMessageId % 4;
@@ -218,7 +220,7 @@ void soak_test()
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
-            */
+            //
             
             sendMessageId++;
             numMessagesSent++;
@@ -329,7 +331,7 @@ void soak_test()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr 4) );
 
     if ( !InitializeSockets() )
     {

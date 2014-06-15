@@ -286,7 +286,7 @@ void test_string_stream()
 
 int main()
 {
-    srand( time( NULL ) );
+    srand( time( nullptr ) );
 
     test_memory();
     test_scratch();
