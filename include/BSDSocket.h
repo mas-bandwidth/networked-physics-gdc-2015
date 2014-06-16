@@ -3,8 +3,8 @@
     Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
 */
 
-#ifndef PROTOCOL_BSD_SOCKETS_H
-#define PROTOCOL_BSD_SOCKETS_H
+#ifndef PROTOCOL_BSD_SOCKET_H
+#define PROTOCOL_BSD_SOCKET_H
 
 #include "NetworkInterface.h"
 
@@ -27,9 +27,9 @@ namespace protocol
         #endif
     }    
 
-    struct BSDSocketsConfig
+    struct BSDSocketConfig
     {
-        BSDSocketsConfig()
+        BSDSocketConfig()
         {
             port = 10000;
             family = AF_INET6;                      // default to IPv6.
@@ -43,9 +43,9 @@ namespace protocol
         Factory<Packet> * packetFactory;            // packet factory (required)
     };
 
-    class BSDSockets : public NetworkInterface
+    class BSDSocket : public NetworkInterface
     {
-        const BSDSocketsConfig m_config;
+        const BSDSocketConfig m_config;
 
         int m_socket;
         BSDSocketError m_error;
@@ -54,12 +54,12 @@ namespace protocol
         uint8_t * m_receiveBuffer;
         uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];
 
-        BSDSockets( BSDSockets & other );
-        BSDSockets & operator = ( BSDSockets & other );
+        BSDSocket( BSDSocket & other );
+        BSDSocket & operator = ( BSDSocket & other );
 
     public:
 
-        BSDSockets( const BSDSocketsConfig & config = BSDSocketsConfig() )
+        BSDSocket( const BSDSocketConfig & config = BSDSocketConfig() )
             : m_config( config )
         {
             assert( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
@@ -159,7 +159,7 @@ namespace protocol
             #endif
         }
 
-        ~BSDSockets()
+        ~BSDSocket()
         {
             if ( m_receiveBuffer )
             {

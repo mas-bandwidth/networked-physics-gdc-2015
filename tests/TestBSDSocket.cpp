@@ -1,4 +1,4 @@
-#include "BSDSockets.h"
+#include "BSDSocket.h"
 
 using namespace protocol;
 
@@ -144,11 +144,11 @@ public:
     }
 };
 
-void test_bsd_sockets_send_and_receive_ipv4()
+void test_bsd_socket_send_and_receive_ipv4()
 {
-    printf( "test_bsd_sockets_send_and_receive_ipv4\n" );
+    printf( "test_bsd_socket_send_and_receive_ipv4\n" );
 
-    BSDSocketsConfig config;
+    BSDSocketConfig config;
 
     PacketFactory packetFactory;
 
@@ -157,7 +157,7 @@ void test_bsd_sockets_send_and_receive_ipv4()
     config.maxPacketSize = 1024;
     config.packetFactory = &packetFactory;
 
-    BSDSockets interface( config );
+    BSDSocket interface( config );
 
     Address address( "127.0.0.1" );
     address.SetPort( config.port );
@@ -250,11 +250,11 @@ void test_bsd_sockets_send_and_receive_ipv4()
     }
 }
 
-void test_bsd_sockets_send_and_receive_ipv6()
+void test_bsd_socket_send_and_receive_ipv6()
 {
-    printf( "test_bsd_sockets_send_and_receive_ipv6\n" );
+    printf( "test_bsd_socket_send_and_receive_ipv6\n" );
 
-    BSDSocketsConfig config;
+    BSDSocketConfig config;
 
     PacketFactory packetFactory;
 
@@ -263,7 +263,7 @@ void test_bsd_sockets_send_and_receive_ipv6()
     config.maxPacketSize = 1024;
     config.packetFactory = &packetFactory;
 
-    BSDSockets interface( config );
+    BSDSocket interface( config );
 
     Address address( "::1" );
     address.SetPort( config.port );
@@ -356,27 +356,27 @@ void test_bsd_sockets_send_and_receive_ipv6()
     }
 }
 
-void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
+void test_bsd_socket_send_and_receive_multiple_ipv4()
 {
-    printf( "test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4\n" );
+    printf( "test_bsd_socket_send_and_receive_multiple_ipv4\n" );
 
     PacketFactory packetFactory;
 
-    BSDSocketsConfig sender_config;
+    BSDSocketConfig sender_config;
     sender_config.port = 10000;
     sender_config.family = AF_INET;
     sender_config.maxPacketSize = 1024;
     sender_config.packetFactory = &packetFactory;
 
-    BSDSockets interface_sender( sender_config );
+    BSDSocket interface_sender( sender_config );
     
-    BSDSocketsConfig receiver_config;
+    BSDSocketConfig receiver_config;
     receiver_config.port = 10001;
     receiver_config.family = AF_INET;
     receiver_config.maxPacketSize = 1024;
     receiver_config.packetFactory = &packetFactory;
 
-    BSDSockets interface_receiver( receiver_config );
+    BSDSocket interface_receiver( receiver_config );
 
     Address sender_address( "[127.0.0.1]:10000" );
     Address receiver_address( "[127.0.0.1]:10001" );
@@ -470,27 +470,27 @@ void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4()
     }
 }
 
-void test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6()
+void test_bsd_socket_send_and_receive_multiple_ipv6()
 {
-    printf( "test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6\n" );
+    printf( "test_bsd_socket_send_and_receive_multiple_ipv6\n" );
 
     PacketFactory packetFactory;
 
-    BSDSocketsConfig sender_config;
+    BSDSocketConfig sender_config;
     sender_config.port = 10000;
     sender_config.family = AF_INET6;
     sender_config.maxPacketSize = 1024;
     sender_config.packetFactory = &packetFactory;
 
-    BSDSockets interface_sender( sender_config );
+    BSDSocket interface_sender( sender_config );
     
-    BSDSocketsConfig receiver_config;
+    BSDSocketConfig receiver_config;
     receiver_config.port = 10001;
     receiver_config.family = AF_INET6;
     receiver_config.maxPacketSize = 1024;
     receiver_config.packetFactory = &packetFactory;
 
-    BSDSockets interface_receiver( receiver_config );
+    BSDSocket interface_receiver( receiver_config );
 
     Address sender_address( "[::1]:10000" );
     Address receiver_address( "[::1]:10001" );
@@ -594,10 +594,10 @@ int main()
         return 1;
     }
 
-    test_bsd_sockets_send_and_receive_ipv4();
-    test_bsd_sockets_send_and_receive_ipv6();
-    test_bsd_sockets_send_and_receive_multiple_interfaces_ipv4();
-    test_bsd_sockets_send_and_receive_multiple_interfaces_ipv6();
+    test_bsd_socket_send_and_receive_ipv4();
+    test_bsd_socket_send_and_receive_ipv6();
+    test_bsd_socket_send_and_receive_multiple_ipv4();
+    test_bsd_socket_send_and_receive_multiple_ipv6();
 
     ShutdownSockets();
 

@@ -1,4 +1,4 @@
-#include "BSDSockets.h"
+#include "BSDSocket.h"
 #include "DNSResolver.h"
 #include "ResolveWrapper.h"
 
@@ -150,7 +150,7 @@ void test_resolve_wrapper_send_to_hostname()
 {
     printf( "test_resolve_wrapper_send_to_hostname\n" );
 
-    BSDSocketsConfig config;
+    BSDSocketConfig config;
 
     PacketFactory packetFactory;
 
@@ -159,13 +159,13 @@ void test_resolve_wrapper_send_to_hostname()
     config.maxPacketSize = 1024;
     config.packetFactory = &packetFactory;
 
-    auto bsdSockets = new BSDSockets( config );
+    auto bsdSocket = new BSDSocket( config );
 
     DNSResolver resolver;
 
     ResolveWrapperConfig wrapperConfig;
     wrapperConfig.resolver = &resolver;
-    wrapperConfig.networkInterface = bsdSockets;
+    wrapperConfig.networkInterface = bsdSocket;
 
     auto interface = new ResolveWrapper( wrapperConfig );
 
@@ -187,7 +187,7 @@ void test_resolve_wrapper_send_to_hostname()
     {
         interface->Update( timeBase );
 
-        if ( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets )
+        if ( bsdSocket->GetCounter( BSD_SOCKET_COUNTER_PACKETS_SENT ) == numPackets )
             break;
 
         std::this_thread::sleep_for( ms );
@@ -195,10 +195,10 @@ void test_resolve_wrapper_send_to_hostname()
         timeBase.time += timeBase.deltaTime;
     }
 
-    assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );
-    assert( bsdSockets->GetCounter( BSDSockets::PacketsReceived ) == numPackets );
+    assert( bsdSocket->GetCounter( BSD_SOCKET_COUNTER_PACKETS_SENT ) == numPackets );
+    assert( bsdSocket->GetCounter( BSD_SOCKET_COUNTER_PACKETS_RECEIVED ) == numPackets );
 
-    delete bsdSockets;
+    delete bsdSocket;
     delete interface;
 }
 
@@ -206,7 +206,7 @@ void test_resolve_wrapper_send_to_hostname_port()
 {
     printf( "test_resolve_wrapper_send_to_hostname_port\n" );
 
-    BSDSocketsConfig config;
+    BSDSocketConfig config;
 
     PacketFactory packetFactory;
 
@@ -215,13 +215,13 @@ void test_resolve_wrapper_send_to_hostname_port()
     config.maxPacketSize = 1024;
     config.packetFactory = &packetFactory;
 
-    auto bsdSockets = new BSDSockets( config );
+    auto bsdSocket = new BSDSocket( config );
 
     DNSResolver resolver;
 
     ResolveWrapperConfig wrapperConfig;
     wrapperConfig.resolver = &resolver;
-    wrapperConfig.networkInterface = bsdSockets;
+    wrapperConfig.networkInterface = bsdSocket;
 
     auto interface = new ResolveWrapper( wrapperConfig );
 
@@ -243,7 +243,7 @@ void test_resolve_wrapper_send_to_hostname_port()
     {
         interface->Update( timeBase );
 
-        if ( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets )
+        if ( bsdSocket->GetCounter( BSD_SOCKET_COUNTER_PACKETS_SENT ) == numPackets )
             break;
 
         std::this_thread::sleep_for( ms );
@@ -251,11 +251,11 @@ void test_resolve_wrapper_send_to_hostname_port()
         timeBase.time += timeBase.deltaTime;
     }
 
-    assert( bsdSockets->GetCounter( BSDSockets::PacketsSent ) == numPackets );
-    assert( bsdSockets->GetCounter( BSDSockets::PacketsReceived ) == numPackets );
+    assert( bsdSocket->GetCounter( BSD_SOCKET_COUNTER_PACKETS_SENT ) == numPackets );
+    assert( bsdSocket->GetCounter( BSD_SOCKET_COUNTER_PACKETS_RECEIVED ) == numPackets );
 
     delete interface;
-    delete bsdSockets;
+    delete bsdSocket;
 }
 
 int main()

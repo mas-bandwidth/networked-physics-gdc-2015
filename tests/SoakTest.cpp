@@ -1,5 +1,4 @@
 #include "Connection.h"
-#include "BSDSockets.h"
 #include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
 
@@ -162,8 +161,8 @@ void soak_test()
     timeBase.time = 0.0;
     timeBase.deltaTime = 0.01;
 
-    for ( int i = 0; i < 10000; ++i )
-    //while ( true )
+//    for ( int i = 0; i < 10000; ++i )
+    while ( true )
     {
         const int maxMessagesToSend = 1 + rand() % 32;
 
@@ -322,19 +321,11 @@ int main()
 {
     srand( time( nullptr ) );
 
-    if ( !InitializeSockets() )
-    {
-        printf( "failed to initialize sockets\n" );
-        return 1;
-    }
-
     memory::initialize();
 
     soak_test();
 
     memory::shutdown();
-
-    ShutdownSockets();
 
     return 0;
 }

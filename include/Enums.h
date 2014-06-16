@@ -133,8 +133,6 @@ namespace protocol
         RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY,
         RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS
     };
-
-    // todo: put client/server packets here?
 }
 
 #endif

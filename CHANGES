@@ -19,6 +19,8 @@ Sunday Afternoon, June 15th, 2014:
 
     Move all packet definitions into "Packets.h"
 
+    "BSDSockets" should become "BSDSocket"
+
 
 Sunday Morning, June 15th, 2014:
 --------------------------------

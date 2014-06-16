@@ -2,12 +2,6 @@ DONE:
 
 TODO:    
 
-    "BSDSockets" should become "BSDSocket"
-
-    Move all config types into Config.h?
-
-    Common.h is really more of a Util.h right now
-
     --------------------
 
     Move protocol id handling entirely to the interface layer
