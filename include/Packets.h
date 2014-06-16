@@ -34,14 +34,12 @@ namespace protocol
 
     struct ConnectionRequestPacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
 
         ConnectionRequestPacket() : Packet( PACKET_CONNECTION_REQUEST ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
         }
 
@@ -63,7 +61,6 @@ namespace protocol
 
     struct ChallengeResponsePacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
@@ -71,7 +68,6 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
         }
@@ -94,7 +90,6 @@ namespace protocol
 
     struct ConnectionDeniedPacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
         uint32_t reason = 0;
 
@@ -102,7 +97,6 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint32( stream, reason );
         }
@@ -125,7 +119,6 @@ namespace protocol
 
     struct ConnectionChallengePacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
@@ -133,7 +126,6 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
         }
@@ -156,7 +148,6 @@ namespace protocol
 
     struct RequestClientDataPacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
@@ -164,7 +155,6 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
         }
@@ -187,7 +177,6 @@ namespace protocol
 
     struct ReadyForConnectionPacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
@@ -195,7 +184,6 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
         }
@@ -218,7 +206,6 @@ namespace protocol
 
     struct DisconnectedPacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
@@ -226,7 +213,6 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, protocolId );
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
         }
@@ -249,7 +235,6 @@ namespace protocol
 
     struct ConnectionPacket : public Packet
     {
-        uint64_t protocolId = 0;
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
@@ -291,8 +276,6 @@ namespace protocol
 
             // IMPORTANT: Insert non-frequently changing values here
             // This helps LZ dictionary based compressors do a good job!
-
-            serialize_uint64( stream, protocolId );
 
             bool perfect;
             if ( Stream::IsWriting )

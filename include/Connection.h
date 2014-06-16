@@ -167,7 +167,6 @@ namespace protocol
 
             auto packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( m_config.packetType ) );
 
-            packet->protocolId = m_config.protocolId;
             packet->sequence = m_sentPackets->GetSequence();
 
             GenerateAckBits( *m_receivedPackets, packet->ack, packet->ack_bits );
@@ -192,9 +191,6 @@ namespace protocol
             assert( packet->numChannels == m_numChannels );
 
             if ( packet->numChannels != m_numChannels )
-                return false;
-
-            if ( packet->protocolId != m_config.protocolId )
                 return false;
 
 //            printf( "read packet %d\n", (int) packet->sequence );

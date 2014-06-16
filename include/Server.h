@@ -14,8 +14,6 @@ namespace protocol
 {
     struct ServerConfig
     {
-        uint64_t protocolId = 42;                               // the protocol id. must be the same for client and server to talk.
-        
         int maxClients = 16;                                    // max number of clients supported by this server.
 
         float connectingSendRate = 10;                          // packets to send per-second while a client slot is connecting.
@@ -132,7 +130,6 @@ namespace protocol
 
             auto packet = new DisconnectedPacket();
 
-            packet->protocolId = m_config.protocolId;
             packet->clientGuid = client.clientGuid;
             packet->serverGuid = client.serverGuid;
 
@@ -201,7 +198,6 @@ namespace protocol
             {
                 auto packet = new ConnectionChallengePacket();
 
-                packet->protocolId = m_config.protocolId;
                 packet->clientGuid = client.clientGuid;
                 packet->serverGuid = client.serverGuid;
 
@@ -233,7 +229,6 @@ namespace protocol
 
                 auto packet = new RequestClientDataPacket();
 
-                packet->protocolId = m_config.protocolId;
                 packet->clientGuid = client.clientGuid;
                 packet->serverGuid = client.serverGuid;
 
@@ -358,7 +353,6 @@ namespace protocol
 //                printf( "server is closed. denying connection request\n" );
 
                 auto connectionDeniedPacket = new ConnectionDeniedPacket();
-                connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
                 connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
 
@@ -380,7 +374,6 @@ namespace protocol
             {
 //                printf( "client is already connected. denying connection request\n" );
                 auto connectionDeniedPacket = new ConnectionDeniedPacket();
-                connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
                 connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
                 m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
@@ -391,7 +384,6 @@ namespace protocol
             {
 //              printf( "server is full. denying connection request\n" );
                 auto connectionDeniedPacket = new ConnectionDeniedPacket();
-                connectionDeniedPacket->protocolId = m_config.protocolId;
                 connectionDeniedPacket->clientGuid = packet->clientGuid;
                 connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
                 m_config.networkInterface->SendPacket( address, connectionDeniedPacket );

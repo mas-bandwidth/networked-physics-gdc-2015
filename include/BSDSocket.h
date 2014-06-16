@@ -31,12 +31,14 @@ namespace protocol
     {
         BSDSocketConfig()
         {
+            protocolId = 0x12345;
             port = 10000;
             family = AF_INET6;                      // default to IPv6.
             maxPacketSize = 10*1024;
             packetFactory = nullptr;
         }
 
+        uint64_t protocolId;                        // the protocol id. packets sent are prefixed with this id and discarded on receive if the protocol id does not match
         uint16_t port;                              // port to bind UDP socket to
         int family;                                 // socket family: eg. AF_INET (IPv4 only), AF_INET6 (IPv6 only)
         int maxPacketSize;                          // maximum packet size
@@ -248,6 +250,9 @@ namespace protocol
 
                 Stream stream( buffer, m_config.maxPacketSize );
 
+                uint64_t protocolId = m_config.protocolId;
+                serialize_uint64( stream, protocolId );
+
                 const int maxPacketType = m_config.packetFactory->GetMaxType();
                 
                 int packetType = packet->GetType();
@@ -256,7 +261,7 @@ namespace protocol
                 
                 stream.Align();
 
-                packet->SerializeWrite( stream );                
+                packet->SerializeWrite( stream );
 
                 stream.Check( 0x51246234 );
 
@@ -303,7 +308,13 @@ namespace protocol
 
                 Stream stream( m_receiveBuffer, m_config.maxPacketSize );
 
-                // todo: move the protocol id processing here!!!
+                uint64_t protocolId;
+                serialize_uint64( stream, protocolId );
+                if ( protocolId != m_config.protocolId )
+                {
+                    m_counters[BSD_SOCKET_COUNTER_PROTOCOL_ID_MISMATCH]++;
+                    continue;
+                }
 
                 const int maxPacketType = m_config.packetFactory->GetMaxType();
                 int packetType = 0;
@@ -329,7 +340,12 @@ namespace protocol
                     continue;
                 }
 
-                stream.Check( 0x51246234 );         // if this triggers then the packet was truncated
+                if ( !stream.Check( 0x51246234 ) )
+                {
+                    printf( "end of packet stream check failed\n" );
+                    delete packet;
+                    continue;
+                }
 
                 packet->SetAddress( address );
 

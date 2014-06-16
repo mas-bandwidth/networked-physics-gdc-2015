@@ -1,9 +1,9 @@
 #include "Client.h"
 #include "Server.h"
 #include "Message.h"
-#include "BSDSockets.h"
+#include "BSDSocket.h"
 #include "DNSResolver.h"
-#include "ClientServerPackets.h"
+#include "Packets.h"
 #include "ReliableMessageChannel.h"
 
 using namespace protocol;
@@ -106,12 +106,12 @@ void test_client_initial_state()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSockets( bsdSocketsConfig );
+        auto networkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.networkInterface = networkInterface;
@@ -143,12 +143,12 @@ void test_client_resolve_hostname_failure()
         TestChannelStructure channelStructure;
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSockets( bsdSocketsConfig );
+        auto networkInterface = new BSDSocket( bsdSocketConfig );
 
         DNSResolver resolver;
 
@@ -206,12 +206,12 @@ void test_client_resolve_hostname_timeout()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSockets( bsdSocketsConfig );
+        auto networkInterface = new BSDSocket( bsdSocketConfig );
 
         DNSResolver resolver;
 
@@ -264,12 +264,12 @@ void test_client_resolve_hostname_success()
         TestChannelStructure channelStructure;
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSockets( bsdSocketsConfig );
+        auto networkInterface = new BSDSocket( bsdSocketConfig );
 
         DNSResolver resolver;
 
@@ -324,12 +324,12 @@ void test_client_connection_request_timeout()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSockets( bsdSocketsConfig );
+        auto networkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.networkInterface = networkInterface;
@@ -380,13 +380,13 @@ void test_client_connection_request_denied()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -396,8 +396,8 @@ void test_client_connection_request_denied()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -457,13 +457,13 @@ void test_client_connection_challenge()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -473,8 +473,8 @@ void test_client_connection_challenge()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -534,13 +534,13 @@ void test_client_connection_challenge_response()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -550,8 +550,8 @@ void test_client_connection_challenge_response()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -610,13 +610,13 @@ void test_client_connection_established()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -626,8 +626,8 @@ void test_client_connection_established()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -688,13 +688,13 @@ void test_client_connection_messages()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -704,8 +704,8 @@ void test_client_connection_messages()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -838,13 +838,13 @@ void test_client_connection_disconnect()
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -854,8 +854,8 @@ void test_client_connection_disconnect()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -943,13 +943,13 @@ void test_client_connection_server_full()
 
         // create a server on port 10000
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -965,11 +965,11 @@ void test_client_connection_server_full()
         std::vector<Client*> clients;
         std::vector<NetworkInterface*> clientInterface;
 
-        bsdSocketsConfig.port = 0;
+        bsdSocketConfig.port = 0;
 
         for ( int i = 0; i < serverConfig.maxClients; ++i )
         {
-            auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+            auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
             ClientConfig clientConfig;
             clientConfig.channelStructure = &channelStructure;
@@ -1031,7 +1031,7 @@ void test_client_connection_server_full()
         // with the "server full" connection denied response and the other clients
         // remain connected throughout the test.
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -1111,13 +1111,13 @@ void test_client_connection_timeout()
 
         // start server and connect one client and wait the client is fully connected
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -1127,8 +1127,8 @@ void test_client_connection_timeout()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -1225,13 +1225,13 @@ void test_client_connection_already_connected()
 
         // start a server and connect a client. wait until the client is fully connected
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -1241,8 +1241,8 @@ void test_client_connection_already_connected()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
@@ -1332,13 +1332,13 @@ void test_client_connection_reconnect()
 
         // start a server and connect a client. wait until the client is fully connected
 
-        BSDSocketsConfig bsdSocketsConfig;
-        bsdSocketsConfig.port = 10000;
-        bsdSocketsConfig.family = AF_INET6;
-        bsdSocketsConfig.maxPacketSize = 1024;
-        bsdSocketsConfig.packetFactory = &packetFactory;
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.family = AF_INET6;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
@@ -1348,8 +1348,8 @@ void test_client_connection_reconnect()
 
         client.Connect( "[::1]:10001" );
 
-        bsdSocketsConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSockets( bsdSocketsConfig );
+        bsdSocketConfig.port = 10001;
+        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;

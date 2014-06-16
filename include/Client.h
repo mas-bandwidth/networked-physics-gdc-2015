@@ -15,8 +15,6 @@ namespace protocol
 {
     struct ClientConfig
     {
-        uint64_t protocolId = 42;                               // the protocol id. must be same on client or server or they cannot talk to each other.
-
         uint16_t defaultServerPort = 10000;                     // the default server port. used when resolving by hostname and address port is zero.
 
         float connectingTimeOut = 5.0f;                         // number of seconds before timeout for any situation *before* the client establishes connection
@@ -280,7 +278,6 @@ namespace protocol
                     {
 //                        printf( "client sent connection request packet\n" );
                         auto packet = new ConnectionRequestPacket();
-                        packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
 //                        printf( "send connection request packet: m_clientGuid = %llx\n", m_clientGuid );
                         m_config.networkInterface->SendPacket( m_address, packet );
@@ -291,7 +288,6 @@ namespace protocol
                     {
 //                        printf( "client sent challenge response packet\n" );
                         auto packet = new ChallengeResponsePacket();
-                        packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
                         packet->serverGuid = m_serverGuid;
                         m_config.networkInterface->SendPacket( m_address, packet );
@@ -301,7 +297,6 @@ namespace protocol
                     case CLIENT_STATE_READY_FOR_CONNECTION:
                     {
                         auto packet = new ReadyForConnectionPacket();
-                        packet->protocolId = m_config.protocolId;
                         packet->clientGuid = m_clientGuid;
                         packet->serverGuid = m_serverGuid;
                         m_config.networkInterface->SendPacket( m_address, packet );

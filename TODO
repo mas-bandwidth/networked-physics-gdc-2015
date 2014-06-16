@@ -2,22 +2,6 @@ DONE:
 
 TODO:    
 
-    --------------------
-
-    Move protocol id handling entirely to the interface layer
-
-    Remove protocol id concept from Client.h, Server.h and ClientServerPackets.h
-
-    If a packet comes in over the interface with wrong protocol id, discard it
-    immediately without even trying to create a packet of type.
-
-    This allows different interfaces to handle protocol id, whether they
-    need it or not (some will not!).
-
-    Plus reduces cost of processing packets dramatically, if a stray
-    packet comes in it is read, and discarded immediately before any
-    serialization is done.
-
     ---------------------
 
     Convert to .h / .cpp split.
