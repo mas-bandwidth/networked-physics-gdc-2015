@@ -2,8 +2,6 @@
 
 using namespace protocol;
 
-enum { PACKET_CONNECTION = 0 };
-
 class TestChannel : public ChannelAdapter 
 {
 public:

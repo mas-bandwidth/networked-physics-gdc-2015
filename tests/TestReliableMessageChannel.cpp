@@ -4,11 +4,6 @@
 
 using namespace protocol;
 
-enum PacketType
-{
-    PACKET_CONNECTION
-};
-
 enum MessageType
 {
     MESSAGE_BLOCK = BlockMessageType,

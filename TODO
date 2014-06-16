@@ -1,12 +1,6 @@
 DONE:
 
-    Standardize counters to BSD_SOCKETS_COUNTER_... etc.
-
-    Move all enums to Enums.h
-
 TODO:    
-    
-    Move all packet definitions into "Packets.h"
 
     "BSDSockets" should become "BSDSocket"
 

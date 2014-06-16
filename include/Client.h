@@ -6,10 +6,10 @@
 #ifndef PROTOCOL_CLIENT_H
 #define PROTOCOL_CLIENT_H
 
+#include "Packets.h"
 #include "Resolver.h"
 #include "Connection.h"
 #include "NetworkInterface.h"
-#include "ClientServerPackets.h"
 
 namespace protocol
 {

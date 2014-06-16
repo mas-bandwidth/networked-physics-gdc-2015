@@ -73,12 +73,6 @@ public:
     }
 };
 
-enum 
-{ 
-    PACKET_CONNECTION = 0,
-    PACKET_DUMMY
-};
-
 class TestChannelStructure : public ChannelStructure
 {
     MessageFactory m_messageFactory;
@@ -120,17 +114,6 @@ public:
     }
 };
 
-class PacketFactory : public Factory<Packet>
-{
-public:
-
-    PacketFactory( ChannelStructure * channelStructure )
-    {
-        Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
-        Register( PACKET_DUMMY, [] { return nullptr; } );
-    }
-};
-
 void soak_test()
 {
 #if !PROFILE
@@ -139,7 +122,7 @@ void soak_test()
 
     TestChannelStructure channelStructure;
 
-    PacketFactory packetFactory( &channelStructure );
+    ClientServerPacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 4096;
 
@@ -327,9 +310,9 @@ void soak_test()
                     status.numFragments );
 #endif
 
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == numMessagesSent );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
+        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
     }

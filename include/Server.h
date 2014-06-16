@@ -6,9 +6,9 @@
 #ifndef PROTOCOL_SERVER_H
 #define PROTOCOL_SERVER_H
 
+#include "Packets.h"
 #include "Connection.h"
 #include "NetworkInterface.h"
-#include "ClientServerPackets.h"
 
 namespace protocol
 {

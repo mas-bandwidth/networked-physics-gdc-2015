@@ -13,6 +13,12 @@ Sunday Afternoon, June 15th, 2014:
 
     No. Valgrind thinks nothing has "definitely" or "potentially" leaked.
 
+    Standardize counters to BSD_SOCKETS_COUNTER_... etc.
+
+    Move all enums to Enums.h
+
+    Move all packet definitions into "Packets.h"
+
 
 Sunday Morning, June 15th, 2014:
 --------------------------------
