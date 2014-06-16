@@ -1,3 +1,19 @@
+Sunday Afternoon, June 15th, 2014:
+----------------------------------
+
+    There is an assert in SoakTest.cpp to do with block receive.
+
+    Seems that block size on receive might be off. I probably broke it?
+
+    Fixed. Was not sending a large block when expected.
+
+    Try to get valgrind running again, eg. with "-g"
+
+    Can it find any leaks now?
+
+    No. Valgrind thinks nothing has "definitely" or "potentially" leaked.
+
+
 Sunday Morning, June 15th, 2014:
 --------------------------------
 

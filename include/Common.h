@@ -6,6 +6,7 @@
 #ifndef PROTOCOL_COMMON_H
 #define PROTOCOL_COMMON_H
 
+#include "Enums.h"
 #include "Constants.h"
 
 #include <cassert>

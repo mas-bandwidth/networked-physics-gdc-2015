@@ -179,8 +179,8 @@ void soak_test()
     timeBase.time = 0.0;
     timeBase.deltaTime = 0.01;
 
-//    for ( int i = 0; i < 10; ++i )
-    while ( true )
+    for ( int i = 0; i < 10000; ++i )
+    //while ( true )
     {
         const int maxMessagesToSend = 1 + rand() % 32;
 
@@ -210,7 +210,7 @@ void soak_test()
                     (*block)[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
-            else if ( value % 10000 == 0 )
+            else
             {
                 // large block
                 int index = sendMessageId % 4;
@@ -284,6 +284,13 @@ void soak_test()
                 if ( block->size() <= messageChannelConfig.maxSmallBlockSize )
                 {
                     const int index = numMessagesReceived % 32;
+                    /*
+                    if ( block->size() != index +1 )
+                    {
+                        printf( "block size mismatch: got %d, expected %d\n", (int) block->size(), index + 1 );
+                        exit(1);
+                    }
+                    */
                     assert( block->size() == index + 1 );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );

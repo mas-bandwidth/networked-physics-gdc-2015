@@ -12,12 +12,6 @@
 
 namespace protocol
 {
-    enum
-    {
-        RELIABLE_MESSAGE_CHANNEL_NO_ERROR = 0,
-        RELIABLE_MESSAGE_CHANNEL_ERROR_SEND_QUEUE_FULL
-    };
-
     struct ReliableMessageChannelConfig
     {
         ReliableMessageChannelConfig()
@@ -341,19 +335,6 @@ namespace protocol
 
     public:
 
-        // todo: move outside class. standardize to CAPS_CAPS
-
-        enum Counters
-        {
-            MessagesSent,
-            MessagesWritten,
-            MessagesRead,
-            MessagesReceived,
-            MessagesLate,
-            MessagesEarly,
-            NumCounters
-        };
-
         struct SendLargeBlockStatus
         {
             bool sending;
@@ -395,7 +376,7 @@ namespace protocol
 
         uint16_t * m_sentPacketMessageIds;                                  // array of message ids, n ids per-sent packet
 
-        uint64_t m_counters[NumCounters];                                   // counters used for unit testing and validation
+        uint64_t m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS]; // counters used for unit testing and validation
 
         ReliableMessageChannel( const ReliableMessageChannel & other );
         ReliableMessageChannel & operator = ( const ReliableMessageChannel & other );
@@ -562,7 +543,7 @@ namespace protocol
 //              printf( "message %d is %d bits\n", (int) m_sendMessageId, entity->measuredBits );
             }
 
-            m_counters[MessagesSent]++;
+            m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT]++;
 
             m_sendMessageId++;
         }
@@ -596,7 +577,7 @@ namespace protocol
             entry->valid = 0;
             entry->message = nullptr;
             
-            m_counters[MessagesReceived]++;
+            m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED]++;
 
             m_receiveMessageId++;
 
@@ -782,7 +763,7 @@ namespace protocol
 
                 // update counter: num messages written
 
-                m_counters[MessagesWritten] += numMessageIds;
+                m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_WRITTEN] += numMessageIds;
 
                 // construct channel data for packet
 
@@ -999,7 +980,7 @@ namespace protocol
                     {
 //                        printf( "old message %d, min = %d, max = %d\n", messageId, minMessageId, maxMessageId );
 
-                        m_counters[MessagesLate]++;
+                        m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_LATE]++;
                     }
                     else if ( sequence_greater_than( messageId, maxMessageId ) )
                     {
@@ -1007,7 +988,7 @@ namespace protocol
 
                         earlyMessage = true;
 
-                        m_counters[MessagesEarly]++;
+                        m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY]++;
                     }
                     else
                     {
@@ -1016,7 +997,7 @@ namespace protocol
                         assert( result );
                     }
 
-                    m_counters[MessagesRead]++;
+                    m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_READ]++;
                 }
 
                 if ( earlyMessage )
@@ -1134,7 +1115,7 @@ namespace protocol
         uint64_t GetCounter( int index ) const
         {
             assert( index >= 0 );
-            assert( index < NumCounters );
+            assert( index < RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS );
             return m_counters[index];
         }
 

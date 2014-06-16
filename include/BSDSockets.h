@@ -43,34 +43,8 @@ namespace protocol
         Factory<Packet> * packetFactory;            // packet factory (required)
     };
 
-    enum BSDSocketError
-    {
-        BSD_SOCKET_ERROR_NONE = 0,
-        BSD_SOCKET_ERROR_CREATE_FAILED,
-        BSD_SOCKET_ERROR_SOCKOPT_IPV6_ONLY_FAILED,
-        BSD_SOCKET_ERROR_BIND_IPV6_FAILED,
-        BSD_SOCKET_ERROR_BIND_IPV4_FAILED,
-        BSD_SOCKET_ERROR_SET_NON_BLOCKING_FAILED
-    };
-
     class BSDSockets : public NetworkInterface
     {
-    public:
-
-        enum Counters
-        {
-            // todo: move outside class and standardize to CAPS_CAPS
-
-            PacketsSent,                            // number of packets sent (eg. added to send queue)
-            PacketsReceived,                        // number of packets received (eg. added to recv queue)
-            SendFailures,                           // number of packets lost due to sendto failure
-            SerializeWriteFailures,                 // number of serialize write failures
-            SerializeReadFailures,                  // number of serialize read failures
-            NumCounters
-        };
-
-    private:
-
         const BSDSocketsConfig m_config;
 
         int m_socket;
@@ -78,7 +52,7 @@ namespace protocol
         PacketQueue m_send_queue;
         PacketQueue m_receive_queue;
         uint8_t * m_receiveBuffer;
-        uint64_t m_counters[NumCounters];
+        uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];
 
         BSDSockets( BSDSockets & other );
         BSDSockets & operator = ( BSDSockets & other );
@@ -255,7 +229,7 @@ namespace protocol
         uint64_t GetCounter( int index ) const
         {
             assert( index >= 0 );
-            assert( index < NumCounters );
+            assert( index < BSD_SOCKET_COUNTER_NUM_COUNTERS );
             return m_counters[index];
         }
 
@@ -291,6 +265,8 @@ namespace protocol
                 if ( stream.IsOverflow() )
                 {
 //                    printf( "stream overflow on write\n" );
+                    m_counters[BSD_SOCKET_COUNTER_SERIALIZE_WRITE_OVERFLOW]++;
+                    delete packet;
                     continue;
                 }
 
@@ -301,11 +277,12 @@ namespace protocol
                 if ( bytes > m_config.maxPacketSize )
                 {
                     //printf( "packet is too large to send\n" );
+                    m_counters[BSD_SOCKET_COUNTER_PACKET_TOO_LARGE_TO_SEND]++;
+                    delete packet;
                     continue;
                 }
 
-                if ( !SendPacketInternal( packet->GetAddress(), data, bytes ) )
-                    printf( "failed to send packet\n" );
+                SendPacketInternal( packet->GetAddress(), data, bytes );
 
                 delete packet;
             }
@@ -326,6 +303,8 @@ namespace protocol
 
                 Stream stream( m_receiveBuffer, m_config.maxPacketSize );
 
+                // todo: move the protocol id processing here!!!
+
                 const int maxPacketType = m_config.packetFactory->GetMaxType();
                 int packetType = 0;
                 serialize_int( stream, packetType, 0, maxPacketType );
@@ -336,6 +315,7 @@ namespace protocol
                 if ( !packet )
                 {
                     printf( "failed to create packet of type %d\n", packetType );
+                    m_counters[BSD_SOCKET_COUNTER_CREATE_PACKET_FAILURES]++;
                     continue;
                 }
 
@@ -344,6 +324,7 @@ namespace protocol
                 if ( stream.IsOverflow() )
                 {
                     printf( "packet overflow on read\n" );
+                    m_counters[BSD_SOCKET_COUNTER_SERIALIZE_READ_OVERFLOW]++;
                     delete packet;
                     continue;
                 }
@@ -367,7 +348,7 @@ namespace protocol
 
             bool result = false;
 
-            m_counters[PacketsSent]++;
+            m_counters[BSD_SOCKET_COUNTER_PACKETS_SENT]++;
 
             if ( address.GetType() == ADDRESS_IPV6 )
             {
@@ -393,7 +374,7 @@ namespace protocol
             if ( !result )
             {
                 printf( "sendto failed: %s\n", strerror( errno ) );
-                m_counters[SendFailures]++;
+                m_counters[BSD_SOCKET_COUNTER_SEND_FAILURES]++;
             }
 
             return result;
@@ -429,7 +410,7 @@ namespace protocol
 
             assert( result >= 0 );
 
-            m_counters[PacketsReceived]++;
+            m_counters[BSD_SOCKET_COUNTER_PACKETS_RECEIVED]++;
 
             return result;
         }

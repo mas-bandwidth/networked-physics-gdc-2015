@@ -1,27 +1,18 @@
 DONE:
 
-TODO:    
-
-    There is an assert in SoakTest.cpp to do with block receive.
-
-    Seems that block size on receive might be off. I probably broke it.
-
-    ------------------
-
     Standardize counters to BSD_SOCKETS_COUNTER_... etc.
 
     Move all enums to Enums.h
 
-    Move all config types into Config.h
+TODO:    
+    
+    Move all packet definitions into "Packets.h"
+
+    "BSDSockets" should become "BSDSocket"
+
+    Move all config types into Config.h?
 
     Common.h is really more of a Util.h right now
-
-
-    --------------------
-
-    Try to get valgrind running again, eg. with "-g"
-
-    Can it find any leaks now?
 
     --------------------
 
@@ -49,7 +40,13 @@ TODO:
 
     Do I care about Win64 Visual studio project generation? Yes I do.
 
-    Probably best to stick with premake.
+    Probably best to stick with premake then.
+
+    ---------------------
+
+    Branimir has an stl replacement with allocator support.
+
+    Check it out. "BZ"
 
     ---------------------
 

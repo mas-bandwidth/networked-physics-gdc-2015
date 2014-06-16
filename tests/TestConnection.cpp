@@ -2,8 +2,7 @@
 
 using namespace protocol;
 
-// todo: standardize to CAPS_CAPS
-enum { PACKET_Connection = 0 };
+enum { PACKET_CONNECTION = 0 };
 
 class TestChannel : public ChannelAdapter 
 {
@@ -27,7 +26,7 @@ public:
 
     PacketFactory( ChannelStructure * channelStructure )
     {
-        Register( PACKET_Connection, [channelStructure] { return new ConnectionPacket( PACKET_Connection, channelStructure ); } );
+        Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
     }
 };
 
@@ -40,7 +39,7 @@ void test_connection()
     PacketFactory packetFactory( &channelStructure );
 
     ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
+    connectionConfig.packetType = PACKET_CONNECTION;
     connectionConfig.maxPacketSize = 4 * 1024;
     connectionConfig.packetFactory = &packetFactory;
     connectionConfig.channelStructure = &channelStructure;
@@ -55,14 +54,14 @@ void test_connection()
 
         connection.ReadPacket( packet );
 
-        if ( connection.GetCounter( Connection::PacketsAcked ) >= NumAcks )
+        if ( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) >= NumAcks )
             break;
     }
 
-    assert( connection.GetCounter( Connection::PacketsAcked ) == NumAcks );
-    assert( connection.GetCounter( Connection::PacketsWritten ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsRead ) == NumAcks + 1 );
-    assert( connection.GetCounter( Connection::PacketsDiscarded ) == 0 );
+    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
+    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
+    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
+    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
 }
 
 class AckChannel : public ChannelAdapter
@@ -113,7 +112,7 @@ void test_acks()
     PacketFactory packetFactory( &channelStructure );
 
     ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_Connection;
+    connectionConfig.packetType = PACKET_CONNECTION;
     connectionConfig.maxPacketSize = 4 * 1024;
     connectionConfig.packetFactory = &packetFactory;
     connectionConfig.channelStructure = &channelStructure;

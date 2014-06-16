@@ -104,17 +104,16 @@ void test_generate_ack_bits()
     assert( ack_bits == ( 1 | (1<<(11-9)) | (1<<(11-5)) | (1<<(11-1)) ) );
 }
 
-// todo: standardize to CAPS_CAPS
 enum PacketType
 {
-    PACKET_Connect,
-    PACKET_Update,
-    PACKET_Disconnect
+    PACKET_CONNECT,
+    PACKET_UPDATE,
+    PACKET_DISCONNECT
 };
 
 struct ConnectPacket : public Packet
 {
-    ConnectPacket() : Packet( PACKET_Connect ) {}
+    ConnectPacket() : Packet( PACKET_CONNECT ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
     void SerializeMeasure( MeasureStream & stream ) {}
@@ -122,7 +121,7 @@ struct ConnectPacket : public Packet
 
 struct UpdatePacket : public Packet
 {
-    UpdatePacket() : Packet( PACKET_Update ) {}
+    UpdatePacket() : Packet( PACKET_UPDATE ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
     void SerializeMeasure( MeasureStream & stream ) {}
@@ -130,7 +129,7 @@ struct UpdatePacket : public Packet
 
 struct DisconnectPacket : public Packet
 {
-    DisconnectPacket() : Packet( PACKET_Disconnect ) {}
+    DisconnectPacket() : Packet( PACKET_DISCONNECT ) {}
     void SerializeRead( ReadStream & stream ) {}
     void SerializeWrite( WriteStream & stream ) {}
     void SerializeMeasure( MeasureStream & stream ) {}
@@ -141,9 +140,9 @@ class PacketFactory : public Factory<Packet>
 public:
     PacketFactory()
     {
-        Register( PACKET_Connect,    [] { return new ConnectPacket();    } );
-        Register( PACKET_Update,     [] { return new UpdatePacket();     } );
-        Register( PACKET_Disconnect, [] { return new DisconnectPacket(); } );
+        Register( PACKET_CONNECT,    [] { return new ConnectPacket();    } );
+        Register( PACKET_UPDATE,     [] { return new UpdatePacket();     } );
+        Register( PACKET_DISCONNECT, [] { return new DisconnectPacket(); } );
     }
 };
 
@@ -153,13 +152,13 @@ void test_factory()
 
     PacketFactory packetFactory;
 
-    auto connectPacket = packetFactory.Create( PACKET_Connect );
-    auto updatePacket = packetFactory.Create( PACKET_Update );
-    auto disconnectPacket = packetFactory.Create( PACKET_Disconnect );
+    auto connectPacket = packetFactory.Create( PACKET_CONNECT );
+    auto updatePacket = packetFactory.Create( PACKET_UPDATE );
+    auto disconnectPacket = packetFactory.Create( PACKET_DISCONNECT );
 
-    assert( connectPacket->GetType() == PACKET_Connect );
-    assert( updatePacket->GetType() == PACKET_Update );
-    assert( disconnectPacket->GetType() == PACKET_Disconnect );
+    assert( connectPacket->GetType() == PACKET_CONNECT );
+    assert( updatePacket->GetType() == PACKET_UPDATE );
+    assert( disconnectPacket->GetType() == PACKET_DISCONNECT );
 
     delete connectPacket;
     delete updatePacket;

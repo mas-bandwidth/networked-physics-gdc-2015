@@ -13,40 +13,6 @@
 
 namespace protocol
 {
-    enum ConnectionError
-    {
-        CONNECTION_ERROR_NONE = 0,
-        CONNECTION_ERROR_CHANNEL
-    };
-
-    struct SentPacketData
-    {
-        SentPacketData()
-            : valid(0), acked(0), sequence(0) {}
-
-        SentPacketData( uint16_t _sequence )
-            : valid(1), acked(0), sequence( _sequence ) {}
-
-        uint32_t valid : 1;                     // is this packet entry valid?
-        uint32_t acked : 1;                     // has packet been acked?
-        uint32_t sequence : 16;                 // packet sequence #
-    };
-
-    struct ReceivedPacketData
-    {
-        ReceivedPacketData()
-            : valid(0), sequence(0) {}
-
-        ReceivedPacketData( uint16_t _sequence )
-            : valid(1), sequence( _sequence ) {}
-
-        uint32_t valid : 1;                     // is this packet entry valid?
-        uint32_t sequence : 16;                 // packet sequence #
-    };
-
-    typedef SlidingWindow<SentPacketData> SentPackets;
-    typedef SlidingWindow<ReceivedPacketData> ReceivedPackets;
-
     struct ConnectionPacket : public Packet
     {
         uint64_t protocolId = 0;
@@ -216,32 +182,45 @@ namespace protocol
         ChannelStructure * channelStructure = nullptr;
     };
 
+    struct SentPacketData
+    {
+        SentPacketData()
+            : valid(0), acked(0), sequence(0) {}
+
+        SentPacketData( uint16_t _sequence )
+            : valid(1), acked(0), sequence( _sequence ) {}
+
+        uint32_t valid : 1;                     // is this packet entry valid?
+        uint32_t acked : 1;                     // has packet been acked?
+        uint32_t sequence : 16;                 // packet sequence #
+    };
+
+    struct ReceivedPacketData
+    {
+        ReceivedPacketData()
+            : valid(0), sequence(0) {}
+
+        ReceivedPacketData( uint16_t _sequence )
+            : valid(1), sequence( _sequence ) {}
+
+        uint32_t valid : 1;                     // is this packet entry valid?
+        uint32_t sequence : 16;                 // packet sequence #
+    };
+
+    typedef SlidingWindow<SentPacketData> SentPackets;
+    typedef SlidingWindow<ReceivedPacketData> ReceivedPackets;
+
     class Connection
     {
-    public:
-
-        // todo: move outside class, standardize to CAPS_CAPS
-        
-        enum Counters
-        {
-            PacketsRead,                            // number of packets read
-            PacketsWritten,                         // number of packets written
-            PacketsAcked,                           // number of packets acked
-            PacketsDiscarded,                       // number of read packets that we discarded (eg. not acked)
-            NumCounters
-        };
-
-    private:
-
         ConnectionError m_error = CONNECTION_ERROR_NONE;
 
-        const ConnectionConfig m_config;                    // const configuration data
-        TimeBase m_timeBase;                                // network time base
-        SentPackets * m_sentPackets = nullptr;              // sliding window of recently sent packets
-        ReceivedPackets * m_receivedPackets = nullptr;      // sliding window of recently received packets
-        int m_numChannels = 0;                              // cached number of channels
-        Channel * m_channels[MaxChannels];                  // array of channels created according to channel structure
-        uint64_t m_counters[NumCounters];                   // counters for unit testing, stats etc.
+        const ConnectionConfig m_config;                            // const configuration data
+        TimeBase m_timeBase;                                        // network time base
+        SentPackets * m_sentPackets = nullptr;                      // sliding window of recently sent packets
+        ReceivedPackets * m_receivedPackets = nullptr;              // sliding window of recently received packets
+        int m_numChannels = 0;                                      // cached number of channels
+        Channel * m_channels[MaxChannels];                          // array of channels created according to channel structure
+        uint64_t m_counters[CONNECTION_COUNTER_NUM_COUNTERS];       // counters for unit testing, stats etc.
 
     public:
 
@@ -357,7 +336,7 @@ namespace protocol
 
             m_sentPackets->Insert( packet->sequence );
 
-            m_counters[PacketsWritten]++;
+            m_counters[CONNECTION_COUNTER_PACKETS_WRITTEN]++;
 
             return packet;
         }
@@ -381,7 +360,7 @@ namespace protocol
 
             ProcessAcks( packet->ack, packet->ack_bits );
 
-            m_counters[PacketsRead]++;
+            m_counters[CONNECTION_COUNTER_PACKETS_READ]++;
 
             bool discardPacket = false;
 
@@ -401,7 +380,7 @@ namespace protocol
 
             if ( discardPacket || !m_receivedPackets->Insert( packet->sequence ) )
             {
-                m_counters[PacketsDiscarded]++;
+                m_counters[CONNECTION_COUNTER_PACKETS_DISCARDED]++;
                 return false;            
             }
 
@@ -411,7 +390,7 @@ namespace protocol
         uint64_t GetCounter( int index ) const
         {
             assert( index >= 0 );
-            assert( index < NumCounters );
+            assert( index < CONNECTION_COUNTER_NUM_COUNTERS );
             return m_counters[index];
         }
 
@@ -441,7 +420,8 @@ namespace protocol
         {
 //            printf( "packet %d acked\n", (int) sequence );
 
-            m_counters[PacketsAcked]++;
+            m_counters[CONNECTION_COUNTER_PACKETS_ACKED]++;
+
             for ( int i = 0; i < m_numChannels; ++i )
                 m_channels[i]->ProcessAck( sequence );
         }

@@ -178,9 +178,9 @@ void test_reliable_message_channel_messages()
                 delete packet;
             }
 
-            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -206,13 +206,13 @@ void test_reliable_message_channel_messages()
 
             connection.Update( timeBase );
 
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             timeBase.time += timeBase.deltaTime;
 
-            if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
+            if ( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent )
                 break;
 
             iteration++;
@@ -297,9 +297,9 @@ void test_reliable_message_channel_small_blocks()
                 delete packet;
             }
 
-            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -329,13 +329,13 @@ void test_reliable_message_channel_small_blocks()
 
             connection.Update( timeBase );
 
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             timeBase.time += timeBase.deltaTime;
 
-            if ( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent )
+            if ( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent )
                 break;
 
             iteration++;
@@ -417,9 +417,9 @@ void test_reliable_message_channel_large_blocks()
                 delete packet;
             }
         
-            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -451,16 +451,16 @@ void test_reliable_message_channel_large_blocks()
 
             connection.Update( timeBase );
 
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             timeBase.time += timeBase.deltaTime;
 
             iteration++;
         }
 
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
+        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
     }
     memory::shutdown();
 }
@@ -546,9 +546,9 @@ void test_reliable_message_channel_mixture()
                 delete packet;
             }
             
-            assert( connection.GetCounter( Connection::PacketsRead ) <= iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsWritten ) == iteration + 1 );
-            assert( connection.GetCounter( Connection::PacketsAcked ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -594,16 +594,16 @@ void test_reliable_message_channel_mixture()
 
             connection.Update( timeBase );
 
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesSent ) == NumMessagesSent );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == numMessagesReceived );
-            assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesEarly ) == 0 );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             timeBase.time += timeBase.deltaTime;
 
             iteration++;
         }
 
-        assert( messageChannel->GetCounter( ReliableMessageChannel::MessagesReceived ) == NumMessagesSent );
+        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
     }
     memory::shutdown();
 }
