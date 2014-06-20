@@ -5,6 +5,13 @@
 
 namespace protocol
 {
+    enum AddressType
+    {
+        ADDRESS_UNDEFINED,
+        ADDRESS_IPV4,
+        ADDRESS_IPV6
+    };
+
     enum BSDSocketError
     {
         BSD_SOCKET_ERROR_NONE = 0,

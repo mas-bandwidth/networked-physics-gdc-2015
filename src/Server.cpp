@@ -1,0 +1,504 @@
+/*
+    Network Protocol Library
+    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+*/
+
+#include "Server.h"
+
+namespace protocol
+{
+    Server::Server( const ServerConfig & config )
+        : m_config( config )
+    {
+        assert( m_config.networkInterface );
+        assert( m_config.channelStructure );
+        assert( m_config.maxClients >= 1 );
+
+//            printf( "creating server with %d client slots\n", m_config.maxClients );
+
+        m_clients.resize( m_config.maxClients );
+
+        m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
+
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_CONNECTION;
+        connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
+        connectionConfig.channelStructure = m_config.channelStructure;
+        connectionConfig.packetFactory = m_packetFactory;
+
+        for ( int i = 0; i < m_clients.size(); ++i )
+            m_clients[i].connection = new Connection( connectionConfig );
+    }
+
+    Server::~Server()
+    {
+        assert( m_packetFactory );
+        delete m_packetFactory;
+        m_packetFactory = nullptr;
+
+        for ( int i = 0; i < m_clients.size(); ++i )
+        {
+            assert( m_clients[i].connection );
+            delete m_clients[i].connection; 
+            m_clients[i].connection = nullptr;
+        }
+    }
+
+    void Server::Open()
+    {
+        m_open = true;
+    }
+
+    void Server::Close()
+    {
+        m_open = false;
+    }
+
+    bool Server::IsOpen() const
+    {
+        return m_open;
+    }
+
+    void Server::Update( const TimeBase & timeBase )
+    {
+        m_timeBase = timeBase;
+
+        UpdateClients();
+
+        UpdateNetworkInterface();
+
+        UpdateReceivePackets();
+    }
+
+    void Server::DisconnectClient( int clientIndex )
+    {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_config.maxClients );
+
+        auto & client = m_clients[clientIndex];
+
+        if ( client.state == SERVER_CLIENT_STATE_DISCONNECTED )
+            return;
+
+//            printf( "sent disconnected packet to client\n" );
+
+        auto packet = new DisconnectedPacket();
+
+        packet->clientGuid = client.clientGuid;
+        packet->serverGuid = client.serverGuid;
+
+        m_config.networkInterface->SendPacket( client.address, packet );
+
+        ResetClientSlot( clientIndex );
+    }
+
+    ServerClientState Server::GetClientState( int clientIndex ) const
+    {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_config.maxClients );
+        return m_clients[clientIndex].state;
+    }
+
+    Connection * Server::GetClientConnection( int clientIndex )
+    {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_config.maxClients );
+        return m_clients[clientIndex].connection;
+    }
+
+    void Server::UpdateClients()
+    {
+        for ( int i = 0; i < m_clients.size(); ++i )
+        {
+            switch ( m_clients[i].state )
+            {
+                case SERVER_CLIENT_STATE_SENDING_CHALLENGE:
+                    UpdateSendingChallenge( i );
+                    break;
+
+                case SERVER_CLIENT_STATE_SENDING_SERVER_DATA:
+                    UpdateSendingServerData( i );
+                    break;
+
+                case SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA:
+                    UpdateRequestingClientData( i );
+                    break;
+
+                case SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA:
+                    UpdateReceivingClientData( i );
+                    break;
+
+                case SERVER_CLIENT_STATE_CONNECTED:
+                    UpdateConnected( i );
+                    break;
+
+                default:
+                    break;
+            }
+
+            UpdateTimeouts( i );
+        }
+    }
+
+    void Server::UpdateSendingChallenge( int clientIndex )
+    {
+        ClientData & client = m_clients[clientIndex];
+
+        assert( client.state == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
+
+        if ( client.accumulator > 1.0 / m_config.connectingSendRate )
+        {
+            auto packet = new ConnectionChallengePacket();
+
+            packet->clientGuid = client.clientGuid;
+            packet->serverGuid = client.serverGuid;
+
+            m_config.networkInterface->SendPacket( client.address, packet );
+
+            client.accumulator = 0.0;
+        }
+    }
+
+    void Server::UpdateSendingServerData( int clientIndex )
+    {
+        ClientData & client = m_clients[clientIndex];
+
+        assert( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
+
+        // todo: not implemented yet
+        assert( false );
+    }
+
+    void Server::UpdateRequestingClientData( int clientIndex )
+    {
+        ClientData & client = m_clients[clientIndex];
+
+        assert( client.state == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
+
+        if ( client.accumulator > 1.0 / m_config.connectingSendRate )
+        {
+//                printf( "sent request client data packet\n" );
+
+            auto packet = new RequestClientDataPacket();
+
+            packet->clientGuid = client.clientGuid;
+            packet->serverGuid = client.serverGuid;
+
+            m_config.networkInterface->SendPacket( client.address, packet );
+
+            client.accumulator = 0.0;
+        }
+    }
+
+    void Server::UpdateReceivingClientData( int clientIndex )
+    {
+        ClientData & client = m_clients[clientIndex];
+
+        assert( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
+
+        // todo: not implemented yet
+        assert( false );
+    }
+
+    void Server::UpdateConnected( int clientIndex )
+    {
+        ClientData & client = m_clients[clientIndex];
+
+        assert( client.state == SERVER_CLIENT_STATE_CONNECTED );
+
+        assert( client.connection );
+
+        client.connection->Update( m_timeBase );
+
+        if ( client.connection->GetError() != CONNECTION_ERROR_NONE )
+        {
+            printf( "client connection is in error state\n" );
+            ResetClientSlot( clientIndex );
+            return;
+        }
+
+        if ( client.accumulator > 1.0 / m_config.connectedSendRate )
+        {
+            auto packet = client.connection->WritePacket();
+
+//                printf( "server sent connection packet\n" );
+
+            m_config.networkInterface->SendPacket( client.address, packet );
+
+            client.accumulator = 0.0;
+        }
+    }
+
+    void Server::UpdateTimeouts( int clientIndex )
+    {
+        ClientData & client = m_clients[clientIndex];
+
+        if ( client.state == SERVER_CLIENT_STATE_DISCONNECTED )
+            return;
+
+        client.accumulator += m_timeBase.deltaTime;
+
+        const float timeout = client.state == SERVER_CLIENT_STATE_CONNECTED ? m_config.connectedTimeOut : m_config.connectingTimeOut;
+
+        if ( client.lastPacketTime + timeout < m_timeBase.time )
+        {
+//                printf( "client %d timed out\n", clientIndex );
+
+            ResetClientSlot( clientIndex );
+        }
+    }
+
+    void Server::UpdateNetworkInterface()
+    {
+        assert( m_config.networkInterface );
+
+        m_config.networkInterface->Update( m_timeBase );
+    }
+
+    void Server::UpdateReceivePackets()
+    {
+        while ( true )
+        {
+            auto packet = m_config.networkInterface->ReceivePacket();
+            if ( !packet )
+                break;
+
+//                printf( "server received packet\n" );
+
+            switch ( packet->GetType() )
+            {
+                case PACKET_CONNECTION_REQUEST:
+                    ProcessConnectionRequestPacket( static_cast<ConnectionRequestPacket*>( packet ) );
+                    break;
+
+                case PACKET_CHALLENGE_RESPONSE:
+                    ProcessChallengeResponsePacket( static_cast<ChallengeResponsePacket*>( packet ) );
+                    break;
+
+                case PACKET_READY_FOR_CONNECTION:
+                    ProcessReadyForConnectionPacket( static_cast<ReadyForConnectionPacket*>( packet ) );
+                    break;
+
+                case PACKET_CONNECTION:
+                    ProcessConnectionPacket( static_cast<ConnectionPacket*>( packet ) );
+                    break;
+
+                default:
+                    break;
+            }
+
+            delete packet;
+        }
+    }
+
+    void Server::ProcessConnectionRequestPacket( ConnectionRequestPacket * packet )
+    {
+        assert( packet );
+
+//            printf( "server received connection request packet\n" );
+
+//            printf( "server received connection request packet: clientGuid = %llx\n", packet->clientGuid );
+
+
+        if ( !m_open )
+        {
+//                printf( "server is closed. denying connection request\n" );
+
+            auto connectionDeniedPacket = new ConnectionDeniedPacket();
+            connectionDeniedPacket->clientGuid = packet->clientGuid;
+            connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
+
+            m_config.networkInterface->SendPacket( packet->GetAddress(), connectionDeniedPacket );
+
+            return;
+        }
+
+        auto address = packet->GetAddress();
+
+        if ( FindClientIndex( address, packet->clientGuid ) != -1 )
+        {
+//                printf( "ignoring connection request. client already has a slot\n" );
+            return;
+        }
+
+        int clientIndex = FindClientIndex( address );
+        if ( clientIndex != -1 && m_clients[clientIndex].clientGuid != packet->clientGuid )
+        {
+//                printf( "client is already connected. denying connection request\n" );
+            auto connectionDeniedPacket = new ConnectionDeniedPacket();
+            connectionDeniedPacket->clientGuid = packet->clientGuid;
+            connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
+            m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+        }
+
+        clientIndex = FindFreeClientSlot();
+        if ( clientIndex == -1 )
+        {
+//              printf( "server is full. denying connection request\n" );
+            auto connectionDeniedPacket = new ConnectionDeniedPacket();
+            connectionDeniedPacket->clientGuid = packet->clientGuid;
+            connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
+            m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+        }
+
+//            printf( "new client connection at index %d\n", clientIndex );
+
+        ClientData & client = m_clients[clientIndex];
+
+        client.address = address;
+        client.clientGuid = packet->clientGuid;
+        client.serverGuid = GenerateGuid();
+        client.lastPacketTime = m_timeBase.time;
+        client.state = SERVER_CLIENT_STATE_SENDING_CHALLENGE;
+    }
+
+    void Server::ProcessChallengeResponsePacket( ChallengeResponsePacket * packet )
+    {
+        assert( packet );
+
+//            printf( "server received challenge response packet\n" );
+
+        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        if ( clientIndex == -1 )
+        {
+//                printf( "found no matching client\n" );
+            return;
+        }
+
+        ClientData & client = m_clients[clientIndex];
+
+        if ( client.serverGuid != packet->serverGuid )
+        {
+//                printf( "client server guid does not match\n" );
+            return;
+        }
+
+        if ( client.state != SERVER_CLIENT_STATE_SENDING_CHALLENGE )
+        {
+//                printf( "ignoring because client slot is not in sending challenge state\n" );
+            return;
+        }
+
+        client.accumulator = 0.0;
+        client.lastPacketTime = m_timeBase.time;
+        client.state = m_config.block ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA;
+    }
+
+    void Server::ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet )
+    {
+        assert( packet );
+
+//            printf( "server received ready for connection packet\n" );
+
+        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        if ( clientIndex == -1 )
+        {
+//                printf( "found no matching client\n" );
+            return;
+        }
+
+        ClientData & client = m_clients[clientIndex];
+
+        if ( client.serverGuid != packet->serverGuid )
+        {
+//              printf( "client server guid does not match\n" );
+            return;
+        }
+
+        // todo: should also transition here from received client data state
+
+        if ( client.state != SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA )
+        {
+//                printf( "ignoring because client slot is not in correct state\n" );
+            return;
+        }
+
+        client.accumulator = 0.0;
+        client.lastPacketTime = m_timeBase.time;
+        client.state = SERVER_CLIENT_STATE_CONNECTED;
+    }
+
+    void Server::ProcessConnectionPacket( ConnectionPacket * packet )
+    {
+        assert( packet );
+
+//            printf( "server received connection packet\n" );
+
+        const int clientIndex = FindClientIndex( packet->GetAddress() );
+        if ( clientIndex == -1 )
+        {
+//                printf( "found no matching client\n" );
+            return;
+        }
+
+        ClientData & client = m_clients[clientIndex];
+        if ( client.state != SERVER_CLIENT_STATE_CONNECTED )
+        {
+//                printf( "ignoring because client slot is not in correct state\n" );
+            return;
+        }
+
+        client.connection->ReadPacket( packet );
+
+        client.lastPacketTime = m_timeBase.time;
+    }
+
+    int Server::FindClientIndex( const Address & address ) const
+    {
+        for ( int i = 0; i < m_clients.size(); ++i )
+        {
+            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
+                continue;
+            
+            if ( m_clients[i].address == address )
+            {
+                assert( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int Server::FindClientIndex( const Address & address, uint64_t clientGuid ) const
+    {
+        for ( int i = 0; i < m_clients.size(); ++i )
+        {
+            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
+                continue;
+            
+            if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid )
+            {
+                assert( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int Server::FindFreeClientSlot() const
+    {
+        for ( int i = 0; i < m_clients.size(); ++i )
+        {
+            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
+                return i;
+        }
+        return -1;
+    }
+
+    void Server::ResetClientSlot( int clientIndex )
+    {
+//          printf( "reset client slot %d\n", clientIndex );
+
+        ClientData & client = m_clients[clientIndex];
+
+        client.state = SERVER_CLIENT_STATE_DISCONNECTED;
+        client.address = Address();
+        client.accumulator = 0.0;
+        client.lastPacketTime = 0.0;
+        client.clientGuid = 0;
+        client.serverGuid = 0;
+
+        assert( client.connection );
+        client.connection->Reset();
+    }
+}

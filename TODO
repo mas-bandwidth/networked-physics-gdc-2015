@@ -1,18 +1,24 @@
 DONE:
 
+    Convert to a premake based build system.
+
+    Convert to .h / .cpp split
+
+    Address.h
+    BitPacker.h
+    Common.h
+    BSDSocket.h
+    Connection.h
+    Client.h
+    Server.h
+    DNSResolver.h
+    NetworkSimulator.h
+    ResolveWrapper.h
+    Channel.h
+
 TODO:    
 
-    ---------------------
-
-    Convert to .h / .cpp split.
-
-    Makefile or premake? Premake is probably the best bet at this point.
-
-    Rakefile is another option.
-
-    Do I care about Win64 Visual studio project generation? Yes I do.
-
-    Probably best to stick with premake then.
+    Get UnitTest.cpp building, eg. pm test
 
     ---------------------
 

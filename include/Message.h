@@ -83,10 +83,10 @@ namespace protocol
 
     private:
 
+        Block * m_block = nullptr;
+
         BlockMessage( const BlockMessage & other );
         const BlockMessage & operator = ( const BlockMessage & other );
-
-        Block * m_block = nullptr;
     };
 }
 

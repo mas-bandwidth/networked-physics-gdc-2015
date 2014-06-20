@@ -68,95 +68,19 @@ namespace protocol
 
     public:
 
-        NetworkSimulator( const NetworkSimulatorConfig & config = NetworkSimulatorConfig() )
-            : m_config( config )
-        {
-            m_packetNumber = 0;
-            m_packets.resize( config.numPackets );
-        }
+        NetworkSimulator( const NetworkSimulatorConfig & config = NetworkSimulatorConfig() );
 
-        ~NetworkSimulator()
-        {
-            for ( int i = 0; i < m_packets.size(); ++i )
-            {
-                if ( m_packets[i].packet )
-                {
-                    delete m_packets[i].packet;
-                    m_packets[i].packet = nullptr;
-                }
-            }
-        }
+        ~NetworkSimulator();
 
-        void AddState( const NetworkSimulatorState & state )
-        {
-            m_states.push_back( state );
-        }
+        void AddState( const NetworkSimulatorState & state );
 
-        void SendPacket( const Address & address, Packet * packet )
-        {
-//            printf( "send packet %d\n", m_packetNumber );
+        void SendPacket( const Address & address, Packet * packet );
 
-            assert( packet );
+        Packet * ReceivePacket();
 
-            packet->SetAddress( address );
+        void Update( const TimeBase & timeBase );
 
-            const int index = m_packetNumber % m_config.numPackets;
-
-            if ( random_int( 0, 100 ) <= m_state.packetLoss )
-            {
-                delete packet;
-                return;
-            }
-
-            const float delay = m_state.latency + random_float( -m_state.jitter, +m_state.jitter );
-
-            m_packets[index].packet = packet;
-            m_packets[index].packetNumber = m_packetNumber;
-            m_packets[index].dequeueTime = m_timeBase.time + delay;
-            
-            m_packetNumber++;
-        }
-
-        Packet * ReceivePacket()
-        {
-            PacketData * oldestPacket = nullptr;
-
-            for ( int i = 0; i < m_packets.size(); ++i )
-            {
-                if ( m_packets[i].packet == nullptr )
-                    continue;
-
-                if ( !oldestPacket || ( oldestPacket && m_packets[i].dequeueTime < oldestPacket->dequeueTime ) )
-                    oldestPacket = &m_packets[i];
-            }
-
-            if ( oldestPacket && oldestPacket->dequeueTime <= m_timeBase.time )
-            {
-//                printf( "receive packet %d\n", (int) oldestPacket->packetNumber );
-                auto packet = oldestPacket->packet;
-                oldestPacket->packet = nullptr;
-                return packet;
-            }
-
-            return nullptr;
-        }
-
-        void Update( const TimeBase & timeBase )
-        {
-            m_timeBase = timeBase;
-
-            if ( m_states.size() && ( rand() % m_config.stateChance ) == 0 )
-            {
-                int stateIndex = rand() % m_states.size();
-//                printf( "*** network simulator switching to state %d ***\n", stateIndex );
-                m_state = m_states[stateIndex];
-            }
-        }
-
-        uint32_t GetMaxPacketSize() const
-        {
-            return 0xFFFFFFFF;
-        }
+        uint32_t GetMaxPacketSize() const;
     };
 }
 

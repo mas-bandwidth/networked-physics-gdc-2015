@@ -9,6 +9,7 @@
 #include "Packet.h"
 #include "Stream.h"
 #include "Channel.h"
+#include "Factory.h"
 
 namespace protocol
 {

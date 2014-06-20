@@ -104,53 +104,17 @@ namespace protocol
 
         void AddChannel( const std::string & name,
                          CreateChannelFunction createChannel,
-                         CreateChannelDataFunction createChannelData )
-        {
-            assert( !m_locked );
-            if ( m_locked )
-                return;
+                         CreateChannelDataFunction createChannelData );
 
-            assert( m_numChannels < MaxChannels - 1 );
+        void Lock();
 
-            ChannelEntry & entry = m_channelEntries[m_numChannels];
+        bool IsLocked() const;
 
-            entry.name = name;
-            entry.createChannel = createChannel;
-            entry.createChannelData = createChannelData;
+        int GetNumChannels();
 
-            m_numChannels++;
-        }
+        Channel * CreateChannel( int channelIndex );
 
-        void Lock()
-        {
-            m_locked = true;
-        }
-
-        bool IsLocked() const
-        {
-            return m_locked;
-        }
-
-        int GetNumChannels()
-        {
-            return m_numChannels;
-        }
-
-        Channel * CreateChannel( int channelIndex )
-        {
-            assert( m_locked );
-            assert( channelIndex >= 0 );
-            assert( channelIndex < m_numChannels );
-            return m_channelEntries[channelIndex].createChannel();
-        }
-
-        ChannelData * CreateChannelData( int channelIndex )
-        {
-            assert( m_locked );
-            assert( channelIndex >= 0 );
-            assert( channelIndex < m_numChannels );
-            return m_channelEntries[channelIndex].createChannelData();
-        }
+        ChannelData * CreateChannelData( int channelIndex );
     };
 }
 
