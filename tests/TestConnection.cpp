@@ -66,9 +66,9 @@ class AckChannel : public ChannelAdapter
 {
 public:
 
-    std::vector<bool> & ackedPackets;
+    int * ackedPackets = nullptr;
 
-    AckChannel( std::vector<bool> & _ackedPackets )
+    AckChannel( int * _ackedPackets )
         : ackedPackets( _ackedPackets ) {}
 
     bool ProcessData( uint16_t sequence, ChannelData * data )
@@ -85,10 +85,12 @@ public:
 
 class AckChannelStructure : public ChannelStructure
 {
+    int * ackedPackets = nullptr;
 public:
-    AckChannelStructure( std::vector<bool> & ackedPackets )
+    AckChannelStructure( int * _ackedPackets )
     {
-        AddChannel( "ack channel", [&ackedPackets] { return new AckChannel( ackedPackets ); }, [] { return nullptr; } );
+        ackedPackets = _ackedPackets;
+        AddChannel( "ack channel", [this] { return new AckChannel( ackedPackets ); }, [] { return nullptr; } );
         Lock();
     }
 };
@@ -101,11 +103,11 @@ void test_acks()
     {
         const int NumIterations = 10*1024;
 
-        std::vector<bool> receivedPackets;
-        std::vector<bool> ackedPackets;
+        int receivedPackets[NumIterations];
+        int ackedPackets[NumIterations];
 
-        receivedPackets.resize( NumIterations );
-        ackedPackets.resize( NumIterations );
+        memset( receivedPackets, 0, sizeof( receivedPackets ) );
+        memset( ackedPackets, 0, sizeof( ackedPackets ) );
 
         AckChannelStructure channelStructure( ackedPackets );
 

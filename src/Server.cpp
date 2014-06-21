@@ -24,23 +24,29 @@ namespace protocol
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
 
-        m_clients.resize( m_config.maxClients );
-        for ( int i = 0; i < m_clients.size(); ++i )
+        m_numClients = m_config.maxClients;
+        m_clients = new ClientData[m_numClients];
+        for ( int i = 0; i < m_numClients; ++i )
             m_clients[i].connection = new Connection( connectionConfig );
     }
 
     Server::~Server()
     {
+        assert( m_clients );
         assert( m_packetFactory );
-        delete m_packetFactory;
-        m_packetFactory = nullptr;
 
-        for ( int i = 0; i < m_clients.size(); ++i )
+        for ( int i = 0; i < m_numClients; ++i )
         {
             assert( m_clients[i].connection );
             delete m_clients[i].connection; 
             m_clients[i].connection = nullptr;
         }
+
+        delete [] m_clients;
+        delete m_packetFactory;
+
+        m_clients = nullptr;
+        m_packetFactory = nullptr;
     }
 
     void Server::Open()
@@ -72,7 +78,7 @@ namespace protocol
     void Server::DisconnectClient( int clientIndex )
     {
         assert( clientIndex >= 0 );
-        assert( clientIndex < m_config.maxClients );
+        assert( clientIndex < m_numClients );
 
         auto & client = m_clients[clientIndex];
 
@@ -94,20 +100,20 @@ namespace protocol
     ServerClientState Server::GetClientState( int clientIndex ) const
     {
         assert( clientIndex >= 0 );
-        assert( clientIndex < m_config.maxClients );
+        assert( clientIndex < m_numClients );
         return m_clients[clientIndex].state;
     }
 
     Connection * Server::GetClientConnection( int clientIndex )
     {
         assert( clientIndex >= 0 );
-        assert( clientIndex < m_config.maxClients );
+        assert( clientIndex < m_numClients );
         return m_clients[clientIndex].connection;
     }
 
     void Server::UpdateClients()
     {
-        for ( int i = 0; i < m_clients.size(); ++i )
+        for ( int i = 0; i < m_numClients; ++i )
         {
             switch ( m_clients[i].state )
             {
@@ -141,6 +147,9 @@ namespace protocol
 
     void Server::UpdateSendingChallenge( int clientIndex )
     {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_numClients );
+
         ClientData & client = m_clients[clientIndex];
 
         assert( client.state == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
@@ -160,6 +169,9 @@ namespace protocol
 
     void Server::UpdateSendingServerData( int clientIndex )
     {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_numClients );
+
         ClientData & client = m_clients[clientIndex];
 
         assert( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
@@ -170,6 +182,9 @@ namespace protocol
 
     void Server::UpdateRequestingClientData( int clientIndex )
     {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_numClients );
+
         ClientData & client = m_clients[clientIndex];
 
         assert( client.state == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
@@ -191,6 +206,9 @@ namespace protocol
 
     void Server::UpdateReceivingClientData( int clientIndex )
     {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_numClients );
+
         ClientData & client = m_clients[clientIndex];
 
         assert( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
@@ -201,6 +219,9 @@ namespace protocol
 
     void Server::UpdateConnected( int clientIndex )
     {
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_numClients );
+
         ClientData & client = m_clients[clientIndex];
 
         assert( client.state == SERVER_CLIENT_STATE_CONNECTED );
@@ -345,7 +366,7 @@ namespace protocol
 //            printf( "new client connection at index %d\n", clientIndex );
 
         assert( clientIndex >= 0 );
-        assert( clientIndex < m_clients.size() );
+        assert( clientIndex < m_numClients );
 
         ClientData & client = m_clients[clientIndex];
 
@@ -401,6 +422,9 @@ namespace protocol
             return;
         }
 
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_numClients );
+
         ClientData & client = m_clients[clientIndex];
 
         if ( client.serverGuid != packet->serverGuid )
@@ -449,7 +473,7 @@ namespace protocol
 
     int Server::FindClientIndex( const Address & address ) const
     {
-        for ( int i = 0; i < m_clients.size(); ++i )
+        for ( int i = 0; i < m_numClients; ++i )
         {
             if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
                 continue;
@@ -465,7 +489,7 @@ namespace protocol
 
     int Server::FindClientIndex( const Address & address, uint64_t clientGuid ) const
     {
-        for ( int i = 0; i < m_clients.size(); ++i )
+        for ( int i = 0; i < m_numClients; ++i )
         {
             if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
                 continue;
@@ -481,7 +505,7 @@ namespace protocol
 
     int Server::FindFreeClientSlot() const
     {
-        for ( int i = 0; i < m_clients.size(); ++i )
+        for ( int i = 0; i < m_numClients; ++i )
         {
             if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
                 return i;

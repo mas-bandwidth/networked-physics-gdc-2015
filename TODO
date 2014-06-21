@@ -2,8 +2,6 @@ DONE:
 
 TODO:    
 
-    -------------------
-
     Pass over remaining std::vector and see if they can be removed easily.
 
     -------------------
@@ -13,10 +11,6 @@ TODO:
     Look for runtime allocations, that can't easily be moved to pools etc.
 
     Do not allocate at runtime!
-
-    Don't do additional allocations for packets, so consider
-    setting a maximum # of channels per-connection, eg. 16
-    and hardcode the channel data inside the packet? Simpler.
 
     Work towards getting packets allocated via allocator
     passed in to the connection, eg. this will allow
@@ -30,7 +24,7 @@ TODO:
 
     ------------------
 
-    need a "check" macros that works in release for unit tests.
+    need a "check" macro that works in release for unit tests.
 
     ------------------
 

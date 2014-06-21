@@ -11,12 +11,16 @@ namespace protocol
         : m_config( config )
     {
         m_packetNumber = 0;
-        m_packets.resize( config.numPackets );
+        m_packets = new PacketData[config.numPackets];
+        memset( m_packets, 0, sizeof(PacketData) * config.numPackets );
+        m_numStates = 0;
     }
 
     NetworkSimulator::~NetworkSimulator()
     {
-        for ( int i = 0; i < m_packets.size(); ++i )
+        assert( m_packets );
+        
+        for ( int i = 0; i < m_config.numPackets; ++i )
         {
             if ( m_packets[i].packet )
             {
@@ -24,11 +28,15 @@ namespace protocol
                 m_packets[i].packet = nullptr;
             }
         }
+
+        delete [] m_packets;
+        m_packets = nullptr;
     }
 
     void NetworkSimulator::AddState( const NetworkSimulatorState & state )
     {
-        m_states.push_back( state );
+        assert( m_numStates < MaxSimulatorStates - 1 );
+        m_states[m_numStates++] = state;
     }
 
     void NetworkSimulator::SendPacket( const Address & address, Packet * packet )
@@ -60,7 +68,7 @@ namespace protocol
     {
         PacketData * oldestPacket = nullptr;
 
-        for ( int i = 0; i < m_packets.size(); ++i )
+        for ( int i = 0; i < m_config.numPackets; ++i )
         {
             if ( m_packets[i].packet == nullptr )
                 continue;
@@ -84,9 +92,9 @@ namespace protocol
     {
         m_timeBase = timeBase;
 
-        if ( m_states.size() && ( rand() % m_config.stateChance ) == 0 )
+        if ( m_numStates && ( rand() % m_config.stateChance ) == 0 )
         {
-            int stateIndex = rand() % m_states.size();
+            int stateIndex = rand() % m_numStates;
 //                printf( "*** network simulator switching to state %d ***\n", stateIndex );
             m_state = m_states[stateIndex];
         }

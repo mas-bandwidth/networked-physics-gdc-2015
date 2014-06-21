@@ -185,9 +185,8 @@ namespace protocol
 
         m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
 
-        // todo: boo! don't use std::vector here
-        m_sendLargeBlock.fragments.resize( m_maxBlockFragments );
-        m_receiveLargeBlock.fragments.resize( m_maxBlockFragments );
+        m_sendLargeBlock.fragments = new SendFragmentData[m_maxBlockFragments];
+        m_receiveLargeBlock.fragments = new ReceiveFragmentData[m_maxBlockFragments];
 
         m_sentPacketMessageIds = new uint16_t[m_config.maxMessagesPerPacket*m_config.sendQueueSize];
 
@@ -202,16 +201,22 @@ namespace protocol
         assert( m_sentPackets );
         assert( m_receiveQueue );
         assert( m_sentPacketMessageIds );
-        
+        assert( m_sendLargeBlock.fragments );
+        assert( m_receiveLargeBlock.fragments );
+
         delete m_sendQueue;
         delete m_sentPackets;
         delete m_receiveQueue;
         delete [] m_sentPacketMessageIds;
+        delete [] m_sendLargeBlock.fragments;
+        delete [] m_receiveLargeBlock.fragments;
 
         m_sendQueue = nullptr;
         m_sentPackets = nullptr;
         m_receiveQueue = nullptr;
         m_sentPacketMessageIds = nullptr;
+        m_sendLargeBlock.fragments = nullptr;
+        m_receiveLargeBlock.fragments = nullptr;
     }
 
     void ReliableMessageChannel::Reset()
@@ -732,6 +737,7 @@ namespace protocol
                     m_receiveQueue->Insert( ReceiveQueueEntry( blockMessage, m_receiveLargeBlock.blockId ) );
 
                     m_receiveLargeBlock.active = false;
+                    m_receiveLargeBlock.block = nullptr;        // IMPORTANT: otherwise it will get deleted on reset
                 }
             }
         }

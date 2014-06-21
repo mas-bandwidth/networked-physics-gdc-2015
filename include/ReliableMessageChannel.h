@@ -139,6 +139,7 @@ namespace protocol
         {
             SendLargeBlockData()
             {
+                fragments = nullptr;
                 Reset();
             }
 
@@ -156,16 +157,15 @@ namespace protocol
             int numAckedFragments;                      // number of acked fragments in current block being sent
             int blockSize;                              // send block size in bytes
             uint16_t blockId;                           // the message id for the current large block being sent
-            // todo: replace std::vector usage here
-            // and make sure we allocate something large enough
-            // for the maximum potential # fragments.
-            std::vector<SendFragmentData> fragments;    // per-fragment data for send
+            SendFragmentData * fragments;               // per-fragment data for send. array of size max fragments
         };
 
         struct ReceiveLargeBlockData
         {
             ReceiveLargeBlockData()
             {
+                block = nullptr;
+                fragments = nullptr;
                 Reset();
             }
 
@@ -175,7 +175,12 @@ namespace protocol
                 numFragments = 0;
                 numReceivedFragments = 0;
                 blockId = 0;
-                blockSize = 0;                
+                blockSize = 0;      
+                if ( block )
+                {
+                    delete block;
+                    block = nullptr;
+                }
             }
 
             bool active;                                // true if we are currently receiving a large block
@@ -183,9 +188,8 @@ namespace protocol
             int numReceivedFragments;                   // number of fragments received.
             uint16_t blockId;                           // block id being currently received.
             uint32_t blockSize;                         // block size in bytes.
-            // todo: replace std::vector usage here
-            std::vector<ReceiveFragmentData> fragments; // per-fragment data for receive
             Block * block;                              // the block being received.
+            ReceiveFragmentData * fragments;            // per-fragment data for receive. array of size max fragments
         };
 
     public:

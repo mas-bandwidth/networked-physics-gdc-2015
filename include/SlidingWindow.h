@@ -17,19 +17,25 @@ namespace protocol
         SlidingWindow( int size )
         {
             assert( size > 0 );
+            m_size = size;
             m_first_entry = true;
             m_sequence = 0;
-            m_entries.resize( size );
+            m_entries = new T[size];
+        }
+
+        ~SlidingWindow()
+        {
+            assert( m_entries );
+            delete m_entries;
+            m_entries = nullptr;
         }
 
         void Reset()
         {
             m_first_entry = true;
             m_sequence = 0;
-            auto size = m_entries.size();
-            assert( size );
-            m_entries.clear();
-            m_entries.resize( size );
+            for ( int i = 0; i < m_size; ++i )
+                m_entries[i] = T();
         }
 
         bool Insert( const T & entry )
@@ -45,12 +51,12 @@ namespace protocol
             {
                 m_sequence = entry.sequence + 1;
             }
-            else if ( sequence_less_than( entry.sequence, m_sequence - m_entries.size() ) )
+            else if ( sequence_less_than( entry.sequence, m_sequence - m_size ) )
             {
                 return false;
             }
 
-            const int index = entry.sequence % m_entries.size();
+            const int index = entry.sequence % m_size;
 
             m_entries[index] = entry;
 
@@ -68,12 +74,12 @@ namespace protocol
             {
                 m_sequence = sequence + 1;
             }
-            else if ( sequence_less_than( sequence, m_sequence - m_entries.size() ) )
+            else if ( sequence_less_than( sequence, m_sequence - m_size ) )
             {
                 return nullptr;
             }
 
-            const int index = sequence % m_entries.size();
+            const int index = sequence % m_size;
             auto entry = &m_entries[index];
             entry->valid = 1;
             entry->sequence = sequence;
@@ -82,19 +88,19 @@ namespace protocol
 
         bool HasSlotAvailable( uint16_t sequence ) const
         {
-            const int index = sequence % m_entries.size();
+            const int index = sequence % m_size;
             return !m_entries[index].valid;
         }
 
         int GetIndex( uint16_t sequence ) const
         {
-            const int index = sequence % m_entries.size();
+            const int index = sequence % m_size;
             return index;
         }
 
         const T * Find( uint16_t sequence ) const
         {
-            const int index = sequence % m_entries.size();
+            const int index = sequence % m_size;
             if ( m_entries[index].valid && m_entries[index].sequence == sequence )
                 return &m_entries[index];
             else
@@ -103,7 +109,7 @@ namespace protocol
 
         T * Find( uint16_t sequence )
         {
-            const int index = sequence % m_entries.size();
+            const int index = sequence % m_size;
             if ( m_entries[index].valid && m_entries[index].sequence == sequence )
                 return &m_entries[index];
             else
@@ -113,7 +119,7 @@ namespace protocol
         T * GetAtIndex( int index )
         {
             assert( index >= 0 );
-            assert( index < m_entries.size() );
+            assert( index < m_size );
             return m_entries[index].valid ? &m_entries[index] : nullptr;
         }
 
@@ -124,14 +130,18 @@ namespace protocol
 
         int GetSize() const
         {
-            return m_entries.size();
+            return m_size;
         }
 
     private:
 
         bool m_first_entry;
         uint16_t m_sequence;
-        std::vector<T> m_entries;
+        int m_size;
+        T * m_entries;
+
+        SlidingWindow( const SlidingWindow<T> & other );
+        SlidingWindow<T> & operator = ( const SlidingWindow<T> & other );
     };
 
     template <typename T> void GenerateAckBits( const SlidingWindow<T> & packets, 

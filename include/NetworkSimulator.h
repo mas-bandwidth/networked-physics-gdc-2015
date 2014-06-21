@@ -59,9 +59,12 @@ namespace protocol
 
         TimeBase m_timeBase;
         uint32_t m_packetNumber;
-        std::vector<PacketData> m_packets;
+
+        PacketData * m_packets;
+
+        int m_numStates;
         NetworkSimulatorState m_state;
-        std::vector<NetworkSimulatorState> m_states;
+        NetworkSimulatorState m_states[MaxSimulatorStates];
 
         NetworkSimulator( const NetworkSimulator & other );
         const NetworkSimulator & operator = ( const NetworkSimulator & other );

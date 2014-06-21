@@ -898,7 +898,10 @@ void test_client_connection_server_full()
 
         auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
 
+        const int NumClients = 32;
+
         ServerConfig serverConfig;
+        serverConfig.maxClients = NumClients;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = serverNetworkInterface;
 
@@ -909,12 +912,13 @@ void test_client_connection_server_full()
         // connect the maximum number of clients to the server
         // and wait until they are all fully connected.
 
-        std::vector<Client*> clients;
-        std::vector<NetworkInterface*> clientInterface;
+        // todo: remove std::vector usage. I know how many there are
+        Client * clients[NumClients];
+        NetworkInterface * clientInterface[NumClients];
 
         bsdSocketConfig.port = 0;
 
-        for ( int i = 0; i < serverConfig.maxClients; ++i )
+        for ( int i = 0; i < NumClients; ++i )
         {
             auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
@@ -936,17 +940,12 @@ void test_client_connection_server_full()
             assert( !client->HasError() );
             assert( client->GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
-            clients.push_back( client );
-            clientInterface.push_back( clientNetworkInterface );
+            clients[i] = client;
+            clientInterface[i] = clientNetworkInterface;
         }
-
-        assert( clients.size() == serverConfig.maxClients );
-        assert( clientInterface.size() == serverConfig.maxClients );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
-
-        printf( "connecting\n" );
 
         for ( int i = 0; i < 256; ++i )
         {
@@ -969,8 +968,6 @@ void test_client_connection_server_full()
             timeBase.time += timeBase.deltaTime;
         }
 
-        printf( "connected\n" );
-
         for ( int i = 0; i < serverConfig.maxClients; ++i )
             assert( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
 
@@ -988,8 +985,6 @@ void test_client_connection_server_full()
         // now try to connect another client, and verify this client fails to connect
         // with the "server full" connection denied response and the other clients
         // remain connected throughout the test.
-
-        printf( "connect extra client\n" );
 
         auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
@@ -1046,17 +1041,13 @@ void test_client_connection_server_full()
         assert( extraClient->GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
         assert( extraClient->GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
-        printf( "before deletes\n" );
-
         delete clientNetworkInterface;
         delete serverNetworkInterface;
         delete extraClient;
-        for ( int i = 0; i < clients.size(); ++i )
+        for ( int i = 0; i < NumClients; ++i )
             delete clients[i];
-        for ( int i = 0; i < clientInterface.size(); ++i )
+        for ( int i = 0; i < NumClients; ++i )
             delete clientInterface[i];
-        
-        printf( "leave scope\n" );
     }
 
     memory::shutdown(); 
