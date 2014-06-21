@@ -58,12 +58,3 @@ void test_bitpacker()
     assert( reader.GetBitsRead() == bitsWritten );
     assert( reader.GetBitsRemaining() == BufferSize * 8 - bitsWritten );
 }
-
-int main()
-{
-    srand( time( nullptr ) );
-    
-    test_bitpacker();
-
-    return 0;
-}

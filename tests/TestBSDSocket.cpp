@@ -1,148 +1,8 @@
+#include "Network.h"
 #include "BSDSocket.h"
+#include "TestPackets.h"
 
 using namespace protocol;
-
-enum PacketType
-{
-    PACKET_CONNECT = 1,
-    PACKET_UPDATE,
-    PACKET_DISCONNECT
-};
-
-struct ConnectPacket : public Packet
-{
-    int a,b,c;
-
-    ConnectPacket() : Packet( PACKET_CONNECT )
-    {
-        a = 1;
-        b = 2;
-        c = 3;        
-    }
-
-    template <typename Stream> void Serialize( Stream & stream )
-    {
-        serialize_int( stream, a, -10, 10 );
-        serialize_int( stream, b, -10, 10 );
-        serialize_int( stream, c, -10, 10 );
-    }
-
-    void SerializeRead( ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( MeasureStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    bool operator ==( const ConnectPacket & other ) const
-    {
-        return a == other.a && b == other.b && c == other.c;
-    }
-
-    bool operator !=( const ConnectPacket & other ) const
-    {
-        return !( *this == other );
-    }
-};
-
-struct UpdatePacket : public Packet
-{
-    uint16_t timestamp;
-
-    UpdatePacket() : Packet( PACKET_UPDATE )
-    {
-        timestamp = 0;
-    }
-
-    template <typename Stream> void Serialize( Stream & stream )
-    {
-        serialize_bits( stream, timestamp, 16 );
-    }
-
-    void SerializeRead( ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( MeasureStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    bool operator ==( const UpdatePacket & other ) const
-    {
-        return timestamp == other.timestamp;
-    }
-
-    bool operator !=( const UpdatePacket & other ) const
-    {
-        return !( *this == other );
-    }
-};
-
-struct DisconnectPacket : public Packet
-{
-    int x;
-
-    DisconnectPacket() : Packet( PACKET_DISCONNECT )
-    {
-        x = 2;
-    }
-
-    template <typename Stream> void Serialize( Stream & stream )
-    {
-        serialize_int( stream, x, -100, +100 );
-    }
-
-    void SerializeRead( ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( MeasureStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    bool operator ==( const DisconnectPacket & other ) const
-    {
-        return x == other.x;
-    }
-
-    bool operator !=( const DisconnectPacket & other ) const
-    {
-        return !( *this == other );
-    }
-};
-
-class PacketFactory : public Factory<Packet>
-{
-public:
-    PacketFactory()
-    {
-        Register( PACKET_CONNECT,    [] { return new ConnectPacket();    } );
-        Register( PACKET_UPDATE,     [] { return new UpdatePacket();     } );
-        Register( PACKET_DISCONNECT, [] { return new DisconnectPacket(); } );
-    }
-};
 
 void test_bsd_socket_send_and_receive_ipv4()
 {
@@ -150,7 +10,7 @@ void test_bsd_socket_send_and_receive_ipv4()
 
     BSDSocketConfig config;
 
-    PacketFactory packetFactory;
+    TestPacketFactory packetFactory;
 
     config.port = 10000;
     config.family = AF_INET;
@@ -256,7 +116,7 @@ void test_bsd_socket_send_and_receive_ipv6()
 
     BSDSocketConfig config;
 
-    PacketFactory packetFactory;
+    TestPacketFactory packetFactory;
 
     config.port = 10000;
     config.family = AF_INET6;
@@ -360,7 +220,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
 {
     printf( "test_bsd_socket_send_and_receive_multiple_ipv4\n" );
 
-    PacketFactory packetFactory;
+    TestPacketFactory packetFactory;
 
     BSDSocketConfig sender_config;
     sender_config.port = 10000;
@@ -474,7 +334,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
 {
     printf( "test_bsd_socket_send_and_receive_multiple_ipv6\n" );
 
-    PacketFactory packetFactory;
+    TestPacketFactory packetFactory;
 
     BSDSocketConfig sender_config;
     sender_config.port = 10000;
@@ -582,24 +442,4 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
 
         timeBase.time += timeBase.deltaTime;
     }
-}
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    if ( !InitializeSockets() )
-    {
-        printf( "failed to initialize sockets\n" );
-        return 1;
-    }
-
-    test_bsd_socket_send_and_receive_ipv4();
-    test_bsd_socket_send_and_receive_ipv6();
-    test_bsd_socket_send_and_receive_multiple_ipv4();
-    test_bsd_socket_send_and_receive_multiple_ipv6();
-
-    ShutdownSockets();
-
-    return 0;
 }

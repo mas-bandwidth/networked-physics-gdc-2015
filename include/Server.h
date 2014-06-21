@@ -47,6 +47,7 @@ namespace protocol
 
         bool m_open = true;
 
+        // todo: don't use std::vector
         std::vector<ClientData> m_clients;
 
         Factory<Packet> * m_packetFactory;

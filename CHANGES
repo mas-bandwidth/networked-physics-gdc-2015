@@ -1,3 +1,72 @@
+Friday Evening, June 21st, 2014:
+--------------------------------
+
+    Get SoakTest.cpp building, eg. pm soak (done)
+
+    Get UnitTest.cpp building, eg. pm test
+
+    Move test message definitions into "TestMessages.h"
+
+    There are problems where multiple definitions of "PacketFactory" 
+    are causing linker errors and weirdness in tests, make sure that
+    only one "TestPacketFactory" is declared in "TestPackets.h"
+
+    Maybe rename Sockets.h -> Network.h (it's not really SOCKETS per-se...)
+
+    There is a crash on malloc/free inside SoakTest.cpp now
+
+    What happened?!
+
+    Was incorrectly using the old client/server packet factory,
+    when the code was expecting it to be using the test packet
+    factory instead.
+
+    There is a rare crash in client/server tests
+
+    Added a loop mode for UnitTest.cpp to catch it in the debugger.
+
+    Looks like it might be a memory trash. 
+
+    The message this pointer is garbage: 0x071973e753a50afa
+
+    Run valgrind over the unit test, and yes, it finds some bad stuff:
+
+        valgrind: m_mallocfree.c:303 (SizeT get_bszB_as_is(Block *)): Assertion 'bszB_lo == bszB_hi' failed.
+        valgrind: Heap block lo/hi size mismatch: lo = 1088, hi = 4608533498775470080.
+        This is probably caused by your program erroneously writing past the
+        end of a heap block and corrupting heap metadata.  If you fix any
+        invalid writes reported by Memcheck, this assertion failure will
+        probably go away.  Please try that before reporting this as a bug.
+
+    My guess is that the error is *specific* to that test.
+
+    Or, it is something that only shows up with multiple clients.
+
+    Yes, there was an invalid index access because of a fall through
+    when denying a connection do to being full, it was not returning
+    and then would access m_clients with index -1.
+
+
+Thursday Evening, June 20th, 2014:
+----------------------------------
+
+    Convert to a premake based build system.
+
+    Convert to .h / .cpp split
+
+    Address.h
+    BitPacker.h
+    Common.h
+    BSDSocket.h
+    Connection.h
+    Client.h
+    Server.h
+    DNSResolver.h
+    NetworkSimulator.h
+    ResolveWrapper.h
+    Channel.h
+
+
 Sunday Evening, June 15th, 2014:
 --------------------------------
 

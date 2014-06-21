@@ -191,9 +191,13 @@ namespace protocol
         const int remainderBits = m_bitsRead % 8;
         if ( remainderBits != 0 )
         {
+            #ifdef NDEBUG
+            ReadBits( 8 - remainderBits );
+            #else
             uint32_t value = ReadBits( 8 - remainderBits );
             assert( value == 0 );
             assert( m_bitsRead % 8 == 0 );
+            #endif
         }
     }
 

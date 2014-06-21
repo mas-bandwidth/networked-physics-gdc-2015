@@ -283,21 +283,3 @@ void test_string_stream()
     }
     memory::shutdown();
 }
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_memory();
-    test_scratch();
-    test_temp_allocator();
-    test_array();
-    test_hash();
-    test_multi_hash();
-    test_murmur_hash();
-    test_queue();
-    test_pointer_arithmetic();
-    test_string_stream();
-
-    return 0;
-}

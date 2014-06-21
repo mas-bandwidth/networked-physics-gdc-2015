@@ -113,12 +113,3 @@ void test_stream()
     for ( int i = 0; i < readObject.numItems; ++i )
         assert( readObject.items[i] == writeObject.items[i] );
 }
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_stream();
-
-    return 0;
-}

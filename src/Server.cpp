@@ -16,16 +16,15 @@ namespace protocol
 
 //            printf( "creating server with %d client slots\n", m_config.maxClients );
 
-        m_clients.resize( m_config.maxClients );
-
         m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
 
         ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
+        connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
         connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
 
+        m_clients.resize( m_config.maxClients );
         for ( int i = 0; i < m_clients.size(); ++i )
             m_clients[i].connection = new Connection( connectionConfig );
     }
@@ -267,19 +266,19 @@ namespace protocol
 
             switch ( packet->GetType() )
             {
-                case PACKET_CONNECTION_REQUEST:
+                case CLIENT_SERVER_PACKET_CONNECTION_REQUEST:
                     ProcessConnectionRequestPacket( static_cast<ConnectionRequestPacket*>( packet ) );
                     break;
 
-                case PACKET_CHALLENGE_RESPONSE:
+                case CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE:
                     ProcessChallengeResponsePacket( static_cast<ChallengeResponsePacket*>( packet ) );
                     break;
 
-                case PACKET_READY_FOR_CONNECTION:
+                case CLIENT_SERVER_PACKET_READY_FOR_CONNECTION:
                     ProcessReadyForConnectionPacket( static_cast<ReadyForConnectionPacket*>( packet ) );
                     break;
 
-                case PACKET_CONNECTION:
+                case CLIENT_SERVER_PACKET_CONNECTION:
                     ProcessConnectionPacket( static_cast<ConnectionPacket*>( packet ) );
                     break;
 
@@ -300,6 +299,8 @@ namespace protocol
 //            printf( "server received connection request packet: clientGuid = %llx\n", packet->clientGuid );
 
 
+        auto address = packet->GetAddress();
+
         if ( !m_open )
         {
 //                printf( "server is closed. denying connection request\n" );
@@ -308,12 +309,10 @@ namespace protocol
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
 
-            m_config.networkInterface->SendPacket( packet->GetAddress(), connectionDeniedPacket );
+            m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
 
             return;
         }
-
-        auto address = packet->GetAddress();
 
         if ( FindClientIndex( address, packet->clientGuid ) != -1 )
         {
@@ -329,6 +328,7 @@ namespace protocol
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
             m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+            return;
         }
 
         clientIndex = FindFreeClientSlot();
@@ -339,9 +339,13 @@ namespace protocol
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
             m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+            return;
         }
 
 //            printf( "new client connection at index %d\n", clientIndex );
+
+        assert( clientIndex >= 0 );
+        assert( clientIndex < m_clients.size() );
 
         ClientData & client = m_clients[clientIndex];
 

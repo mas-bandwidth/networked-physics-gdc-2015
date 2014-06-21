@@ -197,13 +197,3 @@ void test_address6()
         assert( address.ToString() == "[::1]:65535" );
     }
 }
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_address4();
-    test_address6();
-
-    return 0;
-}

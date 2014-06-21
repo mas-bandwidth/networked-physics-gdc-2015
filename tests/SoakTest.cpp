@@ -1,80 +1,14 @@
 #include "Connection.h"
+#include "TestMessages.h"
+#include "TestPackets.h"
 #include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
 
 using namespace protocol;
 
-enum MessageType
-{
-    MESSAGE_BLOCK = BlockMessageType,
-    MESSAGE_TEST
-};
-
-static int messageBitsArray[] = { 1, 320, 120, 4, 256, 45, 11, 13, 101, 100, 84, 95, 203, 2, 3, 8, 512, 5, 3, 7, 50 };
-
-int GetNumBitsForMessage( uint16_t sequence )
-{
-    const int modulus = sizeof( messageBitsArray ) / sizeof( int );
-    const int index = sequence % modulus;
-    return messageBitsArray[index];
-}
-
-struct TestMessage : public Message
-{
-    TestMessage() : Message( MESSAGE_TEST )
-    {
-        sequence = 0;
-        dummy = 0;
-    }
-
-    template <typename Stream> void Serialize( Stream & stream )
-    {        
-        serialize_bits( stream, sequence, 16 );
-
-        int numBits = GetNumBitsForMessage( sequence );
-        int numWords = numBits / 32;
-        for ( int i = 0; i < numWords; ++i )
-            serialize_bits( stream, dummy, 32 );
-        int numRemainderBits = numBits - numWords * 32;
-        if ( numRemainderBits > 0 )
-            serialize_bits( stream, dummy, numRemainderBits );
-
-        serialize_check( stream, 0xDEADBEEF );
-    }
-
-    void SerializeRead( ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( MeasureStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    uint16_t sequence;
-    uint32_t dummy;
-};
-
-class MessageFactory : public Factory<Message>
-{
-public:
-
-    MessageFactory()
-    {
-        Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
-        Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
-    }
-};
-
 class TestChannelStructure : public ChannelStructure
 {
-    MessageFactory m_messageFactory;
+    TestMessageFactory m_messageFactory;
     ReliableMessageChannelConfig m_config;
 
 public:
@@ -115,13 +49,15 @@ public:
 
 void soak_test()
 {
-#if !PROFILE
+#if PROFILE
+    printf( "[profile]\n" );
+#else
     printf( "[soak test]\n" );
 #endif
 
     TestChannelStructure channelStructure;
 
-    ClientServerPacketFactory packetFactory( &channelStructure );
+    TestPacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 4096;
 
@@ -266,13 +202,6 @@ void soak_test()
                 if ( block->size() <= messageChannelConfig.maxSmallBlockSize )
                 {
                     const int index = numMessagesReceived % 32;
-                    /*
-                    if ( block->size() != index +1 )
-                    {
-                        printf( "block size mismatch: got %d, expected %d\n", (int) block->size(), index + 1 );
-                        exit(1);
-                    }
-                    */
                     assert( block->size() == index + 1 );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );
@@ -283,7 +212,7 @@ void soak_test()
                 else
                 {
                     const int index = numMessagesReceived % 4;
-                    assert( block->size() == (index + 1 ) * 1024 * 1000 + index );
+                    assert( block->size() == ( index + 1 ) * 1024 * 1000 + index );
                     for ( int i = 0; i < block->size(); ++i )
                         assert( (*block)[i] == ( index + i ) % 256 );
 #if !PROFILE

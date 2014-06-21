@@ -197,12 +197,12 @@ namespace protocol
     ReliableMessageChannel::~ReliableMessageChannel()
     {
         Reset();
-        
+
         assert( m_sendQueue );
         assert( m_sentPackets );
         assert( m_receiveQueue );
         assert( m_sentPacketMessageIds );
-
+        
         delete m_sendQueue;
         delete m_sentPackets;
         delete m_receiveQueue;
@@ -216,6 +216,11 @@ namespace protocol
 
     void ReliableMessageChannel::Reset()
     {
+        assert( m_sendQueue );
+        assert( m_sentPackets );
+        assert( m_receiveQueue );
+        assert( m_sentPacketMessageIds );
+
         m_error = 0;
 
         m_sendMessageId = 0;

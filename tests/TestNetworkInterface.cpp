@@ -114,12 +114,3 @@ void test_network_interface()
     delete updatePacket;
     delete disconnectPacket;
 }
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_network_interface();
-
-    return 0;
-}

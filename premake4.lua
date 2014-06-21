@@ -1,40 +1,39 @@
 solution "Protocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++"
-    pchheader "include/Common.h"
-    pchsource "src/Common.cpp"
+--    pchheader "include/Common.h"
+--    pchsource "src/Common.cpp"
     includedirs { "include", "." }
     platforms { "x64", "x32" }
     configurations { "Debug", "Release" }
-    configuration "Debug"
-        flags { "Symbols" }
+    flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI" }
     configuration "Release"
-        flags { "Optimize" }
+        flags { "OptimizeSpeed" }
         defines { "NDEBUG" }
-
-project "UnitTest"
-    kind "ConsoleApp"
-    files { "tests/UnitTest.cpp", "test/Test*.cpp" }
-    links { "Protocol" }
-    location "build"
-    targetdir "bin"
 
 project "protocol"
     kind "StaticLib"
     files { "include/*.h", "src/*.cpp" }
     targetdir "lib"
 
+project "UnitTest"
+    kind "ConsoleApp"
+    files { "tests/UnitTest.cpp", "tests/Test*.cpp" }
+    links { "protocol" }
+    location "build"
+    targetdir "bin"
+
 project "SoakTest"
     kind "ConsoleApp"
-    files { "test/SoakTest.cpp" }
-    links { "Protocol" }
+    files { "tests/SoakTest.cpp" }
+    links { "protocol" }
     targetdir "bin"
     location "build"
 
 project "Profile"
     kind "ConsoleApp"
     files { "tests/Profile.cpp" }
-    links { "Protocol" }
+    links { "protocol" }
     targetdir "bin"
     location "build"
 
@@ -63,7 +62,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
 
         execute = function ()
-            os.execute "wc -l src/*.cpp tests/*.cpp include/*.h"
+            os.execute "wc -l src/*.cpp tests/*.h tests/*.cpp include/*.h"
         end
     }
 

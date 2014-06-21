@@ -16,7 +16,7 @@ namespace protocol
         m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
 
         ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
+        connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
         connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
@@ -279,7 +279,7 @@ namespace protocol
 
             const int type = packet->GetType();
 
-            if ( type == PACKET_DISCONNECTED )
+            if ( type == CLIENT_SERVER_PACKET_DISCONNECTED )
             {
 //                    printf( "client received disconnected packet\n" );
                 ProcessDisconnected( static_cast<DisconnectedPacket*>( packet ) );
@@ -290,7 +290,7 @@ namespace protocol
             {
                 case CLIENT_STATE_SENDING_CONNECTION_REQUEST:
                 {
-                    if ( type == PACKET_CONNECTION_CHALLENGE )
+                    if ( type == CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE )
                     {
                         auto connectionChallengePacket = static_cast<ConnectionChallengePacket*>( packet );
 
@@ -304,7 +304,7 @@ namespace protocol
                             m_lastPacketReceiveTime = m_timeBase.time;
                         }
                     }
-                    else if ( type == PACKET_CONNECTION_DENIED )
+                    else if ( type == CLIENT_SERVER_PACKET_CONNECTION_DENIED )
                     {
                         auto connectionDeniedPacket = static_cast<ConnectionDeniedPacket*>( packet );
 
@@ -321,7 +321,7 @@ namespace protocol
 
                 case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:
                 {
-                    if ( type == PACKET_REQUEST_CLIENT_DATA )
+                    if ( type == CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA )
                     {
                         auto requestClientDataPacket = static_cast<RequestClientDataPacket*>( packet );
 
@@ -351,7 +351,7 @@ namespace protocol
                 case CLIENT_STATE_READY_FOR_CONNECTION:
                 case CLIENT_STATE_CONNECTED:
                 {
-                    if ( type == PACKET_CONNECTION )
+                    if ( type == CLIENT_SERVER_PACKET_CONNECTION )
                     {
 //                            printf( "client received connection packet\n" );
 

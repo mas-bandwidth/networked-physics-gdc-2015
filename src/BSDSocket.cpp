@@ -3,6 +3,7 @@
     Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
 */
 
+#include "Network.h"
 #include "BSDSocket.h"
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,26 +13,11 @@
 
 namespace protocol 
 {     
-    inline bool InitializeSockets()     
-    {         
-        #if PLATFORM == PLATFORM_WINDOWS
-        WSADATA WsaData;         
-        return WSAStartup( MAKEWORD(2,2), &WsaData ) == NO_ERROR;
-        #else
-        return true;         
-        #endif     
-    }
-
-    inline void ShutdownSockets()
-    {
-        #if PLATFORM == PLATFORM_WINDOWS
-        WSACleanup();
-        #endif
-    }    
-
     BSDSocket::BSDSocket( const BSDSocketConfig & config )
         : m_config( config )
     {
+        assert( IsNetworkInitialized() );
+
         assert( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
         assert( m_config.maxPacketSize > 0 );
 
@@ -70,6 +56,7 @@ namespace protocol
         if ( m_config.family == AF_INET6 )
         {
             sockaddr_in6 sock_address;
+            memset( &sock_address, 0, sizeof( sockaddr_in6 ) );
             sock_address.sin6_family = AF_INET6;
             sock_address.sin6_addr = in6addr_any;
             sock_address.sin6_port = htons( m_config.port );
@@ -336,6 +323,7 @@ namespace protocol
         {
 //                printf( "ipv6 packet\n" );
             sockaddr_in6 s_addr;
+            memset( &s_addr, 0, sizeof( s_addr ) );
             s_addr.sin6_family = AF_INET6;
             s_addr.sin6_port = htons( address.GetPort() );
             memcpy( &s_addr.sin6_addr, address.GetAddress6(), sizeof( s_addr.sin6_addr ) );
@@ -346,6 +334,7 @@ namespace protocol
         {
 //                printf( "sent ipv4 packet\n" );
             sockaddr_in s_addr;
+            memset( &s_addr, 0, sizeof( s_addr ) );
             s_addr.sin_family = AF_INET;
             s_addr.sin_addr.s_addr = address.GetAddress4();
             s_addr.sin_port = htons( (unsigned short) address.GetPort() );

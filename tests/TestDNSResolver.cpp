@@ -101,7 +101,7 @@ void test_dns_resolve_with_port()
     double dt = 0.1f;
     std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
-    for ( int i = 0; i < 50; ++i )
+    while ( true )
     {
         resolver.Update( TimeBase() );
 
@@ -134,17 +134,17 @@ void test_dns_resolve_failure()
 
     DNSResolver resolver;
 
-    bool resolved = false;
+    bool resolve_failed = false;
 
     std::string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
 
 //    printf( "resolving garbage hostname: %s\n", garbage_hostname.c_str() );
 
-    resolver.Resolve( garbage_hostname, [&resolved, &garbage_hostname] ( const std::string & name, ResolveResult * result ) 
+    resolver.Resolve( garbage_hostname, [&resolve_failed, &garbage_hostname] ( const std::string & name, ResolveResult * result ) 
     { 
         assert( name == garbage_hostname );
         assert( result == nullptr );
-        resolved = true;
+        resolve_failed = true;
     } );
 
     auto entry = resolver.GetEntry( garbage_hostname );
@@ -155,11 +155,11 @@ void test_dns_resolve_failure()
     double dt = 0.1f;
     std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
-    for ( int i = 0; i < 50; ++i )
+    while ( true )
     {
         resolver.Update( TimeBase() );
 
-        if ( resolved )
+        if ( resolve_failed )
             break;
 
         std::this_thread::sleep_for( ms );
@@ -171,15 +171,4 @@ void test_dns_resolve_failure()
     assert( entry );
     assert( entry->status == RESOLVE_FAILED );
     assert( entry->result == nullptr );
-}
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_dns_resolve();
-    test_dns_resolve_with_port();
-    test_dns_resolve_failure();
-
-    return 0;
 }

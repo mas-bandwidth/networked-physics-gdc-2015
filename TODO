@@ -1,32 +1,8 @@
 DONE:
 
-    Convert to a premake based build system.
-
-    Convert to .h / .cpp split
-
-    Address.h
-    BitPacker.h
-    Common.h
-    BSDSocket.h
-    Connection.h
-    Client.h
-    Server.h
-    DNSResolver.h
-    NetworkSimulator.h
-    ResolveWrapper.h
-    Channel.h
-
 TODO:    
 
-    Get UnitTest.cpp building, eg. pm test
-
-    ---------------------
-
-    Branimir has an stl replacement with allocator support.
-
-    Check it out. "BZ"
-
-    ---------------------
+    -------------------
 
     Pass over remaining std::vector and see if they can be removed easily.
 
@@ -54,6 +30,10 @@ TODO:
 
     ------------------
 
+    need a "check" macros that works in release for unit tests.
+
+    ------------------
+
     Replace all STL usage with bitsquid containers.
 
     Remove STL header includes.
@@ -63,6 +43,11 @@ TODO:
 
     --------------------
 
+    Once STL is removed, use this:
+
+    package.buildflags = { "no-exceptions", "no-rtti" }
+
+    --------------------
 
 
 
@@ -72,6 +57,10 @@ TODO:
     ----------------------
 
     Unit tests to add:
+
+    Move the murmur hash test into TestCommon.cpp
+
+    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
 
     Verify that channel error percolates down and makes the server disconnect client,
     *and* on client side, makes the client disconnect from server.
@@ -173,6 +162,12 @@ TODO:
 
 
 WOULD BE NICE:
+
+    ---------------------
+
+    Branimir has an stl replacement with allocator support.
+
+    Check it out. "BZ"
 
     ----------------------
 

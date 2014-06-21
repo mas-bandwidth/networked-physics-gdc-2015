@@ -1,30 +1,22 @@
+#include "Memory.h"
 #include "Connection.h"
+#include "TestPackets.h"
 
 using namespace protocol;
 
-class TestChannel : public ChannelAdapter 
+class FakeChannel : public ChannelAdapter 
 {
 public:
-    TestChannel() {}
+    FakeChannel() {}
 };
 
-class TestChannelStructure : public ChannelStructure
+class FakeChannelStructure : public ChannelStructure
 {
 public:
-    TestChannelStructure()
+    FakeChannelStructure()
     {
-        AddChannel( "test channel", [] { return new TestChannel(); }, [] { return nullptr; } );
+        AddChannel( "fake channel", [] { return new FakeChannel(); }, [] { return nullptr; } );
         Lock();
-    }
-};
-
-class PacketFactory : public Factory<Packet>
-{
-public:
-
-    PacketFactory( ChannelStructure * channelStructure )
-    {
-        Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
     }
 };
 
@@ -32,34 +24,42 @@ void test_connection()
 {
     printf( "test_connection\n" );
 
-    TestChannelStructure channelStructure;
-
-    PacketFactory packetFactory( &channelStructure );
-
-    ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_CONNECTION;
-    connectionConfig.maxPacketSize = 4 * 1024;
-    connectionConfig.packetFactory = &packetFactory;
-    connectionConfig.channelStructure = &channelStructure;
-
-    Connection connection( connectionConfig );
-
-    const int NumAcks = 100;
-
-    for ( int i = 0; i < NumAcks*2; ++i )
+    memory::initialize();
     {
-        auto packet = connection.WritePacket();
+        FakeChannelStructure channelStructure;
 
-        connection.ReadPacket( packet );
+        TestPacketFactory packetFactory( &channelStructure );
 
-        if ( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) >= NumAcks )
-            break;
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_CONNECTION;
+        connectionConfig.maxPacketSize = 4 * 1024;
+        connectionConfig.packetFactory = &packetFactory;
+        connectionConfig.channelStructure = &channelStructure;
+
+        Connection connection( connectionConfig );
+
+        const int NumAcks = 100;
+
+        for ( int i = 0; i < NumAcks*2; ++i )
+        {
+            auto packet = connection.WritePacket();
+
+            assert( packet );
+
+            connection.ReadPacket( packet );
+
+            delete packet;
+
+            if ( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) >= NumAcks )
+                break;
+        }
+
+        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
+        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
+        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
+        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
     }
-
-    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
-    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
-    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
-    assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
+    memory::shutdown();
 }
 
 class AckChannel : public ChannelAdapter
@@ -97,74 +97,70 @@ void test_acks()
 {
     printf( "test_acks\n" );
 
-    const int NumIterations = 10*1024;
-
-    std::vector<bool> receivedPackets;
-    std::vector<bool> ackedPackets;
-
-    receivedPackets.resize( NumIterations );
-    ackedPackets.resize( NumIterations );
-
-    AckChannelStructure channelStructure( ackedPackets );
-
-    PacketFactory packetFactory( &channelStructure );
-
-    ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_CONNECTION;
-    connectionConfig.maxPacketSize = 4 * 1024;
-    connectionConfig.packetFactory = &packetFactory;
-    connectionConfig.channelStructure = &channelStructure;
-
-    Connection connection( connectionConfig );
-
-    for ( int i = 0; i < NumIterations; ++i )
+    memory::initialize();
     {
-        auto packet = connection.WritePacket();
+        const int NumIterations = 10*1024;
 
-        if ( rand() % 100 == 0 )
+        std::vector<bool> receivedPackets;
+        std::vector<bool> ackedPackets;
+
+        receivedPackets.resize( NumIterations );
+        ackedPackets.resize( NumIterations );
+
+        AckChannelStructure channelStructure( ackedPackets );
+
+        TestPacketFactory packetFactory( &channelStructure );
+
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = PACKET_CONNECTION;
+        connectionConfig.maxPacketSize = 4 * 1024;
+        connectionConfig.packetFactory = &packetFactory;
+        connectionConfig.channelStructure = &channelStructure;
+
+        Connection connection( connectionConfig );
+
+        for ( int i = 0; i < NumIterations; ++i )
         {
-            connection.ReadPacket( packet );
+            auto packet = connection.WritePacket();
 
-            if ( packet )
+            assert( packet );
+
+            if ( rand() % 100 == 0 )
             {
-                uint16_t sequence = packet->sequence;
+                connection.ReadPacket( packet );
 
-    //            printf( "received %d\n", (int)sequence );
+                if ( packet )
+                {
+                    uint16_t sequence = packet->sequence;
 
-                receivedPackets[sequence] = true;
+        //            printf( "received %d\n", (int)sequence );
 
-                delete packet;
+                    receivedPackets[sequence] = true;
+                }
             }
+
+            delete packet;
         }
+
+        int numAckedPackets = 0;
+        int numReceivedPackets = 0;
+        for ( int i = 0; i < NumIterations; ++i )
+        {
+            if ( ackedPackets[i] )
+                numAckedPackets++;
+
+            if ( receivedPackets[i] )
+                numReceivedPackets++;
+
+            // an acked packet *must* have been received
+            if ( ackedPackets[i] && !receivedPackets[i] )
+                assert( false );
+        }
+
+        assert( numAckedPackets > 0 );
+        assert( numReceivedPackets >= numAckedPackets );
+
+    //    printf( "%d packets received, %d packets acked\n", numReceivedPackets, numAckedPackets );
     }
-
-    int numAckedPackets = 0;
-    int numReceivedPackets = 0;
-    for ( int i = 0; i < NumIterations; ++i )
-    {
-        if ( ackedPackets[i] )
-            numAckedPackets++;
-
-        if ( receivedPackets[i] )
-            numReceivedPackets++;
-
-        // an acked packet *must* have been received
-        if ( ackedPackets[i] && !receivedPackets[i] )
-            assert( false );
-    }
-
-    assert( numAckedPackets > 0 );
-    assert( numReceivedPackets >= numAckedPackets );
-
-//    printf( "%d packets received, %d packets acked\n", numReceivedPackets, numAckedPackets );
-}
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_connection();
-    test_acks();
-
-    return 0;
+    memory::shutdown();
 }

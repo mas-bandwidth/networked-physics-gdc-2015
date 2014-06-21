@@ -4,67 +4,14 @@
 #include "BSDSocket.h"
 #include "DNSResolver.h"
 #include "Packets.h"
+#include "TestMessages.h"
 #include "ReliableMessageChannel.h"
 
 using namespace protocol;
 
-enum MessageType
-{
-    MESSAGE_BLOCK = BlockMessageType,
-    MESSAGE_TEST
-};
-
-struct TestMessage : public Message
-{
-    TestMessage() : Message( MESSAGE_TEST )
-    {
-        sequence = 0;
-    }
-
-    template <typename Stream> void Serialize( Stream & stream )
-    {        
-        serialize_bits( stream, sequence, 16 );
-
-        for ( int i = 0; i < sequence % 8; ++i )
-        {
-            int value = 0;
-            serialize_bits( stream, value, 32 );
-        }
-
-        serialize_check( stream, 0xDEADBEEF );
-    }
-
-    void SerializeRead( ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( MeasureStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    uint16_t sequence;
-};
-
-class MessageFactory : public Factory<Message>
-{
-public:
-    MessageFactory()
-    {
-        Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
-        Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
-    }
-};
-
 class TestChannelStructure : public ChannelStructure
 {
-    MessageFactory m_messageFactory;
+    TestMessageFactory m_messageFactory;
     ReliableMessageChannelConfig m_config;
 
 public:
@@ -971,11 +918,15 @@ void test_client_connection_server_full()
         {
             auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
+            assert( clientNetworkInterface );
+
             ClientConfig clientConfig;
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
             auto client = new Client( clientConfig );
+
+            assert( client );
 
             client->Connect( "[::1]:10000" );
 
@@ -989,8 +940,13 @@ void test_client_connection_server_full()
             clientInterface.push_back( clientNetworkInterface );
         }
 
+        assert( clients.size() == serverConfig.maxClients );
+        assert( clientInterface.size() == serverConfig.maxClients );
+
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
+
+        printf( "connecting\n" );
 
         for ( int i = 0; i < 256; ++i )
         {
@@ -1013,6 +969,8 @@ void test_client_connection_server_full()
             timeBase.time += timeBase.deltaTime;
         }
 
+        printf( "connected\n" );
+
         for ( int i = 0; i < serverConfig.maxClients; ++i )
             assert( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
 
@@ -1030,6 +988,8 @@ void test_client_connection_server_full()
         // now try to connect another client, and verify this client fails to connect
         // with the "server full" connection denied response and the other clients
         // remain connected throughout the test.
+
+        printf( "connect extra client\n" );
 
         auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
@@ -1086,14 +1046,17 @@ void test_client_connection_server_full()
         assert( extraClient->GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
         assert( extraClient->GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
+        printf( "before deletes\n" );
+
         delete clientNetworkInterface;
         delete serverNetworkInterface;
         delete extraClient;
         for ( int i = 0; i < clients.size(); ++i )
-        {
             delete clients[i];
+        for ( int i = 0; i < clientInterface.size(); ++i )
             delete clientInterface[i];
-        }
+        
+        printf( "leave scope\n" );
     }
 
     memory::shutdown(); 
@@ -1428,27 +1391,4 @@ void test_client_connection_reconnect()
     }
 
     memory::shutdown();
-}
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_client_initial_state();
-    test_client_resolve_hostname_failure();
-    test_client_resolve_hostname_timeout();
-    test_client_resolve_hostname_success();
-    test_client_connection_request_timeout();
-    test_client_connection_request_denied();
-    test_client_connection_challenge();
-    test_client_connection_challenge_response();
-    test_client_connection_established();
-    test_client_connection_messages();
-    test_client_connection_disconnect();
-    test_client_connection_server_full();
-    test_client_connection_timeout();
-    test_client_connection_already_connected();
-    test_client_connection_reconnect();
-
-    return 0;
 }

@@ -11,16 +11,13 @@
 
 namespace protocol 
 {     
-    inline bool InitializeSockets();
-
-    inline void ShutdownSockets();
-
     struct BSDSocketConfig
     {
         BSDSocketConfig()
         {
             protocolId = 0x12345;
             port = 10000;
+            // todo: this should move somewhere so we don't ened this definition at the header
             family = AF_INET6;                      // default to IPv6.
             maxPacketSize = 10*1024;
             packetFactory = nullptr;

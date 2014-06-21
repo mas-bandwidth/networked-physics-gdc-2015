@@ -89,13 +89,3 @@ void test_generate_ack_bits()
     assert( ack == 11 );
     assert( ack_bits == ( 1 | (1<<(11-9)) | (1<<(11-5)) | (1<<(11-1)) ) );
 }
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_sliding_window();
-    test_generate_ack_bits();
-
-    return 0;
-}

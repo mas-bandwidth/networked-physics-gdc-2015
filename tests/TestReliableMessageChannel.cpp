@@ -1,106 +1,11 @@
 #include "Connection.h"
+#include "TestMessages.h"
+#include "TestPackets.h"
 #include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
+#include "TestChannelStructure.h"
 
 using namespace protocol;
-
-enum MessageType
-{
-    MESSAGE_BLOCK = BlockMessageType,
-    MESSAGE_TEST
-};
-
-struct TestMessage : public Message
-{
-    TestMessage() : Message( MESSAGE_TEST )
-    {
-        sequence = 0;
-    }
-
-    template <typename Stream> void Serialize( Stream & stream )
-    {        
-        serialize_bits( stream, sequence, 16 );
-
-        for ( int i = 0; i < sequence % 8; ++i )
-        {
-            int value = 0;
-            serialize_bits( stream, value, 8 );
-        }
-
-        stream.Check( 0xDEADBEEF );
-    }
-
-    void SerializeRead( ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( MeasureStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    uint16_t sequence;
-    uint32_t magic;
-};
-
-class MessageFactory : public Factory<Message>
-{
-public:
-    MessageFactory()
-    {
-        Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
-        Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
-    }
-};
-
-class TestChannelStructure : public ChannelStructure
-{
-    ReliableMessageChannelConfig m_config;
-
-public:
-
-    TestChannelStructure()
-    {
-        m_config.messageFactory = new MessageFactory();
-
-        AddChannel( "reliable message channel", 
-                    [this] { return CreateReliableMessageChannel(); }, 
-                    [this] { return CreateReliableMessageChannelData(); } );
-
-        Lock();
-    }
-
-    ReliableMessageChannel * CreateReliableMessageChannel()
-    {
-        return new ReliableMessageChannel( m_config );
-    }
-
-    ReliableMessageChannelData * CreateReliableMessageChannelData()
-    {
-        return new ReliableMessageChannelData( m_config );
-    }
-
-    const ReliableMessageChannelConfig & GetConfig() const
-    {
-        return m_config;
-    }
-};
-
-class PacketFactory : public Factory<Packet>
-{
-public:
-
-    PacketFactory( ChannelStructure * channelStructure )
-    {
-        Register( PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( PACKET_CONNECTION, channelStructure ); } );
-    }
-};
 
 void test_reliable_message_channel_messages()
 {
@@ -110,7 +15,7 @@ void test_reliable_message_channel_messages()
     {
         TestChannelStructure channelStructure;
 
-        PacketFactory packetFactory( &channelStructure );
+        TestPacketFactory packetFactory( &channelStructure );
 
         const int MaxPacketSize = 256;
 
@@ -224,9 +129,9 @@ void test_reliable_message_channel_small_blocks()
     {
         TestChannelStructure channelStructure;
 
-        PacketFactory packetFactory( &channelStructure );
+        TestPacketFactory packetFactory( &channelStructure );
         
-        MessageFactory messageFactory;
+        TestMessageFactory messageFactory;
 
         const int MaxPacketSize = 256;
 
@@ -347,7 +252,7 @@ void test_reliable_message_channel_large_blocks()
     {
         TestChannelStructure channelStructure;
 
-        PacketFactory packetFactory( &channelStructure );
+        TestPacketFactory packetFactory( &channelStructure );
 
         const int MaxPacketSize = 256;
 
@@ -381,7 +286,7 @@ void test_reliable_message_channel_large_blocks()
         Address address( "::1" );
 
         NetworkSimulator simulator;
-        simulator.AddState( { 1.0f, 1.0f, 90 } );
+        simulator.AddState( { 1.0f, 1.0f, 50 } );
 
         while ( true )
         {  
@@ -430,7 +335,7 @@ void test_reliable_message_channel_large_blocks()
 
                 auto block = blockMessage->GetBlock();
 
-                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
+//                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
                 assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
                 for ( int i = 0; i < block->size(); ++i )
@@ -468,7 +373,7 @@ void test_reliable_message_channel_mixture()
     {
         TestChannelStructure channelStructure;
 
-        PacketFactory packetFactory( &channelStructure );
+        TestPacketFactory packetFactory( &channelStructure );
 
         const int MaxPacketSize = 256;
 
@@ -482,7 +387,7 @@ void test_reliable_message_channel_mixture()
 
         auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
-        const int NumMessagesSent = 256;
+        const int NumMessagesSent = 32;
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
@@ -601,16 +506,4 @@ void test_reliable_message_channel_mixture()
         assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
     }
     memory::shutdown();
-}
-
-int main()
-{
-    srand( time( nullptr ) );
-
-    test_reliable_message_channel_messages();
-    test_reliable_message_channel_small_blocks();
-    test_reliable_message_channel_large_blocks();
-    test_reliable_message_channel_mixture();
-
-    return 0;
 }

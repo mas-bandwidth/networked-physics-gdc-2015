@@ -48,7 +48,7 @@ namespace protocol
         CLIENT_STATE_COUNT
     };
 
-    const char * GetClientStateName( int clientState )
+    inline const char * GetClientStateName( int clientState )
     {
         switch ( clientState )
         {
@@ -77,7 +77,7 @@ namespace protocol
         CLIENT_ERROR_COUNT
     };
 
-    const char * GetClientErrorString( int clientError )
+    inline const char * GetClientErrorString( int clientError )
     {
         switch ( clientError )
         {
