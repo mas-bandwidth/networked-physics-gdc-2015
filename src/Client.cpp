@@ -188,7 +188,7 @@ namespace protocol
         {
 //                printf( "resolve hostname succeeded: %s\n", entry->result->addresses[0].ToString().c_str() );
 
-            auto address = entry->result->addresses[0];
+            auto address = entry->result.address[0];
 
             if ( address.GetPort() == 0 )
                 address.SetPort( m_config.defaultServerPort );

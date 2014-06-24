@@ -50,55 +50,6 @@ namespace protocol
         uint32_t m_id : 16;
         uint32_t m_type : 16;       
     };
-
-    class BlockMessage : public Message
-    {
-    public:
-
-        BlockMessage() : Message( BlockMessageType ) {}
-
-        BlockMessage( Block * block ) : Message( BlockMessageType ) 
-        { 
-            assert( block ); 
-            m_block = block; 
-        }
-
-        ~BlockMessage()
-        {
-            assert( m_block );
-            delete m_block;
-            m_block = nullptr;
-        }
-
-        template <typename Stream> void Serialize( Stream & stream )
-        { 
-            serialize_block( stream, m_block, MaxSmallBlockSize );
-        }
-
-        void SerializeRead( ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeMeasure( MeasureStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        Block * GetBlock() { return m_block; }
-
-    private:
-
-        Block * m_block = nullptr;
-
-        BlockMessage( const BlockMessage & other );
-        const BlockMessage & operator = ( const BlockMessage & other );
-    };
 }
 
 #endif

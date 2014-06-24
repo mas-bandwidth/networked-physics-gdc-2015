@@ -1,3 +1,161 @@
+Monday Evening, June 23rd, 2014:
+--------------------------------
+
+    Change tack and start with the lowest level, "serialize_new_block"
+
+    Now switch in new block for old and get the library compiling.
+
+    Now update the unit tests to work with the new block.
+
+    Converted small block test.
+
+    Converted large block test.
+
+    Converted mixture test.
+
+    Fix Soak test to work with new blocks.
+
+    Verify soak test is stable.
+
+
+Monday Morning, June 23rd, 2014:
+--------------------------------
+
+    Implement "Block" manually, don't use std::vector.
+
+    Block doesn't need to be resized. It just needs a uint8_t *
+    and a size in bytes. It *owns* that data, so it needs to be
+    able to delete that data in dtor.
+
+    Should block own the data? 
+
+    I think it needs to, because inside a message, it is expected
+    that a message ownership is passed to the channel on send,
+    and back to caller on receive.
+
+    So are blocks copyable?
+
+    No. Not by value.
+
+    How can you take the data in a block and store it somewhere else?
+
+    You need to copy it! Blocks are messages and are temporary. 
+
+    You cannot hold onto block memory, this will fuck up the life cycle
+    of the block allocator.
+
+    If you receive a block and want to hold on to it for a while
+    after you process the message, you'll need to make a copy of it.
+
+    Ideally, blocks should be received and processed into some other
+    form, eg. deserialized, decompressed and so on.
+
+    Created "NewBlock" class which allocates and frees using an allocator.
+
+    Renamed "Deallocate" to "Free". Deallocate is long.
+
+    Need three allocators:
+
+        1. Message allocator
+        2. Small block allocator
+        3. Large block allocator
+
+    These are "fundamental concepts" in the library,
+    so I don't see the problem with specializing like this.
+
+    Could just have the channel structure be the place that owns these.
+
+    Added "SetAllocators", "GetMessageAllocator", "GetSmallBlockAllocator"
+    and "GetLargeBlockAllocator" to channel structure.
+
+    By default all allocators point to default allocator (malloc)
+
+    Messages should not need a copy of their own allocator. They 
+    must be passed to the correct allocator on destructor.
+
+    Blocks are different. They need to implement their own dtor,
+    and thus they must know what their allocator was to clean
+    themselves up.
+
+    Only other option would be for block allocator to be a runtime
+    type thing, but I don't like that.
+
+    A guiding principle is that you should be able to have two
+    differently configured connections running in the same process
+    with different channel structures, different message sets and
+    different allocators -- without any interference or problems
+    between these two systems.
+
+    Added small test suite for block. Create it, memset zero, free it.
+
+    The small block serialize will be a problem. If it is a small block
+    the serialize is going to need to be specialized so that it knows
+    the allocator to use.
+
+    This means that small blocks cannot just serialize automatically
+    anymore, they must have a special serialize fn and the channel data
+    serialize must *know* how to serialize small blocks.
+
+    Note that blocks themselves also need an allocator, eg. we create
+    blocks by pointer and pass them around this way. In effect, blocks
+    are like messages.
+
+    It might be a better idea to specialize the block message such that
+    *it* owns the block entirely, perhaps by mixing in the block interface.
+
+    I don't like the idea of suppyling a separate block allocator for
+    the block class itself!
+
+    Sketched out "NewBlock" class.
+
+    Added default ctor for uninitialized block.
+
+    Updated dtor to be able to handle not having valid data. Do nothing.
+
+    Added method "Connect" which takes allocator, block and size,
+    and "Disconnect" method. This allows transferring ownership
+    of a block of memory from one block instance to another, or 
+    even externally from the block.
+
+    One tricky part about this is that blocks that are passed in
+    to "SendBlock" in reliable message channel will actually have
+    disconnect called on them inside that method, meaning the block
+    is invalid (IsValid = false) on return.
+
+    I can live with this.
+
+    Need to work out how to perform small block serialization.
+
+    My guess is that I just need a special serialize method which
+    takes the allocator as a parameter. This can be done if I check
+    each message is a block, cast, and call a specific block serialize
+    method in that case.
+
+    Assert false in the dummy serialize then.
+
+    *ALTERNATIVELY*. Could stash the allocator inside the block instance
+    inside the block message, and then on serialize read, rely on this
+    to get the block message.
+
+    Seems a bit dodgy though. It's still a "special" case that needs
+    to be performed when serializing the small block. One special case
+    vs. another. Take the simplest one?
+
+
+Sunday Evening, June 22nd, 2014:
+--------------------------------
+
+    Pass over remaining std::vector and see if they can be removed easily.
+
+    Cleaned up vector usage in resolver.
+
+    Greatly simplified resolver by removing callback support.
+
+    Refactored so DNS resolver doesn't allocate result, returns by value.
+
+    Updated tests to work with new resolver interface.
+
+
 Friday Evening, June 21st, 2014:
 --------------------------------
 

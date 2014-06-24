@@ -82,7 +82,7 @@ namespace protocol
 				memcpy( new_data, a.m_data, sizeof(T) * a.m_size );
 			}
 
-			a.m_allocator->Deallocate( a.m_data );
+			a.m_allocator->Free( a.m_data );
 			a.m_data = new_data;
 			a.m_capacity = new_capacity;
 		}
@@ -108,7 +108,7 @@ namespace protocol
 
 	template<typename T> inline Array<T>::~Array()
 	{
-		m_allocator->Deallocate( m_data );
+		m_allocator->Free( m_data );
 	}
 
 	template<typename T> Array<T>::Array( const Array<T> & other ) 

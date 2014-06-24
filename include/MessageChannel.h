@@ -20,7 +20,7 @@ namespace protocol
 
         virtual void SendMessage( Message * message ) = 0;          // takes ownership of message pointer
 
-        virtual void SendBlock( Block * block ) = 0;                // takes ownership of block pointer
+        virtual void SendBlock( Block & block ) = 0;                // takes ownership of block data
 
         virtual Message * ReceiveMessage() = 0;                     // gives ownership of message pointer to *you*
     };

@@ -20,7 +20,7 @@ namespace protocol
         if ( fragment )
         {
 //                printf( "deallocate fragment %p (channel data dtor)\n", fragment );
-            a.Deallocate( fragment );
+            a.Free( fragment );
             fragment = nullptr;
         }
 
@@ -41,7 +41,7 @@ namespace protocol
         if ( messages )
         {
 //                printf( "deallocate messages %p (destructor)\n", messages );
-            a.Deallocate( messages );
+            a.Free( messages );
             messages = nullptr;
         }
     }
@@ -143,6 +143,13 @@ namespace protocol
                     assert( messages[i] );
                     assert( messages[i]->GetType() == messageTypes[i] );
                     messages[i]->SetId( messageIds[i] );
+
+                    if ( Stream::IsReading && messageTypes[i] == BlockMessageType )
+                    {
+                        assert( config.smallBlockAllocator );
+                        BlockMessage * blockMessage = static_cast<BlockMessage*>( messages[i] );
+                        blockMessage->SetAllocator( *config.smallBlockAllocator );
+                    }
                 }
 
                 assert( messages[i] );
@@ -171,6 +178,9 @@ namespace protocol
     ReliableMessageChannel::ReliableMessageChannel( const ReliableMessageChannelConfig & config ) : m_config( config )
     {
         assert( config.messageFactory );
+        assert( config.messageAllocator );
+        assert( config.smallBlockAllocator );
+        assert( config.largeBlockAllocator );
         assert( config.maxSmallBlockSize <= MaxSmallBlockSize );
 
         m_sendQueue = new SlidingWindow<SendQueueEntry>( m_config.sendQueueSize );
@@ -299,9 +309,8 @@ namespace protocol
         if ( message->IsBlock() )
         {
             BlockMessage & blockMessage = static_cast<BlockMessage&>( *message );
-            auto block = blockMessage.GetBlock();
-            assert( block );
-            if ( block->size() > m_config.maxSmallBlockSize )
+            Block & block = blockMessage.GetBlock();
+            if ( block.GetSize() > m_config.maxSmallBlockSize )
                 largeBlock = true;
         }
 
@@ -343,7 +352,7 @@ namespace protocol
         m_sendMessageId++;
     }
 
-    void ReliableMessageChannel::SendBlock( Block * block )
+    void ReliableMessageChannel::SendBlock( Block & block )
     {
 //            printf( "send block: %d bytes\n", block->size() );
 
@@ -408,17 +417,16 @@ namespace protocol
 
             BlockMessage & blockMessage = static_cast<BlockMessage&>( *firstEntry->message );
 
-            auto block = blockMessage.GetBlock();
+            Block & block = blockMessage.GetBlock();
 
-            assert( block );
-            assert( block->size() > m_config.maxSmallBlockSize );
+            assert( block.GetSize() > m_config.maxSmallBlockSize );
 
             if ( !m_sendLargeBlock.active )
             {
                 m_sendLargeBlock.active = true;
                 m_sendLargeBlock.blockId = m_oldestUnackedMessageId;
-                m_sendLargeBlock.blockSize = block->size();
-                m_sendLargeBlock.numFragments = (int) ceil( block->size() / (float)m_config.blockFragmentSize );
+                m_sendLargeBlock.blockSize = block.GetSize();
+                m_sendLargeBlock.numFragments = (int) ceil( block.GetSize() / (float)m_config.blockFragmentSize );
                 m_sendLargeBlock.numAckedFragments = 0;
 
 //                    printf( "sending block %d in %d fragments\n", (int) firstMessageId, m_sendLargeBlock.numFragments );
@@ -459,7 +467,7 @@ namespace protocol
 
             auto data = new ReliableMessageChannelData( m_config );
             data->largeBlock = 1;
-            data->blockSize = block->size();
+            data->blockSize = block.GetSize();
             data->blockId = m_oldestUnackedMessageId;
             data->fragmentId = fragmentId;
             Allocator & a = memory::default_scratch_allocator();
@@ -470,13 +478,13 @@ namespace protocol
             //printf( "create fragment %p\n", data->fragment );
 
             int fragmentBytes = m_config.blockFragmentSize;
-            int fragmentRemainder = block->size() % m_config.blockFragmentSize;
+            int fragmentRemainder = block.GetSize() % m_config.blockFragmentSize;
             if ( fragmentRemainder && fragmentId == m_sendLargeBlock.numFragments - 1 )
                 fragmentBytes = fragmentRemainder;
 
             assert( fragmentBytes >= 0 );
             assert( fragmentBytes <= m_config.blockFragmentSize );
-            uint8_t * src = &( (*block)[fragmentId*m_config.blockFragmentSize] );
+            uint8_t * src = &( block.GetData()[fragmentId*m_config.blockFragmentSize] );
             uint8_t * dst = data->fragment;
             memcpy( dst, src, fragmentBytes );
 
@@ -663,7 +671,10 @@ namespace protocol
                 m_receiveLargeBlock.numReceivedFragments = 0;
                 m_receiveLargeBlock.blockId = data->blockId;
                 m_receiveLargeBlock.blockSize = data->blockSize;
-                m_receiveLargeBlock.block = new Block( m_receiveLargeBlock.blockSize );
+
+                assert( m_config.largeBlockAllocator );
+                uint8_t * blockData = (uint8_t*) m_config.largeBlockAllocator->Allocate( data->blockSize );
+                m_receiveLargeBlock.block.Connect( *m_config.largeBlockAllocator, blockData, data->blockSize );
                 
                 memset( &m_receiveLargeBlock.fragments[0], 0, sizeof( ReceiveFragmentData ) * numFragments );
             }
@@ -709,10 +720,10 @@ namespace protocol
 
                 fragment.received = 1;
 
-                auto block = m_receiveLargeBlock.block;
+                Block & block = m_receiveLargeBlock.block;
 
                 int fragmentBytes = m_config.blockFragmentSize;
-                int fragmentRemainder = block->size() % m_config.blockFragmentSize;
+                int fragmentRemainder = block.GetSize() % m_config.blockFragmentSize;
                 if ( fragmentRemainder && data->fragmentId == m_receiveLargeBlock.numFragments - 1 )
                     fragmentBytes = fragmentRemainder;
 
@@ -721,7 +732,7 @@ namespace protocol
                 assert( fragmentBytes >= 0 );
                 assert( fragmentBytes <= m_config.blockFragmentSize );
                 uint8_t * src = data->fragment;
-                uint8_t * dst = &( (*block)[data->fragmentId*m_config.blockFragmentSize] );
+                uint8_t * dst = &( block.GetData()[data->fragmentId*m_config.blockFragmentSize] );
                 memcpy( dst, src, fragmentBytes );
 
                 m_receiveLargeBlock.numReceivedFragments++;
@@ -737,7 +748,8 @@ namespace protocol
                     m_receiveQueue->Insert( ReceiveQueueEntry( blockMessage, m_receiveLargeBlock.blockId ) );
 
                     m_receiveLargeBlock.active = false;
-                    m_receiveLargeBlock.block = nullptr;        // IMPORTANT: otherwise it will get deleted on reset
+
+                    assert( !m_receiveLargeBlock.block.IsValid() );
                 }
             }
         }

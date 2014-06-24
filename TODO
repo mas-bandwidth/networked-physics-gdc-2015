@@ -1,8 +1,10 @@
 DONE:
 
-TODO:    
+TODO:
 
-    Pass over remaining std::vector and see if they can be removed easily.
+    -------------------
+
+    Convert messages to use message allocator.
 
     -------------------
 
@@ -34,6 +36,12 @@ TODO:
 
     Use the bitsquid allocators to track down memory leaks, eg.
     make sure each individual unit test checks for leaks.
+
+    --------------------
+
+    Restructure so that precompiled headers are used.
+
+    Add timing to build steps so the efficiency can be measured.
 
     --------------------
 

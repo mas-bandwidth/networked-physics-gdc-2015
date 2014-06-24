@@ -1,8 +1,9 @@
 #ifndef TEST_MESSAGES_H
 #define TEST_MESSAGES_H
 
-#include "Message.h"
 #include "Factory.h"
+#include "Message.h"
+#include "BlockMessage.h"
 
 using namespace protocol;
 

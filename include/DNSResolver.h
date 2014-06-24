@@ -12,7 +12,7 @@ struct addrinfo;
 
 namespace protocol
 {
-    ResolveResult * DNSResolve_Blocking( std::string name, int family = AF_UNSPEC, int socktype = SOCK_DGRAM );
+    ResolveResult DNSResolve_Blocking( std::string name, int family = AF_INET6, int socktype = SOCK_DGRAM );
 
     typedef std::map<std::string,ResolveEntry*> ResolveMap;
 
@@ -24,7 +24,7 @@ namespace protocol
 
         ~DNSResolver();
 
-        void Resolve( const std::string & name, ResolveCallback callback );
+        void Resolve( const std::string & name );
 
         virtual void Update( const TimeBase & timeBase );
 

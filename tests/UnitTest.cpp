@@ -23,6 +23,7 @@ extern void test_stream();
 extern void test_sliding_window();
 extern void test_generate_ack_bits();
 extern void test_network_interface();
+extern void test_block();
 
 extern void test_bsd_socket_send_and_receive_ipv4();
 extern void test_bsd_socket_send_and_receive_ipv6();
@@ -91,6 +92,7 @@ int main()
         test_sliding_window();
         test_generate_ack_bits();
         test_network_interface();
+        test_block();
 
         test_bsd_socket_send_and_receive_ipv4();
         test_bsd_socket_send_and_receive_ipv6();

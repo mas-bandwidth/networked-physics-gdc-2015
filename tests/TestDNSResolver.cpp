@@ -8,27 +8,9 @@ void test_dns_resolve()
 
     DNSResolver resolver;
 
-    int num_google_success_callbacks = 0;
-    int num_google_failure_callbacks = 0;
-
     std::string google_hostname( "google.com" );
 
-//    printf( "resolving %s\n", google_hostname.c_str() );
-
-    const int num_google_iterations = 10;
-
-    for ( int i = 0; i < num_google_iterations; ++i )
-    {
-        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const std::string & name, ResolveResult * result ) 
-        { 
-            assert( name == google_hostname );
-            assert( result );
-            if ( result )
-                ++num_google_success_callbacks;
-            else
-                ++num_google_failure_callbacks;
-        } );
-    }
+    resolver.Resolve( google_hostname );
 
     auto google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
@@ -42,7 +24,8 @@ void test_dns_resolve()
     {
         resolver.Update( TimeBase() );
 
-        if ( num_google_success_callbacks == num_google_iterations )
+        auto google_entry = resolver.GetEntry( google_hostname );
+        if ( google_entry && google_entry->status != RESOLVE_IN_PROGRESS )
             break;
 
         std::this_thread::sleep_for( ms );
@@ -50,19 +33,10 @@ void test_dns_resolve()
         t += dt;
     }
 
-    assert( num_google_success_callbacks == num_google_iterations );
-    assert( num_google_failure_callbacks == 0 );
-
     google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
     assert( google_entry->status == RESOLVE_SUCCEEDED );
-    assert( google_entry->result->addresses.size() );
-
-    /*
-    printf( "%s:\n", google_hostname.c_str() );
-    for ( auto & address : google_entry->result->addresses )
-        printf( " + %s\n", address.ToString().c_str() );
-        */
+    assert( google_entry->result.numAddresses );
 }
 
 void test_dns_resolve_with_port()
@@ -71,27 +45,9 @@ void test_dns_resolve_with_port()
 
     DNSResolver resolver;
 
-    int num_google_success_callbacks = 0;
-    int num_google_failure_callbacks = 0;
-
     std::string google_hostname( "google.com:5000" );
 
-//    printf( "resolving %s\n", google_hostname.c_str() );
-
-    const int num_google_iterations = 10;
-
-    for ( int i = 0; i < num_google_iterations; ++i )
-    {
-        resolver.Resolve( google_hostname, [&google_hostname, &num_google_success_callbacks, &num_google_failure_callbacks] ( const std::string & name, ResolveResult * result ) 
-        { 
-            assert( name == google_hostname );
-            assert( result );
-            if ( result )
-                ++num_google_success_callbacks;
-            else
-                ++num_google_failure_callbacks;
-        } );
-    }
+    resolver.Resolve( google_hostname );
 
     auto google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
@@ -101,11 +57,12 @@ void test_dns_resolve_with_port()
     double dt = 0.1f;
     std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
 
-    while ( true )
+    for ( int i = 0; i < 50; ++i )
     {
         resolver.Update( TimeBase() );
 
-        if ( num_google_success_callbacks == num_google_iterations )
+        auto google_entry = resolver.GetEntry( google_hostname );
+        if ( google_entry && google_entry->status != RESOLVE_IN_PROGRESS )
             break;
 
         std::this_thread::sleep_for( ms );
@@ -113,19 +70,12 @@ void test_dns_resolve_with_port()
         t += dt;
     }
 
-    assert( num_google_success_callbacks == num_google_iterations );
-    assert( num_google_failure_callbacks == 0 );
-
     google_entry = resolver.GetEntry( google_hostname );
     assert( google_entry );
     assert( google_entry->status == RESOLVE_SUCCEEDED );
-    assert( google_entry->result->addresses.size() );
-
-    /*
-    printf( "%s:\n", google_hostname.c_str() );
-    for ( auto & address : google_entry->result->addresses )
-        printf( " + %s\n", address.ToString().c_str() );
-        */
+    assert( google_entry->result.numAddresses );
+    for ( int i = 0; i < google_entry->result.numAddresses; ++i )
+        assert( google_entry->result.address[i].GetPort() == 5000 );
 }
 
 void test_dns_resolve_failure()
@@ -134,18 +84,11 @@ void test_dns_resolve_failure()
 
     DNSResolver resolver;
 
-    bool resolve_failed = false;
-
     std::string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
 
 //    printf( "resolving garbage hostname: %s\n", garbage_hostname.c_str() );
 
-    resolver.Resolve( garbage_hostname, [&resolve_failed, &garbage_hostname] ( const std::string & name, ResolveResult * result ) 
-    { 
-        assert( name == garbage_hostname );
-        assert( result == nullptr );
-        resolve_failed = true;
-    } );
+    resolver.Resolve( garbage_hostname );
 
     auto entry = resolver.GetEntry( garbage_hostname );
     assert( entry );
@@ -159,7 +102,8 @@ void test_dns_resolve_failure()
     {
         resolver.Update( TimeBase() );
 
-        if ( resolve_failed )
+        auto entry = resolver.GetEntry( garbage_hostname );
+        if ( entry && entry->status != RESOLVE_IN_PROGRESS )
             break;
 
         std::this_thread::sleep_for( ms );
@@ -169,6 +113,6 @@ void test_dns_resolve_failure()
 
     entry = resolver.GetEntry( garbage_hostname );
     assert( entry );
+
     assert( entry->status == RESOLVE_FAILED );
-    assert( entry->result == nullptr );
 }

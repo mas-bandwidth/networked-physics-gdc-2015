@@ -7,6 +7,7 @@
 #define PROTOCOL_CHANNEL_H
 
 #include "Common.h"
+#include "Memory.h"
 
 namespace protocol
 {
@@ -99,7 +100,7 @@ namespace protocol
         bool m_locked = false;
         int m_numChannels = 0;
         ChannelEntry m_channelEntries[MaxChannels];
-
+ 
     public:
 
         void AddChannel( const std::string & name,

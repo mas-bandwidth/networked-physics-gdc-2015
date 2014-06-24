@@ -151,9 +151,10 @@ void test_reliable_message_channel_small_blocks()
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            auto block = new Block( i + 1 );
-            for ( int j = 0; j < block->size(); ++j )
-                (*block)[j] = ( i + j ) % 256;
+            Block block( memory::default_allocator(), i + 1 );
+            uint8_t * data = block.GetData();
+            for ( int j = 0; j < block.GetSize(); ++j )
+                data[j] = ( i + j ) % 256;
             messageChannel->SendBlock( block );
         }
 
@@ -213,11 +214,12 @@ void test_reliable_message_channel_small_blocks()
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
-                auto block = blockMessage->GetBlock();
+                Block & block = blockMessage->GetBlock();
 
-                assert( block->size() == numMessagesReceived + 1 );
-                for ( int i = 0; i < block->size(); ++i )
-                    assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
+                assert( block.GetSize() == numMessagesReceived + 1 );
+                const uint8_t * data = block.GetData();
+                for ( int i = 0; i < block.GetSize(); ++i )
+                    assert( data[i] == ( numMessagesReceived + i ) % 256 );
 
                 ++numMessagesReceived;
 
@@ -270,9 +272,10 @@ void test_reliable_message_channel_large_blocks()
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            auto block = new Block( ( i + 1 ) * 1024 + i );
-            for ( int j = 0; j < block->size(); ++j )
-                (*block)[j] = ( i + j ) % 256;
+            Block block( memory::default_allocator(), ( i + 1 ) * 1024 + i );
+            uint8_t * data = block.GetData();
+            for ( int j = 0; j < block.GetSize(); ++j )
+                data[j] = ( i + j ) % 256;
             messageChannel->SendBlock( block );
         }
 
@@ -333,13 +336,14 @@ void test_reliable_message_channel_large_blocks()
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
-                auto block = blockMessage->GetBlock();
+                Block & block = blockMessage->GetBlock();
 
 //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                assert( block->size() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
-                for ( int i = 0; i < block->size(); ++i )
-                    assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
+                assert( block.GetSize() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
+                const uint8_t * data = block.GetData();
+                for ( int i = 0; i < block.GetSize(); ++i )
+                    assert( data[i] == ( numMessagesReceived + i ) % 256 );
 
                 ++numMessagesReceived;
 
@@ -399,9 +403,10 @@ void test_reliable_message_channel_mixture()
             }
             else
             {
-                auto block = new Block( ( i + 1 ) * 8 + i );
-                for ( int j = 0; j < block->size(); ++j )
-                    (*block)[j] = ( i + j ) % 256;
+                Block block( memory::default_allocator(), ( i + 1 ) * 8 + i );
+                uint8_t * data = block.GetData();
+                for ( int j = 0; j < block.GetSize(); ++j )
+                    data[j] = ( i + j ) % 256;
                 messageChannel->SendBlock( block );
             }
         }
@@ -465,13 +470,14 @@ void test_reliable_message_channel_mixture()
 
                     auto blockMessage = static_cast<BlockMessage*>( message );
 
-                    auto block = blockMessage->GetBlock();
+                    Block & block = blockMessage->GetBlock();
 
     //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                    assert( block->size() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
-                    for ( int i = 0; i < block->size(); ++i )
-                        assert( (*block)[i] == ( numMessagesReceived + i ) % 256 );
+                    assert( block.GetSize() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
+                    const uint8_t * data = block.GetData();
+                    for ( int i = 0; i < block.GetSize(); ++i )
+                        assert( data[i] == ( numMessagesReceived + i ) % 256 );
                 }
                 else
                 {
@@ -507,3 +513,4 @@ void test_reliable_message_channel_mixture()
     }
     memory::shutdown();
 }
+

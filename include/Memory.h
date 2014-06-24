@@ -34,7 +34,7 @@ namespace protocol
 		
 		virtual void * Allocate( uint32_t size, uint32_t align = DEFAULT_ALIGN ) = 0;
 
-		virtual void Deallocate( void * p ) = 0;
+		virtual void Free( void * p ) = 0;
 
 		virtual uint32_t GetAllocatedSize( void * p ) = 0;
 
@@ -67,7 +67,7 @@ namespace protocol
 			while ( p ) 
 			{
 				void * next = *(void**) p;
-				m_backing.Deallocate( p );
+				m_backing.Free( p );
 				p = next;
 			}
 		}
@@ -94,7 +94,7 @@ namespace protocol
 			return result;
 		}		
 
-		virtual void Deallocate( void * ) {}
+		virtual void Free( void * ) {}
 
 		virtual uint32_t GetAllocatedSize( void * ) { return SIZE_NOT_TRACKED; }
 
@@ -175,7 +175,7 @@ namespace protocol
 			return p;
 		}
 
-		virtual void Deallocate( void * p ) 
+		virtual void Free( void * p ) 
 		{
 			if ( !p )
 				return;
@@ -219,7 +219,7 @@ namespace protocol
 		{
 			assert( m_free == m_allocate );			// You leaked memory!
 
-			m_backing.Deallocate( m_begin );
+			m_backing.Free( m_begin );
 		}
 
 		bool IsAllocated( void * p )
@@ -267,7 +267,7 @@ namespace protocol
 			return data;
 		}
 
-		void Deallocate( void * p ) 
+		void Free( void * p ) 
 		{
 			if ( !p )
 				return;
@@ -276,7 +276,7 @@ namespace protocol
 			{
 				// hack: I want to know if this happens!
 				assert( false );
-				m_backing.Deallocate( p );
+				m_backing.Free( p );
 				return;
 			}
 
@@ -328,7 +328,7 @@ namespace protocol
 #endif
 
 	#define PROTOCOL_NEW( a, T, ... ) ( new ((a).Allocate(sizeof(T), alignof(T))) T(__VA_ARGS__) )
-	#define PROTOCOL_DELETE( a, T, p ) do { if (p) { (p)->~T(); a.Deallocate(p); } } while (0)	
+	#define PROTOCOL_DELETE( a, T, p ) do { if (p) { (p)->~T(); a.Free(p); } } while (0)	
 }
 
 #endif

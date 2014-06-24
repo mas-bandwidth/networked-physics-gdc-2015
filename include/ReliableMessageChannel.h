@@ -8,6 +8,8 @@
 
 #include "Memory.h"
 #include "Factory.h"
+#include "Message.h"
+#include "BlockMessage.h"
 #include "MessageChannel.h"
 #include "SlidingWindow.h"
 #include <math.h>
@@ -46,6 +48,10 @@ namespace protocol
         bool align;                     // if true then insert align at key points, eg. before messages etc. good for dictionary based LZ compressors
 
         Factory<Message> * messageFactory = nullptr;
+
+        Allocator * messageAllocator = nullptr;
+        Allocator * smallBlockAllocator = nullptr;
+        Allocator * largeBlockAllocator = nullptr;
     };
 
     class ReliableMessageChannelData : public ChannelData
@@ -164,7 +170,6 @@ namespace protocol
         {
             ReceiveLargeBlockData()
             {
-                block = nullptr;
                 fragments = nullptr;
                 Reset();
             }
@@ -175,12 +180,9 @@ namespace protocol
                 numFragments = 0;
                 numReceivedFragments = 0;
                 blockId = 0;
-                blockSize = 0;      
-                if ( block )
-                {
-                    delete block;
-                    block = nullptr;
-                }
+                blockSize = 0;
+                assert( !block.IsValid() );
+                block.Disconnect();
             }
 
             bool active;                                // true if we are currently receiving a large block
@@ -188,7 +190,7 @@ namespace protocol
             int numReceivedFragments;                   // number of fragments received.
             uint16_t blockId;                           // block id being currently received.
             uint32_t blockSize;                         // block size in bytes.
-            Block * block;                              // the block being received.
+            Block block;                                // the block being received.
             ReceiveFragmentData * fragments;            // per-fragment data for receive. array of size max fragments
         };
 
@@ -252,7 +254,7 @@ namespace protocol
 
         void SendMessage( Message * message );
 
-        void SendBlock( Block * block );
+        void SendBlock( Block & block );
 
         Message * ReceiveMessage();
 

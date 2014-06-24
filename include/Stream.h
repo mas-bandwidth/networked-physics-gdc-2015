@@ -7,6 +7,8 @@
 #define PROTOCOL_STREAM_H
 
 #include "Common.h"
+#include "Block.h"
+#include "Memory.h"
 #include "BitPacker.h"
 
 namespace protocol
@@ -322,28 +324,32 @@ namespace protocol
             value = ( uint64_t(hi) << 32 ) | lo;
     }
 
-    template <typename Stream> void serialize_block( Stream & stream, Block *& block_ptr, int maxBytes )
+    template <typename Stream> void serialize_block( Stream & stream, Block & block, int maxBytes )
     { 
-        int numBytes = 0;
-
-        if ( Stream::IsWriting )
-        {
-            assert( block_ptr );
-            numBytes = (int) block_ptr->size();
-        }
-
         stream.Align();
 
-        serialize_int( stream, numBytes, 1, maxBytes - 1 );
+        int numBytes;
+        if ( Stream::IsWriting )
+        {
+            assert( block.IsValid() );
+            numBytes = (int) block.GetSize();
+        }
+
+        serialize_int( stream, numBytes, 1, maxBytes );
 
         stream.Align();
         
         if ( Stream::IsReading )
-            block_ptr = new Block( numBytes );
+        {
+            assert( numBytes > 0 );
+            assert( numBytes <= maxBytes );
+            Allocator * allocator = block.GetAllocator();
+            assert( allocator );
+            uint8_t * data = (uint8_t*) allocator->Allocate( numBytes );
+            block.Connect( *allocator, data, numBytes );
+        }
         
-        Block & block = *block_ptr;
-
-        stream.SerializeBytes( &block[0], numBytes );
+        stream.SerializeBytes( block.GetData(), numBytes );
     }
 
     template <typename Stream, typename T> void serialize_int_relative( Stream & stream, T previous, T & current )

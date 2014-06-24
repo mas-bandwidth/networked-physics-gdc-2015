@@ -23,6 +23,9 @@ public:
         m_config.blockFragmentSize = 3900;
         m_config.maxLargeBlockSize = 32 * 1024 * 1024;
         m_config.messageFactory = &m_messageFactory;
+        m_config.messageAllocator = &memory::default_allocator();
+        m_config.smallBlockAllocator = &memory::default_allocator();
+        m_config.largeBlockAllocator = &memory::default_allocator();
 
         AddChannel( "reliable message channel", 
                     [this] { return CreateReliableMessageChannel(); }, 
@@ -122,20 +125,20 @@ void soak_test()
             {
                 // small block
                 int index = sendMessageId % 32;
-                auto block = new Block( index + 1 );
-                assert( block );
-                for ( int i = 0; i < block->size(); ++i )
-                    (*block)[i] = ( index + i ) % 256;
+                Block block( memory::default_allocator(), index + 1 );
+                uint8_t * data = block.GetData();
+                for ( int i = 0; i < block.GetSize(); ++i )
+                    data[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
             else
             {
                 // large block
                 int index = sendMessageId % 4;
-                auto block = new Block( (index+1) * 1024 * 1000 + index );
-                assert( block );
-                for ( int i = 0; i < block->size(); ++i )
-                    (*block)[i] = ( index + i ) % 256;
+                Block block( memory::default_allocator(), (index+1) * 1024 * 1000 + index );
+                uint8_t * data = block.GetData();
+                for ( int i = 0; i < block.GetSize(); ++i )
+                    data[i] = ( index + i ) % 256;
                 messageChannel->SendBlock( block );
             }
             
@@ -196,15 +199,16 @@ void soak_test()
             else
             {
                 auto blockMessage = static_cast<BlockMessage*>( message );
-                auto block = blockMessage->GetBlock();
-                assert( block );
                 
-                if ( block->size() <= messageChannelConfig.maxSmallBlockSize )
+                Block & block = blockMessage->GetBlock();                
+
+                if ( block.GetSize() <= messageChannelConfig.maxSmallBlockSize )
                 {
                     const int index = numMessagesReceived % 32;
-                    assert( block->size() == index + 1 );
-                    for ( int i = 0; i < block->size(); ++i )
-                        assert( (*block)[i] == ( index + i ) % 256 );
+                    assert( block.GetSize() == index + 1 );
+                    const uint8_t * data = block.GetData();
+                    for ( int i = 0; i < block.GetSize(); ++i )
+                        assert( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
 #endif
@@ -212,9 +216,10 @@ void soak_test()
                 else
                 {
                     const int index = numMessagesReceived % 4;
-                    assert( block->size() == ( index + 1 ) * 1024 * 1000 + index );
-                    for ( int i = 0; i < block->size(); ++i )
-                        assert( (*block)[i] == ( index + i ) % 256 );
+                    assert( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
+                    const uint8_t * data = block.GetData();
+                    for ( int i = 0; i < block.GetSize(); ++i )
+                        assert( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
 #endif

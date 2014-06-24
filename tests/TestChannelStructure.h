@@ -16,6 +16,13 @@ public:
     TestChannelStructure()
     {
         m_config.messageFactory = &m_messageFactory;
+        m_config.messageAllocator = &memory::default_allocator();
+        m_config.smallBlockAllocator = &memory::default_allocator();
+        m_config.largeBlockAllocator = &memory::default_allocator();
+
+        assert( m_config.messageAllocator );
+        assert( m_config.smallBlockAllocator );
+        assert( m_config.largeBlockAllocator );
 
         AddChannel( "reliable message channel", 
                     [this] { return CreateReliableMessageChannel(); }, 

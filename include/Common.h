@@ -165,13 +165,6 @@ namespace protocol
         virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
     };
 
-#if !NOSTL
-
-    // todo: replace this. move to block.h -- don't use std::vector!
-    typedef std::vector<uint8_t> Block;
-
-#endif
-
     inline uint64_t GenerateGuid()
     {
         return ( uint64_t(rand()) << 32 ) | time( nullptr );

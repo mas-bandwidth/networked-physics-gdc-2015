@@ -12,6 +12,7 @@ namespace protocol
     const int MaxSmallBlockSize = 256;
     const int MaxChannels = 8;
     const int MaxSimulatorStates = 32;
+    const int MaxResolveAddresses = 8;
 }
 
 #endif

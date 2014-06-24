@@ -23,8 +23,8 @@ void test_memory()
     assert( allocator.GetAllocatedSize( q ) >= 100 );
     assert( allocator.GetTotalAllocated() >= 200 );
     
-    allocator.Deallocate( p );
-    allocator.Deallocate( q );
+    allocator.Free( p );
+    allocator.Free( q );
 
     memory::shutdown();
 }
@@ -45,15 +45,15 @@ void test_scratch()
         pointers[i] = (uint8_t*) a.Allocate( 1024 );
 
     for ( int i = 0; i < 100; ++i )
-        a.Deallocate( pointers[i] );
+        a.Free( pointers[i] );
 
-    a.Deallocate( p );
+    a.Free( p );
 
     for ( int i = 0; i < 100; ++i )
         pointers[i] = (uint8_t*) a.Allocate( 4 * 1024 );
 
     for ( int i = 0; i < 100; ++i )
-        a.Deallocate( pointers[i] );
+        a.Free( pointers[i] );
 
     memory::shutdown();
 }

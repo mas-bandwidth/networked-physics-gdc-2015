@@ -13,8 +13,8 @@ namespace protocol
 {
     struct ResolveResult
     {
-        // todo: have a maximum # of addresses per-resolve. ignore any addition addresses. I suggest max of 8.
-        std::vector<Address> addresses;
+        int numAddresses = 0;
+        Address address[MaxResolveAddresses];
     };
 
     enum ResolveStatus
@@ -24,24 +24,18 @@ namespace protocol
         RESOLVE_FAILED
     };
 
-    typedef std::function< void( const std::string & name, ResolveResult * result ) > ResolveCallback;
-
     struct ResolveEntry
     {
         ResolveStatus status;
-        ResolveResult * result;
-        std::future<ResolveResult*> future;
-        std::vector<ResolveCallback> callbacks;     // ugh. max callbacks? yep.
-
-        // todo: still need to determine ownership here. this class should become 
-        // non-POD and will need to be stored only via pointer.
+        ResolveResult result;
+        std::future<ResolveResult> future;
     };
 
     class Resolver
     {
     public:
 
-        virtual void Resolve( const std::string & name, ResolveCallback cb = nullptr ) = 0;
+        virtual void Resolve( const std::string & name ) = 0;
 
         virtual void Update( const TimeBase & timeBase ) = 0;
 

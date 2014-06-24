@@ -12,7 +12,7 @@
 
 namespace protocol
 {
-    ResolveResult * DNSResolve_Blocking( std::string name, int family, int socktype )
+    ResolveResult DNSResolve_Blocking( std::string name, int family, int socktype )
     {
         struct addrinfo hints, *res, *p;
         memset( &hints, 0, sizeof hints );
@@ -32,25 +32,23 @@ namespace protocol
         }
 
         if ( getaddrinfo( hostname, nullptr, &hints, &res ) != 0 )
-            return nullptr;
+            return ResolveResult();
 
-        auto result = new ResolveResult();
-
+        ResolveResult result;
         for ( p = res; p != nullptr; p = p->ai_next )
         {
+            if ( result.numAddresses >= MaxResolveAddresses - 1 )
+                break;
             auto address = Address( p );
             if ( address.IsValid() )
             {
                 if ( port != 0 )
                     address.SetPort( port );
-                result->addresses.push_back( address );
+                result.address[result.numAddresses++] = address;
             }
         }
 
         freeaddrinfo( res );
-
-        if ( result->addresses.size() == 0 )
-            return nullptr;
 
         return result;
     }
@@ -66,42 +64,18 @@ namespace protocol
         // todo: this class owns the entry pointers so it is responsible for deleting them
     }
 
-    void DNSResolver::Resolve( const std::string & name, ResolveCallback callback )
+    void DNSResolver::Resolve( const std::string & name )
     {
         auto itor = map.find( name );
         if ( itor != map.end() )
-        {
-            auto name = itor->first;
-            auto entry = itor->second;
-            switch ( entry->status )
-            {
-                case RESOLVE_IN_PROGRESS:
-                    if ( callback )
-                        entry->callbacks.push_back( callback );
-                    break;
-
-                case RESOLVE_SUCCEEDED:
-                case RESOLVE_FAILED:             // note: result is nullptr if resolve failed
-                    if ( callback )
-                        callback( name, entry->result );      
-                    break;
-            }
             return;
-        }
 
-        auto entry = new ResolveEntry();
+        auto entry = new ResolveEntry();           // todo: instead of allocating here have some "max resolves" or something in a pool
         entry->status = RESOLVE_IN_PROGRESS;
-        if ( callback != nullptr )
-            entry->callbacks.push_back( callback );
         const int family = m_family;
         const int socktype = m_socktype;
 
-        // todo: probably want to do the alloc of the result *here*
-        // while we are on main thread, before the future runs async
-        // my allocators will *not* be threadsafe by design, eg. only
-        // to be used on one thread.
-
-        entry->future = async( std::launch::async, [name, family, socktype] () -> ResolveResult*
+        entry->future = async( std::launch::async, [name, family, socktype, entry] () -> ResolveResult
         { 
             return DNSResolve_Blocking( name, family, socktype );
         } );
@@ -121,9 +95,7 @@ namespace protocol
             if ( entry->future.wait_for( std::chrono::seconds(0) ) == std::future_status::ready )
             {
                 entry->result = entry->future.get();
-                entry->status = entry->result ? RESOLVE_SUCCEEDED : RESOLVE_FAILED;
-                for ( auto callback : entry->callbacks )
-                    callback( name, entry->result );
+                entry->status = entry->result.numAddresses ? RESOLVE_SUCCEEDED : RESOLVE_FAILED;
                 in_progress.erase( itor++ );
             }
             else
