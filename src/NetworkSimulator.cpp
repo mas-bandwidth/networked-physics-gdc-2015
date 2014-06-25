@@ -51,6 +51,7 @@ namespace protocol
 
         if ( random_int( 0, 100 ) <= m_state.packetLoss )
         {
+            printf( "drop packet\n" );
             delete packet;
             return;
         }

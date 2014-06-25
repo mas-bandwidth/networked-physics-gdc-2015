@@ -7,7 +7,7 @@
 
 namespace protocol
 {
-    void ChannelStructure::AddChannel( const std::string & name,
+    void ChannelStructure::AddChannel( const char * name,
                                        CreateChannelFunction createChannel,
                                        CreateChannelDataFunction createChannelData )
     {
@@ -19,7 +19,8 @@ namespace protocol
 
         ChannelEntry & entry = m_channelEntries[m_numChannels];
 
-        entry.name = name;
+        strncpy( entry.name, name, MaxChannelName - 1 );
+        entry.name[MaxChannelName-1] = '\0';
         entry.createChannel = createChannel;
         entry.createChannelData = createChannelData;
 
@@ -36,9 +37,16 @@ namespace protocol
         return m_locked;
     }
 
-    int ChannelStructure::GetNumChannels()
+    int ChannelStructure::GetNumChannels() const
     {
         return m_numChannels;
+    }
+
+    const char * ChannelStructure::GetChannelName( int channelIndex ) const
+    {
+        assert( channelIndex >= 0 );
+        assert( channelIndex < m_numChannels );
+        return m_channelEntries[channelIndex].name;
     }
 
     Channel * ChannelStructure::CreateChannel( int channelIndex )

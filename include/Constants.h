@@ -13,6 +13,8 @@ namespace protocol
     const int MaxChannels = 8;
     const int MaxSimulatorStates = 32;
     const int MaxResolveAddresses = 8;
+    const int MaxHostName = 256;
+    const int MaxChannelName = 64;
 }
 
 #endif

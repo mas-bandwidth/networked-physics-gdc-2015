@@ -44,7 +44,7 @@ namespace protocol
 
         explicit Address( addrinfo * p );
 
-        Address( std::string address );
+        explicit Address( const char * address );
 
         void Clear();
 
@@ -58,7 +58,7 @@ namespace protocol
 
         AddressType GetType() const;
 
-        std::string ToString() const;
+        const char * ToString( char buffer[], int bufferSize ) const;
 
         bool IsValid() const;
 

@@ -4,7 +4,7 @@
 */
 
 #include "Address.h"
-
+#include "Memory.h"
 #include <netdb.h>
 #include <arpa/inet.h>
 
@@ -106,29 +106,39 @@ namespace protocol
         }
     }
 
-    Address::Address( std::string address )
+    Address::Address( const char * address_in )
     {
         // first try to parse as an IPv6 address:
         // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
         // 2. otherwise try to parse as raw IPv6 address, parse using inet_pton
 
+        assert( address_in );
+
+        char buffer[256];
+        char * address = buffer;
+        strncpy( address, address_in, 255 );
+        address[255] = '\0';
+
+        int addressLength = strlen( address );
         m_port = 0;
         if ( address[0] == '[' )
         {
-            const int base_index = address.size() - 1;
+            const int base_index = addressLength - 1;
             for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
             {
                 const int index = base_index - i;
+                if ( index < 3 )
+                    break;
                 if ( address[index] == ':' )
                 {
-                    const char * port_string = address.substr( index + 1, 6 ).c_str();
-                    m_port = atoi( port_string );
-                    address = address.substr( 1, index - 2 );
+                    m_port = atoi( &address[index+1] );
+                    address[index-1] = '\0';
                 }
             }
+            address += 1;
         }
         struct in6_addr sockaddr6;
-        if ( inet_pton( AF_INET6, address.c_str(), &sockaddr6 ) == 1 )
+        if ( inet_pton( AF_INET6, address, &sockaddr6 ) == 1 )
         {
             memcpy( m_address6, &sockaddr6, 16 );
             m_type = ADDRESS_IPV6;
@@ -139,20 +149,22 @@ namespace protocol
         // 1. look for ":portnum", if found save the portnum and strip it out
         // 2. parse remaining ipv4 address via inet_pton
 
-        const int base_index = address.size() - 1;
+        addressLength = strlen( address );
+        const int base_index = addressLength - 1;
         for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
         {
             const int index = base_index - i;
+            if ( index < 0 )
+                break;
             if ( address[index] == ':' )
             {
-                const char * port_string = address.substr( index + 1, 6 ).c_str();
-                m_port = atoi( port_string );
-                address = address.substr( 0, index );
+                m_port = atoi( &address[index+1] );
+                address[index] = '\0';
             }
         }
 
         struct sockaddr_in sockaddr4;
-        if ( inet_pton( AF_INET, address.c_str(), &sockaddr4.sin_addr ) == 1 )
+        if ( inet_pton( AF_INET, address, &sockaddr4.sin_addr ) == 1 )
         {
             m_type = ADDRESS_IPV4;
             m_address4 = sockaddr4.sin_addr.s_addr;
@@ -198,7 +210,7 @@ namespace protocol
         return m_type;
     }
 
-    std::string Address::ToString() const
+    const char * Address::ToString( char buffer[], int bufferSize ) const
     {
         if ( m_type == ADDRESS_IPV4 )
         {
@@ -206,25 +218,26 @@ namespace protocol
             const uint8_t b = ( m_address4 >> 8  ) & 0xff;
             const uint8_t c = ( m_address4 >> 16 ) & 0xff;
             const uint8_t d = ( m_address4 >> 24 ) & 0xff;
-            char buffer[256];
             if ( m_port != 0 )
-                sprintf( buffer, "%d.%d.%d.%d:%d", a, b, c, d, m_port );
+                snprintf( buffer, bufferSize, "%d.%d.%d.%d:%d", a, b, c, d, m_port );
             else
-                sprintf( buffer, "%d.%d.%d.%d", a, b, c, d );
+                snprintf( buffer, bufferSize, "%d.%d.%d.%d", a, b, c, d );
             return buffer;
         }
         else if ( m_type == ADDRESS_IPV6 )
         {
-            char addressString[INET6_ADDRSTRLEN];
-            inet_ntop( AF_INET6, &m_address6, addressString, INET6_ADDRSTRLEN );
-            if ( m_port != 0 )
+            if ( m_port == 0 )
             {
-                char buffer[256];
-                sprintf( buffer, "[%s]:%d", addressString, m_port );
+                inet_ntop( AF_INET6, &m_address6, buffer, bufferSize );
                 return buffer;
             }
             else
-                return addressString;
+            {
+                char addressString[INET6_ADDRSTRLEN];
+                inet_ntop( AF_INET6, &m_address6, addressString, INET6_ADDRSTRLEN );
+                snprintf( buffer, bufferSize, "[%s]:%d", addressString, m_port );
+                return buffer;
+            }
         }
         else
         {

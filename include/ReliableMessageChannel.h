@@ -83,6 +83,8 @@ namespace protocol
         void SerializeWrite( WriteStream & stream );
 
         void SerializeMeasure( MeasureStream & stream );
+
+        void DisconnectMessages();
     };
 
     class ReliableMessageChannel : public MessageChannel

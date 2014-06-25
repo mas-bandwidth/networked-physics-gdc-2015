@@ -64,16 +64,24 @@ void test_temp_allocator()
 
     memory::initialize();
     {
-        TempAllocator128 temp;
+        TempAllocator256 temp;
 
         void * p = temp.Allocate( 100 );
 
         assert( p );
         assert( temp.GetAllocatedSize( p ) >= 100 );
+        memset( p, 100, 0 );
 
-        void * q = temp.Allocate( 2 * 1024 );
+        void * q = temp.Allocate( 256 );
+
         assert( q );
-        assert( temp.GetAllocatedSize( q ) >= 2 * 1024 );
+        assert( temp.GetAllocatedSize( q ) >= 256 );
+        memset( q, 256, 0 );
+
+        void * r = temp.Allocate( 2 * 1024 );
+        assert( r );
+        assert( temp.GetAllocatedSize( r ) >= 2 * 1024 );
+        memset( r, 2*1024, 0 );
     }
     memory::shutdown();
 }

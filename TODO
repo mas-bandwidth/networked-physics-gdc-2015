@@ -1,10 +1,60 @@
 DONE:
 
+    Convert std::string to c_str in Address class
+
+    Remove std::string usage from Client class (hostname)
+
+    Added MaxHostName const (256).
+
+    Remove std::string from Channel class (channel name)
+
+    We are getting memory leaks in small message test.
+
+    What is leaking?! It's random, doesn't happen 100%.
+
+    Confirmed: Dropped packets are triggering the loss.
+
+    Is there something wrong with the message cleanup?
+
+    I think we have an error where the delete on the *read*
+    packet does not clean up the messages it contains.
+
+    This happens on packet drop in the simulator.
+
+    However, if the packet is actually processed by the connection,
+    the connection takes those messages and inserts them into recv
+    queue, where they will be received.
+
+    It seems that a packet must be put into a state after being read
+    that each of the messages it contains will be deleted, but upon
+    processing this packet, those messages must be marked not to be
+    deleted when the packet is deleted (which it will be).
+
+    In short, the packet must transfer ownership of its messages
+    to the receive queue when it is processed, but otherwise should
+    delete those messages.
+
+    Yes. That was it. It's not leaking anymore.
+
 TODO:
+
 
     -------------------
 
-    Convert messages to use message allocator.
+    Remove std::string usage from Resolver interface and DNSResolver. (How?!)
+
+    -------------------
+
+    Send a "Disconnect" packet from client -> server on disconnect,
+    so the slot gets freed up a bit quicker than if it timed out.
+
+    -------------------
+
+    Convert messages to use message allocator (factory?)
+
+    -------------------
+
+    Convert packets to use packet allocator (factory?)
 
     -------------------
 
@@ -49,6 +99,8 @@ TODO:
 
     package.buildflags = { "no-exceptions", "no-rtti" }
 
+    Will this work with std::future?
+
     --------------------
 
 
@@ -58,11 +110,17 @@ TODO:
 
     ----------------------
 
+    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
+
+    Grab the big endian check from sophist.h and anything else useful.
+
+    Fix the bitpacker to do bswap when necessary for big endian.
+
+    ----------------------
+
     Unit tests to add:
 
     Move the murmur hash test into TestCommon.cpp
-
-    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
 
     Verify that channel error percolates down and makes the server disconnect client,
     *and* on client side, makes the client disconnect from server.
@@ -165,6 +223,10 @@ TODO:
 
 WOULD BE NICE:
 
+    ----------------------
+
+    Google have some cool allocators. Check them out.
+
     ---------------------
 
     Branimir has an stl replacement with allocator support.
@@ -190,13 +252,6 @@ WOULD BE NICE:
 
     --------------------
 
-    Protocol id belongs inside the BSD socket layer,
-    rather than inside the protocol itself. This allows
-    me to choose how to serialize the packet, and omit
-    the protocol id for interfaces that don't need it.
-
-    --------------------
-
     Optimization for fragments, track oldest unacked fragment id, and start there
     and go left to right to search for fragments to send.
 
@@ -212,10 +267,6 @@ WOULD BE NICE:
     the received fragment data to a bitfield
 
     We only need one bit per-fragment, "has it been received?"
-
-    -----------------
-
-    Might be a good idea to consolidate bitpacker into stream class.
 
     -----------------
 

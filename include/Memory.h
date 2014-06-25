@@ -63,6 +63,7 @@ namespace protocol
 
 		~TempAllocator()
 		{
+			// note: temp allocator appears to be broken! it's not always freeing all blocks
 			void * p = *(void**) m_buffer;
 			while ( p ) 
 			{
@@ -162,6 +163,11 @@ namespace protocol
 
 		~MallocAllocator() 
 		{
+			if ( m_total_allocated != 0 )
+			{
+				printf( "you leaked memory! %d bytes still allocated\n", m_total_allocated );
+				exit(1);
+			}
 			assert( m_total_allocated == 0 );
 		}
 
@@ -181,6 +187,7 @@ namespace protocol
 				return;
 			Header * h = header( p );
 			m_total_allocated -= h->size;
+			assert( m_total_allocated >= 0 );
 			free( h );
 		}
 

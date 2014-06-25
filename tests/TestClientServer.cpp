@@ -879,7 +879,6 @@ void test_client_connection_server_full()
         // connect the maximum number of clients to the server
         // and wait until they are all fully connected.
 
-        // todo: remove std::vector usage. I know how many there are
         Client * clients[NumClients];
         NetworkInterface * clientInterface[NumClients];
 

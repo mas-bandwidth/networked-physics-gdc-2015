@@ -147,7 +147,7 @@ void test_reliable_message_channel_small_blocks()
 
         auto channelConfig = channelStructure.GetConfig(); 
 
-        const int NumMessagesSent = channelConfig.maxSmallBlockSize;
+        const int NumMessagesSent = 1;//channelConfig.maxSmallBlockSize;
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
@@ -170,7 +170,7 @@ void test_reliable_message_channel_small_blocks()
         NetworkSimulator simulator;
         simulator.AddState( { 1.0f, 1.0f, 90 } );
 
-        while ( true )
+        //while ( true )
         {  
             auto writePacket = connection.WritePacket();
 
@@ -186,10 +186,12 @@ void test_reliable_message_channel_small_blocks()
             auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
             readPacket->SerializeRead( readStream );
 
-            simulator.SendPacket( address, readPacket );
+            //simulator.SendPacket( address, readPacket );
+            delete readPacket;
 
             simulator.Update( timeBase );
 
+            /*
             auto packet = simulator.ReceivePacket();
 
             if ( packet )
@@ -197,6 +199,7 @@ void test_reliable_message_channel_small_blocks()
                 connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
                 delete packet;
             }
+            */
 
             assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
             assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
@@ -223,11 +226,10 @@ void test_reliable_message_channel_small_blocks()
 
                 ++numMessagesReceived;
 
+                printf( "delete message %p (receive)\n", message );
+
                 delete message;
             }
-
-            if ( numMessagesReceived == NumMessagesSent )
-                break;
 
             connection.Update( timeBase );
 
@@ -235,10 +237,10 @@ void test_reliable_message_channel_small_blocks()
             assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
             assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
-            timeBase.time += timeBase.deltaTime;
+            //if ( numMessagesReceived == NumMessagesSent )
+            //    break;
 
-            if ( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent )
-                break;
+            timeBase.time += timeBase.deltaTime;
 
             iteration++;
         }

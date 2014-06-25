@@ -24,26 +24,46 @@ namespace protocol
             fragment = nullptr;
         }
 
-        if ( releaseMessages && messages )
-        {
-            for ( int i = 0; i < numMessages; ++i )
-            {
-                assert( messages[i] );
-                messages[i]->Release();
-                if ( messages[i]->GetRefCount() == 0 )
-                {
-//                        printf( "deallocate message %p (channel data dtor)\n", messages[i] );
-                    delete messages[i];
-                }
-            }
-        }
-
         if ( messages )
         {
+            if ( releaseMessages )
+            {
+                for ( int i = 0; i < numMessages; ++i )
+                {
+                    assert( messages[i] );
+                    messages[i]->Release();
+                    if ( messages[i]->GetRefCount() == 0 )
+                    {
+                        printf( "delete message %p (channel data dtor)\n", messages[i] );
+                        delete messages[i];
+                        messages[i] = nullptr;
+                    }
+                }
+            }
+            else
+            {
+                for ( int i = 0; i < numMessages; ++i )
+                {
+                    assert( messages[i] );
+                    delete messages[i];
+                    messages[i] = nullptr;
+                }
+            }
+
 //                printf( "deallocate messages %p (destructor)\n", messages );
             a.Free( messages );
             messages = nullptr;
         }
+    }
+
+    void ReliableMessageChannelData::DisconnectMessages()
+    {
+        // IMPORTANT: This is used by "ProcessData" to take ownership
+        // of the message pointers in the packet. Otherwise, they will
+        // get deleted when the packet is deleted and we don't want that.
+        Allocator & a = memory::default_scratch_allocator();
+        a.Free( messages );
+        messages = nullptr;
     }
 
     template <typename Stream> void ReliableMessageChannelData::Serialize( Stream & stream )
@@ -140,6 +160,7 @@ namespace protocol
                 if ( Stream::IsReading )
                 {
                     messages[i] = config.messageFactory->Create( messageTypes[i] );
+                    printf( "create message %p (read packet)\n", messages[i] );
                     assert( messages[i] );
                     assert( messages[i]->GetType() == messageTypes[i] );
                     messages[i]->SetId( messageIds[i] );
@@ -153,6 +174,7 @@ namespace protocol
                 }
 
                 assert( messages[i] );
+
                 serialize_object( stream, *messages[i] );
             }
         }
@@ -250,7 +272,7 @@ namespace protocol
                 entry->message->Release();
                 if ( entry->message->GetRefCount() == 0 )
                 {
-//                      printf( "deallocate message %p (reset send queue)\n", entry->message );
+                    printf( "delete message %p (reset send queue)\n", entry->message );
                     delete entry->message;
                 }
             }
@@ -264,7 +286,7 @@ namespace protocol
                 entry->message->Release();
                 if ( entry->message->GetRefCount() == 0 )
                 {
-//                      printf( "deallocate message %p (reset receive queue)\n", entry->message );
+                    printf( "delete message %p (reset receive queue)\n", entry->message );
                     delete entry->message;
                 }
             }
@@ -357,6 +379,8 @@ namespace protocol
 //            printf( "send block: %d bytes\n", block->size() );
 
         auto blockMessage = new BlockMessage( block );
+
+        printf( "create message %p (send block)\n", blockMessage );
 
         assert( blockMessage );
 
@@ -808,6 +832,8 @@ namespace protocol
                 m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_READ]++;
             }
 
+            data->DisconnectMessages();
+
             if ( earlyMessage )
                 return false;
         }
@@ -900,7 +926,7 @@ namespace protocol
                     sendQueueEntry->message->Release();
                     if ( sendQueueEntry->message->GetRefCount() == 0 )
                     {
-//                            printf( "delete message %p (block ack)\n", sendQueueEntry->message );
+                        printf( "delete message %p (block ack)\n", sendQueueEntry->message );
                         delete sendQueueEntry->message;
                     }
                     

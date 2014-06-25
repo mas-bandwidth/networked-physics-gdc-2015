@@ -33,6 +33,7 @@ namespace protocol
 
         for ( int i = 0; i < m_numChannels; ++i )
         {
+            printf( "delete channel %d\n", i );
             assert( m_channels[i] );
             delete m_channels[i];
         }

@@ -92,7 +92,7 @@ namespace protocol
 
         struct ChannelEntry
         {
-            std::string name;
+            char name[MaxChannelName];
             CreateChannelFunction createChannel;
             CreateChannelDataFunction createChannelData;
         };
@@ -103,7 +103,7 @@ namespace protocol
  
     public:
 
-        void AddChannel( const std::string & name,
+        void AddChannel( const char * name,
                          CreateChannelFunction createChannel,
                          CreateChannelDataFunction createChannelData );
 
@@ -111,7 +111,9 @@ namespace protocol
 
         bool IsLocked() const;
 
-        int GetNumChannels();
+        int GetNumChannels() const;
+
+        const char * GetChannelName( int channelIndex ) const;
 
         Channel * CreateChannel( int channelIndex );
 

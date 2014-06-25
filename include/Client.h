@@ -38,7 +38,6 @@ namespace protocol
         Connection * m_connection;
         ClientServerPacketFactory * m_packetFactory;
 
-        std::string m_hostname;
         Address m_address;
         ClientState m_state = CLIENT_STATE_DISCONNECTED;
         uint64_t m_clientGuid = 0;
@@ -47,6 +46,8 @@ namespace protocol
         double m_lastPacketReceiveTime = 0.0;
         ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
+
+        char m_hostname[MaxHostName];
 
         Client( const Client & other );
         Client & operator = ( const Client & other );
@@ -59,7 +60,7 @@ namespace protocol
 
         void Connect( const Address & address );
 
-        void Connect( const std::string & hostname );
+        void Connect( const char * hostname );
 
         void Disconnect();
 

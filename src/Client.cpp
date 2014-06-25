@@ -22,10 +22,14 @@ namespace protocol
         connectionConfig.packetFactory = m_packetFactory;
 
         m_connection = new Connection( connectionConfig );
+
+        ClearStateData();
     }
 
     Client::~Client()
     {
+        Disconnect();
+
         assert( m_connection );
         assert( m_packetFactory );
 
@@ -51,7 +55,7 @@ namespace protocol
 //            printf( "connect: set client guid = %llx\n", m_clientGuid );
     }
 
-    void Client::Connect( const std::string & hostname )
+    void Client::Connect( const char * hostname )
     {
         Disconnect();
 
@@ -68,15 +72,16 @@ namespace protocol
 
         // ok, it's really a hostname. go into the resolving hostname state
 
-//            printf( "resolving hostname: \"%s\"\n", hostname.c_str() );
+//            printf( "resolving hostname: \"%s\"\n", hostname );
 
         assert( m_config.resolver );
 
         m_config.resolver->Resolve( hostname );
         
         m_state = CLIENT_STATE_RESOLVING_HOSTNAME;
-        m_hostname = hostname;
         m_lastPacketReceiveTime = m_timeBase.time;
+        strncpy( m_hostname, hostname, MaxHostName - 1 );
+        m_hostname[MaxHostName-1] = '\0';
     }
 
     void Client::Disconnect()
@@ -85,7 +90,11 @@ namespace protocol
             return;
 
 //            printf( "client disconnect\n" );
-        
+
+        // todo: send off disconnect packet to server. in the common case this packet
+        // gets through and tells the server this client has disconnected, freeing up
+        // the client slot much faster than timing it out over 5-10 seconds.
+
         m_connection->Reset();
 
         ClearStateData();
@@ -425,7 +434,7 @@ namespace protocol
 
     void Client::ClearStateData()
     {
-        m_hostname = "";
+        m_hostname[0] = '\0';
         m_address = Address();
         m_clientGuid = 0;
         m_serverGuid = 0;
