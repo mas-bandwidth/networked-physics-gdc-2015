@@ -11,20 +11,15 @@
 
 namespace protocol
 {
+    class MessageFactory;
+
     class Message : public Object
     {
     public:
 
-        Message( int type ) : m_refCount(0), m_id(0), m_type(type)
+        Message( int type ) : m_refCount(1), m_id(0), m_type(type)
         {
-            assert( m_magic == 0x12345 );             
-        }
-
-        ~Message() 
-        { 
             assert( m_magic == 0x12345 );
-            assert( m_refCount == 0 ); 
-            m_magic = 0;
         }
 
         int GetId() const { assert( m_magic == 0x12345 ); return m_id; }
@@ -34,11 +29,23 @@ namespace protocol
 
         bool IsBlock() const { assert( m_magic == 0x12345 ); return m_type == BlockMessageType; }
 
-        void AddRef() { m_refCount++; }
-        void Release() { assert( m_magic == 0x12345 ); assert( m_refCount > 0 ); m_refCount--; }
         int GetRefCount() { assert( m_magic == 0x12345 ); return m_refCount; }
 
+    protected:
+
+        void AddRef() { m_refCount++; }
+        void Release() { assert( m_magic == 0x12345 ); assert( m_refCount > 0 ); m_refCount--; }
+
+        ~Message() 
+        { 
+            assert( m_magic == 0x12345 );
+            assert( m_refCount == 0 ); 
+            m_magic = 0;
+        }
+
     private:
+
+        friend class MessageFactory;
       
         Message( const Message & other );
         const Message & operator = ( const Message & other );

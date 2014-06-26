@@ -8,7 +8,7 @@
 namespace protocol
 {
     ReliableMessageChannelData::ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
-        : config( _config ), numMessages(0), fragmentId(0), blockSize(0), blockId(0), largeBlock(0), releaseMessages(0)
+        : config( _config ), numMessages(0), fragmentId(0), blockSize(0), blockId(0), largeBlock(0)
     {
 //      printf( "create reliable message channel data: %p\n", this );
     }
@@ -19,51 +19,22 @@ namespace protocol
 
         if ( fragment )
         {
-//                printf( "deallocate fragment %p (channel data dtor)\n", fragment );
             a.Free( fragment );
             fragment = nullptr;
         }
 
         if ( messages )
         {
-            if ( releaseMessages )
+            for ( int i = 0; i < numMessages; ++i )
             {
-                for ( int i = 0; i < numMessages; ++i )
-                {
-                    assert( messages[i] );
-                    messages[i]->Release();
-                    if ( messages[i]->GetRefCount() == 0 )
-                    {
-                        printf( "delete message %p (channel data dtor)\n", messages[i] );
-                        delete messages[i];
-                        messages[i] = nullptr;
-                    }
-                }
-            }
-            else
-            {
-                for ( int i = 0; i < numMessages; ++i )
-                {
-                    assert( messages[i] );
-                    delete messages[i];
-                    messages[i] = nullptr;
-                }
+                assert( messages[i] );
+                config.messageFactory->Release( messages[i] );
+                messages[i] = nullptr;
             }
 
-//                printf( "deallocate messages %p (destructor)\n", messages );
             a.Free( messages );
             messages = nullptr;
         }
-    }
-
-    void ReliableMessageChannelData::DisconnectMessages()
-    {
-        // IMPORTANT: This is used by "ProcessData" to take ownership
-        // of the message pointers in the packet. Otherwise, they will
-        // get deleted when the packet is deleted and we don't want that.
-        Allocator & a = memory::default_scratch_allocator();
-        a.Free( messages );
-        messages = nullptr;
     }
 
     template <typename Stream> void ReliableMessageChannelData::Serialize( Stream & stream )
@@ -84,7 +55,6 @@ namespace protocol
                 Allocator & a = memory::default_scratch_allocator();
                 fragment = (uint8_t*) a.Allocate( config.blockFragmentSize );
                 assert( fragment );
-//                    printf( "allocate fragment %p (read stream)\n", fragment );
             }
 
             serialize_bits( stream, blockId, 16 );
@@ -99,13 +69,14 @@ namespace protocol
             if ( Stream::IsWriting )
                 assert( numMessages > 0 );
 
-            serialize_int( stream, numMessages, 0, config.maxMessagesPerPacket );
+            serialize_int( stream, numMessages, 1, config.maxMessagesPerPacket );
+
+            assert( numMessages > 0 );
 
             if ( Stream::IsReading )
             {
                 Allocator & a = memory::default_scratch_allocator();
                 messages = (Message**) a.Allocate( numMessages * sizeof( Message* ) );
-//                    printf( "allocate messages %p (serialize read)\n", messages );
             }
 
             assert( messages );
@@ -160,9 +131,10 @@ namespace protocol
                 if ( Stream::IsReading )
                 {
                     messages[i] = config.messageFactory->Create( messageTypes[i] );
-                    printf( "create message %p (read packet)\n", messages[i] );
+
                     assert( messages[i] );
                     assert( messages[i]->GetType() == messageTypes[i] );
+
                     messages[i]->SetId( messageIds[i] );
 
                     if ( Stream::IsReading && messageTypes[i] == BlockMessageType )
@@ -268,28 +240,14 @@ namespace protocol
         {
             auto entry = m_sendQueue->GetAtIndex( i );
             if ( entry && entry->message )
-            {
-                entry->message->Release();
-                if ( entry->message->GetRefCount() == 0 )
-                {
-                    printf( "delete message %p (reset send queue)\n", entry->message );
-                    delete entry->message;
-                }
-            }
+                m_config.messageFactory->Release( entry->message );
         }
 
         for ( int i = 0; i < m_receiveQueue->GetSize(); ++i )
         {
             auto entry = m_receiveQueue->GetAtIndex( i );
             if ( entry && entry->message )
-            {
-                entry->message->Release();
-                if ( entry->message->GetRefCount() == 0 )
-                {
-                    printf( "delete message %p (reset receive queue)\n", entry->message );
-                    delete entry->message;
-                }
-            }
+                m_config.messageFactory->Release( entry->message );
         }
 
         m_sendQueue->Reset();
@@ -321,7 +279,7 @@ namespace protocol
         {
             printf( "reliable message send queue overflow\n" );
             m_error = RELIABLE_MESSAGE_CHANNEL_ERROR_SEND_QUEUE_FULL;
-            delete message;
+            m_config.messageFactory->Release( message );
             return;
         }
 
@@ -341,7 +299,6 @@ namespace protocol
             printf( "sent large block %d\n", (int) m_sendMessageId );
 */
 
-        message->AddRef();
         bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
         assert( result );
 
@@ -378,11 +335,9 @@ namespace protocol
     {
 //            printf( "send block: %d bytes\n", block->size() );
 
-        auto blockMessage = new BlockMessage( block );
-
-        printf( "create message %p (send block)\n", blockMessage );
-
+        auto blockMessage = (BlockMessage*) m_config.messageFactory->Create( BlockMessageType );
         assert( blockMessage );
+        blockMessage->Connect( block );
 
         SendMessage( blockMessage );
     }        
@@ -408,8 +363,6 @@ namespace protocol
         m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED]++;
 
         m_receiveMessageId++;
-
-        assert( message->GetRefCount() == 0 );      // must be a normal object. delete when done with it
 
         return message;
     }
@@ -600,15 +553,14 @@ namespace protocol
             data->messages = (Message**) a.Allocate( numMessageIds * sizeof( Message* ) );
             assert( data->messages );
 //                printf( "allocate messages %p (get data)\n", data->messages );
-            data->releaseMessages = 1;
             data->numMessages = numMessageIds;
             for ( int i = 0; i < numMessageIds; ++i )
             {
                 auto entry = m_sendQueue->Find( messageIds[i] );
                 assert( entry );
                 assert( entry->message );
-                entry->message->AddRef();
                 data->messages[i] = entry->message;
+                m_config.messageFactory->AddRef( entry->message );
             }
 
 //                printf( "sent %d messages in packet\n", data->messages.size() );
@@ -765,8 +717,9 @@ namespace protocol
                 {
 //                        printf( "received large block %d (%d bytes)\n", m_receiveLargeBlock.blockId, m_receiveLargeBlock.block->size() );
 
-                    auto blockMessage = new BlockMessage( m_receiveLargeBlock.block );
-
+                    auto blockMessage = (BlockMessage*) m_config.messageFactory->Create( BlockMessageType );
+                    assert( blockMessage );
+                    blockMessage->Connect( m_receiveLargeBlock.block );
                     blockMessage->SetId( m_receiveLargeBlock.blockId );
 
                     m_receiveQueue->Insert( ReceiveQueueEntry( blockMessage, m_receiveLargeBlock.blockId ) );
@@ -794,8 +747,6 @@ namespace protocol
 
             // process messages included in this packet data
 
-//            printf( "%d messages in packet\n", data->messages.size() );
-
             assert( data->messages );
 
             for ( int i = 0; i < data->numMessages; ++i )
@@ -806,33 +757,24 @@ namespace protocol
 
                 const uint16_t messageId = message->GetId();
 
-//                printf( "add message to receive queue: %d\n", (int) messageId );
-
                 if ( sequence_less_than( messageId, minMessageId ) )
                 {
-//                        printf( "old message %d, min = %d, max = %d\n", messageId, minMessageId, maxMessageId );
-
                     m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_LATE]++;
                 }
                 else if ( sequence_greater_than( messageId, maxMessageId ) )
                 {
-//                        printf( "early message %d\n", messageId );
-
-                    earlyMessage = true;
-
                     m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY]++;
+                    earlyMessage = true;
                 }
-                else
+                else if ( !m_receiveQueue->Find( messageId ) )
                 {
                     bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
-
                     assert( result );
+                    m_config.messageFactory->AddRef( message );
                 }
-
+                
                 m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_READ]++;
             }
-
-            data->DisconnectMessages();
 
             if ( earlyMessage )
                 return false;
@@ -883,15 +825,9 @@ namespace protocol
 
 //                        printf( "acked message %d\n", messageId );
 
-                    sendQueueEntry->message->Release();
-                    if ( sendQueueEntry->message->GetRefCount() == 0 )
-                    {
-//                            printf( "deallocate message %p (ack)\n", sendQueueEntry->message );
-                        delete sendQueueEntry->message;
-                    }
-
-                    sendQueueEntry->valid = 0;
+                    m_config.messageFactory->Release( sendQueueEntry->message );
                     sendQueueEntry->message = nullptr;
+                    sendQueueEntry->valid = 0;
                 }
             }
 
@@ -922,16 +858,10 @@ namespace protocol
 
                     auto sendQueueEntry = m_sendQueue->Find( sentPacket->blockId );
                     assert( sendQueueEntry );
-                    
-                    sendQueueEntry->message->Release();
-                    if ( sendQueueEntry->message->GetRefCount() == 0 )
-                    {
-                        printf( "delete message %p (block ack)\n", sendQueueEntry->message );
-                        delete sendQueueEntry->message;
-                    }
-                    
-                    sendQueueEntry->valid = 0;
+
+                    m_config.messageFactory->Release( sendQueueEntry->message );                    
                     sendQueueEntry->message = nullptr;
+                    sendQueueEntry->valid = 0;
 
                     UpdateOldestUnackedMessageId();
                 }

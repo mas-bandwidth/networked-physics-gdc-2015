@@ -6,27 +6,20 @@
 #ifndef PROTOCOL_COMMON_H
 #define PROTOCOL_COMMON_H
 
-#include "Enums.h"
-#include "Constants.h"
-    
-#include <cassert>
+//#define DEBUG_MEMORY_LEAKS 1
 
-#if NOSTL == 0
-// todo: kill it with fire!
-#include <string>
-#include <vector>
-#include <limits>
-#include <memory>
-#include <thread>
-#include <queue>
-#include <chrono>
+#if DEBUG_MEMORY_LEAKS
 #include <map>
+#include <algorithm>
 #endif
 
-#include <future>
-#include <unistd.h>
-#include <stdexcept>
-#include <string.h>
+#include "Enums.h"
+#include "Constants.h"
+#include <cassert>
+
+// todo: kill it with fire!
+#include <queue>
+#include <map>
 
 // todo: prefix all defines with PROTOCOL_
 #define PLATFORM_WINDOWS  1
@@ -39,23 +32,6 @@
 #define PLATFORM PLATFORM_MAC
 #else
 #define PLATFORM PLATFORM_UNIX
-#endif
-
-#if PLATFORM == PLATFORM_WINDOWS
-
-    #include <winsock2.h>
-    #pragma comment( lib, "wsock32.lib" )
-
-#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
-
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <fcntl.h>
-
-#else
-
-    #error unknown platform!
-
 #endif
 
 namespace protocol

@@ -54,6 +54,8 @@
 #pragma warning(disable:4100)
 #endif
 
+#include <chrono>
+
 namespace MICRO_ALLOCATOR
 {
 

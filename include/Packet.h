@@ -11,6 +11,7 @@
 
 namespace protocol
 {
+    class PacketFactory;
 
     class Packet : public Object
     {
@@ -26,6 +27,17 @@ namespace protocol
         void SetAddress( const Address & _address ) { address = _address; }
 
         const Address & GetAddress() const { return address; }
+
+    protected:
+
+        virtual ~Packet() {}
+
+        friend class PacketFactory;
+
+    private:
+
+        Packet( const Packet & other );
+        Packet & operator = ( const Packet & other );
     };
 
     typedef std::queue<Packet*> PacketQueue;

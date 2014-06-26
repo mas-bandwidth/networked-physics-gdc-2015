@@ -47,8 +47,8 @@ void test_connection()
             assert( packet );
 
             connection.ReadPacket( packet );
-
-            delete packet;
+            packetFactory.Destroy( packet );
+            packet = nullptr;
 
             if ( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) >= NumAcks )
                 break;
@@ -141,7 +141,8 @@ void test_acks()
                 }
             }
 
-            delete packet;
+            packetFactory.Destroy( packet );
+            packet = nullptr;
         }
 
         int numAckedPackets = 0;

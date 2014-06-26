@@ -11,13 +11,18 @@
 
 namespace protocol
 {
+    class PacketFactory;
+
     struct NetworkSimulatorConfig
     {
+        PacketFactory * packetFactory;
+
         int stateChance;                    // 1 in n chance to pick a new state per-update
         int numPackets;                     // number of packets to buffer
 
         NetworkSimulatorConfig()
-        {
+        {   
+            packetFactory = nullptr;
             stateChance = 1000;             // 1 in every 1000 chance per-update by default
             numPackets = 1024;              // buffer up to 1024 packets by default
         }
@@ -84,6 +89,8 @@ namespace protocol
         void Update( const TimeBase & timeBase );
 
         uint32_t GetMaxPacketSize() const;
+
+        PacketFactory & GetPacketFactory() const;
     };
 }
 

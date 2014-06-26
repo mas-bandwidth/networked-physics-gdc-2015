@@ -60,7 +60,7 @@ namespace protocol
         int m_numClients = 0;
         ClientData * m_clients = nullptr;
 
-        Factory<Packet> * m_packetFactory = nullptr;
+        PacketFactory * m_packetFactory = nullptr;                  // important: we don't own this pointer. it comes from the network interface
 
     public:
 

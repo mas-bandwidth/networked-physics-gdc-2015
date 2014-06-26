@@ -152,6 +152,10 @@ namespace protocol
 	{
 		uint32_t m_total_allocated;
 
+		#if DEBUG_MEMORY_LEAKS
+		std::map<void*,int> m_alloc_map;
+		#endif
+
 		static inline uint32_t size_with_padding( uint32_t size, uint32_t align ) 
 		{
 			return size + align + sizeof( Header );
@@ -161,8 +165,22 @@ namespace protocol
 
 		MallocAllocator() : m_total_allocated(0) {}
 
-		~MallocAllocator() 
+		~MallocAllocator()
 		{
+			#if DEBUG_MEMORY_LEAKS
+			if ( m_alloc_map.size() )
+			{
+				printf( "you leaked memory!\n" );
+				printf( "%d blocks still allocated\n", (int) m_alloc_map.size() );
+				printf( "%d bytes still allocated\n", m_total_allocated );
+				for ( auto itor : m_alloc_map )
+				{
+					auto p = itor.first;
+					printf( "leaked block %p\n", p );
+				}
+				exit(1);
+			}
+			#endif
 			if ( m_total_allocated != 0 )
 			{
 				printf( "you leaked memory! %d bytes still allocated\n", m_total_allocated );
@@ -178,6 +196,9 @@ namespace protocol
 			void * p = data_pointer( h, align );
 			fill( h, p, ts );
 			m_total_allocated += ts;
+			#if DEBUG_MEMORY_LEAKS
+			m_alloc_map[p] = 1;
+			#endif
 			return p;
 		}
 
@@ -185,6 +206,11 @@ namespace protocol
 		{
 			if ( !p )
 				return;
+			#if DEBUG_MEMORY_LEAKS
+			auto itor = m_alloc_map.find( p );
+			assert( itor != m_alloc_map.end() );
+			m_alloc_map.erase( p );
+			#endif
 			Header * h = header( p );
 			m_total_allocated -= h->size;
 			assert( m_total_allocated >= 0 );
@@ -306,10 +332,6 @@ namespace protocol
 
 				iterations++;
 			}
-			/*
-			if ( iterations > 32 )
-				printf( "scratch deallocate lots of iterations: %d\n", iterations );
-				*/
 		}
 
 		uint32_t GetAllocatedSize( void * p )

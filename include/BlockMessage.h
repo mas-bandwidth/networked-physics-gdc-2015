@@ -19,8 +19,8 @@ namespace protocol
 
         BlockMessage() : Message( BlockMessageType ) {}
 
-        BlockMessage( Block & block ) : Message( BlockMessageType ) 
-        { 
+        void Connect( Block & block )
+        {
             assert( block.IsValid() );
             Allocator * allocator = block.GetAllocator();
             assert( allocator );

@@ -16,7 +16,9 @@ void test_client_initial_state()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -54,7 +56,10 @@ void test_client_resolve_hostname_failure()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
+
         ClientServerPacketFactory packetFactory( &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
@@ -116,7 +121,9 @@ void test_client_resolve_hostname_timeout()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -175,7 +182,10 @@ void test_client_resolve_hostname_success()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
+
         ClientServerPacketFactory packetFactory( &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
@@ -234,7 +244,9 @@ void test_client_connection_request_timeout()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -290,7 +302,9 @@ void test_client_connection_request_denied()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -367,7 +381,9 @@ void test_client_connection_challenge()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -444,7 +460,9 @@ void test_client_connection_challenge_response()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -520,7 +538,9 @@ void test_client_connection_established()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -598,7 +618,9 @@ void test_client_connection_messages()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -670,14 +692,14 @@ void test_client_connection_messages()
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            auto message = new TestMessage();
+            auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
             message->sequence = i;
             clientMessageChannel->SendMessage( message );
         }
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            auto message = new TestMessage();
+            auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
             message->sequence = i;
             serverMessageChannel->SendMessage( message );
         }
@@ -707,7 +729,7 @@ void test_client_connection_messages()
 
                 ++numMessagesReceivedOnClient;
 
-                delete message;
+                messageFactory.Release( message );
             }
 
             while ( true )
@@ -726,7 +748,7 @@ void test_client_connection_messages()
 
                 ++numMessagesReceivedOnServer;
 
-                delete message;
+                messageFactory.Release( message );
             }
 
             if ( numMessagesReceivedOnClient == NumMessagesSent && numMessagesReceivedOnServer == NumMessagesSent )
@@ -748,7 +770,9 @@ void test_client_connection_disconnect()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -851,7 +875,9 @@ void test_client_connection_server_full()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -1025,7 +1051,9 @@ void test_client_connection_timeout()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -1139,7 +1167,9 @@ void test_client_connection_already_connected()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 
@@ -1246,7 +1276,9 @@ void test_client_connection_reconnect()
 
     memory::initialize();
     {
-        TestChannelStructure channelStructure;
+        TestMessageFactory messageFactory;
+
+        TestChannelStructure channelStructure( messageFactory );
 
         ClientServerPacketFactory packetFactory( &channelStructure );
 

@@ -9,7 +9,7 @@
 #include "Packet.h"
 #include "Stream.h"
 #include "Channel.h"
-#include "Factory.h"
+#include "PacketFactory.h"
 
 namespace protocol
 {
@@ -245,24 +245,22 @@ namespace protocol
 
         ConnectionPacket( int type, ChannelStructure * _channelStructure ) : Packet( type )
         {
-//            printf( "ConnectionPacket\n" );
             assert( _channelStructure );
             channelStructure = _channelStructure;
             numChannels = channelStructure->GetNumChannels();
             memset( channelData, 0, sizeof( ChannelData* ) * numChannels );
         }
 
+    private:
+
         ~ConnectionPacket()
         {
-//            printf( "~ConnectionPacket\n" );
-
             assert( channelStructure );
 
             for ( int i = 0; i < numChannels; ++i )
             {
                 if ( channelData[i] )
                 {
-//                    printf( "connection packet delete channel data\n" );
                     delete channelData[i];
                     channelData[i] = nullptr;
                 }
@@ -270,6 +268,8 @@ namespace protocol
 
             channelStructure = nullptr;
         }
+
+    public:
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -389,7 +389,7 @@ namespace protocol
         const ConnectionPacket & operator = ( const ConnectionPacket & other );
     };
 
-    class ClientServerPacketFactory : public Factory<Packet>
+    class ClientServerPacketFactory : public PacketFactory
     {
     public:
 

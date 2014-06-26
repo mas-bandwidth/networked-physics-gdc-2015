@@ -9,6 +9,8 @@
 #include "Common.h"
 
 struct addrinfo;
+struct sockaddr_in6;
+struct sockaddr_storage;
 
 namespace protocol
 {    

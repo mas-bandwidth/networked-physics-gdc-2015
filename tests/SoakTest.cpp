@@ -8,12 +8,11 @@ using namespace protocol;
 
 class TestChannelStructure : public ChannelStructure
 {
-    TestMessageFactory m_messageFactory;
     ReliableMessageChannelConfig m_config;
 
 public:
 
-    TestChannelStructure()
+    TestChannelStructure( MessageFactory & messageFactory )
     {
         m_config.maxMessagesPerPacket = 256;
         m_config.sendQueueSize = 2048;
@@ -22,7 +21,7 @@ public:
         m_config.maxMessageSize = 1024;
         m_config.blockFragmentSize = 3900;
         m_config.maxLargeBlockSize = 32 * 1024 * 1024;
-        m_config.messageFactory = &m_messageFactory;
+        m_config.messageFactory = &messageFactory;
         m_config.messageAllocator = &memory::default_allocator();
         m_config.smallBlockAllocator = &memory::default_allocator();
         m_config.largeBlockAllocator = &memory::default_allocator();
@@ -58,14 +57,18 @@ void soak_test()
     printf( "[soak test]\n" );
 #endif
 
-    TestChannelStructure channelStructure;
+    TestMessageFactory messageFactory;
+
+    TestChannelStructure channelStructure( messageFactory );
 
     TestPacketFactory packetFactory( &channelStructure );
 
     const int MaxPacketSize = 4096;
 
 #if !PROFILE
-    NetworkSimulator simulator;
+    NetworkSimulatorConfig simulatorConfig;
+    simulatorConfig.packetFactory = &packetFactory;
+    NetworkSimulator simulator( simulatorConfig );
     simulator.AddState( { 0.0f, 0.0f, 0.0f } );
     simulator.AddState( { 0.0f, 0.0f, 0.0f } );
     simulator.AddState( { 0.1f, 0.01f, 1.0f } );
@@ -115,9 +118,8 @@ void soak_test()
             if ( value < 5000 )
             {
                 // bitpacked message
-                auto message = new TestMessage();
+                auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
                 assert( message );
-//                printf( "allocate message %p (send)\n", message );
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
@@ -146,11 +148,7 @@ void soak_test()
             numMessagesSent++;
         }
 
-//        printf( "before write packet\n" );
-
         ConnectionPacket * writePacket = connection.WritePacket();
-
-//        printf( "after write packet\n" );
 
         uint8_t buffer[MaxPacketSize];
 
@@ -159,24 +157,18 @@ void soak_test()
         writeStream.Flush();
         assert( !writeStream.IsOverflow() );
 
-        delete writePacket;
-
-//        printf( "deleted writePacket\n" );
-
-//        printf( "before read packet\n" );
+        packetFactory.Destroy( writePacket );
+        writePacket = nullptr;
 
         ReadStream readStream( buffer, MaxPacketSize );
-        auto readPacket = new ConnectionPacket( PACKET_CONNECTION, &channelStructure );
+        auto readPacket = (ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
         readPacket->SerializeRead( readStream );
         assert( !readStream.IsOverflow() );
 
         connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
 
-//        printf( "after read packet\n" );
-
-        delete readPacket;
-
-//        printf( "deleted read packet\n" );
+        packetFactory.Destroy( readPacket );
+        readPacket = nullptr;
 
         connection.Update( timeBase );
 
@@ -228,9 +220,7 @@ void soak_test()
 
             numMessagesReceived++;
 
-//            printf( "deallocater message %p (received)\n", message );
-
-            delete message;
+            messageFactory.Release( message );
         }
 
 #if !PROFILE

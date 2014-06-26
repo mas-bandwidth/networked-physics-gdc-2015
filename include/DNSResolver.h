@@ -8,6 +8,9 @@
 
 #include "Resolver.h"
 
+// todo: replace family with enum ADDRESS_*
+#include <netinet/in.h>
+
 struct addrinfo;
 
 namespace protocol

@@ -4,6 +4,7 @@
 #include "Factory.h"
 #include "Message.h"
 #include "BlockMessage.h"
+#include "MessageFactory.h"
 
 using namespace protocol;
 
@@ -63,7 +64,7 @@ struct TestMessage : public Message
     uint32_t dummy;
 };
 
-class TestMessageFactory : public Factory<Message>
+class TestMessageFactory : public MessageFactory
 {
 public:
 

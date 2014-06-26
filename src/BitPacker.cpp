@@ -25,9 +25,6 @@ namespace protocol
         assert( bits > 0 );
         assert( bits <= 32 );
 
-//            if ( m_bitsWritten + bits > m_numBits )
-//                printf( "bitpacker overflow: bits written = %d + %d, max %d\n", m_bitsWritten, bits, m_numBits );
-
         assert( m_bitsWritten + bits <= m_numBits );
 
         if ( m_bitsWritten + bits > m_numBits )
@@ -45,7 +42,6 @@ namespace protocol
         if ( m_bitIndex >= 32 )
         {
             assert( m_wordIndex < m_numWords );
-//                printf( "write word: %x\n", htonl( m_scratch >> 32 ) );
             m_data[m_wordIndex] = uint32_t( m_scratch >> 32 ); //htonl( uint32_t( m_scratch >> 32 ) );
             m_scratch <<= 32;
             m_bitIndex -= 32;
@@ -120,7 +116,6 @@ namespace protocol
     {
         if ( m_bitIndex != 0 )
         {
-//                printf( "write word: %x\n", htonl( m_scratch >> 32 ) );
             assert( m_wordIndex < m_numWords );
             if ( m_wordIndex >= m_numWords )
             {
@@ -142,7 +137,6 @@ namespace protocol
         m_wordIndex = 0;
         m_scratch = m_data[0];//ntohl( m_data[0] );
         m_overflow = false;
-//            printf( "read word = %x\n", m_data[0] );
     }
 
     uint32_t BitReader::ReadBits( int bits )
@@ -174,7 +168,6 @@ namespace protocol
             const uint32_t b = bits - a;
             m_scratch <<= a;
             m_scratch |= m_data[m_wordIndex];//ntohl( m_data[m_wordIndex] );
-//                printf( "read word = %x\n" );
             m_scratch <<= b;
             m_bitIndex = b;
         }

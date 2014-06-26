@@ -1,43 +1,11 @@
 DONE:
 
-    Convert std::string to c_str in Address class
-
-    Remove std::string usage from Client class (hostname)
-
-    Added MaxHostName const (256).
-
-    Remove std::string from Channel class (channel name)
-
-    We are getting memory leaks in small message test.
-
-    What is leaking?! It's random, doesn't happen 100%.
-
-    Confirmed: Dropped packets are triggering the loss.
-
-    Is there something wrong with the message cleanup?
-
-    I think we have an error where the delete on the *read*
-    packet does not clean up the messages it contains.
-
-    This happens on packet drop in the simulator.
-
-    However, if the packet is actually processed by the connection,
-    the connection takes those messages and inserts them into recv
-    queue, where they will be received.
-
-    It seems that a packet must be put into a state after being read
-    that each of the messages it contains will be deleted, but upon
-    processing this packet, those messages must be marked not to be
-    deleted when the packet is deleted (which it will be).
-
-    In short, the packet must transfer ownership of its messages
-    to the receive queue when it is processed, but otherwise should
-    delete those messages.
-
-    Yes. That was it. It's not leaking anymore.
-
 TODO:
 
+    Remove the need for AF_INET6 etc. in DNSResolver.h and BSDSocket.h
+
+    Can just be replaced with "bool ipv6" really. I don't know that I care
+    about the transition which is either. That's not well tested.
 
     -------------------
 
@@ -47,14 +15,6 @@ TODO:
 
     Send a "Disconnect" packet from client -> server on disconnect,
     so the slot gets freed up a bit quicker than if it timed out.
-
-    -------------------
-
-    Convert messages to use message allocator (factory?)
-
-    -------------------
-
-    Convert packets to use packet allocator (factory?)
 
     -------------------
 
@@ -102,6 +62,8 @@ TODO:
     Will this work with std::future?
 
     --------------------
+
+
 
 
 
@@ -332,13 +294,6 @@ WOULD BE NICE:
     Channel budget should be dynamic. The user should be able to derive their own 
     connection type and specify channel budgets dynamically based on flow control, 
     for example.
-
-    ---------------------
-
-    Integrate the oodle library. Provide an #if USE_OODLE 1 type thing and hook it up
-    for compression. Try it out in the stress test and see how it generates dictionaries
-    and how much compression it gets post-dictionary and so on. Do not check in the oodle
-    libs, but do check in the interface and source code that uses it.
 
     ---------------------
 

@@ -10,6 +10,7 @@
 #include "Factory.h"
 #include "Message.h"
 #include "BlockMessage.h"
+#include "MessageFactory.h"
 #include "MessageChannel.h"
 #include "SlidingWindow.h"
 #include <math.h>
@@ -47,7 +48,7 @@ namespace protocol
         int giveUpBits;                 // give up trying to add more messages to packet if we have less than this # of bits available.
         bool align;                     // if true then insert align at key points, eg. before messages etc. good for dictionary based LZ compressors
 
-        Factory<Message> * messageFactory = nullptr;
+        MessageFactory * messageFactory = nullptr;
 
         Allocator * messageAllocator = nullptr;
         Allocator * smallBlockAllocator = nullptr;
@@ -70,8 +71,7 @@ namespace protocol
         uint64_t blockSize : 32;               // block size in bytes. valid if sending large block.
         uint64_t blockId : 16;                 // block id. valid if sending large block.
         uint64_t largeBlock : 1;               // true if currently sending a large block.
-        uint64_t releaseMessages : 1;          // 1 if this channel data should release the messages in destructor.
-
+       
         ReliableMessageChannelData( const ReliableMessageChannelConfig & _config );
 
         ~ReliableMessageChannelData();
@@ -183,8 +183,7 @@ namespace protocol
                 numReceivedFragments = 0;
                 blockId = 0;
                 blockSize = 0;
-                assert( !block.IsValid() );
-                block.Disconnect();
+                block.Destroy();
             }
 
             bool active;                                // true if we are currently receiving a large block

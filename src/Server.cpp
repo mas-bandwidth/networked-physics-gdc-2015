@@ -16,7 +16,7 @@ namespace protocol
 
 //            printf( "creating server with %d client slots\n", m_config.maxClients );
 
-        m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
+        m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
@@ -43,7 +43,6 @@ namespace protocol
         }
 
         delete [] m_clients;
-        delete m_packetFactory;
 
         m_clients = nullptr;
         m_packetFactory = nullptr;
@@ -87,7 +86,7 @@ namespace protocol
 
 //            printf( "sent disconnected packet to client\n" );
 
-        auto packet = new DisconnectedPacket();
+        auto packet = (DisconnectedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DISCONNECTED );
 
         packet->clientGuid = client.clientGuid;
         packet->serverGuid = client.serverGuid;
@@ -156,7 +155,7 @@ namespace protocol
 
         if ( client.accumulator > 1.0 / m_config.connectingSendRate )
         {
-            auto packet = new ConnectionChallengePacket();
+            auto packet = (ConnectionChallengePacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE );
 
             packet->clientGuid = client.clientGuid;
             packet->serverGuid = client.serverGuid;
@@ -193,7 +192,7 @@ namespace protocol
         {
 //                printf( "sent request client data packet\n" );
 
-            auto packet = new RequestClientDataPacket();
+            auto packet = (RequestClientDataPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA );
 
             packet->clientGuid = client.clientGuid;
             packet->serverGuid = client.serverGuid;
@@ -307,7 +306,7 @@ namespace protocol
                     break;
             }
 
-            delete packet;
+            m_packetFactory->Destroy( packet );
         }
     }
 
@@ -326,7 +325,7 @@ namespace protocol
         {
 //                printf( "server is closed. denying connection request\n" );
 
-            auto connectionDeniedPacket = new ConnectionDeniedPacket();
+            auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
 
@@ -345,7 +344,7 @@ namespace protocol
         if ( clientIndex != -1 && m_clients[clientIndex].clientGuid != packet->clientGuid )
         {
 //                printf( "client is already connected. denying connection request\n" );
-            auto connectionDeniedPacket = new ConnectionDeniedPacket();
+            auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
             m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
@@ -356,14 +355,14 @@ namespace protocol
         if ( clientIndex == -1 )
         {
 //              printf( "server is full. denying connection request\n" );
-            auto connectionDeniedPacket = new ConnectionDeniedPacket();
+            auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
             m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
             return;
         }
 
-//            printf( "new client connection at index %d\n", clientIndex );
+//            printf( "incoming client connection at index %d\n", clientIndex );
 
         assert( clientIndex >= 0 );
         assert( clientIndex < m_numClients );

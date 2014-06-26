@@ -18,6 +18,7 @@ extern void test_sequence();
 extern void test_address4();
 extern void test_address6();
 extern void test_factory();
+extern void test_message_factory();
 extern void test_bitpacker();
 extern void test_stream();
 extern void test_sliding_window();
@@ -70,9 +71,8 @@ int main()
 
     assert( IsNetworkInitialized() );
 
-    //while ( true )
+    while ( true )
     {
-        /*
         test_memory();
         test_scratch();
         test_temp_allocator();
@@ -88,6 +88,7 @@ int main()
         test_address4();
         test_address6();
         test_factory();
+        test_message_factory();
         test_bitpacker();
         test_stream();
         test_sliding_window();
@@ -106,11 +107,8 @@ int main()
 
         test_connection();
         test_acks();
-
         test_reliable_message_channel_messages();
-        */
         test_reliable_message_channel_small_blocks();
-        /*
         test_reliable_message_channel_large_blocks();
         test_reliable_message_channel_mixture();
 
@@ -129,7 +127,6 @@ int main()
         test_client_connection_timeout();
         test_client_connection_already_connected();
         test_client_connection_reconnect();
-        */
     }
 
     ShutdownNetwork();

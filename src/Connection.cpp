@@ -33,7 +33,6 @@ namespace protocol
 
         for ( int i = 0; i < m_numChannels; ++i )
         {
-            printf( "delete channel %d\n", i );
             assert( m_channels[i] );
             delete m_channels[i];
         }
@@ -150,9 +149,6 @@ namespace protocol
                 continue;
 
             auto result = m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
-
-            delete packet->channelData[i];
-            packet->channelData[i] = nullptr;
 
             if ( !result )
                 discardPacket = true;

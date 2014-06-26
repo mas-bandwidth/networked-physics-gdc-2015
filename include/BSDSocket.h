@@ -6,8 +6,11 @@
 #ifndef PROTOCOL_BSD_SOCKET_H
 #define PROTOCOL_BSD_SOCKET_H
 
-#include "Factory.h"
+#include "PacketFactory.h"
 #include "NetworkInterface.h"
+
+// todo: replace family with enum ADDRESS_
+#include <netinet/in.h>
 
 namespace protocol 
 {     
@@ -17,7 +20,7 @@ namespace protocol
         {
             protocolId = 0x12345;
             port = 10000;
-            // todo: this should move somewhere so we don't ened this definition at the header
+            // todo: this should move somewhere so we don't need this definition at the header
             family = AF_INET6;                      // default to IPv6.
             maxPacketSize = 10*1024;
             packetFactory = nullptr;
@@ -27,7 +30,7 @@ namespace protocol
         uint16_t port;                              // port to bind UDP socket to
         int family;                                 // socket family: eg. AF_INET (IPv4 only), AF_INET6 (IPv6 only)
         int maxPacketSize;                          // maximum packet size
-        Factory<Packet> * packetFactory;            // packet factory (required)
+        PacketFactory * packetFactory;              // packet factory (required)
     };
 
     class BSDSocket : public NetworkInterface
@@ -61,6 +64,8 @@ namespace protocol
         void Update( const TimeBase & timeBase );
 
         uint32_t GetMaxPacketSize() const;
+
+        PacketFactory & GetPacketFactory() const;
 
         uint64_t GetCounter( int index ) const;
 

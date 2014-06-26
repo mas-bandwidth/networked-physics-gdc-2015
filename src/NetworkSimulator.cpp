@@ -4,12 +4,14 @@
 */
 
 #include "NetworkSimulator.h"
+#include "PacketFactory.h"
 
 namespace protocol
 {
     NetworkSimulator::NetworkSimulator( const NetworkSimulatorConfig & config )
         : m_config( config )
     {
+        assert( m_config.packetFactory );
         m_packetNumber = 0;
         m_packets = new PacketData[config.numPackets];
         memset( m_packets, 0, sizeof(PacketData) * config.numPackets );
@@ -19,12 +21,12 @@ namespace protocol
     NetworkSimulator::~NetworkSimulator()
     {
         assert( m_packets );
-        
+
         for ( int i = 0; i < m_config.numPackets; ++i )
         {
             if ( m_packets[i].packet )
             {
-                delete m_packets[i].packet;
+                m_config.packetFactory->Destroy( m_packets[i].packet );
                 m_packets[i].packet = nullptr;
             }
         }
@@ -37,23 +39,26 @@ namespace protocol
     {
         assert( m_numStates < MaxSimulatorStates - 1 );
         m_states[m_numStates++] = state;
+        if ( m_numStates == 1 )
+            m_state = m_states[0];
     }
 
     void NetworkSimulator::SendPacket( const Address & address, Packet * packet )
     {
-//            printf( "send packet %d\n", m_packetNumber );
-
         assert( packet );
 
-        packet->SetAddress( address );
+        if ( random_int( 0, 99 ) < m_state.packetLoss )
+        {
+            m_config.packetFactory->Destroy( packet );
+            return;
+        }
 
         const int index = m_packetNumber % m_config.numPackets;
 
-        if ( random_int( 0, 100 ) <= m_state.packetLoss )
+        if ( m_packets[index].packet )
         {
-            printf( "drop packet\n" );
-            delete packet;
-            return;
+            m_config.packetFactory->Destroy( m_packets[index].packet );
+            m_packets[index].packet = nullptr;
         }
 
         const float delay = m_state.latency + random_float( -m_state.jitter, +m_state.jitter );
@@ -62,6 +67,8 @@ namespace protocol
         m_packets[index].packetNumber = m_packetNumber;
         m_packets[index].dequeueTime = m_timeBase.time + delay;
         
+        packet->SetAddress( address );
+
         m_packetNumber++;
     }
 
@@ -78,9 +85,9 @@ namespace protocol
                 oldestPacket = &m_packets[i];
         }
 
+        // todo: simplify. no need for this check -- do it in the loop above
         if ( oldestPacket && oldestPacket->dequeueTime <= m_timeBase.time )
         {
-//                printf( "receive packet %d\n", (int) oldestPacket->packetNumber );
             auto packet = oldestPacket->packet;
             oldestPacket->packet = nullptr;
             return packet;
@@ -96,7 +103,6 @@ namespace protocol
         if ( m_numStates && ( rand() % m_config.stateChance ) == 0 )
         {
             int stateIndex = rand() % m_numStates;
-//                printf( "*** network simulator switching to state %d ***\n", stateIndex );
             m_state = m_states[stateIndex];
         }
     }
@@ -104,5 +110,11 @@ namespace protocol
     uint32_t NetworkSimulator::GetMaxPacketSize() const
     {
         return 0xFFFFFFFF;
+    }
+
+    PacketFactory & NetworkSimulator::GetPacketFactory() const
+    {
+        assert( m_config.packetFactory );
+        return *m_config.packetFactory;
     }
 }

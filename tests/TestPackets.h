@@ -3,6 +3,7 @@
 
 #include "Stream.h"
 #include "Packets.h"
+#include "PacketFactory.h"
 
 using namespace protocol;
 
@@ -47,6 +48,14 @@ struct ConnectPacket : public Packet
         Serialize( stream );
     }
 
+    ConnectPacket & operator = ( const ConnectPacket & other )
+    {
+        a = other.a;
+        b = other.b;
+        c = other.c;
+        return *this;
+    }
+
     bool operator ==( const ConnectPacket & other ) const
     {
         return a == other.a && b == other.b && c == other.c;
@@ -85,6 +94,12 @@ struct UpdatePacket : public Packet
     void SerializeMeasure( MeasureStream & stream )
     {
         Serialize( stream );
+    }
+
+    UpdatePacket & operator = ( const UpdatePacket & other )
+    {
+        timestamp = other.timestamp;
+        return *this;
     }
 
     bool operator ==( const UpdatePacket & other ) const
@@ -127,6 +142,12 @@ struct DisconnectPacket : public Packet
         Serialize( stream );
     }
 
+    DisconnectPacket & operator = ( const DisconnectPacket & other )
+    {
+        x = other.x;
+        return *this;
+    }
+
     bool operator ==( const DisconnectPacket & other ) const
     {
         return x == other.x;
@@ -138,7 +159,7 @@ struct DisconnectPacket : public Packet
     }
 };
 
-class TestPacketFactory : public Factory<Packet>
+class TestPacketFactory : public PacketFactory
 {
     ChannelStructure * m_channelStructure = nullptr;
 

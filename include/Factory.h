@@ -6,15 +6,17 @@
 namespace protocol
 {
     template <typename T> class Factory
-    {
+    {        
     public:
-
-        typedef std::function<T*()> create_function;
         
+        typedef std::function<T*()> create_function;
+
         Factory()
         {
             max_type = 0;
         }
+
+        virtual ~Factory() {}
 
         void Register( int type, create_function const & function )
         {
@@ -28,12 +30,17 @@ namespace protocol
             return itor != create_map.end();
         }
 
-        T * Create( int type )
+        virtual T * Create( int type )
         {
             auto itor = create_map.find( type );
             assert( itor != create_map.end() );
             if ( itor != create_map.end() )
-                return itor->second();
+            {
+                T * obj = itor->second();
+                assert( obj );
+                assert( obj->GetType() == type );
+                return obj;
+            }
             else
                 return nullptr;
         }
@@ -46,9 +53,11 @@ namespace protocol
     private:
 
         int max_type;
-        
-        // todo: don't use std::map
+
         std::map<int,create_function> create_map;
+
+        Factory( const Factory & other );
+        Factory & operator = ( const Factory & other );
     };
 }
 

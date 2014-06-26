@@ -2,6 +2,9 @@
 #include "BSDSocket.h"
 #include "TestPackets.h"
 
+#include <chrono>
+#include <thread>
+
 using namespace protocol;
 
 void test_bsd_socket_send_and_receive_ipv4()
@@ -51,13 +54,17 @@ void test_bsd_socket_send_and_receive_ipv4()
         {
             assert ( iterations++ < 10 );
 
-            auto connectPacket = new ConnectPacket();
-            auto updatePacket = new UpdatePacket();
-            auto disconnectPacket = new DisconnectPacket();
+            auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
+            auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
+            auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
 
             *connectPacket = connectPacketTemplate;
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
+
+            assert( *connectPacket == connectPacketTemplate );
+            assert( *updatePacket == updatePacketTemplate );
+            assert( *disconnectPacket == disconnectPacketTemplate );
 
             interface.SendPacket( address, connectPacket );
             interface.SendPacket( address, updatePacket );
@@ -102,7 +109,7 @@ void test_bsd_socket_send_and_receive_ipv4()
                     break;
                 }
 
-                delete packet;
+                packetFactory.Destroy( packet );
             }
 
             if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -161,13 +168,17 @@ void test_bsd_socket_send_and_receive_ipv6()
         {
             assert ( iterations++ < 10 );
 
-            auto connectPacket = new ConnectPacket();
-            auto updatePacket = new UpdatePacket();
-            auto disconnectPacket = new DisconnectPacket();
+            auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
+            auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
+            auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
 
             *connectPacket = connectPacketTemplate;
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
+
+            assert( *connectPacket == connectPacketTemplate );
+            assert( *updatePacket == updatePacketTemplate );
+            assert( *disconnectPacket == disconnectPacketTemplate );
 
             interface.SendPacket( address, connectPacket );
             interface.SendPacket( address, updatePacket );
@@ -212,7 +223,7 @@ void test_bsd_socket_send_and_receive_ipv6()
                     break;
                 }
 
-                delete packet;
+                packetFactory.Destroy( packet );
             }
 
             if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -278,13 +289,17 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
         {
             assert ( iterations++ < 4 );
 
-            auto connectPacket = new ConnectPacket();
-            auto updatePacket = new UpdatePacket();
-            auto disconnectPacket = new DisconnectPacket();
+            auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
+            auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
+            auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
 
             *connectPacket = connectPacketTemplate;
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
+
+            assert( *connectPacket == connectPacketTemplate );
+            assert( *updatePacket == updatePacketTemplate );
+            assert( *disconnectPacket == disconnectPacketTemplate );
 
             interface_sender.SendPacket( receiver_address, connectPacket );
             interface_sender.SendPacket( receiver_address, updatePacket );
@@ -330,7 +345,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
                     break;
                 }
 
-                delete packet;
+                packetFactory.Destroy( packet );
             }
 
             if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )
@@ -396,13 +411,17 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
         {
             assert ( iterations++ < 4 );
 
-            auto connectPacket = new ConnectPacket();
-            auto updatePacket = new UpdatePacket();
-            auto disconnectPacket = new DisconnectPacket();
+            auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
+            auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
+            auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
 
             *connectPacket = connectPacketTemplate;
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
+
+            assert( *connectPacket == connectPacketTemplate );
+            assert( *updatePacket == updatePacketTemplate );
+            assert( *disconnectPacket == disconnectPacketTemplate );
 
             interface_sender.SendPacket( receiver_address, connectPacket );
             interface_sender.SendPacket( receiver_address, updatePacket );
@@ -448,7 +467,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
                     break;
                 }
 
-                delete packet;
+                packetFactory.Destroy( packet );
             }
 
             if ( receivedConnectPacket && receivedUpdatePacket && receivedDisconnectPacket )

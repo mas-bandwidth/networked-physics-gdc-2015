@@ -13,7 +13,7 @@ namespace protocol
         assert( m_config.networkInterface );
         assert( m_config.channelStructure );
 
-        m_packetFactory = new ClientServerPacketFactory( m_config.channelStructure );
+        m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
@@ -31,10 +31,9 @@ namespace protocol
         Disconnect();
 
         assert( m_connection );
-        assert( m_packetFactory );
+        assert( m_packetFactory );      // packet factory pointer is not owned by us
 
         delete m_connection;
-        delete m_packetFactory;
         
         m_connection = nullptr;
         m_packetFactory = nullptr;
@@ -238,7 +237,7 @@ namespace protocol
                 case CLIENT_STATE_SENDING_CONNECTION_REQUEST:
                 {
 //                        printf( "client sent connection request packet\n" );
-                    auto packet = new ConnectionRequestPacket();
+                    auto packet = (ConnectionRequestPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_REQUEST );
                     packet->clientGuid = m_clientGuid;
 //                        printf( "send connection request packet: m_clientGuid = %llx\n", m_clientGuid );
                     m_config.networkInterface->SendPacket( m_address, packet );
@@ -248,7 +247,7 @@ namespace protocol
                 case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:
                 {
 //                        printf( "client sent challenge response packet\n" );
-                    auto packet = new ChallengeResponsePacket();
+                    auto packet = (ChallengeResponsePacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE );
                     packet->clientGuid = m_clientGuid;
                     packet->serverGuid = m_serverGuid;
                     m_config.networkInterface->SendPacket( m_address, packet );
@@ -257,7 +256,7 @@ namespace protocol
 
                 case CLIENT_STATE_READY_FOR_CONNECTION:
                 {
-                    auto packet = new ReadyForConnectionPacket();
+                    auto packet = (ReadyForConnectionPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION );
                     packet->clientGuid = m_clientGuid;
                     packet->serverGuid = m_serverGuid;
                     m_config.networkInterface->SendPacket( m_address, packet );
@@ -292,6 +291,7 @@ namespace protocol
             {
 //                    printf( "client received disconnected packet\n" );
                 ProcessDisconnected( static_cast<DisconnectedPacket*>( packet ) );
+                m_packetFactory->Destroy( packet );
                 continue;
             }
 
@@ -382,7 +382,7 @@ namespace protocol
                     break;
             }
 
-            delete packet;
+            m_packetFactory->Destroy( packet );
         }
     }
 

@@ -1,14 +1,17 @@
 #include "NetworkInterface.h"
+#include "PacketFactory.h"
 
 using namespace protocol;
 
 class TestInterface : public NetworkInterface
 {
+    PacketFactory * m_packetFactory;
+
 public:
 
-    TestInterface()
+    TestInterface( PacketFactory & packetFactory )
     {
-        // ...
+        m_packetFactory = &packetFactory;
     }
 
     ~TestInterface()
@@ -17,7 +20,7 @@ public:
         {
             auto packet = packet_queue.front();
             packet_queue.pop();
-            delete packet;
+            m_packetFactory->Destroy( packet );
         }
     }
 
@@ -87,6 +90,10 @@ void test_network_interface()
 {
     printf( "test_network_interface\n" );
 
+    // todo: need to get a packet factory created for TestPacketABC
+
+    /*
+
     TestInterface interface;
 
     Address address( 127,0,0,1, 1000 );
@@ -113,4 +120,5 @@ void test_network_interface()
     delete connectPacket;
     delete updatePacket;
     delete disconnectPacket;
+    */
 }

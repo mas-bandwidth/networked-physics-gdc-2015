@@ -9,6 +9,12 @@
 #include "Common.h"
 #include "Address.h"
 
+// todo: find a way to move this into the implementation cpp file
+#include <future>
+
+// todo: kill it with fire!
+#include <string>
+
 namespace protocol
 {
     struct ResolveResult
@@ -28,7 +34,7 @@ namespace protocol
     {
         ResolveStatus status;
         ResolveResult result;
-        std::future<ResolveResult> future;
+        std::future<ResolveResult> future;          // todo: move the future into the C++ so it does not pollute headers
     };
 
     class Resolver

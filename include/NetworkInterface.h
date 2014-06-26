@@ -26,6 +26,8 @@ namespace protocol
         virtual void Update( const TimeBase & timeBase ) = 0;
 
         virtual uint32_t GetMaxPacketSize() const = 0;
+
+        virtual PacketFactory & GetPacketFactory() const = 0;
     };
 }
 

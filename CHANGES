@@ -1,3 +1,317 @@
+Wednesday Evening, June 25th, 2014:
+-----------------------------------
+
+    Fixed some cases where packet leaks were caused by delete instead of destroy.
+
+    Track down why we are leaking packets.
+
+    Leaking now seems to be *triggered* exclusively by delay.
+
+    Packet leak is fixed, but now I have a message leak.
+
+    Message leak only occurs 100% with packet loss and latency,
+    it however does occur *occasionally* with just packet loss.
+
+    It seems that this is now an actual message leak.
+
+    Probably something to do with the processing of acks,
+    or handling of messages between packet <-> queues.
+
+    Refs are added in only two places:
+
+        a) On create
+        b) When adding a message to a packet
+
+    Should probably also add a ref when taking a message from packet -> receive queue.
+
+    Seems that the leaking messages are coming from packet -> receive queue?
+
+    I think the packet factory doing the freeing is not the same as the one creating the packets.
+
+    Nope. I've got it! It's when a message comes in, but the message id
+    has already been added to the receive queue. In this case, it is clobbering
+    the previous message in the sliding window.
+
+    FIXED!!!!
+
+    Now bring it all back...
+
+    Get the small block test passing.
+
+    Get the large block test passing.
+
+    Get mixture of message types unit test passing.
+
+    Looks like I have a double message delete somewhere in the mixture test?
+
+    Nope. Was just creating the test message with new.
+
+    Get remaining unit tests that were disabled passing again.
+
+    Blocked now at test_bsd_socket_send_and_receive_ipv4
+
+    My guess is that we are creating a packet via new and passing in?
+
+    Some crazy stuff going on with copy constructor / assignment?
+
+    Seems that serialize is not getting called at all for connect packet?
+
+    Sorted. Just some crazy stuff with assignment.
+
+    Now, fixed some memory leaks spotted in BSDSocket.cpp -- on destructor
+    send and receive queues needed to be cleaned up, and on send packet
+    if in error state, it was leaking the packet.
+
+    Get the client/server tests passing.
+
+    Seems that we have some old packets created via new in Client.cpp
+
+    We had that, but still there are problems.
+
+    Seems that we have multiple packet factories active.
+
+    eg. a packet created with one factory, destroyed with another...
+
+    Something in client is causing this.
+
+    Perhaps the network interface has a different packet factory
+    than the client/server?! Somehow?!
+
+    Seems like the client needs to get the packet factory
+    from the network interface, not the other way around.
+
+    Fixed.
+
+    Now the disconnect packet was being leaked on client. Fixed.
+
+    All unit tests pass again!
+
+    Reduced header dependencies. 
+
+    Moved socket stuff into BSDSocket.cpp etc and out of Common.h
+
+    Get the soak test passing.
+
+    Pass over and remove unnecessary debug logs.
+
+
+Wednesday Morning, June 25th, 2014:
+-----------------------------------
+
+    C++ guarantees that stack objects are destroyed in reverse
+    order of their construction, so I don't need to worry about
+    the message factory being destroyed before the packets and
+    other structures that point to messages.
+
+    Repeated iterations on the small block test still fails.
+
+    But now, paydirt -- it is a message that is not being released.
+
+    So we know now that it is caused by a message not being cleaned up...
+
+    The question is. Why does this happen in the small block test but
+    not the normal message test?
+
+    Answer: The leak still happens for the non-small block message test.
+
+    I'll start here then, and keep it separate from blocks.
+
+    Is it packet loss related then? I think it must be.
+
+    Complete packet loss isn't enough to cause it.
+
+    It must be something ack related. Perhaps it happens when a
+    sliding window entry is *reused* to insert another sequence?
+
+    In this case, the message may not be getting cleaned up.
+
+    I'll bet this is it!
+
+    When a state was added to simulator, it was not immediately switching
+    to that state, but random change it would switch to it -- this was why
+    the packet loss wasn't triggering in the common case for short tests,
+    and why repeating the unit test was necessary to reproduce the leak.
+
+    Fixed it so that if you add a state to the sim, the first state 
+    you add is immediately active, eg. 90% packet loss now active
+    in all reliable message channel tests.
+
+    Memory leak repros 100% now. It's definitely caused by packet loss.
+
+    Why would the message be leaking? Are packets not getting cleaned up?
+
+    Add packet leak check to packet factory.
+
+    Convert packet factory to have specialized leak detection as well?
+
+    eg. centralize packet create and free to go through the factory?
+
+    Yes. Done.
+
+    Confirmed. We are leaking packets, not messages!
+
+
+Tuesday Evening, June 24th, 2014:
+---------------------------------
+
+    Convert std::string to c_str in Address class
+
+    Remove std::string usage from Client class (hostname)
+
+    Added MaxHostName const (256).
+
+    Remove std::string from Channel class (channel name)
+
+    We are getting memory leaks in small message test.
+
+    What is leaking?! It's random, doesn't happen 100%.
+
+    Confirmed: Dropped packets are triggering the loss.
+
+    Is there something wrong with the message cleanup?
+
+    I think we have an error where the delete on the *read*
+    packet does not clean up the messages it contains.
+
+    This happens on packet drop in the simulator.
+
+    However, if the packet is actually processed by the connection,
+    the connection takes those messages and inserts them into recv
+    queue, where they will be received.
+
+    It seems that a packet must be put into a state after being read
+    that each of the messages it contains will be deleted, but upon
+    processing this packet, those messages must be marked not to be
+    deleted when the packet is deleted (which it will be).
+
+    In short, the packet must transfer ownership of its messages
+    to the receive queue when it is processed, but otherwise should
+    delete those messages.
+
+    Yes. That was it. It's not leaking anymore.
+
+    Nope. There is another memory leak still happening.
+
+    To reproduce this leak requires the simulator having latency.
+
+    It still happens with zero packet loss. 
+
+    It doesn't happen if there is no simulator latency.
+
+    Theory: If a packet is deleted while in the simulator it is not deleting the block.
+
+    No. It's not this simple. Just deleting the read packet before processing it
+    doesn't reproduce the leak.
+
+    Analysis shows however that the block that is not being freed,
+    is a block that was *sent*.
+
+    So how could a sent block not end up getting deleted?
+
+    It is inserted immediately in send queue
+
+    It should be deleted as long as:
+
+        - remove ref is called on send queue entries
+        - remove ref is called on packet destructor
+        - all packets are actually deleted
+
+    I think messages are a cluster fuck right now...
+
+    They should be uniformly ref counted, most likely.
+
+    It seems that special cases of the messages to not be ref counted
+    are causing problems, eg. complexity, asserts where messages are
+    deleted with ref count != 0.
+
+    Message factory could have a method "Release" which decreases
+    ref count for message, and deletes that message if its ref count
+    becomes zero.
+
+    Deleting messages should become "outlawed". They can only be released.
+
+    Sketched out the new "MessageFactory". Messages now start with 1 ref.
+    It is illegal to delete a message manually now, you must release.
+
+    Designed the process for messages going *in* being sent, I think they
+    have one ref, and this ref just transfers to the send queue at this
+    point.
+
+    Each time a message is included in a packet, add ref.
+
+    Each time a packet is deleted with messages in it, release.
+
+    When a packet is processed, grab the messages and add to receive queue
+    and add ref.
+
+    When messages are recieved, remove from receive queue and pass
+    to caller.
+
+    Caller is now responsible for calling release on each message.
+
+    If messages are in send or receive queue on reset, release message.
+
+    This should avoid leaks and complication of messages entirely!!!
+
+    Messages *always* need to be released. vs. sometimes needing release
+    and other times needing delete.
+
+    Remove block message ctor that accepts block. Cannot be used.
+
+    Make messages dtor protected, and friend the message factory class.
+
+    Make message addref/release protected. Must always go through factory.
+
+    You *must* use the factory for deletion of messages.
+
+    Remove cases where messages are created via "new". Always
+    create messages via the factory. This will make it easier
+    to convert the factory to use a custom allocator.
+
+    Convert reliable message channel code to use uniform addref/release
+    on all messages.
+
+    Convert over the simplest test for reliable message channel,
+    eg. non-block case to use the updated message addref/release.
+
+    Works.
+
+    Convert over the small block test.
+
+    Still leaks.
+
+    Simplified the test as much as possible while still reproducing the leak.
+
+    Seems that if a packet is serialize read containing messages,
+    these messages are not being properly released on packet delete.
+
+    Why is it leaking?
+
+    Was as simple as an extra addref on send message that didn't need to be there.
+
+    Now there is another leak when the "real test" is turned back on.
+
+    Is it packet loss related?
+
+    Does not happen if packet loss and latency are disabled.
+
+    Does it happen with latency only?
+
+    No. It seems to be specific to packet loss.
+
+    How would packet loss cause a message leak?
+
+    Trust nobody. 
+
+    Add message factory checking, eg. a map that verifies all messages
+    are freed in destructor, and that all messages being freed are known
+    pointers created by the factory.
+
+    Fixed up duplicate message factories, and the message alloc and free looks good.
+
+    Now the small block test passes!
+
+
 Monday Evening, June 23rd, 2014:
 --------------------------------
 

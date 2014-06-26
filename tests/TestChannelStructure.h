@@ -8,14 +8,13 @@ using namespace protocol;
 
 class TestChannelStructure : public ChannelStructure
 {
-    TestMessageFactory m_messageFactory;
     ReliableMessageChannelConfig m_config;
 
 public:
 
-    TestChannelStructure()
+    TestChannelStructure( TestMessageFactory & messageFactory )
     {
-        m_config.messageFactory = &m_messageFactory;
+        m_config.messageFactory = &messageFactory;
         m_config.messageAllocator = &memory::default_allocator();
         m_config.smallBlockAllocator = &memory::default_allocator();
         m_config.largeBlockAllocator = &memory::default_allocator();

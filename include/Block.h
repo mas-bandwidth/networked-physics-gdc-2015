@@ -34,23 +34,14 @@ namespace protocol
             assert( bytes > 0 );
             m_allocator = &allocator;
             m_data = (uint8_t*) allocator.Allocate( bytes );
-            printf( "allocate block data %p (%d)\n", m_data, bytes );
+//            printf( "allocate block data %p (%d)\n", m_data, bytes );
             m_size = bytes;
             assert( m_data );
         }
 
         ~Block()
         {
-            if ( m_data )
-            {
-                printf( "free block data %p (%d)\n", m_data, m_size );
-                assert( m_allocator );
-                assert( m_size > 0 );
-                m_allocator->Free( m_data );
-                m_data = nullptr;
-                m_size = 0;
-                m_allocator = nullptr;
-            }
+            Destroy();
         }
 
         void SetAllocator( Allocator & allocator )
@@ -80,6 +71,19 @@ namespace protocol
             m_data = nullptr;
             m_allocator = nullptr;
             m_size = 0;
+        }
+
+        void Destroy()
+        {
+            if ( !m_data )
+                return;
+//          printf( "free block data %p (%d)\n", m_data, m_size );
+            assert( m_allocator );
+            assert( m_size > 0 );
+            m_allocator->Free( m_data );
+            m_data = nullptr;
+            m_size = 0;
+            m_allocator = nullptr;
         }
 
         uint8_t * GetData()

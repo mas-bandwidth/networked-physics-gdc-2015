@@ -14,13 +14,16 @@
 
 namespace protocol
 {
+    class PacketFactory;
+    class ChannelStructure;
+
     struct ConnectionConfig
     {
         uint64_t protocolId = 0;
         int packetType = 0;
         int maxPacketSize = 1024;
         int slidingWindowSize = 256;
-        Factory<Packet> * packetFactory = nullptr;
+        PacketFactory * packetFactory = nullptr;
         ChannelStructure * channelStructure = nullptr;
     };
 
