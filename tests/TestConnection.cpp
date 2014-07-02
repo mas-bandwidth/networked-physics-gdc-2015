@@ -14,9 +14,9 @@ class FakeChannelStructure : public ChannelStructure
 {
 public:
     FakeChannelStructure()
+        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
     {
-        // todo: convert to custom allocator
-        AddChannel( "fake channel", [] { return new FakeChannel(); }, [] { return nullptr; } );
+        AddChannel( "fake channel", [this] { return PROTOCOL_NEW( GetChannelAllocator(), FakeChannel ); }, [] { return nullptr; } );
         Lock();
     }
 };
@@ -89,10 +89,11 @@ class AckChannelStructure : public ChannelStructure
     int * ackedPackets = nullptr;
 public:
     AckChannelStructure( int * _ackedPackets )
+        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
     {
         ackedPackets = _ackedPackets;
         // todo: convert to custom allocator
-        AddChannel( "ack channel", [this] { return new AckChannel( ackedPackets ); }, [] { return nullptr; } );
+        AddChannel( "ack channel", [this] { return PROTOCOL_NEW( GetChannelAllocator(), AckChannel, ackedPackets ); }, [] { return nullptr; } );
         Lock();
     }
 };

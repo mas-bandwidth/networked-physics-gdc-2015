@@ -3,6 +3,7 @@
 
 #include "TestMessages.h"
 #include "ReliableMessageChannel.h"
+#include "Memory.h"
 
 using namespace protocol;
 
@@ -13,6 +14,7 @@ class TestChannelStructure : public ChannelStructure
 public:
 
     TestChannelStructure( TestMessageFactory & messageFactory )
+        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
     {
         m_config.messageFactory = &messageFactory;
         m_config.messageAllocator = &memory::default_allocator();
@@ -32,13 +34,12 @@ public:
 
     ReliableMessageChannel * CreateReliableMessageChannel()
     {
-        // todo: convert to custom allocator
-        return new ReliableMessageChannel( m_config );
+        return PROTOCOL_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
     }
 
     ReliableMessageChannelData * CreateReliableMessageChannelData()
     {
-        return PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
+        return PROTOCOL_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const

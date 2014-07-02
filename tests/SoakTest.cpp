@@ -13,6 +13,7 @@ class TestChannelStructure : public ChannelStructure
 public:
 
     TestChannelStructure( MessageFactory & messageFactory )
+        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
     {
         m_config.maxMessagesPerPacket = 256;
         m_config.sendQueueSize = 2048;
@@ -35,13 +36,12 @@ public:
 
     ReliableMessageChannel * CreateReliableMessageChannel()
     {
-        // todo: convert to custom allocator
-        return new ReliableMessageChannel( m_config );
+        return PROTOCOL_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
     }
 
     ReliableMessageChannelData * CreateReliableMessageChannelData()
     {   
-        return PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
+        return PROTOCOL_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const

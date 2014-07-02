@@ -87,7 +87,8 @@ namespace protocol
 
     class ChannelStructure
     {
-        Allocator * m_allocator;
+        Allocator * m_channelAllocator;
+        Allocator * m_channelDataAllocator;
 
         typedef std::function<Channel*()> CreateChannelFunction;
         typedef std::function<ChannelData*()> CreateChannelDataFunction;
@@ -105,7 +106,7 @@ namespace protocol
  
     public:
 
-        ChannelStructure( Allocator * allocator = nullptr );
+        ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator );
 
         ~ChannelStructure();
 
@@ -128,6 +129,9 @@ namespace protocol
         ChannelData * CreateChannelData( int channelIndex );
 
         void DestroyChannelData( ChannelData * channelData );
+
+        Allocator & GetChannelAllocator();
+        Allocator & GetChannelDataAllocator();
     };
 }
 

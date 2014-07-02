@@ -1,3 +1,23 @@
+Wednesday Morning, July 2nd, 2014:
+----------------------------------
+
+    Pass over unit tests and convert remaining new/deletes.
+
+    Channel structure should have a corresponding destroy channel
+    function, for maximum flexibility of implementation, eg. could
+    actually new the channel if it wanted to.
+
+    Channel structure should create channels via base allocator passed in.
+
+    Update code to call DestroyChannel on channel structure instead of delete.
+
+    Had to split up the channel and channel data allocators, as one of them
+    typically will want to be a scratch allocator and the other is long term.
+
+    Unit tests pass with all channel and channel data allocations going
+    through custom allocators!
+
+
 Tuesday Evening, July 1st, 2014:
 --------------------------------
 

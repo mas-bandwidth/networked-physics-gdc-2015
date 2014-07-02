@@ -8,15 +8,18 @@
 
 namespace protocol
 {
-    ChannelStructure::ChannelStructure( Allocator * allocator )
+    ChannelStructure::ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator )
     {
-        m_allocator = allocator ? allocator : &memory::default_allocator();
+        m_channelAllocator = &channelAllocator;
+        m_channelDataAllocator = &channelDataAllocator;
     }
 
     ChannelStructure::~ChannelStructure()
     {
-        assert( m_allocator );
-        m_allocator = nullptr;
+        assert( m_channelAllocator );
+        assert( m_channelDataAllocator );
+        m_channelAllocator = nullptr;
+        m_channelDataAllocator = nullptr;
     }
 
     void ChannelStructure::AddChannel( const char * name,
@@ -24,6 +27,7 @@ namespace protocol
                                        CreateChannelDataFunction createChannelData )
     {
         assert( !m_locked );
+
         if ( m_locked )
             return;
 
@@ -72,8 +76,8 @@ namespace protocol
     void ChannelStructure::DestroyChannel( Channel * channel )
     {
         assert( channel );
-        assert( m_allocator );
-        PROTOCOL_DELETE( *m_allocator, Channel, channel );
+        assert( m_channelAllocator );
+        PROTOCOL_DELETE( *m_channelAllocator, Channel, channel );
     }
 
     ChannelData * ChannelStructure::CreateChannelData( int channelIndex )
@@ -87,7 +91,17 @@ namespace protocol
     void ChannelStructure::DestroyChannelData( ChannelData * channelData )
     {
         assert( channelData );
-        assert( m_allocator );
-        PROTOCOL_DELETE( *m_allocator, ChannelData, channelData );
+        assert( m_channelDataAllocator );
+        PROTOCOL_DELETE( *m_channelDataAllocator, ChannelData, channelData );
+    }
+
+    Allocator & ChannelStructure::GetChannelAllocator()
+    { 
+        return *m_channelAllocator;
+    }
+
+    Allocator & ChannelStructure::GetChannelDataAllocator()
+    { 
+        return *m_channelDataAllocator;
     }
 }

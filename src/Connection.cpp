@@ -38,8 +38,7 @@ namespace protocol
         for ( int i = 0; i < m_numChannels; ++i )
         {
             assert( m_channels[i] );
-            // todo: call channel structure to perform the delete. more flexible
-            delete m_channels[i];
+            m_config.channelStructure->DestroyChannel( m_channels[i] );
         }
 
         PROTOCOL_DELETE( *m_allocator, SentPackets, m_sentPackets );

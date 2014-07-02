@@ -1,18 +1,9 @@
 DONE:
 
-    Pass over unit tests and convert remaining new/deletes.
-
 TODO:
 
     -----------------
 
-    Channel structure should have a corresponding destroy channel
-    function, for maximum flexibility of implementation, eg. could
-    actually new the channel if it wanted to.
-
-    Channel structure should create channels via base allocator passed in.
-
-    Update code to call DestroyChannel on channel structure instead of delete.
 
     ------------------
 
