@@ -7,6 +7,7 @@
 #define PROTOCOL_CHANNEL_H
 
 #include "Common.h"
+#include "Allocator.h"
 
 namespace protocol
 {
@@ -86,6 +87,8 @@ namespace protocol
 
     class ChannelStructure
     {
+        Allocator * m_allocator;
+
         typedef std::function<Channel*()> CreateChannelFunction;
         typedef std::function<ChannelData*()> CreateChannelDataFunction;
 
@@ -102,6 +105,10 @@ namespace protocol
  
     public:
 
+        ChannelStructure( Allocator * allocator = nullptr );
+
+        ~ChannelStructure();
+
         void AddChannel( const char * name,
                          CreateChannelFunction createChannel,
                          CreateChannelDataFunction createChannelData );
@@ -116,7 +123,11 @@ namespace protocol
 
         Channel * CreateChannel( int channelIndex );
 
+        void DestroyChannel( Channel * channel );
+
         ChannelData * CreateChannelData( int channelIndex );
+
+        void DestroyChannelData( ChannelData * channelData );
     };
 }
 

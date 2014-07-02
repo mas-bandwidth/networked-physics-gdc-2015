@@ -4,9 +4,21 @@
 */
 
 #include "Channel.h"
+#include "Memory.h"
 
 namespace protocol
 {
+    ChannelStructure::ChannelStructure( Allocator * allocator )
+    {
+        m_allocator = allocator ? allocator : &memory::default_allocator();
+    }
+
+    ChannelStructure::~ChannelStructure()
+    {
+        assert( m_allocator );
+        m_allocator = nullptr;
+    }
+
     void ChannelStructure::AddChannel( const char * name,
                                        CreateChannelFunction createChannel,
                                        CreateChannelDataFunction createChannelData )
@@ -57,11 +69,25 @@ namespace protocol
         return m_channelEntries[channelIndex].createChannel();
     }
 
+    void ChannelStructure::DestroyChannel( Channel * channel )
+    {
+        assert( channel );
+        assert( m_allocator );
+        PROTOCOL_DELETE( *m_allocator, Channel, channel );
+    }
+
     ChannelData * ChannelStructure::CreateChannelData( int channelIndex )
     {
         assert( m_locked );
         assert( channelIndex >= 0 );
         assert( channelIndex < m_numChannels );
         return m_channelEntries[channelIndex].createChannelData();
+    }
+
+    void ChannelStructure::DestroyChannelData( ChannelData * channelData )
+    {
+        assert( channelData );
+        assert( m_allocator );
+        PROTOCOL_DELETE( *m_allocator, ChannelData, channelData );
     }
 }
