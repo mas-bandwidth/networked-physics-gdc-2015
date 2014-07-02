@@ -18,7 +18,7 @@ void test_bsd_socket_send_and_receive_ipv4()
         TestPacketFactory packetFactory;
 
         config.port = 10000;
-        config.family = AF_INET;
+        config.ipv6 = false;
         config.maxPacketSize = 1024;
         config.packetFactory = &packetFactory;
 
@@ -132,7 +132,6 @@ void test_bsd_socket_send_and_receive_ipv6()
         TestPacketFactory packetFactory;
 
         config.port = 10000;
-        config.family = AF_INET6;
         config.maxPacketSize = 1024;
         config.packetFactory = &packetFactory;
 
@@ -245,7 +244,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
 
         BSDSocketConfig sender_config;
         sender_config.port = 10000;
-        sender_config.family = AF_INET;
+        sender_config.ipv6 = false;
         sender_config.maxPacketSize = 1024;
         sender_config.packetFactory = &packetFactory;
 
@@ -253,7 +252,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
         
         BSDSocketConfig receiver_config;
         receiver_config.port = 10001;
-        receiver_config.family = AF_INET;
+        receiver_config.ipv6 = false;
         receiver_config.maxPacketSize = 1024;
         receiver_config.packetFactory = &packetFactory;
 
@@ -367,7 +366,6 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
 
         BSDSocketConfig sender_config;
         sender_config.port = 10000;
-        sender_config.family = AF_INET6;
         sender_config.maxPacketSize = 1024;
         sender_config.packetFactory = &packetFactory;
 
@@ -375,7 +373,6 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
         
         BSDSocketConfig receiver_config;
         receiver_config.port = 10001;
-        receiver_config.family = AF_INET6;
         receiver_config.maxPacketSize = 1024;
         receiver_config.packetFactory = &packetFactory;
 

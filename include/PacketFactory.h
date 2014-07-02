@@ -44,7 +44,7 @@ namespace protocol
         {
             Packet * packet = Factory<Packet>::Create( type );
             #if DEBUG_MEMORY_LEAKS
-//            printf( "%p: create packet %p\n", this, packet );
+            printf( "create packet %p\n", packet );
             allocated_packets[packet] = 1;
             auto itor = allocated_packets.find( packet );
             assert( itor != allocated_packets.end() );
@@ -57,7 +57,7 @@ namespace protocol
         {
             assert( packet );
             #if DEBUG_MEMORY_LEAKS
-//            printf( "%p: destroy packet %p\n", this, packet );
+            printf( "destroy packet %p\n", packet );
             auto itor = allocated_packets.find( packet );
             assert( itor != allocated_packets.end() );
             allocated_packets.erase( packet );

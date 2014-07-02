@@ -15,6 +15,7 @@ class FakeChannelStructure : public ChannelStructure
 public:
     FakeChannelStructure()
     {
+        // todo: convert to custom allocator
         AddChannel( "fake channel", [] { return new FakeChannel(); }, [] { return nullptr; } );
         Lock();
     }
@@ -90,6 +91,7 @@ public:
     AckChannelStructure( int * _ackedPackets )
     {
         ackedPackets = _ackedPackets;
+        // todo: convert to custom allocator
         AddChannel( "ack channel", [this] { return new AckChannel( ackedPackets ); }, [] { return nullptr; } );
         Lock();
     }

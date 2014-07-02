@@ -8,14 +8,11 @@
 
 #include "Resolver.h"
 
-// todo: replace family with enum ADDRESS_*
-#include <netinet/in.h>
-
 struct addrinfo;
 
 namespace protocol
 {
-    ResolveResult DNSResolve_Blocking( std::string name, int family = AF_INET6, int socktype = SOCK_DGRAM );
+    ResolveResult DNSResolve_Blocking( std::string name, bool ipv6 );
 
     typedef std::map<std::string,ResolveEntry*> ResolveMap;
 
@@ -23,7 +20,7 @@ namespace protocol
     {
     public:
 
-        DNSResolver( int family = AF_INET6, int socktype = SOCK_DGRAM );
+        DNSResolver( bool ipv6 = true );
 
         ~DNSResolver();
 
@@ -37,8 +34,7 @@ namespace protocol
 
     private:
 
-        int m_family;
-        int m_socktype;
+        bool m_ipv6;
         ResolveMap map;
         ResolveMap in_progress;
     };

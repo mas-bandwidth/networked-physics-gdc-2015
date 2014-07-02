@@ -21,7 +21,7 @@ namespace protocol
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
 
-        m_connection = new Connection( connectionConfig );
+        m_connection = new Connection( connectionConfig );          // todo: convert to custom allocator
 
         ClearStateData();
     }
@@ -89,10 +89,6 @@ namespace protocol
             return;
 
 //            printf( "client disconnect\n" );
-
-        // todo: send off disconnect packet to server. in the common case this packet
-        // gets through and tells the server this client has disconnected, freeing up
-        // the client slot much faster than timing it out over 5-10 seconds.
 
         m_connection->Reset();
 

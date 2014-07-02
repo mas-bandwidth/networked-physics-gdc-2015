@@ -7,6 +7,7 @@
 #define SLIDING_WINDOW_H
 
 #include "Common.h"
+#include "Memory.h"         // todo: move allocator interface out to another header to avoid this
 
 namespace protocol
 {
@@ -14,19 +15,23 @@ namespace protocol
     {
     public:
 
-        SlidingWindow( int size )
+        SlidingWindow( Allocator & allocator, int size )
         {
             assert( size > 0 );
             m_size = size;
             m_first_entry = true;
             m_sequence = 0;
-            m_entries = new T[size];
+            m_allocator = &allocator;
+            m_entries = (T*) allocator.Allocate( sizeof(T) * size, alignof(T) );
+            Reset();
         }
 
         ~SlidingWindow()
         {
             assert( m_entries );
-            delete m_entries;
+            assert( m_allocator );
+            m_allocator->Free( m_entries );
+            m_allocator = nullptr;
             m_entries = nullptr;
         }
 
@@ -134,6 +139,8 @@ namespace protocol
         }
 
     private:
+
+        Allocator * m_allocator;
 
         bool m_first_entry;
         uint16_t m_sequence;

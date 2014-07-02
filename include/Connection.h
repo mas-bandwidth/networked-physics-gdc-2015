@@ -19,6 +19,7 @@ namespace protocol
 
     struct ConnectionConfig
     {
+        Allocator * allocator = nullptr;
         uint64_t protocolId = 0;
         int packetType = 0;
         int maxPacketSize = 1024;
@@ -60,6 +61,9 @@ namespace protocol
         ConnectionError m_error = CONNECTION_ERROR_NONE;
 
         const ConnectionConfig m_config;                            // const configuration data
+
+        Allocator * m_allocator;                                    // allocator for allocations matching life cycle of object.
+
         TimeBase m_timeBase;                                        // network time base
         SentPackets * m_sentPackets = nullptr;                      // sliding window of recently sent packets
         ReceivedPackets * m_receivedPackets = nullptr;              // sliding window of recently received packets

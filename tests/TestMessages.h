@@ -70,6 +70,7 @@ public:
 
     TestMessageFactory()
     {
+        // todo: convert to custom allocator
         Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
         Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
     }

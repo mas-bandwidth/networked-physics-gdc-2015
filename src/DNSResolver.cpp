@@ -12,8 +12,11 @@
 
 namespace protocol
 {
-    ResolveResult DNSResolve_Blocking( std::string name, int family, int socktype )
+    ResolveResult DNSResolve_Blocking( std::string name, bool ipv6 = true )
     {
+        const int family = ipv6 ? AF_INET6 : AF_INET;
+        const int socktype = SOCK_DGRAM;
+
         struct addrinfo hints, *res, *p;
         memset( &hints, 0, sizeof hints );
         hints.ai_family = family;
@@ -53,10 +56,9 @@ namespace protocol
         return result;
     }
 
-    DNSResolver::DNSResolver( int family, int socktype )
+    DNSResolver::DNSResolver( bool ipv6 )
     {
-        m_family = family;
-        m_socktype = socktype;
+        m_ipv6 = ipv6;
     }
 
     DNSResolver::~DNSResolver()
@@ -72,12 +74,10 @@ namespace protocol
 
         auto entry = new ResolveEntry();           // todo: instead of allocating here have some "max resolves" or something in a pool
         entry->status = RESOLVE_IN_PROGRESS;
-        const int family = m_family;
-        const int socktype = m_socktype;
-
-        entry->future = async( std::launch::async, [name, family, socktype, entry] () -> ResolveResult
+        const int ipv6 = m_ipv6;
+        entry->future = async( std::launch::async, [name, ipv6, entry] () -> ResolveResult
         { 
-            return DNSResolve_Blocking( name, family, socktype );
+            return DNSResolve_Blocking( name, ipv6 );
         } );
 
         map[name] = entry;

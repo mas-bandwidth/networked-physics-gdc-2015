@@ -11,6 +11,7 @@ void test_block()
     memory::initialize();
     {
         const int BlockSize = 256 * 1024;
+        // todo: convert to custom allocator. maybe a block factory even?
         Block * block = new Block( memory::default_allocator(), BlockSize );
         assert( block );
         assert( block->GetAllocator() == &memory::default_allocator() );

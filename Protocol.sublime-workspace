@@ -4,6 +4,110 @@
 		"selected_items":
 		[
 			[
+				"Block",
+				"BlockMessageType"
+			],
+			[
+				"RES",
+				"RESOLVE_IN_PROGRESS"
+			],
+			[
+				"RESOL",
+				"RESOLVE_IN_PROGRESS"
+			],
+			[
+				"R",
+				"ResolveResult"
+			],
+			[
+				"RESOLVE",
+				"RESOLVE_SUCCEEDED"
+			],
+			[
+				"REsolv",
+				"ResolveWrapper"
+			],
+			[
+				"BSD_SOCKET_COUNTER_SERIAL",
+				"BSD_SOCKET_COUNTER_SERIALIZE_READ_OVERFLOW"
+			],
+			[
+				"CLIENT_ERROR_Co",
+				"CLIENT_ERROR_ConnectionError"
+			],
+			[
+				"REL",
+				"RELIABLE_MESSAGE_CHANNEL_ERROR_SEND_QUEUE_FULL"
+			],
+			[
+				"BSD_S",
+				"BSD_SOCKET_ERROR_NONE"
+			],
+			[
+				"max",
+				"maxMessagesPerPacket"
+			],
+			[
+				"Small",
+				"MaxSmallBlockSize"
+			],
+			[
+				"resol",
+				"ResolveWrapper"
+			],
+			[
+				"client",
+				"clientNetworkInterface"
+			],
+			[
+				"m_oldest",
+				"m_oldestUnackedMessageId"
+			],
+			[
+				"m_",
+				"m_oldestUnackedMessageId"
+			],
+			[
+				"SendLrg",
+				"SendLargeBlockData"
+			],
+			[
+				"SERVER_CLIENT_",
+				"SERVER_CLIENT_Connected"
+			],
+			[
+				"SERVER_CLIENT",
+				"SERVER_CLIENT_Disconnected"
+			],
+			[
+				"CLIENT_ERROR_Td",
+				"CLIENT_ERROR_ConnectionTimedOut"
+			],
+			[
+				"CLIENT_ERROR_Conn",
+				"CLIENT_ERROR_ConnectionRequestDenied"
+			],
+			[
+				"SERVER",
+				"SERVER_CLIENT_Connected"
+			],
+			[
+				"CLIENT_STATE",
+				"CLIENT_STATE_ReadyForConnection"
+			],
+			[
+				"CLIENT_",
+				"SERVER_CLIENT_Disconnected"
+			],
+			[
+				"CLIENT_STATE_",
+				"CLIENT_STATE_ResolvingHostname"
+			],
+			[
+				"SERE",
+				"SERVER_CLIENT_SendingChallenge"
+			],
+			[
 				"CLIENT_ERROR",
 				"CLIENT_ERROR_ConnectionRequestTimedOut"
 			],
@@ -16,20 +120,8 @@
 				"m_sendingConnectionRequestData"
 			],
 			[
-				"CLIENT_STATE",
-				"CLIENT_STATE_SendingConnectionRequest"
-			],
-			[
 				"res",
 				"resolveHostnameTimeout"
-			],
-			[
-				"m_",
-				"m_resolveHostnameData"
-			],
-			[
-				"CLIENT_STATE_",
-				"CLIENT_STATE_ResolvingHostname"
 			],
 			[
 				"channel",
@@ -42,10 +134,6 @@
 			[
 				"resend",
 				"resendRate"
-			],
-			[
-				"max",
-				"m_maxBlockFragments"
 			],
 			[
 				"fragment",
@@ -179,13 +267,25 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "TODO",
+			"settings":
+			{
+				"buffer_size": 9390,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "Packages/User/C++11.sublime-build",
 	"command_palette":
 	{
-		"height": 67.0,
+		"height": 147.0,
 		"selected_items":
 		[
+			[
+				"TODO",
+				"View: Toggle Open Files in Side Bar"
+			],
 			[
 				"syntax mark",
 				"Set Syntax: Markdown"
@@ -217,10 +317,6 @@
 			[
 				"Packinst",
 				"Package Control: Install Package"
-			],
-			[
-				"TODO",
-				"Package Control: Discover Packages"
 			],
 			[
 				"git",
@@ -273,134 +369,134 @@
 	},
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/include/BSDSockets.h",
-		"/Users/gaffer/git/protocol/include/Client.h",
-		"/Users/gaffer/git/protocol/include/Server.h",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
-		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/include/ClientServerPackets.h",
-		"/Users/gaffer/git/protocol/tests/SoakTest.cpp",
-		"/Users/gaffer/git/protocol/tests/TestBSDSockets.cpp",
-		"/Users/gaffer/git/protocol/tests/TestConnection.cpp",
-		"/Users/gaffer/git/protocol/include/Channel.h",
-		"/Users/gaffer/git/protocol/tests/TestAddress.cpp",
-		"/Users/gaffer/git/protocol/tests/TestStream.cpp",
-		"/Users/gaffer/git/protocol/tests/TestCommon.cpp",
-		"/Users/gaffer/git/protocol/tests/TestDNSResolver.cpp",
-		"/Users/gaffer/git/protocol/tests/TestBitPacker.cpp",
-		"/Users/gaffer/git/protocol/tests/TestNetworkInterface.cpp",
-		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/include/ReliableMessageChannel.h",
-		"/Users/gaffer/git/protocol/include/BitPacker.h",
-		"/Users/gaffer/git/protocol/include/Resolver.h",
-		"/Users/gaffer/git/protocol/Protocol.sublime-project",
-		"/Users/gaffer/git/protocol/include/ClientServerPackets",
-		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel",
-		"/Users/gaffer/git/protocol/tests/TestConnection",
-		"/Users/gaffer/git/protocol/tests/TestClientServer",
-		"/Users/gaffer/git/protocol/include/Common.h",
-		"/Users/gaffer/git/protocol/include/Connection.h",
-		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/memory",
-		"/Users/gaffer/git/protocol/include/ChannelStructure.h",
-		"/Users/gaffer/git/protocol/include/ChannelStructure",
-		"/Users/gaffer/git/protocol/include/Stream.h",
-		"/Users/gaffer/git/protocol/include/NetworkInterface.h",
-		"/Users/gaffer/git/protocol/NOTES",
+		"/Users/gaffer/git/protocol/include/Memory.h",
 		"/Users/gaffer/git/protocol/include/NetworkSimulator.h",
-		"/Users/gaffer/git/protocol/tests/TestBSDSockets",
-		"/Users/gaffer/git/protocol/include/Address.h",
-		"/Users/gaffer/git/protocol/tests/TestDNSResolver",
+		"/Users/gaffer/git/protocol/include/Packets.h",
+		"/Users/gaffer/git/protocol/include/SlidingWindow.h",
+		"/Users/gaffer/git/protocol/src/BSDSocket.cpp",
+		"/Users/gaffer/git/protocol/src/Client.cpp",
+		"/Users/gaffer/git/protocol/src/Connection.cpp",
+		"/Users/gaffer/git/protocol/src/DNSResolver.cpp",
+		"/Users/gaffer/git/protocol/src/Memory.cpp",
+		"/Users/gaffer/git/protocol/src/MicroAllocator.cpp",
+		"/Users/gaffer/git/protocol/src/NetworkSimulator.cpp",
+		"/Users/gaffer/git/protocol/src/ReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/src/Server.cpp",
+		"/Users/gaffer/git/protocol/tests/SoakTest.cpp",
+		"/Users/gaffer/git/protocol/tests/TestBlock.cpp",
+		"/Users/gaffer/git/protocol/tests/TestChannelStructure.h",
+		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
+		"/Users/gaffer/git/protocol/tests/TestConnection.cpp",
+		"/Users/gaffer/git/protocol/tests/TestMessages.h",
+		"/Users/gaffer/git/protocol/tests/TestPackets.h",
+		"/Users/gaffer/git/protocol/include/MessageFactory.h",
+		"/Users/gaffer/git/protocol/include/MicroAllocator.h",
+		"/Users/gaffer/git/protocol/tests/UnitTest.cpp",
+		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/tests/TestNetworkInterface.cpp",
+		"/Users/gaffer/git/protocol/tests/TestCommon.cpp",
+		"/Users/gaffer/git/protocol/src/Address.cpp",
+		"/Users/gaffer/git/protocol/include/Resolver.h",
+		"/Users/gaffer/git/protocol/tests/TestBSDSocket.cpp",
+		"/Users/gaffer/git/protocol/include/Common.h",
+		"/Users/gaffer/git/protocol/include/BSDSocket.h",
 		"/Users/gaffer/git/protocol/include/DNSResolver.h",
-		"/Users/gaffer/git/protocol/tests/TestAddress",
-		"/Users/gaffer/git/protocol/tests/TestNetworkInterface",
-		"/Users/gaffer/git/protocol/include/NetworkSimulator",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/include/Constants.h",
+		"/Users/gaffer/git/protocol/include/Enums.h",
+		"/Users/gaffer/git/protocol/include/Block.h",
+		"/Users/gaffer/git/protocol/include/PacketFactory.h",
+		"/Users/gaffer/git/protocol/include/Platform.h",
+		"/Users/gaffer/git/protocol/include/StringStream.h",
+		"/Users/gaffer/git/protocol/src/BitPacker.cpp",
+		"/Users/gaffer/git/protocol/include/Stream.h",
+		"/Users/gaffer/git/protocol/include/ReliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/include/Address.h",
+		"/Users/gaffer/git/protocol/tests/TestStream.cpp",
+		"/Users/gaffer/git/protocol/Makefile",
 		"/Users/gaffer/git/protocol/output.txt",
-		"/Users/gaffer/git/protocol/include/ReliableMessageChannel",
-		"/Users/gaffer/git/protocol/output.tx",
-		"/Users/gaffer/Dropbox/backup/protocol2/test/TestProtocolConfig.h",
+		"/Users/gaffer/git/protocol/obj/x64/Debug/Memory.d",
+		"/Users/gaffer/git/protocol/src/Common.cpp",
+		"/Users/gaffer/git/protocol/include/Server.h",
+		"/Users/gaffer/git/protocol/include/Client.h",
+		"/Users/gaffer/git/protocol/include/NetworkInterface.h",
 		"/Users/gaffer/git/protocol/include/Packet.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolAssert.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolCommon.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolConstants.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolDataTypes.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolConfig.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolEnums.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolForwards.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolInstance.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolReadPackets.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolSerialize.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolLog.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolStream.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolUpdateStats.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolUtil.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/include/ProtocolWritePackets.h",
-		"/Users/gaffer/Dropbox/backup/protocol2/test/Profile.cpp",
-		"/Users/gaffer/Dropbox/backup/protocol2/test/SoakTest.cpp",
-		"/Users/gaffer/Dropbox/backup/protocol2/test/StatsTest.cpp",
-		"/Users/gaffer/git/protocol/include/UnreliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/include/Network.h",
+		"/Users/gaffer/git/protocol/include/Connection.h",
+		"/Users/gaffer/git/protocol/include/Factory.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestBSDSocket.d",
+		"/Users/gaffer/git/protocol/tests/TestFoundation.cpp",
 		"/Users/gaffer/git/protocol/include/Message.h",
-		"/Users/gaffer/git/protocol/tests/SoakTest",
+		"/Users/gaffer/git/protocol/LICENCE",
+		"/Users/gaffer/git/protocol/tests/Profile.cpp",
+		"/Users/gaffer/git/protocol/tests/TestFactory.cpp",
+		"/Users/gaffer/git/protocol/tests/TestPacketFactory.cpp",
+		"/Users/gaffer/git/protocol/tests/TestSlidingWindow.cpp",
+		"/Users/gaffer/git/protocol/tests/TestMessageFactory.cpp",
 		"/Users/gaffer/git/protocol/include/MessageChannel.h",
-		"/Users/gaffer/git/protocol/tests/TestBSDSocketsInterface.cpp",
-		"/Users/gaffer/git/protocol/include/BSDSocketsInterface.h",
-		"/Users/gaffer/git/protocol/include/Stream",
-		"/Users/gaffer/Desktop/ProtocolStream.cpp",
-		"/Users/gaffer/git/protocol/include/BitPacker",
-		"/Users/gaffer/git/protocol/tests/TestBitPacker",
-		"/Users/gaffer/Desktop/ProtocolStream.h",
-		"/Users/gaffer/git/protocol/include/MessageChannel",
-		"/Users/gaffer/git/protocol/README.md",
-		"/Users/gaffer/git/protocol/tests/TestMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/MessageChannel.h",
-		"/Users/gaffer/git/protocol/Connection.h",
-		"/Users/gaffer/git/protocol/SoakTest.cpp",
-		"/Users/gaffer/git/protocol/TestMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/TestNetworkInterface.cpp",
-		"/Users/gaffer/git/protocol/Common.h",
-		"/Users/gaffer/git/protocol/BSDSocketsInterface.h",
-		"/Users/gaffer/git/protocol/TestBSDSocketsInterface.cpp",
-		"/Users/gaffer/git/protocol/TestMessageChannel",
-		"/Users/gaffer/git/protocol/MessageChannel",
-		"/Users/gaffer/git/protocol/Message.h",
-		"/Users/gaffer/git/protocol/TestCommon.cpp",
-		"/Users/gaffer/git/protocol/TestConnection.cpp",
-		"/Users/gaffer/git/protocol/TestDNSResolver.cpp",
-		"/Users/gaffer/git/protocol/TestAddress.cpp",
-		"/Users/gaffer/git/protocol/TestStream.cpp",
-		"/Users/gaffer/git/protocol/Stream.h",
-		"/Users/gaffer/git/protocol/BSDSocketsInterface",
-		"/Users/gaffer/git/protocol/Resolver.h",
-		"/Users/gaffer/git/protocol/TestDNSResolver",
-		"/Users/gaffer/git/protocol/TestNetworkInterface",
-		"/Users/gaffer/git/protocol/Packet.h",
-		"/Users/gaffer/git/protocol/NetworkInterface.h",
-		"/Users/gaffer/git/protocol/BSDSockets.h",
-		"/Users/gaffer/git/protocol/DNSResolver.h",
-		"/Users/gaffer/git/protocol/TestResolver.cpp",
-		"/Users/gaffer/git/protocol/UnitTest.cpp",
-		"/Users/gaffer/git/protocol/reference/06 - Real World Networking/NetReliability.h",
-		"/Users/gaffer/git/protocol/Network.h",
-		"/Users/gaffer/git/protocol/TestCommon",
-		"/Users/gaffer/git/protocol/TestStream",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/tests/TestEngine.cpp",
-		"/Users/gaffer/git/protocol/Protocol.cpp",
-		"/Users/gaffer/git/protocol/Address.h",
-		"/Users/gaffer/git/protocol/Channel.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/MemoryOutStream.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestReporter.h",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestSuite.h",
-		"/Users/gaffer/git/protocol/reference/08 - Authority Management/NetStream.h",
-		"/Users/gaffer/git/protocol/reference/09 - Drop-In COOP for Open World Games/Scene.rb",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/GIMPACT/GIMPACT-LICENSE-BSD.TXT",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/ode/demo/basket_geom.h",
-		"/Users/gaffer/git/protocol/reference/09 - Drop-In COOP for Open World Games/Game.rb",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/joints/slider.cpp",
-		"/Users/gaffer/git/protocol/reference/10 - Fiedler's Cubes/UnitTest++/TestList.h",
-		"/Users/gaffer/git/protocol/reference/11 - Cubes/resources/ode-0.11.1/tests/collision.cpp",
-		"/Users/gaffer/git/protocol/Connection",
-		"/Users/gaffer/git/protocol/reference/01 - Sending and Receiving Packets/Net.h",
-		"/Users/gaffer/git/protocol/Packet"
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestMessageFactory.d",
+		"/Users/gaffer/git/protocol/include/BlockMessage.h",
+		"/Users/gaffer/git/protocol/include/Channel.h",
+		"/Users/gaffer/git/protocol/Protocol.sublime-project",
+		"/Users/gaffer/git/protocol/protocol.make",
+		"/Users/gaffer/git/protocol/src/Channel.cpp",
+		"/Users/gaffer/git/protocol/tests/TestAddress.cpp",
+		"/Users/gaffer/git/protocol/tests/TestDNSResolver.cpp",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestReliableMessageChannel.d",
+		"/Users/gaffer/git/protocol/build/SoakTest.make",
+		"/Users/gaffer/git/protocol/bin/UnitTest",
+		"/Users/gaffer/git/protocol/build/Profile.make",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestBlock.d",
+		"/Users/gaffer/git/protocol/include/Array.h",
+		"/Users/gaffer/git/protocol/obj/x64/Debug/Server.d",
+		"/Users/gaffer/git/protocol/build/UnitTest.make",
+		"/Users/gaffer/git/protocol/tests/TestBitPacker.cpp",
+		"/Users/gaffer/git/protocol/tests/TestResolveWrapper.cpp",
+		"/Users/gaffer/git/protocol/include/ResolveWrapper.h",
+		"/Users/gaffer/git/protocol/include/BitPacker.h",
+		"/Users/gaffer/git/protocol/src/Network.cpp",
+		"/Users/gaffer/git/protocol/NOTES",
+		"/Users/gaffer/git/protocol/include/Sockets.h",
+		"/Users/gaffer/git/protocol/src/Sockets.cpp",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestAddress.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestCommon.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestConnection.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestDNSResolver.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestFactory.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestFoundation.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestStream.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestBitPacker.d",
+		"/Users/gaffer/git/protocol/src/ResolveWrapper.cpp",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/protocol/Address.d",
+		"/Users/gaffer/git/protocol/build/protocol.make",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/protocol/MicroAllocator.d",
+		"/Users/gaffer/git/protocol/src/BitPacket.cpp",
+		"/Users/gaffer/experiments/oodle/premake4.lua",
+		"/Users/gaffer/git/protocol/tests/TestBSDSockets.cpp",
+		"/Users/gaffer/git/protocol/include/BSDSockets.h",
+		"/Users/gaffer/git/protocol/Packets.h",
+		"/Users/gaffer/git/protocol/include/ClientServerPackets.h",
+		"/Users/gaffer/git/protocol/src/MicroAllocator",
+		"/Users/gaffer/git/protocol/tests/SoakTest",
+		"/Users/gaffer/git/protocol/include/Common2.h",
+		"/Users/gaffer/git/protocol/include/Hash.h",
+		"/Users/gaffer/git/protocol/tests/output.txt",
+		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/iterator",
+		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/iosfwd",
+		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/c++/v1/vector",
+		"/Users/gaffer/git/protocol/include/Queue.h",
+		"/Users/gaffer/Downloads/bitsquid-foundation-7f896236dbaf/array.h",
+		"/usr/local/include/kj/threadlocal.h",
+		"/Users/gaffer/git/protocol/include/Array",
+		"/Users/gaffer/git/protocol/include/Queue",
+		"/Users/gaffer/git/protocol/foundation/memory.h",
+		"/Users/gaffer/git/protocol/foundation/memory.cpp",
+		"/Users/gaffer/git/protocol/foundation/memory_types.h",
+		"/Users/gaffer/git/protocol/foundation/string_stream.h",
+		"/Users/gaffer/git/protocol/include/queue",
+		"/Users/gaffer/git/protocol/foundation/string_stream.cpp"
 	],
 	"find":
 	{
@@ -411,6 +507,10 @@
 		"height": 93.0,
 		"where_history":
 		[
+			"-CHANGES,-TODO",
+			"-CHANGES,TODO",
+			"-CHANGES",
+			"-CHANGES -TODO",
 			"",
 			"*.h,*.cpp",
 			"*.h;*.cpp",
@@ -438,134 +538,134 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"recie",
-			"sent packet",
-			"m_receiveBuffer",
-			"ReceivePacketInternal",
-			"htons",
-			"Sleep",
-			"PacketFactor",
-			"messageChannel = ",
-			"config.port = ",
-			"ChannelConfig",
-			"SetINterface",
-			"[&",
-			"ChannelStructure",
-			"m_interface->",
-			"m_interface",
-			"interface",
-			"protocolId",
-			"ReceivePackets",
-			"cout <<",
-			"networkInterface->Update",
-			"sendto failed",
-			"accumulator",
-			"SendingConnectionRequest",
-			"SendingConnectio",
-			"packet->",
-			"cout << ",
-			"ms",
-			"sleep",
-			"Connect",
-			"Disconnect",
-			".Update(",
-			"Configuration",
-			"Channel",
-			"cout << ",
-			"m_sendLargeBlock",
-			"m_sendLarge",
-			"large block",
-			"AddState",
-			"Address address(",
-			"SendPacket",
-			"Simulator",
-			"m_config",
-			"todo:",
-			"\"read packet failure",
-			".GetSequence",
-			"->GetSequence()",
-			"\"read packet",
-			"\"receive packet",
-			"\"process acks",
-			"cout << ",
-			"->GetSequence",
-			".sequence = ",
-			"sent message",
-			"process ack",
-			"ProcessAck",
-			"cout << ",
-			"random_float",
-			"random_int",
-			"random",
-			"BSD",
-			"_interfac",
-			"Interfac",
-			"Interface",
-			"todo",
-			"todo: ",
-			"todo:",
-			"todo",
-			"% 4",
-			"messagechannel",
-			"block size is",
-			"cout",
-			"ceil",
-			"sending large block",
-			"ceil",
-			"fragmentSize",
-			"GenerateAckBits",
-			"generate_ack_bits",
-			"blockSize = ",
-			"todo ",
+			"new ",
+			"new",
+			"new ",
 			"// todo:",
-			"blockSize",
-			"->valid = ",
-			"->fragment = ",
-			"fragment;",
-			"config->",
-			"first entry is large",
+			"AF_IN",
+			"AF_",
+			"Oodle",
+			"steram",
+			"Check",
+			"printf",
+			"ReliableMessageChannel.h",
+			"NetworkSimulator",
+			"new ",
+			"TestChannelStructure",
+			"std::string",
+			"std::vector",
+			"AF_",
+			"AF_INET6",
 			"todo:",
-			"SendQueueEntry",
-			"m_sentPackets",
-			"SentPacketEntry",
-			"ReceiveQueueEntry",
-			"fragments",
-			"safety",
-			"maxMessageSize",
-			"maxMessageSize * ",
-			"maxMessageSize",
-			"Send",
-			"event",
-			"GetData",
-			"Stream",
-			"STREAM_Write",
-			"serialize_int",
-			"Stream stream",
-			"<Stream>()",
-			"Stream( ",
-			"cout << ",
-			"SerializeBits",
-			"m_buffer",
-			"bufferdata",
-			"CHAR",
-			"SerializeBits",
-			"m_block",
+			"CLIENT_SERVER_PACKET_DISCONNECTED",
+			"->Create",
+			"ClientServerPacket",
+			"Factory<Packet>",
+			"new ",
+			"SendPacket(",
+			"SendPacket",
+			"new ",
+			"new",
+			"printf",
+			"struct ConnectPacket",
+			"new",
+			"delete",
+			"test_network_interface",
+			"todo:",
+			"printf",
+			"AddRef",
+			"0x7f8b78c04d60",
+			"Message *",
+			"channelData",
+			"0x7ff328c04f50",
+			"0x7fb7e0c047f0",
+			"AddRef",
+			"m_receiveQueue->Insert",
+			"0x7fe071404900",
+			"messages = ",
+			"AddRef(",
+			"AddRef",
+			"Release",
+			"exit(0)",
+			"printf( \"~Packet",
+			"delete",
+			"delete ",
+			"delete packet",
+			"allocate message",
+			"allocate packet:",
+			"printf( \"allocate packet: ",
+			"new ConnectionPacket",
+			"new Packet",
+			"packetFactory",
+			"delete pa",
+			"message",
+			"#if DEBUG_MEMORY",
+			"#if DEBUG",
+			"Factory<Packet>",
+			"new ConnectionPacket",
+			"allocate message",
+			"allocate mesasge",
+			"TestMessageFactory",
+			"0x7f91eb404990",
+			"new BlockMessage",
+			"Factory<Message>",
+			"Message<Factory>",
+			"new TestMessage",
+			"new BlockMessage",
+			"map",
+			"Release(",
+			"->AddRef",
+			"SendMessage(",
+			"SendMesas",
+			"allocate block data",
+			"\"delete channel %d",
+			"delete channel",
+			"create message",
+			"new Message",
+			"releaseMessages",
+			"Release",
+			"DEBUG_MEMORY_LEAKS",
+			"delete messages[i]",
+			"ChannelData",
+			"delete mess",
+			"AddRef",
+			"allocate message",
+			"releaseMessages",
+			"packetLoss",
+			"m_total_allocated",
+			".Allocate",
+			"TempAllocator",
+			"MaxHost",
+			"std::string",
+			"std::",
+			"m_hostname[0]",
+			"m_hostname",
+			"new Connection",
+			"std::",
+			"std::string",
+			"Connect(",
+			"std::string",
+			"TempAllocator",
+			"TempAllocator256",
+			"TempAllocator",
+			"std::string",
+			"std::vector",
+			"CreateReliableMessageChannel",
+			"TestChannelStructure",
+			"patch up small block",
+			"SendMessage",
+			".Allocate",
+			"allocator",
+			".Connect",
+			"SendMessage",
+			"block;",
+			"304",
+			"NewBlock",
+			"MaxSmallBlockSize",
 			"Block",
-			"BlockMessage",
-			"MessageChannel",
-			"Message",
-			"MessageChannel",
-			"cout << ",
-			"add message to receive queue: 0",
-			"timeLastSent",
-			"cout << ",
-			"timeLastSent",
-			"resendRate",
-			"_DEBUG",
-			"DEBUG",
-			"_DEBUG",
-			"cout << ",
-			"ReadPacket"
+			"NewBlock",
+			"SendBlock",
+			"Block.h"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -589,14 +689,45 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "TODO",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9390,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								617,
+								617
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 26.0
+		"height": 34.0
 	},
 	"input":
 	{
@@ -636,7 +767,7 @@
 	"project": "Protocol.sublime-project",
 	"replace":
 	{
-		"height": 48.0
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -645,235 +776,79 @@
 		"selected_items":
 		[
 			[
-				"changes",
-				"CHANGES"
+				"testclientserver.cpp",
+				"tests/TestClientServer.cpp"
+			],
+			[
+				"memory.cpp",
+				"src/Memory.cpp"
 			],
 			[
 				"todo",
 				"TODO"
 			],
 			[
-				"canges",
+				"unittest.cpp",
+				"tests/UnitTest.cpp"
+			],
+			[
+				"testint",
+				"tests/TestNetworkInterface.cpp"
+			],
+			[
+				"changes",
 				"CHANGES"
-			],
-			[
-				"client.h",
-				"include/Client.h"
-			],
-			[
-				"server.h",
-				"include/Server.h"
-			],
-			[
-				"bsdsockets.h",
-				"include/BSDSockets.h"
-			],
-			[
-				"testclientserver.cpp",
-				"tests/TestClientServer.cpp"
-			],
-			[
-				"sockets.h",
-				"include/BSDSockets.h"
-			],
-			[
-				"testbsdsockets.cpp",
-				"tests/TestBSDSockets.cpp"
-			],
-			[
-				"testbsd",
-				"tests/TestBSDSockets.cpp"
-			],
-			[
-				"bsdsocket",
-				"include/BSDSockets.h"
-			],
-			[
-				"soaktest.cpp",
-				"tests/SoakTest.cpp"
-			],
-			[
-				"relibalemessagechannel.h",
-				"include/ReliableMessageChannel.h"
-			],
-			[
-				"bitpacker.h",
-				"include/BitPacker.h"
-			],
-			[
-				"testmessag",
-				"tests/TestReliableMessageChannel.cpp"
-			],
-			[
-				"soaktest",
-				"tests/SoakTest.cpp"
-			],
-			[
-				"testreliable",
-				"tests/TestReliableMessageChannel.cpp"
-			],
-			[
-				"test",
-				"tests/SoakTest.cpp"
-			],
-			[
-				"testconnection.cpp",
-				"tests/TestConnection.cpp"
-			],
-			[
-				"client",
-				"include/ClientServerPackets.h"
-			],
-			[
-				"bsd",
-				"include/BSDSockets.h"
-			],
-			[
-				"reliablemessagechannel.h",
-				"include/ReliableMessageChannel.h"
-			],
-			[
-				"channel.h",
-				"include/Channel.h"
-			],
-			[
-				"testconnection",
-				"tests/TestConnection.cpp"
-			],
-			[
-				"testreliablemessagechannel.cpp",
-				"tests/TestReliableMessageChannel.cpp"
-			],
-			[
-				"channelstructure.h",
-				"include/ChannelStructure.h"
-			],
-			[
-				"connection.h",
-				"include/Connection.h"
 			],
 			[
 				"common.h",
 				"include/Common.h"
 			],
 			[
-				"clientserverpackets.h",
-				"include/ClientServerPackets.h"
+				"bsdsocket.h",
+				"include/BSDSocket.h"
 			],
 			[
-				"steram.h",
-				"include/Stream.h"
+				"testclient",
+				"tests/TestClientServer.cpp"
 			],
 			[
-				"server",
-				"include/ClientServerPackets.h"
+				"testbsdsocket.cpp",
+				"tests/TestBSDSocket.cpp"
 			],
 			[
-				"networkinterface.h",
-				"include/NetworkInterface.h"
+				"bsdsocket.cpp",
+				"src/BSDSocket.cpp"
 			],
 			[
-				"stream.h",
-				"include/Stream.h"
+				"dns",
+				"include/DNSResolver.h"
+			],
+			[
+				"dnsresolver.cpp",
+				"src/DNSResolver.cpp"
+			],
+			[
+				"enums.h",
+				"include/Enums.h"
 			],
 			[
 				"resolver.h",
 				"include/Resolver.h"
 			],
 			[
-				"res",
-				"include/Resolver.h"
+				"stream.h",
+				"include/Stream.h"
 			],
 			[
-				"dns",
-				"tests/TestDNSResolver.cpp"
+				"soaktest.cpp",
+				"tests/SoakTest.cpp"
 			],
 			[
-				"simulator.h",
-				"include/NetworkSimulator.h"
-			],
-			[
-				"testdns",
-				"tests/TestDNSResolver.cpp"
-			],
-			[
-				"testres",
-				"tests/TestDNSResolver.cpp"
-			],
-			[
-				"resolve.h",
-				"include/Resolver.h"
-			],
-			[
-				"interface.h",
-				"include/NetworkInterface.h"
-			],
-			[
-				"server.cpp",
-				"tests/TestClientServer.cpp"
-			],
-			[
-				"notes",
-				"NOTES"
-			],
-			[
-				"testnetwok",
-				"tests/TestNetworkInterface.cpp"
-			],
-			[
-				"bsdsoc",
-				"include/BSDSockets.h"
-			],
-			[
-				"testaddress.cpp",
-				"tests/TestAddress.cpp"
-			],
-			[
-				"testreliabl",
-				"tests/TestReliableMessageChannel.cpp"
-			],
-			[
-				"output.txt",
-				"output.txt"
-			],
-			[
-				"out",
-				"output.txt"
-			],
-			[
-				"output",
-				"output.txt"
+				"block.h",
+				"include/Block.h"
 			],
 			[
 				"reliable",
-				"include/ReliableMessageChannel.h"
-			],
-			[
-				"network",
-				"include/NetworkSimulator.h"
-			],
-			[
-				"interface",
-				"include/NetworkInterface.h"
-			],
-			[
-				"packet.h",
-				"include/Packet.h"
-			],
-			[
-				"bsdsockets.cpp",
-				"tests/TestBSDSockets.cpp"
-			],
-			[
-				"message.h",
-				"include/Message.h"
-			],
-			[
-				"testcommon.cpp",
-				"tests/TestCommon.cpp"
-			],
-			[
-				"",
 				"include/ReliableMessageChannel.h"
 			],
 			[
@@ -881,32 +856,396 @@
 				"tests/TestReliableMessageChannel.cpp"
 			],
 			[
-				"bitpacke.h",
-				"include/BitPacker.h"
+				"testbsd",
+				"tests/TestBSDSocket.cpp"
 			],
 			[
-				"messagechannel.h",
+				"bsd",
+				"src/BSDSocket.cpp"
+			],
+			[
+				"microallocator.cpp",
+				"src/MicroAllocator.cpp"
+			],
+			[
+				"micro",
+				"include/MicroAllocator.h"
+			],
+			[
+				"dnsresolver.h",
+				"include/DNSResolver.h"
+			],
+			[
+				"stream.cpp",
+				"tests/TestStream.cpp"
+			],
+			[
+				"testmessages.h",
+				"tests/TestMessages.h"
+			],
+			[
+				"common.cpp",
+				"src/Common.cpp"
+			],
+			[
+				"server.cpp",
+				"src/Server.cpp"
+			],
+			[
+				"server.h",
+				"include/Server.h"
+			],
+			[
+				"packetfactory.h",
+				"include/PacketFactory.h"
+			],
+			[
+				"networksimulator.cpp",
+				"src/NetworkSimulator.cpp"
+			],
+			[
+				"networksimulator.h",
+				"include/NetworkSimulator.h"
+			],
+			[
+				"interface.h",
+				"include/NetworkInterface.h"
+			],
+			[
+				"client.cpp",
+				"src/Client.cpp"
+			],
+			[
+				"client.h",
+				"include/Client.h"
+			],
+			[
+				"packets.h",
+				"include/Packets.h"
+			],
+			[
+				"testpackets.h",
+				"tests/TestPackets.h"
+			],
+			[
+				"packet.h",
+				"include/Packet.h"
+			],
+			[
+				"testbsdsocke.cpp",
+				"tests/TestBSDSocket.cpp"
+			],
+			[
+				"factory.h",
+				"include/Factory.h"
+			],
+			[
+				"testbesd",
+				"tests/TestBSDSocket.cpp"
+			],
+			[
+				"messagefactory.h",
+				"include/MessageFactory.h"
+			],
+			[
+				"testreliable",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"testreliablemessagechannel.cpp",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"simulator.cpp",
+				"src/NetworkSimulator.cpp"
+			],
+			[
+				"reliablemessagechannel.cpp",
+				"src/ReliableMessageChannel.cpp"
+			],
+			[
+				"message",
+				"include/MessageFactory.h"
+			],
+			[
+				"output.txt",
+				"output.txt"
+			],
+			[
+				"reliablemessagechannel.h",
+				"include/ReliableMessageChannel.h"
+			],
+			[
+				"slidingwindow.h",
+				"include/SlidingWindow.h"
+			],
+			[
+				"connection.cpp",
+				"src/Connection.cpp"
+			],
+			[
+				"connection.h",
+				"include/Connection.h"
+			],
+			[
+				"messag",
+				"include/MessageFactory.h"
+			],
+			[
+				"testconnection.cpp",
+				"tests/TestConnection.cpp"
+			],
+			[
+				"testr",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"testreliabl",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"testnetworkinterface.cpp",
+				"tests/TestNetworkInterface.cpp"
+			],
+			[
+				"simulator.h",
+				"include/NetworkSimulator.h"
+			],
+			[
+				"testfactory.cpp",
+				"tests/TestFactory.cpp"
+			],
+			[
+				"testmessagefactory.cpp",
+				"tests/TestMessageFactory.cpp"
+			],
+			[
+				"factoyr.h",
+				"include/Factory.h"
+			],
+			[
+				"chang",
+				"CHANGES"
+			],
+			[
+				"simulator",
+				"src/NetworkSimulator.cpp"
+			],
+			[
+				"testchannelstructure.h",
+				"tests/TestChannelStructure.h"
+			],
+			[
+				"testmessages",
+				"tests/TestMessages.h"
+			],
+			[
+				"memory.h",
+				"include/Memory.h"
+			],
+			[
+				"messagechannel",
+				"src/ReliableMessageChannel.cpp"
+			],
+			[
+				"testmessage",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"channel.h",
+				"include/Channel.h"
+			],
+			[
+				"message.h",
+				"include/Message.h"
+			],
+			[
+				"blockmessage.h",
+				"include/BlockMessage.h"
+			],
+			[
+				"testfact",
+				"tests/TestFactory.cpp"
+			],
+			[
+				"testmess",
+				"tests/TestMessages.h"
+			],
+			[
+				"testcommon.cpp",
+				"tests/TestCommon.cpp"
+			],
+			[
+				"reliabl",
+				"src/ReliableMessageChannel.cpp"
+			],
+			[
+				"blokc.h",
+				"include/Block.h"
+			],
+			[
+				"constants.h",
+				"include/Constants.h"
+			],
+			[
+				"channel.cpp",
+				"src/Channel.cpp"
+			],
+			[
+				"const",
+				"include/Constants.h"
+			],
+			[
+				"address.cpp",
+				"src/Address.cpp"
+			],
+			[
+				"address.h",
+				"include/Address.h"
+			],
+			[
+				"testaddress.cpp",
+				"tests/TestAddress.cpp"
+			],
+			[
+				"stringstream.h",
+				"include/StringStream.h"
+			],
+			[
+				"testfoundation.cpp",
+				"tests/TestFoundation.cpp"
+			],
+			[
+				"connect.cpp",
+				"src/Connection.cpp"
+			],
+			[
+				"testchannel",
+				"tests/TestChannelStructure.h"
+			],
+			[
+				"test",
+				"tests/TestClientServer.cpp"
+			],
+			[
+				"rceliabl",
+				"src/ReliableMessageChannel.cpp"
+			],
+			[
+				"channelstructure.h",
+				"tests/TestChannelStructure.h"
+			],
+			[
+				"testreliablemesasgechannel.cpp",
+				"tests/TestReliableMessageChannel.cpp"
+			],
+			[
+				"mesasgechannel.h",
 				"include/MessageChannel.h"
 			],
 			[
-				"bitacker.h",
-				"include/BitPacker.h"
+				"steram.h",
+				"include/Stream.h"
 			],
 			[
-				"testre",
-				"tests/TestReliableMessageChannel.cpp"
+				"testblock.cpp",
+				"tests/TestBlock.cpp"
 			],
 			[
-				"soak",
-				"tests/SoakTest.cpp"
+				"tdoo",
+				"TODO"
 			],
 			[
-				"bsdsocketsinterface.h",
-				"include/BSDSocketsInterface.h"
+				"testcommon",
+				"tests/TestCommon.cpp"
 			],
 			[
-				"testreli",
-				"tests/TestReliableMessageChannel.cpp"
+				"testresolve",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"testdns",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"dnsres",
+				"src/DNSResolver.cpp"
+			],
+			[
+				"testreso",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"resolver.cpp",
+				"src/DNSResolver.cpp"
+			],
+			[
+				"resolver",
+				"src/DNSResolver.cpp"
+			],
+			[
+				"testresolver.cpp",
+				"tests/TestDNSResolver.cpp"
+			],
+			[
+				"server",
+				"src/Server.cpp"
+			],
+			[
+				"server.",
+				"src/Server.cpp"
+			],
+			[
+				"res",
+				"include/ResolveWrapper.h"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
+			],
+			[
+				"testbitpacker.cpp",
+				"tests/TestBitPacker.cpp"
+			],
+			[
+				"bitpacker.cpp",
+				"src/BitPacker.cpp"
+			],
+			[
+				"premake",
+				"premake4.lua"
+			],
+			[
+				"pre",
+				"premake4.lua"
+			],
+			[
+				"network.h",
+				"include/Network.h"
+			],
+			[
+				"network.cpp",
+				"src/Network.cpp"
+			],
+			[
+				"newo",
+				"include/Network.h"
+			],
+			[
+				"sockets.h",
+				"include/Sockets.h"
+			],
+			[
+				"testres",
+				"tests/TestResolveWrapper.cpp"
+			],
+			[
+				"testnetwor",
+				"tests/TestNetworkInterface.cpp"
+			],
+			[
+				"testsliding",
+				"tests/TestSlidingWindow.cpp"
 			],
 			[
 				"teststream.cpp",
@@ -917,244 +1256,36 @@
 				"tests/TestBitPacker.cpp"
 			],
 			[
-				"testmessage",
-				"tests/TestReliableMessageChannel.cpp"
+				"soaktest",
+				"tests/SoakTest.cpp"
 			],
 			[
-				"rel",
-				"include/ReliableMessageChannel.h"
+				"resolvewrapper.cpp",
+				"src/ResolveWrapper.cpp"
 			],
 			[
-				"messagech",
-				"include/ReliableMessageChannel.h"
+				"resolvewrapper.h",
+				"include/ResolveWrapper.h"
 			],
 			[
-				"testreliablem",
-				"tests/TestReliableMessageChannel.cpp"
+				"memory.cp",
+				"src/Memory.cpp"
 			],
 			[
-				"testmes",
-				"tests/TestMessageChannel.cpp"
+				"reso",
+				"include/Resolver.h"
 			],
 			[
-				"testmessagechannel.cpp",
-				"TestMessageChannel.cpp"
+				"sockets.cpp",
+				"src/Sockets.cpp"
 			],
 			[
-				"message",
-				"TestMessageChannel.cpp"
+				"socket",
+				"src/Sockets.cpp"
 			],
 			[
-				"testnet",
-				"TestNetworkInterface.cpp"
-			],
-			[
-				"testin",
-				"TestNetworkInterface.cpp"
-			],
-			[
-				"testinterface",
-				"TestNetworkInterface.cpp"
-			],
-			[
-				"testinterfac",
-				"TestNetworkInterface.cpp"
-			],
-			[
-				"testnetworkinterface.cpp",
-				"TestNetworkInterface.cpp"
-			],
-			[
-				"network.h",
-				"Network.h"
-			],
-			[
-				"unittest.cpp",
-				"UnitTest.cpp"
-			],
-			[
-				"protocol.cpp",
-				"Protocol.cpp"
-			],
-			[
-				"goals",
-				"GOALS"
-			],
-			[
-				"goal",
-				"GOALS"
-			],
-			[
-				"netrel",
-				"reference/06 - Real World Networking/NetReliability.h"
-			],
-			[
-				"protocol",
-				"Protocol.cpp"
-			],
-			[
-				"sen",
-				"reference/01 - Sending and Receiving Packets/Net.h"
-			],
-			[
-				"seria",
-				"Serialize.cpp"
-			],
-			[
-				"ser",
-				"Serialize.cpp"
-			],
-			[
-				"serialize.cpp",
-				"reference/Serialize.cpp"
-			],
-			[
-				"se",
-				"reference/Serialize.cpp"
-			],
-			[
-				"netstream.h",
-				"reference/07 - Reading and Writing Packets/NetStream.h"
-			],
-			[
-				"sessions.cpp",
-				"durango_sessions.cpp"
-			],
-			[
-				"util.cpp",
-				"durango_util.cpp"
-			],
-			[
-				"util.h",
-				"durango_util.h"
-			],
-			[
-				"party.cpp",
-				"durango_party.cpp"
-			],
-			[
-				"sign_in.cpp",
-				"durango_sign_in.cpp"
-			],
-			[
-				"sessions",
-				"durango_sessions.cpp"
-			],
-			[
-				"durango_sign_in.cpp",
-				"durango_sign_in.cpp"
-			],
-			[
-				"durango_sessions.cpp",
-				"durango_sessions.cpp"
-			],
-			[
-				"durango_party.cpp",
-				"durango_party.cpp"
-			],
-			[
-				"durango_party.h",
-				"durango_party.h"
-			],
-			[
-				"durango_util.h",
-				"durango_util.h"
-			],
-			[
-				"durango_util.cpp",
-				"durango_util.cpp"
-			],
-			[
-				"coffee",
-				"client/code/app/app.coffee"
-			],
-			[
-				"dibs.coffee",
-				"server/rpc/dibs.coffee"
-			],
-			[
-				"app.coffee",
-				"client/code/app/app.coffee"
-			],
-			[
-				"jade",
-				"client/templates/chat/command.jade"
-			],
-			[
-				"status.",
-				"client/templates/chat/status.jade"
-			],
-			[
-				"command.jade",
-				"client/templates/chat/command.jade"
-			],
-			[
-				"app",
-				"client/views/app.jade"
-			],
-			[
-				"a",
-				"client/code/app/app.coffee"
-			],
-			[
-				"styl",
-				"node_modules/socketstream/node_modules/connect/lib/public/style.css"
-			],
-			[
-				"app.js",
-				"app.js"
-			],
-			[
-				"demo.coffee",
-				"server/rpc/demo.coffee"
-			],
-			[
-				"leader",
-				"server/rpc/leaderboard.coffee"
-			],
-			[
-				"demo.js",
-				"node_modules/socketstream/new_project/server/rpc/demo.js"
-			],
-			[
-				"package.json",
-				"package.json"
-			],
-			[
-				".",
-				".nodemonignore"
-			],
-			[
-				"message.jade",
-				"client/templates/chat/message.jade"
-			],
-			[
-				"entry.coffee",
-				"client/code/app/entry.coffee"
-			],
-			[
-				"biconvex.h",
-				"Biconvex.h"
-			],
-			[
-				"view",
-				"xcode/Virtual Go/ViewController.m"
-			],
-			[
-				"viewcontroller.m",
-				"xcode/Virtual Go/ViewController.m"
-			],
-			[
-				"sound.h",
-				"Sound.h"
-			],
-			[
-				"gameinstance.h",
-				"GameInstance.h"
-			],
-			[
-				"stoneinstance.h",
-				"StoneInstance.h"
+				"socket.cpp",
+				"src/BSDSocket.cpp"
 			]
 		],
 		"width": 0.0
@@ -1179,7 +1310,7 @@
 	{
 	},
 	"show_minimap": true,
-	"show_open_files": false,
+	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": false,
 	"side_bar_width": 276.0,

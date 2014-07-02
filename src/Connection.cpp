@@ -12,8 +12,11 @@ namespace protocol
         assert( config.packetFactory );
         assert( config.channelStructure );
 
-        m_sentPackets = new SentPackets( m_config.slidingWindowSize );
-        m_receivedPackets = new ReceivedPackets( m_config.slidingWindowSize );
+        m_allocator = config.allocator ? config.allocator : &memory::default_allocator();
+
+        m_sentPackets = PROTOCOL_NEW( *m_allocator, SentPackets, *m_allocator, m_config.slidingWindowSize );
+        
+        m_receivedPackets = PROTOCOL_NEW( *m_allocator, ReceivedPackets, *m_allocator, m_config.slidingWindowSize );
 
         m_numChannels = config.channelStructure->GetNumChannels();
         for ( int i = 0; i < m_numChannels; ++i )
@@ -37,8 +40,8 @@ namespace protocol
             delete m_channels[i];
         }
 
-        delete m_sentPackets;
-        delete m_receivedPackets;
+        PROTOCOL_DELETE( *m_allocator, SentPackets, m_sentPackets );
+        PROTOCOL_DELETE( *m_allocator, ReceivedPackets, m_receivedPackets );
 
         m_sentPackets = nullptr;
         m_receivedPackets = nullptr;

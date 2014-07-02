@@ -39,15 +39,17 @@ namespace protocol
         assert( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
         assert( m_config.maxPacketSize > 0 );
 
-        m_receiveBuffer = new uint8_t[m_config.maxPacketSize];
+        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
+
+        assert( m_allocator );
+
+        m_receiveBuffer = (uint8_t*) m_allocator->Allocate( m_config.maxPacketSize );
 
         m_error = BSD_SOCKET_ERROR_NONE;
 
         // create socket
 
-        assert( m_config.family == AF_INET || m_config.family == AF_INET6 );
-
-        m_socket = socket( m_config.family, SOCK_DGRAM, IPPROTO_UDP );
+        m_socket = socket( m_config.ipv6 ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP );
 
         if ( m_socket <= 0 )
         {
@@ -58,7 +60,7 @@ namespace protocol
 
         // force IPv6 only if necessary
 
-        if ( m_config.family == AF_INET6 )
+        if ( m_config.ipv6 )
         {
             int yes = 1;
             if ( setsockopt( m_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&yes, sizeof(yes) ) != 0 )
@@ -71,7 +73,7 @@ namespace protocol
 
         // bind to port
 
-        if ( m_config.family == AF_INET6 )
+        if ( m_config.ipv6 )
         {
             sockaddr_in6 sock_address;
             memset( &sock_address, 0, sizeof( sockaddr_in6 ) );
@@ -86,7 +88,7 @@ namespace protocol
                 return;
             }
         }
-        else if ( m_config.family == AF_INET )
+        else
         {
             sockaddr_in sock_address;
             sock_address.sin_family = AF_INET;
@@ -134,7 +136,7 @@ namespace protocol
     {
         if ( m_receiveBuffer )
         {
-            delete [] m_receiveBuffer;
+            m_allocator->Free( m_receiveBuffer );
             m_receiveBuffer = nullptr;
         }
 
@@ -315,7 +317,7 @@ namespace protocol
             assert( packet->GetType() == packetType );
             if ( !packet )
             {
-                printf( "failed to create packet of type %d\n", packetType );
+//                printf( "failed to create packet of type %d\n", packetType );
                 m_counters[BSD_SOCKET_COUNTER_CREATE_PACKET_FAILURES]++;
                 continue;
             }

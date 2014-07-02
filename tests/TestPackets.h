@@ -168,7 +168,8 @@ public:
     TestPacketFactory( ChannelStructure * channelStructure = nullptr )
     {
         m_channelStructure = channelStructure;
-        
+ 
+        // todo: convert to custom allocator       
         Register( PACKET_CONNECTION, [this] { assert( m_channelStructure ); return new ConnectionPacket( PACKET_CONNECTION, m_channelStructure ); } );
         Register( PACKET_CONNECT,    [] { return new ConnectPacket();    } );
         Register( PACKET_UPDATE,     [] { return new UpdatePacket();     } );

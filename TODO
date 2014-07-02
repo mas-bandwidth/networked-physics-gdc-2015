@@ -2,108 +2,66 @@ DONE:
 
 TODO:
 
-    Remove the need for AF_INET6 etc. in DNSResolver.h and BSDSocket.h
+    Convert remaining allocations in channel to use scratch allocator.
 
-    Can just be replaced with "bool ipv6" really. I don't know that I care
-    about the transition which is either. That's not well tested.
+    eg. the channel data create etc.
 
-    -------------------
+    Make sure matching delete is replaced with PROTOCOL_DELETE
 
-    Remove std::string usage from Resolver interface and DNSResolver. (How?!)
+    ----------------
 
-    -------------------
+    Work through and first convert to scratch allocator where possible.
+
+    Convert allocators that are during initialization to use global allocator.
+
+    Identify any allocations which *don't* fit into scratch model, but are
+    created at runtime. These allocations need to go away.
+
+    ------------------
+
+    Convert packet factory to use custom allocators instead of new.
+
+    Convert message factory to use custom allocators instead of new.
+
+    ------------------
+
+    Is there a bug in the scratch allocator? There probably *isn't*
+    but the crash was due to memory leak/corruption on my part.
+
+    BUT... I would like the scratch allocator to be more resilient in 
+    debug builds, eg. for it to have safety checks, eg. missing magic
+    # where expected, assert.
+
+    ------------------
+
+    Replace all *runtime* STL usage with bitsquid containers.
+
+    Still OK to use STL for other structures like memory leak tracking.
+
+    ------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ------------------------
 
     Send a "Disconnect" packet from client -> server on disconnect,
     so the slot gets freed up a bit quicker than if it timed out.
-
-    -------------------
-
-    Work out how to best replace existing new/delete with foundation allocators.
-
-    Look for runtime allocations, that can't easily be moved to pools etc.
-
-    Do not allocate at runtime!
-
-    Work towards getting packets allocated via allocator
-    passed in to the connection, eg. this will allow
-    a specific pool strategy for packet allocation.
-
-    Work towards getting messages allocated using an
-    custom allocator instance specified in config.
-
-    Work towards getting blocks allocated from the heap,
-    and limit the # of blocks allocated at a time.
-
-    ------------------
-
-    need a "check" macro that works in release for unit tests.
-
-    ------------------
-
-    Replace all STL usage with bitsquid containers.
-
-    Remove STL header includes.
-
-    Use the bitsquid allocators to track down memory leaks, eg.
-    make sure each individual unit test checks for leaks.
-
-    --------------------
-
-    Restructure so that precompiled headers are used.
-
-    Add timing to build steps so the efficiency can be measured.
-
-    --------------------
-
-    Once STL is removed, use this:
-
-    package.buildflags = { "no-exceptions", "no-rtti" }
-
-    Will this work with std::future?
-
-    --------------------
-
-
-
-
-
-
-
-
-    ----------------------
-
-    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
-
-    Grab the big endian check from sophist.h and anything else useful.
-
-    Fix the bitpacker to do bswap when necessary for big endian.
-
-    ----------------------
-
-    Unit tests to add:
-
-    Move the murmur hash test into TestCommon.cpp
-
-    Verify that channel error percolates down and makes the server disconnect client,
-    *and* on client side, makes the client disconnect from server.
-
-    Make sure error is properly cleared on reset.
-
-    Make sure we don't leak memory on connection reset (client reconnect should do this)
-
-    ----------------------
-
-
-
-
-
-
-
-
-
-
-
-
 
     ------------------------
 
@@ -184,6 +142,67 @@ TODO:
 
 
 WOULD BE NICE:
+
+    ----------
+
+    Allocator interface for PROTOCOL_NEW and PROTOCOL_DELETE is a bit naff.
+
+    Can use new C++11 typeof to make it suck a lot less.
+
+    It's annoying to have to pass the allocator in twice when creating
+    an object which itself takes the allocator in the constructor params.`
+
+    --------------------
+
+    Find a way to move the future into the implementation (cpp)
+    so we don't need #include <future> in a header file.
+
+    --------------------
+
+    I don't like the bool ipv6. Use address type instead, eg. ADDRESS_IPV6
+
+    --------------------
+
+    Prefix all #define names with PROTOCOL_, eg. PROTOCOL_PLATFORM_WINDOWS
+
+    --------------------
+
+    Restructure so that precompiled headers are used.
+
+    Add timing to build steps so the efficiency can be measured.
+
+    --------------------
+
+    Once STL is removed, use this:
+
+    package.buildflags = { "no-exceptions", "no-rtti" }
+
+    Will this work with std::future?
+
+    -------------------
+
+    Remove std::string usage from Resolver interface and DNSResolver. (How?!)
+
+    ----------------------
+
+    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
+
+    Grab the big endian check from sophist.h and anything else useful.
+
+    Fix the bitpacker to do bswap when necessary for big endian.
+
+    ----------------------
+
+    Unit tests to add:
+
+    Move the murmur hash test into TestCommon.cpp
+
+    Verify that channel error percolates down and makes the server disconnect client,
+    *and* on client side, makes the client disconnect from server.
+
+    Make sure error is properly cleared on reset.
+
+    Make sure we don't leak memory on connection reset (client reconnect should do this)
 
     ----------------------
 

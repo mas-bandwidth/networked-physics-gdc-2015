@@ -21,6 +21,7 @@ namespace protocol
     {
         ReliableMessageChannelConfig()
         {
+            allocator = nullptr;
             resendRate = 0.1f;
             sendQueueSize = 1024;
             receiveQueueSize = 256;
@@ -34,6 +35,8 @@ namespace protocol
             giveUpBits = 128;
             align = true;
         }
+
+        Allocator * allocator;          // allocator used for allocations matching life cycle of this object. if null falls back to default allocator.
 
         float resendRate;               // message max resend rate in seconds, until acked.
         int sendQueueSize;              // send queue size in # of entries
@@ -64,13 +67,13 @@ namespace protocol
 
         const ReliableMessageChannelConfig & config;
 
-        Message ** messages = nullptr;         // array of messages.
-        uint8_t * fragment = nullptr;          // the  fragment data. only valid if sending large block.
-        uint64_t numMessages : 16;             // number of messages in array.
-        uint64_t fragmentId : 16;              // fragment id. valid if sending large block.
-        uint64_t blockSize : 32;               // block size in bytes. valid if sending large block.
-        uint64_t blockId : 16;                 // block id. valid if sending large block.
-        uint64_t largeBlock : 1;               // true if currently sending a large block.
+        Message ** messages = nullptr;          // array of messages.
+        uint8_t * fragment = nullptr;           // the  fragment data. only valid if sending large block.
+        uint64_t numMessages : 16;              // number of messages in array.
+        uint64_t fragmentId : 16;               // fragment id. valid if sending large block.
+        uint64_t blockSize : 32;                // block size in bytes. valid if sending large block.
+        uint64_t blockId : 16;                  // block id. valid if sending large block.
+        uint64_t largeBlock : 1;                // true if currently sending a large block.
        
         ReliableMessageChannelData( const ReliableMessageChannelConfig & _config );
 
@@ -218,6 +221,8 @@ namespace protocol
     private:
 
         const ReliableMessageChannelConfig m_config;                        // constant configuration data
+
+        Allocator * m_allocator = nullptr;                                  // allocator for allocations matching life cycle of object.
 
         int m_error = 0;                                                    // current error state. set to non-zero if an error occurs.
 

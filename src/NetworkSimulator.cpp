@@ -13,6 +13,7 @@ namespace protocol
     {
         assert( m_config.packetFactory );
         m_packetNumber = 0;
+        // todo: convert to using custom allocator
         m_packets = new PacketData[config.numPackets];
         memset( m_packets, 0, sizeof(PacketData) * config.numPackets );
         m_numStates = 0;
@@ -78,17 +79,16 @@ namespace protocol
 
         for ( int i = 0; i < m_config.numPackets; ++i )
         {
-            if ( m_packets[i].packet == nullptr )
+            if ( m_packets[i].packet == nullptr || m_packets[i].dequeueTime > m_timeBase.time )
                 continue;
 
             if ( !oldestPacket || ( oldestPacket && m_packets[i].dequeueTime < oldestPacket->dequeueTime ) )
                 oldestPacket = &m_packets[i];
         }
 
-        // todo: simplify. no need for this check -- do it in the loop above
-        if ( oldestPacket && oldestPacket->dequeueTime <= m_timeBase.time )
+        if ( oldestPacket )
         {
-            auto packet = oldestPacket->packet;
+            Packet * packet = oldestPacket->packet;
             oldestPacket->packet = nullptr;
             return packet;
         }

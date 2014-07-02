@@ -4,6 +4,7 @@
 */
 
 #include "ReliableMessageChannel.h"
+#include "Memory.h"
 
 namespace protocol
 {
@@ -177,9 +178,11 @@ namespace protocol
         assert( config.largeBlockAllocator );
         assert( config.maxSmallBlockSize <= MaxSmallBlockSize );
 
-        m_sendQueue = new SlidingWindow<SendQueueEntry>( m_config.sendQueueSize );
-        m_sentPackets = new SlidingWindow<SentPacketEntry>( m_config.sentPacketsSize );
-        m_receiveQueue = new SlidingWindow<ReceiveQueueEntry>( m_config.receiveQueueSize );
+        m_allocator = config.allocator ? config.allocator : &memory::default_allocator();
+
+        m_sendQueue = PROTOCOL_NEW( *m_allocator, SlidingWindow<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
+        m_sentPackets = PROTOCOL_NEW( *m_allocator, SlidingWindow<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
+        m_receiveQueue = PROTOCOL_NEW( *m_allocator, SlidingWindow<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
 
         const int MessageIdBits = 16;
         const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
@@ -189,10 +192,9 @@ namespace protocol
 
         m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
 
-        m_sendLargeBlock.fragments = new SendFragmentData[m_maxBlockFragments];
-        m_receiveLargeBlock.fragments = new ReceiveFragmentData[m_maxBlockFragments];
-
-        m_sentPacketMessageIds = new uint16_t[m_config.maxMessagesPerPacket*m_config.sendQueueSize];
+        m_sendLargeBlock.fragments = PROTOCOL_NEW_ARRAY( *m_allocator, SendFragmentData, m_maxBlockFragments );
+        m_receiveLargeBlock.fragments = PROTOCOL_NEW_ARRAY( *m_allocator, ReceiveFragmentData, m_maxBlockFragments );
+        m_sentPacketMessageIds = PROTOCOL_NEW_ARRAY( *m_allocator, uint16_t, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
 
         Reset();
     }
@@ -204,16 +206,18 @@ namespace protocol
         assert( m_sendQueue );
         assert( m_sentPackets );
         assert( m_receiveQueue );
+
+        PROTOCOL_DELETE( *m_allocator, SlidingWindow<SendQueueEntry>, m_sendQueue );
+        PROTOCOL_DELETE( *m_allocator, SlidingWindow<SentPacketEntry>, m_sentPackets );
+        PROTOCOL_DELETE( *m_allocator, SlidingWindow<ReceiveQueueEntry>, m_receiveQueue );
+
         assert( m_sentPacketMessageIds );
         assert( m_sendLargeBlock.fragments );
         assert( m_receiveLargeBlock.fragments );
 
-        delete m_sendQueue;
-        delete m_sentPackets;
-        delete m_receiveQueue;
-        delete [] m_sentPacketMessageIds;
-        delete [] m_sendLargeBlock.fragments;
-        delete [] m_receiveLargeBlock.fragments;
+        PROTOCOL_DELETE_ARRAY( *m_allocator, m_sentPacketMessageIds, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
+        PROTOCOL_DELETE_ARRAY( *m_allocator, m_sendLargeBlock.fragments, m_maxBlockFragments );
+        PROTOCOL_DELETE_ARRAY( *m_allocator, m_receiveLargeBlock.fragments, m_maxBlockFragments );
 
         m_sendQueue = nullptr;
         m_sentPackets = nullptr;
@@ -374,6 +378,7 @@ namespace protocol
 
     ChannelData * ReliableMessageChannel::CreateData()
     {
+        // todo: convert to scratch buffer
         return new ReliableMessageChannelData( m_config );
     }
 
@@ -416,13 +421,6 @@ namespace protocol
 
             assert( m_sendLargeBlock.active );
 
-            // todo: don't walk across all fragments here -- start at the 
-            // oldest unacked fragment and walk across only n entries max
-
-// ======================================================================================
-
-            // *** THIS IS THE SLOW BIT ***
-
             int fragmentId = -1;
             for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
             {
@@ -435,13 +433,12 @@ namespace protocol
                 }
             }
 
-// ======================================================================================
-
             if ( fragmentId == -1 )
                 return nullptr;
 
 //                printf( "sending fragment %d\n", (int) fragmentId );
 
+            // todo: convert to custom allocator
             auto data = new ReliableMessageChannelData( m_config );
             data->largeBlock = 1;
             data->blockSize = block.GetSize();
@@ -547,6 +544,7 @@ namespace protocol
 
             // construct channel data for packet
 
+            // todo: convert to custom allocator (scratch)
             auto data = new ReliableMessageChannelData( m_config );
 
             Allocator & a = memory::default_scratch_allocator();

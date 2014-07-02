@@ -1,3 +1,41 @@
+Tuesday Evening, July 1st, 2014:
+--------------------------------
+
+    Pass over code // todo
+
+    Removed TestNetworkInterface.cpp. Was not adding value.
+
+    Pass over code and mark each new that needs to be converted to custom allocators.
+
+    Fixed double free introduced in network simulator.
+
+    Converted BSDSocket to use allocator passed in to config.
+
+    ^-- Falls back to default allocator if null allocator passed in = NICE
+
+    Convert sliding window to accept allocator in ctor.
+
+    Convert sliding window tests.
+
+    Convert classes that use sliding window: Connection, ReliableMessageChannel.
+
+    Convert remaining fragment allocations inside ReliableMessageChannel.cpp
+
+    Probably want an allocate array macro? eg. create an array and then
+    initialize each array entry to the default ctor via placement new?
+
+    Yep. Added PROTOCOL_NEW_ARRAY and PROTOCOL_DELETE_ARRAY.
+
+
+Thursday Morning, June 26th, 2014:
+----------------------------------
+
+    Remove the need for AF_INET6 etc. in DNSResolver.h and BSDSocket.h
+
+    Can just be replaced with "bool ipv6" really. I don't know that I care
+    about the transition which is either. That's not well tested.
+
+
 Wednesday Evening, June 25th, 2014:
 -----------------------------------
 

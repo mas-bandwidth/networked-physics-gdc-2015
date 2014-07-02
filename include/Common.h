@@ -17,11 +17,9 @@
 #include "Constants.h"
 #include <cassert>
 
-// todo: kill it with fire!
 #include <queue>
 #include <map>
 
-// todo: prefix all defines with PROTOCOL_
 #define PLATFORM_WINDOWS  1
 #define PLATFORM_MAC      2
 #define PLATFORM_UNIX     3

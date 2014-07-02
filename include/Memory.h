@@ -357,7 +357,26 @@ namespace protocol
 #endif
 
 	#define PROTOCOL_NEW( a, T, ... ) ( new ((a).Allocate(sizeof(T), alignof(T))) T(__VA_ARGS__) )
-	#define PROTOCOL_DELETE( a, T, p ) do { if (p) { (p)->~T(); a.Free(p); } } while (0)	
+	#define PROTOCOL_DELETE( a, T, p ) do { if (p) { (p)->~T(); (a).Free(p); } } while (0)	
+
+	template <typename T> T * AllocateArray( Allocator & allocator, int arraySize, T * dummy )
+	{
+		T * array = (T*) allocator.Allocate( sizeof(T) * arraySize, alignof(T) );
+		for ( int i = 0; i < arraySize; ++i )
+			new( &array[i] ) T();
+		return array;
+	}
+
+	template <typename T> void DeleteArray( Allocator & allocator, T * array, int arraySize )
+	{
+		for ( int i = 0; i < arraySize; ++i )
+			(&array[i])->~T();
+		allocator.Free( array );
+	}
+
+	#define PROTOCOL_NEW_ARRAY( a, T, count ) AllocateArray( a, count, (T*)nullptr )
+	#define PROTOCOL_DELETE_ARRAY( a, array, count ) DeleteArray( a, array, count )
+
 }
 
 #endif

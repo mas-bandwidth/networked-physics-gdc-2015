@@ -397,6 +397,8 @@ namespace protocol
         {
             assert( channelStructure );
 
+            // todo: convert to using custom allocator
+
             Register( CLIENT_SERVER_PACKET_CONNECTION_REQUEST,   [] { return new ConnectionRequestPacket();  } );
             Register( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE,   [] { return new ChallengeResponsePacket();  } );
             Register( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION, [] { return new ReadyForConnectionPacket(); } );

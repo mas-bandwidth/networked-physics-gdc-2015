@@ -27,10 +27,10 @@ void test_client_initial_state()
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket networkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
-        clientConfig.networkInterface = networkInterface;
+        clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
         Client client( clientConfig );
@@ -41,10 +41,8 @@ void test_client_initial_state()
         assert( !client.HasError() );
         assert( client.GetError() == CLIENT_ERROR_NONE );
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetNetworkInterface() == networkInterface );
+        assert( client.GetNetworkInterface() == &networkInterface );
         assert( client.GetResolver() == nullptr );
-
-        delete networkInterface;
     }
 
     memory::shutdown();
@@ -67,14 +65,14 @@ void test_client_resolve_hostname_failure()
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket networkInterface( bsdSocketConfig );
 
         DNSResolver resolver;
 
         ClientConfig clientConfig;
         clientConfig.connectingTimeOut = 1000000.0;
         clientConfig.resolver = &resolver;
-        clientConfig.networkInterface = networkInterface;
+        clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
         Client client( clientConfig );
@@ -108,8 +106,6 @@ void test_client_resolve_hostname_failure()
         assert( client.HasError() );
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
         assert( client.GetError() == CLIENT_ERROR_RESOLVE_HOSTNAME_FAILED );
-
-        delete networkInterface;
     }
 
     memory::shutdown();
@@ -132,13 +128,13 @@ void test_client_resolve_hostname_timeout()
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket networkInterface( bsdSocketConfig );
 
         DNSResolver resolver;
 
         ClientConfig clientConfig;
         clientConfig.resolver = &resolver;
-        clientConfig.networkInterface = networkInterface;
+        clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
         Client client( clientConfig );
@@ -171,8 +167,6 @@ void test_client_resolve_hostname_timeout()
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
         assert( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );
         assert( client.GetExtendedError() == CLIENT_STATE_RESOLVING_HOSTNAME );
-
-        delete networkInterface;
     }
 }
 
@@ -193,13 +187,13 @@ void test_client_resolve_hostname_success()
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket networkInterface( bsdSocketConfig );
 
         DNSResolver resolver;
 
         ClientConfig clientConfig;
         clientConfig.resolver = &resolver;
-        clientConfig.networkInterface = networkInterface;
+        clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
         Client client( clientConfig );
@@ -233,8 +227,6 @@ void test_client_resolve_hostname_success()
         assert( !client.HasError() );
         assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
         assert( client.GetError() == CLIENT_ERROR_NONE );
-
-        delete networkInterface;
     }
 }
 
@@ -255,10 +247,10 @@ void test_client_connection_request_timeout()
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto networkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket networkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
-        clientConfig.networkInterface = networkInterface;
+        clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
         Client client( clientConfig );
@@ -291,8 +283,6 @@ void test_client_connection_request_timeout()
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
         assert( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );
         assert( client.GetExtendedError() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
-
-        delete networkInterface;
     }
 }
 
@@ -310,26 +300,25 @@ void test_client_connection_request_denied()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -369,9 +358,6 @@ void test_client_connection_request_denied()
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
         assert( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
         assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_CLOSED );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 }
 
@@ -389,26 +375,25 @@ void test_client_connection_challenge()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -448,9 +433,6 @@ void test_client_connection_challenge()
         assert( client.GetState() == CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
         assert( client.GetError() == CLIENT_ERROR_NONE );
         assert( client.GetExtendedError() == 0 );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 }
 
@@ -468,26 +450,25 @@ void test_client_connection_challenge_response()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -526,9 +507,6 @@ void test_client_connection_challenge_response()
         assert( client.GetState() == CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
         assert( client.GetError() == CLIENT_ERROR_NONE );
         assert( client.GetExtendedError() == 0 );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 }
 
@@ -546,26 +524,25 @@ void test_client_connection_established()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -604,9 +581,6 @@ void test_client_connection_established()
         assert( client.GetState() == CLIENT_STATE_CONNECTED );
         assert( client.GetError() == CLIENT_ERROR_NONE );
         assert( client.GetExtendedError() == 0 );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 
     memory::shutdown();
@@ -626,26 +600,25 @@ void test_client_connection_messages()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -758,9 +731,6 @@ void test_client_connection_messages()
 
             timeBase.time += timeBase.deltaTime;
         }
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 }
 
@@ -778,26 +748,25 @@ void test_client_connection_disconnect()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -863,9 +832,6 @@ void test_client_connection_disconnect()
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
         assert( client.GetError() == CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
         assert( client.GetExtendedError() == 0 );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 }
 
@@ -885,18 +851,17 @@ void test_client_connection_server_full()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         const int NumClients = 32;
 
         ServerConfig serverConfig;
         serverConfig.maxClients = NumClients;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -912,6 +877,7 @@ void test_client_connection_server_full()
 
         for ( int i = 0; i < NumClients; ++i )
         {
+            // todo: convert to custom allocator
             auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
 
             assert( clientNetworkInterface );
@@ -920,6 +886,7 @@ void test_client_connection_server_full()
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
+            // todo: convert to custom allocator
             auto client = new Client( clientConfig );
 
             assert( client );
@@ -978,30 +945,30 @@ void test_client_connection_server_full()
         // with the "server full" connection denied response and the other clients
         // remain connected throughout the test.
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
-        auto extraClient = new Client( clientConfig );
+        Client extraClient( clientConfig );
 
-        extraClient->Connect( "[::1]:10000" );
+        extraClient.Connect( "[::1]:10000" );
 
-        assert( extraClient->IsConnecting() );
-        assert( !extraClient->IsDisconnected() );
-        assert( !extraClient->IsConnected() );
-        assert( !extraClient->HasError() );
-        assert( extraClient->GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        assert( extraClient.IsConnecting() );
+        assert( !extraClient.IsDisconnected() );
+        assert( !extraClient.IsConnected() );
+        assert( !extraClient.HasError() );
+        assert( extraClient.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         for ( int i = 0; i < 256; ++i )
         {
             for ( auto client : clients )
                 client->Update( timeBase );
 
-            extraClient->Update( timeBase );
+            extraClient.Update( timeBase );
 
-            if ( extraClient->HasError() )
+            if ( extraClient.HasError() )
                 break;
 
             server.Update( timeBase );
@@ -1025,17 +992,14 @@ void test_client_connection_server_full()
             assert( client->GetExtendedError() == 0 );
         }
 
-        assert( extraClient->HasError() );
-        assert( extraClient->IsDisconnected() );
-        assert( !extraClient->IsConnecting() );
-        assert( !extraClient->IsConnected() );
-        assert( extraClient->GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( extraClient->GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        assert( extraClient->GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
+        assert( extraClient.HasError() );
+        assert( extraClient.IsDisconnected() );
+        assert( !extraClient.IsConnecting() );
+        assert( !extraClient.IsConnected() );
+        assert( extraClient.GetState() == CLIENT_STATE_DISCONNECTED );
+        assert( extraClient.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        assert( extraClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
-        delete extraClient;
         for ( int i = 0; i < NumClients; ++i )
             delete clients[i];
         for ( int i = 0; i < NumClients; ++i )
@@ -1061,26 +1025,25 @@ void test_client_connection_timeout()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -1153,9 +1116,6 @@ void test_client_connection_timeout()
         }
 
         assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 
     memory::shutdown();
@@ -1177,26 +1137,25 @@ void test_client_connection_already_connected()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -1262,9 +1221,6 @@ void test_client_connection_already_connected()
         assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
         assert( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
         assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 
     memory::shutdown();
@@ -1286,26 +1242,25 @@ void test_client_connection_reconnect()
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
-        bsdSocketConfig.family = AF_INET6;
         bsdSocketConfig.maxPacketSize = 1024;
         bsdSocketConfig.packetFactory = &packetFactory;
 
-        auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
 
         ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
-        clientConfig.networkInterface = clientNetworkInterface;
+        clientConfig.networkInterface = &clientNetworkInterface;
 
         Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
-        auto serverNetworkInterface = new BSDSocket( bsdSocketConfig );
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
-        serverConfig.networkInterface = serverNetworkInterface;
+        serverConfig.networkInterface = &serverNetworkInterface;
 
         Server server( serverConfig );
 
@@ -1374,9 +1329,6 @@ void test_client_connection_reconnect()
         assert( client.GetState() == CLIENT_STATE_CONNECTED );
         assert( client.GetError() == CLIENT_ERROR_NONE );
         assert( client.GetExtendedError() == 0 );
-
-        delete clientNetworkInterface;
-        delete serverNetworkInterface;
     }
 
     memory::shutdown();

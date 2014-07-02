@@ -35,11 +35,13 @@ public:
 
     ReliableMessageChannel * CreateReliableMessageChannel()
     {
+        // todo: convert to custom allocator
         return new ReliableMessageChannel( m_config );
     }
 
     ReliableMessageChannelData * CreateReliableMessageChannelData()
-    {
+    {   
+        // todo: convert to custom allocator
         return new ReliableMessageChannelData( m_config );
     }
 

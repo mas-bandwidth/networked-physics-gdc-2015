@@ -25,9 +25,10 @@ namespace protocol
         connectionConfig.packetFactory = m_packetFactory;
 
         m_numClients = m_config.maxClients;
-        m_clients = new ClientData[m_numClients];
+
+        m_clients = new ClientData[m_numClients];                                   // todo: convert to custom allocator
         for ( int i = 0; i < m_numClients; ++i )
-            m_clients[i].connection = new Connection( connectionConfig );
+            m_clients[i].connection = new Connection( connectionConfig );           // todo: convert to custom allocator
     }
 
     Server::~Server()
