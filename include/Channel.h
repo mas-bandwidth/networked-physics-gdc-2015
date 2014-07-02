@@ -7,7 +7,6 @@
 #define PROTOCOL_CHANNEL_H
 
 #include "Common.h"
-#include "Memory.h"
 
 namespace protocol
 {

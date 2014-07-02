@@ -6,7 +6,6 @@
 #ifndef PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 #define PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 
-#include "Memory.h"
 #include "Factory.h"
 #include "Message.h"
 #include "BlockMessage.h"

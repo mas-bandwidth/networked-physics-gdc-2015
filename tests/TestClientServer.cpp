@@ -1000,6 +1000,7 @@ void test_client_connection_server_full()
         assert( extraClient.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
         assert( extraClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
+        // todo: convert to custom allocator
         for ( int i = 0; i < NumClients; ++i )
             delete clients[i];
         for ( int i = 0; i < NumClients; ++i )

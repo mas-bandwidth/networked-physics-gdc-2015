@@ -7,7 +7,7 @@
 #define SLIDING_WINDOW_H
 
 #include "Common.h"
-#include "Memory.h"         // todo: move allocator interface out to another header to avoid this
+#include "Allocator.h"
 
 namespace protocol
 {

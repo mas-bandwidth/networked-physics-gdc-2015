@@ -10,6 +10,7 @@
 #include "Stream.h"
 #include "Channel.h"
 #include "PacketFactory.h"
+#include "Memory.h"
 
 namespace protocol
 {
@@ -261,7 +262,7 @@ namespace protocol
             {
                 if ( channelData[i] )
                 {
-                    delete channelData[i];
+                    PROTOCOL_DELETE( memory::default_scratch_allocator(), ChannelData, channelData[i] );
                     channelData[i] = nullptr;
                 }
             }

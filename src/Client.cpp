@@ -4,6 +4,7 @@
 */
 
 #include "Client.h"
+#include "Memory.h"
 
 namespace protocol
 {
@@ -13,6 +14,8 @@ namespace protocol
         assert( m_config.networkInterface );
         assert( m_config.channelStructure );
 
+        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
+
         m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
         ConnectionConfig connectionConfig;
@@ -21,19 +24,21 @@ namespace protocol
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
 
-        m_connection = new Connection( connectionConfig );          // todo: convert to custom allocator
+        m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
         ClearStateData();
     }
 
     Client::~Client()
     {
+        assert( m_allocator );
+
         Disconnect();
 
         assert( m_connection );
-        assert( m_packetFactory );      // packet factory pointer is not owned by us
+        assert( m_packetFactory );      // IMPORTANT: packet factory pointer is not owned by us
 
-        delete m_connection;
+        PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
         
         m_connection = nullptr;
         m_packetFactory = nullptr;

@@ -1,7 +1,7 @@
 #ifndef PROTOCOL_ARRAY_H
 #define PROTOCOL_ARRAY_H
 
-#include "Memory.h"
+#include "Allocator.h"
 
 namespace protocol
 {

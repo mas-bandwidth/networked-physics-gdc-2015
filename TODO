@@ -1,12 +1,37 @@
 DONE:
 
-TODO:
-
     Convert remaining allocations in channel to use scratch allocator.
 
     eg. the channel data create etc.
 
     Make sure matching delete is replaced with PROTOCOL_DELETE
+
+    Had to update channel structures, they were still using new.
+
+    What other allocations can be converted?
+
+    Network simulator needs custom allocator passed in. Relatively easy.
+
+    What else is easy?
+
+    Client needs to be converted.
+
+    Server as well.
+
+    Split out allocator base class into Allocator.h and removed
+    #include "Memory.h" from headers.
+
+TODO:
+
+    -----------------
+
+    Channel structure should have a corresponding destroy channel
+    function, for maximum flexibility of implementation, eg. could
+    actually new the channel if it wanted to.
+
+    Channel structure should create channels via base allocator passed in.
+
+    Update code to call DestroyChannel on channel structure instead of delete.
 
     ----------------
 
@@ -142,6 +167,13 @@ TODO:
 
 
 WOULD BE NICE:
+
+    -------------
+
+    It seems weird that normal delete needs to pass in the type,
+    but the array delete doesn't. Is this bad? Probably.
+
+    Can I infer the type on normal delete with C++11? Probably.
 
     ----------
 

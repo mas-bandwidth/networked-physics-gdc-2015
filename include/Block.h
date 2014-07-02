@@ -7,7 +7,7 @@
 #define PROTOCOL_BLOCK_H
 
 #include "Common.h"
-#include "Memory.h"
+#include "Allocator.h"
 
 namespace protocol
 {

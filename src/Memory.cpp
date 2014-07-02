@@ -18,11 +18,6 @@ namespace protocol
 
 	namespace memory
 	{
-		// todo: for the greatest flexibility it would be nice to pass in the memory blocks
-		// for temporary memory, and for the default allocator. in fact, I'm not sure I really
-		// even like the idea of the default allocator at all. default scratch, sure...
-		// but default allocator. Probably not.
-
 		void initialize( uint32_t temporary_memory ) 
 		{
 			uint8_t * p = memory_globals.buffer;

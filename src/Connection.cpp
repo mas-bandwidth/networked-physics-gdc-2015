@@ -4,6 +4,7 @@
 */
 
 #include "Connection.h"
+#include "Memory.h"
 
 namespace protocol
 {
@@ -37,6 +38,7 @@ namespace protocol
         for ( int i = 0; i < m_numChannels; ++i )
         {
             assert( m_channels[i] );
+            // todo: call channel structure to perform the delete. more flexible
             delete m_channels[i];
         }
 

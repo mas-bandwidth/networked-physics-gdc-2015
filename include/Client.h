@@ -13,8 +13,12 @@
 
 namespace protocol
 {
+    class Allocator;
+
     struct ClientConfig
     {
+        Allocator * allocator = nullptr;                        // allocator used for objects with the same life cycle as this object. if null is passed in, default allocator is used.
+
         uint16_t defaultServerPort = 10000;                     // the default server port. used when resolving by hostname and address port is zero.
 
         float connectingTimeOut = 5.0f;                         // number of seconds before timeout for any situation *before* the client establishes connection
@@ -32,6 +36,8 @@ namespace protocol
     class Client
     {
         const ClientConfig m_config;
+
+        Allocator * m_allocator;
 
         TimeBase m_timeBase;
 

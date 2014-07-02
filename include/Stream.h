@@ -8,7 +8,6 @@
 
 #include "Common.h"
 #include "Block.h"
-#include "Memory.h"
 #include "BitPacker.h"
 
 namespace protocol

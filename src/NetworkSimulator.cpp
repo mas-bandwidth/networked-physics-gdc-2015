@@ -5,17 +5,19 @@
 
 #include "NetworkSimulator.h"
 #include "PacketFactory.h"
+#include "Memory.h"
 
 namespace protocol
 {
-    NetworkSimulator::NetworkSimulator( const NetworkSimulatorConfig & config )
-        : m_config( config )
+    NetworkSimulator::NetworkSimulator( const NetworkSimulatorConfig & config ) : m_config( config )
     {
         assert( m_config.packetFactory );
+
+        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
+
+        m_packets = PROTOCOL_NEW_ARRAY( *m_allocator, PacketData, config.numPackets );
+
         m_packetNumber = 0;
-        // todo: convert to using custom allocator
-        m_packets = new PacketData[config.numPackets];
-        memset( m_packets, 0, sizeof(PacketData) * config.numPackets );
         m_numStates = 0;
     }
 
@@ -32,8 +34,7 @@ namespace protocol
             }
         }
 
-        delete [] m_packets;
-        m_packets = nullptr;
+        PROTOCOL_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
     }
 
     void NetworkSimulator::AddState( const NetworkSimulatorState & state )

@@ -378,8 +378,7 @@ namespace protocol
 
     ChannelData * ReliableMessageChannel::CreateData()
     {
-        // todo: convert to scratch buffer
-        return new ReliableMessageChannelData( m_config );
+        return PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
     }
 
     ChannelData * ReliableMessageChannel::GetData( uint16_t sequence )
@@ -438,8 +437,7 @@ namespace protocol
 
 //                printf( "sending fragment %d\n", (int) fragmentId );
 
-            // todo: convert to custom allocator
-            auto data = new ReliableMessageChannelData( m_config );
+            auto data = PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
             data->largeBlock = 1;
             data->blockSize = block.GetSize();
             data->blockId = m_oldestUnackedMessageId;
@@ -544,8 +542,7 @@ namespace protocol
 
             // construct channel data for packet
 
-            // todo: convert to custom allocator (scratch)
-            auto data = new ReliableMessageChannelData( m_config );
+            auto data = PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
 
             Allocator & a = memory::default_scratch_allocator();
             data->messages = (Message**) a.Allocate( numMessageIds * sizeof( Message* ) );

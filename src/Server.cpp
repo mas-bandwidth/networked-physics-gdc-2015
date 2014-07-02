@@ -4,6 +4,7 @@
 */
 
 #include "Server.h"
+#include "Memory.h"
 
 namespace protocol
 {
@@ -13,6 +14,8 @@ namespace protocol
         assert( m_config.networkInterface );
         assert( m_config.channelStructure );
         assert( m_config.maxClients >= 1 );
+
+        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
 //            printf( "creating server with %d client slots\n", m_config.maxClients );
 
@@ -26,24 +29,25 @@ namespace protocol
 
         m_numClients = m_config.maxClients;
 
-        m_clients = new ClientData[m_numClients];                                   // todo: convert to custom allocator
+        m_clients = PROTOCOL_NEW_ARRAY( *m_allocator, ClientData, m_numClients );
         for ( int i = 0; i < m_numClients; ++i )
-            m_clients[i].connection = new Connection( connectionConfig );           // todo: convert to custom allocator
+            m_clients[i].connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
     }
 
     Server::~Server()
     {
+        assert( m_allocator );
         assert( m_clients );
         assert( m_packetFactory );
 
         for ( int i = 0; i < m_numClients; ++i )
         {
             assert( m_clients[i].connection );
-            delete m_clients[i].connection; 
+            PROTOCOL_DELETE( *m_allocator, Connection, m_clients[i].connection );
             m_clients[i].connection = nullptr;
         }
 
-        delete [] m_clients;
+        PROTOCOL_DELETE_ARRAY( *m_allocator, m_clients, m_numClients );
 
         m_clients = nullptr;
         m_packetFactory = nullptr;

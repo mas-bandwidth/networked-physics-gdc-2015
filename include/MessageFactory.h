@@ -78,6 +78,7 @@ namespace protocol
                 allocated_messages.erase( message );
                 #endif
                 num_allocated_messages--;
+                // todo: convert to custom allocator
                 delete message;
             }
         }

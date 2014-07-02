@@ -1,4 +1,5 @@
 #include "TestMessages.h"
+#include "Memory.h"
 
 using namespace protocol;
 

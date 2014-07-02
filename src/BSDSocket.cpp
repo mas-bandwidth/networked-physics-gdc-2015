@@ -5,6 +5,7 @@
 
 #include "Network.h"
 #include "BSDSocket.h"
+#include "Memory.h"
 
 #if PLATFORM == PLATFORM_WINDOWS
 

@@ -17,8 +17,8 @@ extern void test_string_stream();
 extern void test_sequence();
 extern void test_address4();
 extern void test_address6();
-extern void test_factory();
 extern void test_message_factory();
+// todo: should probably also be test_packet_factory
 extern void test_bitpacker();
 extern void test_stream();
 extern void test_sliding_window();
@@ -86,8 +86,8 @@ int main()
         test_sequence();
         test_address4();
         test_address6();
-        test_factory();
         test_message_factory();
+        //test_packet_factory();
         test_bitpacker();
         test_stream();
         test_sliding_window();

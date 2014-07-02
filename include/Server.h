@@ -12,8 +12,12 @@
 
 namespace protocol
 {
+    class Allocator;
+
     struct ServerConfig
     {
+        Allocator * allocator = nullptr;                        // allocator used for allocations that match the life cycle of this object. if null then default allocator is used.
+
         int maxClients = 16;                                    // max number of clients supported by this server.
 
         float connectingSendRate = 10;                          // packets to send per-second while a client slot is connecting.
@@ -52,6 +56,8 @@ namespace protocol
         };
 
         const ServerConfig m_config;
+
+        Allocator * m_allocator;
 
         TimeBase m_timeBase;
 

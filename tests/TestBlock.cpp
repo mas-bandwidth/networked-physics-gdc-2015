@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "Memory.h"
 
 using namespace protocol;
 
@@ -19,6 +20,7 @@ void test_block()
         assert( block->IsValid() );
         uint8_t * data = block->GetData();
         memset( data, 0, BlockSize );
+        // todo: convert to custom allocator
         delete block;
     }
     memory::shutdown();

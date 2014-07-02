@@ -64,6 +64,7 @@ namespace protocol
             #endif
             assert( num_allocated_packets > 0 );
             num_allocated_packets--;
+            // todo: convert to custom allocator
             delete packet;
         }
     };

@@ -41,8 +41,7 @@ public:
 
     ReliableMessageChannelData * CreateReliableMessageChannelData()
     {   
-        // todo: convert to custom allocator
-        return new ReliableMessageChannelData( m_config );
+        return PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const
