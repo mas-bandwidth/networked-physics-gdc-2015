@@ -877,8 +877,7 @@ void test_client_connection_server_full()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            // todo: convert to custom allocator
-            auto clientNetworkInterface = new BSDSocket( bsdSocketConfig );
+            auto clientNetworkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
             assert( clientNetworkInterface );
 
@@ -886,8 +885,7 @@ void test_client_connection_server_full()
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
-            // todo: convert to custom allocator
-            auto client = new Client( clientConfig );
+            auto client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
 
             assert( client );
 
@@ -1000,11 +998,11 @@ void test_client_connection_server_full()
         assert( extraClient.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
         assert( extraClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
-        // todo: convert to custom allocator
         for ( int i = 0; i < NumClients; ++i )
-            delete clients[i];
+            PROTOCOL_DELETE( memory::default_allocator(), Client, clients[i] );
+
         for ( int i = 0; i < NumClients; ++i )
-            delete clientInterface[i];
+            PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInterface[i] );
     }
 
     memory::shutdown(); 

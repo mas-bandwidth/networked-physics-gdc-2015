@@ -26,6 +26,27 @@ Tuesday Evening, July 1st, 2014:
 
     Yep. Added PROTOCOL_NEW_ARRAY and PROTOCOL_DELETE_ARRAY.
 
+    Convert remaining allocations in channel to use scratch allocator.
+
+    eg. the channel data create etc.
+
+    Make sure matching delete is replaced with PROTOCOL_DELETE
+
+    Had to update channel structures, they were still using new.
+
+    What other allocations can be converted?
+
+    Network simulator needs custom allocator passed in. Relatively easy.
+
+    What else is easy?
+
+    Client needs to be converted.
+
+    Server as well.
+
+    Split out allocator base class into Allocator.h and removed
+    #include "Memory.h" from headers.
+
 
 Thursday Morning, June 26th, 2014:
 ----------------------------------

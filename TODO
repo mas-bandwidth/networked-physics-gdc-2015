@@ -1,25 +1,6 @@
 DONE:
 
-    Convert remaining allocations in channel to use scratch allocator.
-
-    eg. the channel data create etc.
-
-    Make sure matching delete is replaced with PROTOCOL_DELETE
-
-    Had to update channel structures, they were still using new.
-
-    What other allocations can be converted?
-
-    Network simulator needs custom allocator passed in. Relatively easy.
-
-    What else is easy?
-
-    Client needs to be converted.
-
-    Server as well.
-
-    Split out allocator base class into Allocator.h and removed
-    #include "Memory.h" from headers.
+    Pass over unit tests and convert remaining new/deletes.
 
 TODO:
 
@@ -33,18 +14,11 @@ TODO:
 
     Update code to call DestroyChannel on channel structure instead of delete.
 
-    ----------------
-
-    Work through and first convert to scratch allocator where possible.
-
-    Convert allocators that are during initialization to use global allocator.
-
-    Identify any allocations which *don't* fit into scratch model, but are
-    created at runtime. These allocations need to go away.
-
     ------------------
 
     Convert packet factory to use custom allocators instead of new.
+
+    ------------------
 
     Convert message factory to use custom allocators instead of new.
 
@@ -56,6 +30,8 @@ TODO:
     BUT... I would like the scratch allocator to be more resilient in 
     debug builds, eg. for it to have safety checks, eg. missing magic
     # where expected, assert.
+
+    Test going back to the real scratch allocator. Does it work now?
 
     ------------------
 
