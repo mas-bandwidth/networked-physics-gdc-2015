@@ -18,7 +18,7 @@ extern void test_sequence();
 extern void test_address4();
 extern void test_address6();
 extern void test_message_factory();
-// todo: should probably also be test_packet_factory
+extern void test_packet_factory();
 extern void test_bitpacker();
 extern void test_stream();
 extern void test_sliding_window();
@@ -87,7 +87,7 @@ int main()
         test_address4();
         test_address6();
         test_message_factory();
-        //test_packet_factory();
+        test_packet_factory();
         test_bitpacker();
         test_stream();
         test_sliding_window();
@@ -99,9 +99,11 @@ int main()
         test_bsd_socket_send_and_receive_multiple_ipv4();
         test_bsd_socket_send_and_receive_multiple_ipv6();
 
+        /*
         test_dns_resolve();
         test_dns_resolve_with_port();
         test_dns_resolve_failure();
+        */
 
         test_connection();
         test_acks();

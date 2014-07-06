@@ -176,7 +176,9 @@ namespace protocol
         assert( clientIndex >= 0 );
         assert( clientIndex < m_numClients );
 
+        #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
+        #endif
 
         assert( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
@@ -213,7 +215,9 @@ namespace protocol
         assert( clientIndex >= 0 );
         assert( clientIndex < m_numClients );
 
+        #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
+        #endif
 
         assert( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
 

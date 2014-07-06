@@ -1,3 +1,37 @@
+Saturday Morning, July 5th, 2014:
+---------------------------------
+
+    Run through the profile in release build now. How does it look?
+
+    Looks pretty good. There is still a malloc cost, this could be
+    spill-over from the scratch allocator, but is more likely the
+    message, packet and block allocation going through the malloc
+    allocator.
+
+    To actually measure we'll need a custom pool allocator for messages.
+
+    Prefix all #define names with PROTOCOL_, eg. PROTOCOL_PLATFORM_WINDOWS
+
+    Fix all #defines to be prefixed with PROTOCOL_
+
+    Moved all preprocessor configuration into Config.h
+
+
+Thursday Morning, July 3rd, 2014:
+---------------------------------
+
+    Convert packet factory to use custom allocators instead of new.
+
+    Convert message factory to use custom allocators instead of new.
+
+    Is there a bug in the scratch allocator? There probably *isn't*
+    but the crash was due to memory leak/corruption on my part.
+
+    Test going back to the real scratch allocator. Does it work now?
+
+    Yes it works now.
+
+
 Wednesday Morning, July 2nd, 2014:
 ----------------------------------
 

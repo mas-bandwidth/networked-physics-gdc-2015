@@ -6,31 +6,12 @@
 #ifndef PROTOCOL_COMMON_H
 #define PROTOCOL_COMMON_H
 
-//#define DEBUG_MEMORY_LEAKS 1
-
-#if DEBUG_MEMORY_LEAKS
-#include <map>
-#include <algorithm>
-#endif
-
+#include "Config.h"
 #include "Enums.h"
 #include "Constants.h"
 #include <cassert>
-
 #include <queue>
 #include <map>
-
-#define PLATFORM_WINDOWS  1
-#define PLATFORM_MAC      2
-#define PLATFORM_UNIX     3
-
-#if defined(_WIN32)
-#define PLATFORM PLATFORM_WINDOWS
-#elif defined(__APPLE__)
-#define PLATFORM PLATFORM_MAC
-#else
-#define PLATFORM PLATFORM_UNIX
-#endif
 
 namespace protocol
 {
@@ -190,6 +171,16 @@ namespace protocol
     }
 
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed );
+
+    #define check( condition )                                                                                                          \
+    do                                                                                                                                  \
+    {                                                                                                                                   \
+        if ( !(condition) )                                                                                                             \
+        {                                                                                                                               \
+            printf( "Check failed: ( %s ), function %s, file %s, line %d\n", #condition, __FUNCTION__, __FILE__, __LINE__ );            \
+            exit(1);                                                                                                                    \
+        }                                                                                                                               \
+    } while(0)
 }
 
 #endif

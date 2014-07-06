@@ -26,37 +26,37 @@ void test_sliding_window()
         SlidingWindow<TestPacketData> slidingWindow( memory::default_allocator(), size );
 
         for ( int i = 0; i < size; ++i )
-            assert( slidingWindow.Find(i) == nullptr );
+            check( slidingWindow.Find(i) == nullptr );
 
         for ( int i = 0; i <= size*4; ++i )
         {
             slidingWindow.Insert( i );
-            assert( slidingWindow.GetSequence() == i + 1 );
+            check( slidingWindow.GetSequence() == i + 1 );
         }
 
         for ( int i = 0; i <= size; ++i )
         {
             // note: outside bounds of sliding window!
             bool insert_succeeded = slidingWindow.Insert( i );
-            assert( !insert_succeeded );
+            check( !insert_succeeded );
         }    
 
         int index = size*4;
         for ( int i = 0; i < size; ++i )
         {
             auto entry = slidingWindow.Find( index );
-            assert( entry );
-            assert( entry->valid );
-            assert( entry->sequence == index );
+            check( entry );
+            check( entry->valid );
+            check( entry->sequence == index );
             index--;
         }
 
         slidingWindow.Reset();
 
-        assert( slidingWindow.GetSequence() == 0 );
+        check( slidingWindow.GetSequence() == 0 );
 
         for ( int i = 0; i < size; ++i )
-            assert( slidingWindow.Find(i) == nullptr );
+            check( slidingWindow.Find(i) == nullptr );
     }
 
     memory::shutdown();
@@ -76,15 +76,15 @@ void test_generate_ack_bits()
         uint32_t ack_bits = -1;
 
         GenerateAckBits( received_packets, ack, ack_bits );
-        assert( ack == 0xFFFF );
-        assert( ack_bits == 0 );
+        check( ack == 0xFFFF );
+        check( ack_bits == 0 );
 
         for ( int i = 0; i <= size; ++i )
             received_packets.Insert( i );
 
         GenerateAckBits( received_packets, ack, ack_bits );
-        assert( ack == size );
-        assert( ack_bits == 0xFFFFFFFF );
+        check( ack == size );
+        check( ack_bits == 0xFFFFFFFF );
 
         received_packets.Reset();
         uint16_t input_acks[] = { 1, 5, 9, 11 };
@@ -94,8 +94,8 @@ void test_generate_ack_bits()
 
         GenerateAckBits( received_packets, ack, ack_bits );
 
-        assert( ack == 11 );
-        assert( ack_bits == ( 1 | (1<<(11-9)) | (1<<(11-5)) | (1<<(11-1)) ) );
+        check( ack == 11 );
+        check( ack_bits == ( 1 | (1<<(11-9)) | (1<<(11-5)) | (1<<(11-1)) ) );
     }
 
     memory::shutdown();

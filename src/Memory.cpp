@@ -9,9 +9,14 @@ namespace protocol
 		uint8_t buffer[ALLOCATOR_MEMORY];
 
 		MallocAllocator * default_allocator;
-		MallocAllocator * default_scratch_allocator;//ScratchAllocator * default_scratch_allocator;
 
-		MemoryGlobals() : default_allocator(0), default_scratch_allocator(0) {}
+	#if USE_SCRATCH_ALLOCATOR
+		ScratchAllocator * scratch_allocator;
+	#else
+		MallocAllocator * scratch_allocator;
+	#endif
+
+		MemoryGlobals() : default_allocator( nullptr ), scratch_allocator( nullptr ) {}
 	};
 
 	MemoryGlobals memory_globals;
@@ -23,25 +28,32 @@ namespace protocol
 			uint8_t * p = memory_globals.buffer;
 			memory_globals.default_allocator = new (p) MallocAllocator();
 			p += sizeof( MallocAllocator );
-			memory_globals.default_scratch_allocator = new (p) MallocAllocator();// ScratchAllocator( *memory_globals.default_allocator, temporary_memory );
+		#if USE_SCRATCH_ALLOCATOR
+			memory_globals.scratch_allocator = new (p) ScratchAllocator( *memory_globals.default_allocator, temporary_memory );
+		#else
+			memory_globals.scratch_allocator = new (p) MallocAllocator();
+		#endif
 		}
 
 		Allocator & default_allocator() 
 		{
 			assert( memory_globals.default_allocator );
-			return * memory_globals.default_allocator;
+			return *memory_globals.default_allocator;
 		}
 
-		Allocator & default_scratch_allocator() 
+		Allocator & scratch_allocator() 
 		{
-			assert( memory_globals.default_scratch_allocator );
-			return * memory_globals.default_scratch_allocator;
+			assert( memory_globals.scratch_allocator );
+			return *memory_globals.scratch_allocator;
 		}
 
 		void shutdown() 
 		{
-			//memory_globals.default_scratch_allocator->~ScratchAllocator();
-			memory_globals.default_scratch_allocator->~MallocAllocator();
+		#if USE_SCRATCH_ALLOCATOR
+			memory_globals.scratch_allocator->~ScratchAllocator();
+		#else
+			memory_globals.scratch_allocator->~MallocAllocator();
+		#endif
 			memory_globals.default_allocator->~MallocAllocator();
 			memory_globals = MemoryGlobals();
 		}

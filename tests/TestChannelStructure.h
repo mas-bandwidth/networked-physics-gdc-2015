@@ -14,7 +14,7 @@ class TestChannelStructure : public ChannelStructure
 public:
 
     TestChannelStructure( TestMessageFactory & messageFactory )
-        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
+        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
     {
         m_config.messageFactory = &messageFactory;
         m_config.messageAllocator = &memory::default_allocator();

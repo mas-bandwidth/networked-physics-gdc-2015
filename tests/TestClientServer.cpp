@@ -16,11 +16,11 @@ void test_client_initial_state()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -35,14 +35,14 @@ void test_client_initial_state()
 
         Client client( clientConfig );
 
-        assert( client.IsDisconnected () );
-        assert( !client.IsConnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.HasError() );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetNetworkInterface() == &networkInterface );
-        assert( client.GetResolver() == nullptr );
+        check( client.IsDisconnected () );
+        check( !client.IsConnected() );
+        check( !client.IsConnecting() );
+        check( !client.HasError() );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetNetworkInterface() == &networkInterface );
+        check( client.GetResolver() == nullptr );
     }
 
     memory::shutdown();
@@ -54,11 +54,11 @@ void test_client_resolve_hostname_failure()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -79,11 +79,11 @@ void test_client_resolve_hostname_failure()
 
         client.Connect( "my butt" );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_RESOLVING_HOSTNAME );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_RESOLVING_HOSTNAME );
 
         TimeBase timeBase;
         timeBase.deltaTime = 1.0f;
@@ -100,12 +100,12 @@ void test_client_resolve_hostname_failure()
             std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
         }
 
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_RESOLVE_HOSTNAME_FAILED );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_RESOLVE_HOSTNAME_FAILED );
     }
 
     memory::shutdown();
@@ -117,11 +117,11 @@ void test_client_resolve_hostname_timeout()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -141,11 +141,11 @@ void test_client_resolve_hostname_timeout()
 
         client.Connect( "my butt" );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_RESOLVING_HOSTNAME );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_RESOLVING_HOSTNAME );
 
         TimeBase timeBase;
         timeBase.deltaTime = 1.0f;
@@ -160,13 +160,13 @@ void test_client_resolve_hostname_timeout()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );
-        assert( client.GetExtendedError() == CLIENT_STATE_RESOLVING_HOSTNAME );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );
+        check( client.GetExtendedError() == CLIENT_STATE_RESOLVING_HOSTNAME );
     }
 }
 
@@ -176,11 +176,11 @@ void test_client_resolve_hostname_success()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -200,11 +200,11 @@ void test_client_resolve_hostname_success()
 
         client.Connect( "localhost" );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_RESOLVING_HOSTNAME );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_RESOLVING_HOSTNAME );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -221,12 +221,12 @@ void test_client_resolve_hostname_success()
             std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
         }
 
-        assert( !client.IsDisconnected() );
-        assert( client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
+        check( !client.IsDisconnected() );
+        check( client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.GetError() == CLIENT_ERROR_NONE );
     }
 }
 
@@ -236,11 +236,11 @@ void test_client_connection_request_timeout()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -257,11 +257,11 @@ void test_client_connection_request_timeout()
 
         client.Connect( "[::1]:10001" );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 1.0f;
@@ -276,13 +276,13 @@ void test_client_connection_request_timeout()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );
-        assert( client.GetExtendedError() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );
+        check( client.GetExtendedError() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
     }
 }
 
@@ -292,11 +292,11 @@ void test_client_connection_request_denied()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -324,13 +324,13 @@ void test_client_connection_request_denied()
 
         server.Close();     // IMPORTANT: close the server so all connection requests are denied
 
-        assert( !server.IsOpen() );
+        check( !server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -351,13 +351,13 @@ void test_client_connection_request_denied()
 
     //    printf( "client error: %d\n", client.GetError() );
 
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_CLOSED );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        check( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_CLOSED );
     }
 }
 
@@ -367,11 +367,11 @@ void test_client_connection_challenge()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -397,13 +397,13 @@ void test_client_connection_challenge()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -424,15 +424,15 @@ void test_client_connection_challenge()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
 
-        assert( !client.IsDisconnected() );
-        assert( client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( !client.IsDisconnected() );
+        check( client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
     }
 }
 
@@ -442,11 +442,11 @@ void test_client_connection_challenge_response()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -472,13 +472,13 @@ void test_client_connection_challenge_response()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -499,14 +499,14 @@ void test_client_connection_challenge_response()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
-        assert( !client.IsDisconnected() );
-        assert( client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
+        check( !client.IsDisconnected() );
+        check( client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
     }
 }
 
@@ -516,11 +516,11 @@ void test_client_connection_established()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -546,13 +546,13 @@ void test_client_connection_established()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -573,14 +573,14 @@ void test_client_connection_established()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
     }
 
     memory::shutdown();
@@ -592,11 +592,11 @@ void test_client_connection_messages()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -622,13 +622,13 @@ void test_client_connection_messages()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -649,14 +649,14 @@ void test_client_connection_messages()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
 
         auto clientMessageChannel = static_cast<ReliableMessageChannel*>( client.GetConnection()->GetChannel( 0 ) );
         auto serverMessageChannel = static_cast<ReliableMessageChannel*>( server.GetClientConnection( clientIndex )->GetChannel( 0 ) );
@@ -693,12 +693,12 @@ void test_client_connection_messages()
                 if ( !message )
                     break;
 
-                assert( message->GetId() == numMessagesReceivedOnClient );
-                assert( message->GetType() == MESSAGE_TEST );
+                check( message->GetId() == numMessagesReceivedOnClient );
+                check( message->GetType() == MESSAGE_TEST );
 
                 auto testMessage = static_cast<TestMessage*>( message );
 
-                assert( testMessage->sequence == numMessagesReceivedOnClient );
+                check( testMessage->sequence == numMessagesReceivedOnClient );
 
                 ++numMessagesReceivedOnClient;
 
@@ -712,12 +712,12 @@ void test_client_connection_messages()
                 if ( !message )
                     break;
 
-                assert( message->GetId() == numMessagesReceivedOnServer );
-                assert( message->GetType() == MESSAGE_TEST );
+                check( message->GetId() == numMessagesReceivedOnServer );
+                check( message->GetType() == MESSAGE_TEST );
 
                 auto testMessage = static_cast<TestMessage*>( message );
 
-                assert( testMessage->sequence == numMessagesReceivedOnServer );
+                check( testMessage->sequence == numMessagesReceivedOnServer );
 
                 ++numMessagesReceivedOnServer;
 
@@ -740,11 +740,11 @@ void test_client_connection_disconnect()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -770,13 +770,13 @@ void test_client_connection_disconnect()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -797,18 +797,18 @@ void test_client_connection_disconnect()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
 
         server.DisconnectClient( clientIndex );
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
 
         for ( int i = 0; i < 256; ++i )
         {
@@ -824,14 +824,14 @@ void test_client_connection_disconnect()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
+        check( client.GetExtendedError() == 0 );
     }
 }
 
@@ -841,11 +841,11 @@ void test_client_connection_server_full()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         // create a server on port 10000
 
@@ -865,7 +865,7 @@ void test_client_connection_server_full()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
         // connect the maximum number of clients to the server
         // and wait until they are all fully connected.
@@ -879,7 +879,7 @@ void test_client_connection_server_full()
         {
             auto clientNetworkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
-            assert( clientNetworkInterface );
+            check( clientNetworkInterface );
 
             ClientConfig clientConfig;
             clientConfig.channelStructure = &channelStructure;
@@ -887,15 +887,15 @@ void test_client_connection_server_full()
 
             auto client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
 
-            assert( client );
+            check( client );
 
             client->Connect( "[::1]:10000" );
 
-            assert( client->IsConnecting() );
-            assert( !client->IsDisconnected() );
-            assert( !client->IsConnected() );
-            assert( !client->HasError() );
-            assert( client->GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+            check( client->IsConnecting() );
+            check( !client->IsDisconnected() );
+            check( !client->IsConnected() );
+            check( !client->HasError() );
+            check( client->GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
             clients[i] = client;
             clientInterface[i] = clientNetworkInterface;
@@ -926,17 +926,17 @@ void test_client_connection_server_full()
         }
 
         for ( int i = 0; i < serverConfig.maxClients; ++i )
-            assert( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
+            check( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
 
         for ( auto client : clients )
         {
-            assert( !client->IsDisconnected() );
-            assert( !client->IsConnecting() );
-            assert( client->IsConnected() );
-            assert( !client->HasError() );
-            assert( client->GetState() == CLIENT_STATE_CONNECTED );
-            assert( client->GetError() == CLIENT_ERROR_NONE );
-            assert( client->GetExtendedError() == 0 );
+            check( !client->IsDisconnected() );
+            check( !client->IsConnecting() );
+            check( client->IsConnected() );
+            check( !client->HasError() );
+            check( client->GetState() == CLIENT_STATE_CONNECTED );
+            check( client->GetError() == CLIENT_ERROR_NONE );
+            check( client->GetExtendedError() == 0 );
         }
 
         // now try to connect another client, and verify this client fails to connect
@@ -953,11 +953,11 @@ void test_client_connection_server_full()
 
         extraClient.Connect( "[::1]:10000" );
 
-        assert( extraClient.IsConnecting() );
-        assert( !extraClient.IsDisconnected() );
-        assert( !extraClient.IsConnected() );
-        assert( !extraClient.HasError() );
-        assert( extraClient.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( extraClient.IsConnecting() );
+        check( !extraClient.IsDisconnected() );
+        check( !extraClient.IsConnected() );
+        check( !extraClient.HasError() );
+        check( extraClient.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         for ( int i = 0; i < 256; ++i )
         {
@@ -977,26 +977,26 @@ void test_client_connection_server_full()
         }
 
         for ( int i = 0; i < serverConfig.maxClients; ++i )
-            assert( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
+            check( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
 
         for ( auto client : clients )
         {
-            assert( !client->IsDisconnected() );
-            assert( !client->IsConnecting() );
-            assert( client->IsConnected() );
-            assert( !client->HasError() );
-            assert( client->GetState() == CLIENT_STATE_CONNECTED );
-            assert( client->GetError() == CLIENT_ERROR_NONE );
-            assert( client->GetExtendedError() == 0 );
+            check( !client->IsDisconnected() );
+            check( !client->IsConnecting() );
+            check( client->IsConnected() );
+            check( !client->HasError() );
+            check( client->GetState() == CLIENT_STATE_CONNECTED );
+            check( client->GetError() == CLIENT_ERROR_NONE );
+            check( client->GetExtendedError() == 0 );
         }
 
-        assert( extraClient.HasError() );
-        assert( extraClient.IsDisconnected() );
-        assert( !extraClient.IsConnecting() );
-        assert( !extraClient.IsConnected() );
-        assert( extraClient.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( extraClient.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        assert( extraClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
+        check( extraClient.HasError() );
+        check( extraClient.IsDisconnected() );
+        check( !extraClient.IsConnecting() );
+        check( !extraClient.IsConnected() );
+        check( extraClient.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( extraClient.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        check( extraClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
         for ( int i = 0; i < NumClients; ++i )
             PROTOCOL_DELETE( memory::default_allocator(), Client, clients[i] );
@@ -1014,11 +1014,11 @@ void test_client_connection_timeout()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         // start server and connect one client and wait the client is fully connected
 
@@ -1046,13 +1046,13 @@ void test_client_connection_timeout()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -1073,14 +1073,14 @@ void test_client_connection_timeout()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
 
         // now stop updating the server and verify that the client times out
 
@@ -1094,13 +1094,13 @@ void test_client_connection_timeout()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );    
-        assert( client.GetExtendedError() == CLIENT_STATE_CONNECTED );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_CONNECTION_TIMED_OUT );    
+        check( client.GetExtendedError() == CLIENT_STATE_CONNECTED );
 
         // now update only the server and verify that the client slot times out
 
@@ -1114,7 +1114,7 @@ void test_client_connection_timeout()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
     }
 
     memory::shutdown();
@@ -1126,11 +1126,11 @@ void test_client_connection_already_connected()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         // start a server and connect a client. wait until the client is fully connected
 
@@ -1158,13 +1158,13 @@ void test_client_connection_already_connected()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -1185,14 +1185,14 @@ void test_client_connection_already_connected()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
 
         // now connect the client while already connected
         // verify the client connect is *denied* with reason already connected.
@@ -1213,13 +1213,13 @@ void test_client_connection_already_connected()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( !client.IsConnected() );
-        assert( client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        assert( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
+        check( client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( !client.IsConnected() );
+        check( client.HasError() );
+        check( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        check( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        check( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
     }
 
     memory::shutdown();
@@ -1231,11 +1231,11 @@ void test_client_connection_reconnect()
 
     memory::initialize();
     {
-        TestMessageFactory messageFactory;
+        TestMessageFactory messageFactory( memory::default_allocator() );
 
         TestChannelStructure channelStructure( messageFactory );
 
-        ClientServerPacketFactory packetFactory( &channelStructure );
+        ClientServerPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         // start a server and connect a client. wait until the client is fully connected
 
@@ -1263,13 +1263,13 @@ void test_client_connection_reconnect()
 
         Server server( serverConfig );
 
-        assert( server.IsOpen() );
+        check( server.IsOpen() );
 
-        assert( client.IsConnecting() );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        check( client.IsConnecting() );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
@@ -1290,14 +1290,14 @@ void test_client_connection_reconnect()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
 
         // now disconnect the client on the server and call connect again
         // verify the client can create a new connection to the server.
@@ -1320,14 +1320,14 @@ void test_client_connection_reconnect()
             timeBase.time += timeBase.deltaTime;
         }
 
-        assert( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
-        assert( !client.IsDisconnected() );
-        assert( !client.IsConnecting() );
-        assert( client.IsConnected() );
-        assert( !client.HasError() );
-        assert( client.GetState() == CLIENT_STATE_CONNECTED );
-        assert( client.GetError() == CLIENT_ERROR_NONE );
-        assert( client.GetExtendedError() == 0 );
+        check( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        check( !client.IsDisconnected() );
+        check( !client.IsConnecting() );
+        check( client.IsConnected() );
+        check( !client.HasError() );
+        check( client.GetState() == CLIENT_STATE_CONNECTED );
+        check( client.GetError() == CLIENT_ERROR_NONE );
+        check( client.GetExtendedError() == 0 );
     }
 
     memory::shutdown();

@@ -16,12 +16,12 @@ void test_memory()
     Allocator & allocator = memory::default_allocator();
 
     void * p = allocator.Allocate( 100 );
-    assert( allocator.GetAllocatedSize( p ) >= 100 );
-    assert( allocator.GetTotalAllocated() >= 100 );
+    check( allocator.GetAllocatedSize( p ) >= 100 );
+    check( allocator.GetTotalAllocated() >= 100 );
 
     void * q = allocator.Allocate( 100 );
-    assert( allocator.GetAllocatedSize( q ) >= 100 );
-    assert( allocator.GetTotalAllocated() >= 200 );
+    check( allocator.GetAllocatedSize( q ) >= 100 );
+    check( allocator.GetTotalAllocated() >= 200 );
     
     allocator.Free( p );
     allocator.Free( q );
@@ -34,27 +34,27 @@ void test_scratch()
     printf( "test_scratch\n" );
 
     memory::initialize( 256 * 1024 );
+    {
+        Allocator & a = memory::scratch_allocator();
 
-    Allocator & a = memory::default_scratch_allocator();
+        uint8_t * p = (uint8_t*) a.Allocate( 10 * 1024 );
 
-    uint8_t * p = (uint8_t*) a.Allocate( 10 * 1024 );
+        uint8_t * pointers[100];
 
-    uint8_t * pointers[100];
+        for ( int i = 0; i < 100; ++i )
+            pointers[i] = (uint8_t*) a.Allocate( 1024 );
 
-    for ( int i = 0; i < 100; ++i )
-        pointers[i] = (uint8_t*) a.Allocate( 1024 );
+        for ( int i = 0; i < 100; ++i )
+            a.Free( pointers[i] );
 
-    for ( int i = 0; i < 100; ++i )
-        a.Free( pointers[i] );
+        a.Free( p );
 
-    a.Free( p );
+        for ( int i = 0; i < 100; ++i )
+            pointers[i] = (uint8_t*) a.Allocate( 4 * 1024 );
 
-    for ( int i = 0; i < 100; ++i )
-        pointers[i] = (uint8_t*) a.Allocate( 4 * 1024 );
-
-    for ( int i = 0; i < 100; ++i )
-        a.Free( pointers[i] );
-
+        for ( int i = 0; i < 100; ++i )
+            a.Free( pointers[i] );
+    }
     memory::shutdown();
 }
 
@@ -68,19 +68,19 @@ void test_temp_allocator()
 
         void * p = temp.Allocate( 100 );
 
-        assert( p );
-        assert( temp.GetAllocatedSize( p ) >= 100 );
+        check( p );
+        check( temp.GetAllocatedSize( p ) >= 100 );
         memset( p, 100, 0 );
 
         void * q = temp.Allocate( 256 );
 
-        assert( q );
-        assert( temp.GetAllocatedSize( q ) >= 256 );
+        check( q );
+        check( temp.GetAllocatedSize( q ) >= 256 );
         memset( q, 256, 0 );
 
         void * r = temp.Allocate( 2 * 1024 );
-        assert( r );
-        assert( temp.GetAllocatedSize( r ) >= 2 * 1024 );
+        check( r );
+        check( temp.GetAllocatedSize( r ) >= 2 * 1024 );
         memset( r, 2*1024, 0 );
     }
     memory::shutdown();
@@ -96,28 +96,28 @@ void test_array()
     {
         Array<int> v( a );
 
-        assert( array::size(v) == 0 );
+        check( array::size(v) == 0 );
         array::push_back( v, 3 );
-        assert( array::size( v ) == 1 );
-        assert( v[0] == 3 );
+        check( array::size( v ) == 1 );
+        check( v[0] == 3 );
 
         Array<int> v2( v );
-        assert( v2[0] == 3 );
+        check( v2[0] == 3 );
         v2[0] = 5;
-        assert( v[0] == 3 );
-        assert( v2[0] == 5 );
+        check( v[0] == 3 );
+        check( v2[0] == 5 );
         v2 = v;
-        assert( v2[0] == 3 );
+        check( v2[0] == 3 );
         
-        assert( array::end(v) - array::begin(v) == array::size(v) );
-        assert( *array::begin(v) == 3);
+        check( array::end(v) - array::begin(v) == array::size(v) );
+        check( *array::begin(v) == 3);
         array::pop_back(v);
-        assert( array::empty(v) );
+        check( array::empty(v) );
 
         for ( int i=0; i<100; ++i )
             array::push_back( v, i );
 
-        assert( array::size(v) == 100 );
+        check( array::size(v) == 100 );
     }
 
     memory::shutdown();
@@ -132,32 +132,32 @@ void test_hash()
         TempAllocator128 temp;
 
         Hash<int> h( temp );
-        assert( hash::get( h, 0, 99 ) == 99 );
-        assert( !hash::has( h, 0 ) );
+        check( hash::get( h, 0, 99 ) == 99 );
+        check( !hash::has( h, 0 ) );
         hash::remove( h, 0 );
         hash::set( h, 1000, 123 );
-        assert( hash::get( h, 1000, 0 ) == 123 );
-        assert( hash::get( h, 2000, 99 ) == 99 );
+        check( hash::get( h, 1000, 0 ) == 123 );
+        check( hash::get( h, 2000, 99 ) == 99 );
 
         for ( int i = 0; i < 100; ++i )
             hash::set( h, i, i * i );
 
         for ( int i = 0; i < 100; ++i )
-            assert( hash::get( h, i, 0 ) == i * i );
+            check( hash::get( h, i, 0 ) == i * i );
 
         hash::remove( h, 1000 );
-        assert( !hash::has( h, 1000 ) );
+        check( !hash::has( h, 1000 ) );
 
         hash::remove( h, 2000 );
-        assert( hash::get( h, 1000, 0 ) == 0 );
+        check( hash::get( h, 1000, 0 ) == 0 );
 
         for ( int i = 0; i < 100; ++i )
-            assert( hash::get( h, i, 0 ) == i * i );
+            check( hash::get( h, i, 0 ) == i * i );
 
         hash::clear( h );
 
         for ( int i = 0; i < 100; ++i )
-            assert( !hash::has( h, i ) );
+            check( !hash::has( h, i ) );
     }
 
     memory::shutdown();
@@ -173,22 +173,22 @@ void test_multi_hash()
 
         Hash<int> h( temp );
 
-        assert( multi_hash::count( h, 0 ) == 0 );
+        check( multi_hash::count( h, 0 ) == 0 );
         multi_hash::insert( h, 0, 1 );
         multi_hash::insert( h, 0, 2 );
         multi_hash::insert( h, 0, 3 );
-        assert(multi_hash::count( h, 0 ) == 3 );
+        check( multi_hash::count( h, 0 ) == 3 );
 
         Array<int> a( temp );
         multi_hash::get( h, 0, a );
-        assert( array::size(a) == 3 );
+        check( array::size(a) == 3 );
         std::sort( array::begin(a), array::end(a) );
-        assert( a[0] == 1 && a[1] == 2 && a[2] == 3 );
+        check( a[0] == 1 && a[1] == 2 && a[2] == 3 );
 
         multi_hash::remove( h, multi_hash::find_first( h, 0 ) );
-        assert( multi_hash::count( h, 0 ) == 2 );
+        check( multi_hash::count( h, 0 ) == 2 );
         multi_hash::remove_all( h, 0 );
-        assert(multi_hash::count( h, 0 ) == 0 );
+        check( multi_hash::count( h, 0 ) == 0 );
     }
     memory::shutdown();
 }
@@ -198,7 +198,7 @@ void test_murmur_hash()
     printf( "test_murmur_hash\n" );
     const char * s = "test_string";
     const uint64_t h = murmur_hash_64( s, strlen(s), 0 );
-    assert( h == 0xe604acc23b568f83ull );
+    check( h == 0xe604acc23b568f83ull );
 }
 
 void test_queue()
@@ -213,32 +213,32 @@ void test_queue()
 
         queue::reserve( q, 10 );
 
-        assert( queue::space( q ) == 10 );
+        check( queue::space( q ) == 10 );
 
         queue::push_back( q, 11 );
         queue::push_front( q, 22 );
 
-        assert( queue::size( q ) == 2 );
+        check( queue::size( q ) == 2 );
 
-        assert( q[0] == 22 );
-        assert( q[1] == 11 );
+        check( q[0] == 22 );
+        check( q[1] == 11 );
 
         queue::consume( q, 2 );
-        assert( queue::size( q ) == 0 );
+        check( queue::size( q ) == 0 );
 
         int items[] = { 1,2,3,4,5,6,7,8,9,10 };
 
         queue::push( q,items,10 );
         
-        assert( queue::size(q) == 10 );
+        check( queue::size(q) == 10 );
         
         for ( int i = 0; i < 10; ++i )
-            assert( q[i] == i + 1 );
+            check( q[i] == i + 1 );
         
         queue::consume( q, queue::end_front(q) - queue::begin_front(q) );
         queue::consume( q, queue::end_front(q) - queue::begin_front(q) );
         
-        assert( queue::size(q) == 0 );
+        check( queue::size(q) == 0 );
     }
 }
 
@@ -259,7 +259,7 @@ void test_pointer_arithmetic()
     {
         buffer[i] = check;
         uint8_t * value = (uint8_t*) pointer_add( data, i );
-        assert( *value == buffer[i] );
+        check( *value == buffer[i] );
     }
 }
 
@@ -279,7 +279,7 @@ void test_string_stream()
         ss << "Niklas";         tab( ss, 20 );    printf( ss, "%.2f", 2.7182818284f ); ss << "\n";
         ss << "Jim";            tab( ss, 20 );    printf( ss, "%.2f", 3.14159265f ); ss << "\n";
 
-        assert
+        check
         (
             0 == strcmp( c_str( ss ),
                 "Name                Score\n"

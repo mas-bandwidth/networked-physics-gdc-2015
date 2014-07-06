@@ -262,7 +262,7 @@ namespace protocol
             {
                 if ( channelData[i] )
                 {
-                    PROTOCOL_DELETE( memory::default_scratch_allocator(), ChannelData, channelData[i] );
+                    PROTOCOL_DELETE( memory::scratch_allocator(), ChannelData, channelData[i] );
                     channelData[i] = nullptr;
                 }
             }
@@ -394,22 +394,21 @@ namespace protocol
     {
     public:
 
-        ClientServerPacketFactory( ChannelStructure * channelStructure )
+        ClientServerPacketFactory( Allocator & allocator, ChannelStructure * channelStructure )
+            : PacketFactory( allocator )
         {
             assert( channelStructure );
 
-            // todo: convert to using custom allocator
+            Register( CLIENT_SERVER_PACKET_CONNECTION_REQUEST,   [&allocator] { return PROTOCOL_NEW( allocator, ConnectionRequestPacket );   } );
+            Register( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE,   [&allocator] { return PROTOCOL_NEW( allocator, ChallengeResponsePacket );   } );
+            Register( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION, [&allocator] { return PROTOCOL_NEW( allocator, ReadyForConnectionPacket );  } );
 
-            Register( CLIENT_SERVER_PACKET_CONNECTION_REQUEST,   [] { return new ConnectionRequestPacket();  } );
-            Register( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE,   [] { return new ChallengeResponsePacket();  } );
-            Register( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION, [] { return new ReadyForConnectionPacket(); } );
+            Register( CLIENT_SERVER_PACKET_CONNECTION_DENIED,    [&allocator] { return PROTOCOL_NEW( allocator, ConnectionDeniedPacket );    } );
+            Register( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE, [&allocator] { return PROTOCOL_NEW( allocator, ConnectionChallengePacket ); } );
+            Register( CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA,  [&allocator] { return PROTOCOL_NEW( allocator, RequestClientDataPacket );   } );
+            Register( CLIENT_SERVER_PACKET_DISCONNECTED,         [&allocator] { return PROTOCOL_NEW( allocator, DisconnectedPacket );        } );
 
-            Register( CLIENT_SERVER_PACKET_CONNECTION_DENIED,    [] { return new ConnectionDeniedPacket(); } );
-            Register( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE, [] { return new ConnectionChallengePacket(); } );
-            Register( CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA,  [] { return new RequestClientDataPacket(); } );
-            Register( CLIENT_SERVER_PACKET_DISCONNECTED,         [] { return new DisconnectedPacket(); } );
-
-            Register( CLIENT_SERVER_PACKET_CONNECTION, [channelStructure] { return new ConnectionPacket( CLIENT_SERVER_PACKET_CONNECTION, channelStructure ); } );
+            Register( CLIENT_SERVER_PACKET_CONNECTION, [&allocator, channelStructure] { return PROTOCOL_NEW( allocator, ConnectionPacket, CLIENT_SERVER_PACKET_CONNECTION, channelStructure ); } );
         }
     };
 }

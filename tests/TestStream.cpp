@@ -102,14 +102,14 @@ void test_stream()
 
     // verify read object matches written object
 
-    assert( readObject.a == writeObject.a );
-    assert( readObject.b == writeObject.b );
-    assert( readObject.c == writeObject.c );
-    assert( readObject.d == writeObject.d );
-    assert( readObject.e == writeObject.e );
-    assert( readObject.f == writeObject.f );
-    assert( readObject.g == writeObject.g );
-    assert( readObject.numItems == writeObject.numItems );
+    check( readObject.a == writeObject.a );
+    check( readObject.b == writeObject.b );
+    check( readObject.c == writeObject.c );
+    check( readObject.d == writeObject.d );
+    check( readObject.e == writeObject.e );
+    check( readObject.f == writeObject.f );
+    check( readObject.g == writeObject.g );
+    check( readObject.numItems == writeObject.numItems );
     for ( int i = 0; i < readObject.numItems; ++i )
-        assert( readObject.items[i] == writeObject.items[i] );
+        check( readObject.items[i] == writeObject.items[i] );
 }

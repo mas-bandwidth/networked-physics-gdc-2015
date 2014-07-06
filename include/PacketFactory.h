@@ -3,22 +3,30 @@
 
 #include "Packet.h"
 #include "Factory.h"
+#include "Memory.h"
 
 namespace protocol
 {
     class PacketFactory : public Factory<Packet>
     {        
-        #if DEBUG_MEMORY_LEAKS
+        #if PROTOCOL_DEBUG_MEMORY_LEAKS
         std::map<void*,int> allocated_packets;
         #endif
 
         int num_allocated_packets = 0;
 
+        Allocator * m_allocator;
+
     public:
+
+        PacketFactory( Allocator & allocator )
+        {
+            m_allocator = &allocator;
+        }
 
         ~PacketFactory()
         {
-            #if DEBUG_MEMORY_LEAKS
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             if ( allocated_packets.size() )
             {
                 printf( "you leaked packets!\n" );
@@ -43,29 +51,36 @@ namespace protocol
         Packet * Create( int type )
         {
             Packet * packet = Factory<Packet>::Create( type );
-            #if DEBUG_MEMORY_LEAKS
+            
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "create packet %p\n", packet );
             allocated_packets[packet] = 1;
             auto itor = allocated_packets.find( packet );
             assert( itor != allocated_packets.end() );
             #endif
+            
             num_allocated_packets++;
+
             return packet;
         }
 
         void Destroy( Packet * packet )
         {
             assert( packet );
-            #if DEBUG_MEMORY_LEAKS
+
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "destroy packet %p\n", packet );
             auto itor = allocated_packets.find( packet );
             assert( itor != allocated_packets.end() );
             allocated_packets.erase( packet );
             #endif
+
             assert( num_allocated_packets > 0 );
             num_allocated_packets--;
-            // todo: convert to custom allocator
-            delete packet;
+
+            assert( m_allocator );
+
+            PROTOCOL_DELETE( *m_allocator, Packet, packet );
         }
     };
 }

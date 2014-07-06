@@ -3,22 +3,33 @@
 
 #include "Factory.h"
 #include "Message.h"
+#include "Memory.h"
 
 namespace protocol
 {
     class MessageFactory : public Factory<Message>
     {        
-        #if DEBUG_MEMORY_LEAKS
+        #if PROTOCOL_DEBUG_MEMORY_LEAKS
         std::map<void*,int> allocated_messages;
         #endif
+
+        Allocator * m_allocator;
 
         int num_allocated_messages = 0;
 
     public:
 
+        MessageFactory( Allocator & allocator )
+        {
+            m_allocator = &allocator;
+        }
+
         ~MessageFactory()
         {
-            #if DEBUG_MEMORY_LEAKS
+            assert( m_allocator );
+            m_allocator = nullptr;
+
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             if ( allocated_messages.size() )
             {
                 printf( "you leaked messages!\n" );
@@ -43,43 +54,58 @@ namespace protocol
         Message * Create( int type )
         {
             Message * message = Factory<Message>::Create( type );
-            #if DEBUG_MEMORY_LEAKS
+
+            assert( message );
+
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "create message %p\n", message );
             allocated_messages[message] = 1;
             auto itor = allocated_messages.find( message );
             assert( itor != allocated_messages.end() );
             #endif
+
             num_allocated_messages++;
+
             return message;
         }
 
         void AddRef( Message * message )
         {
-            #if DEBUG_MEMORY_LEAKS
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "addref message %p (%d->%d)\n", message, message->GetRefCount(), message->GetRefCount()+1 );
             #endif
+            
             assert( message );
+            
             message->AddRef();
         }
 
         void Release( Message * message )
         {
-            #if DEBUG_MEMORY_LEAKS
+            assert( message );
+
+            #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "release message %p (%d->%d)\n", message, message->GetRefCount(), message->GetRefCount()-1 );
             #endif
+
             assert( message );
+            
             message->Release();
+            
             if ( message->GetRefCount() == 0 )
             {
-                #if DEBUG_MEMORY_LEAKS
+                #if PROTOCOL_DEBUG_MEMORY_LEAKS
                 printf( "destroy message %p\n", message );
                 auto itor = allocated_messages.find( message );
                 assert( itor != allocated_messages.end() );
                 allocated_messages.erase( message );
                 #endif
+            
                 num_allocated_messages--;
-                // todo: convert to custom allocator
-                delete message;
+
+                assert( m_allocator );
+
+                PROTOCOL_DELETE( *m_allocator, Message, message );
             }
         }
     };

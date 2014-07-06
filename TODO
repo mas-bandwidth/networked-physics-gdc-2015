@@ -1,28 +1,46 @@
 DONE:
 
+    Add a "check" macro that works in release.
+
+    Verify unit tests pass in release build!
+
+
+
 TODO:
 
-    -----------------
+    ----------------------
 
+    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
+
+    Grab the big endian check from sophist.h and anything else useful.
+
+    Update the LICENCE to incorporate the sophist.
+
+    Remove the sophist header.
+
+    --------------------
+
+    Fix the bitpacker to do bswap when necessary for big endian.
+
+    I need to provide my own efficient byteswap functions in Common.h,
+    eg. fast_ntonl, or just bswap if big endian in/out.
+
+    --------------------
+
+    I really want my own custom allocator so I can create as much
+    memory as I want to use, and allocate from that. 
+
+    This should be implemented as the "default allocator"
+
+    Don't use malloc. Add a #define to drop back to malloc though.
 
     ------------------
 
-    Convert packet factory to use custom allocators instead of new.
+    Now that I have a .h/.cpp split, the way I have structured
+    the bitsquid containers means that I am not getting the full
+    benefits of short compile times.
 
-    ------------------
-
-    Convert message factory to use custom allocators instead of new.
-
-    ------------------
-
-    Is there a bug in the scratch allocator? There probably *isn't*
-    but the crash was due to memory leak/corruption on my part.
-
-    BUT... I would like the scratch allocator to be more resilient in 
-    debug builds, eg. for it to have safety checks, eg. missing magic
-    # where expected, assert.
-
-    Test going back to the real scratch allocator. Does it work now?
+    Split back up into Types.h
 
     ------------------
 
@@ -137,19 +155,18 @@ WOULD BE NICE:
 
     -------------
 
-    It seems weird that normal delete needs to pass in the type,
-    but the array delete doesn't. Is this bad? Probably.
+    Should be able to determine if scratch allocator is being exhausted,
+    and falling back to malloc, eg. add a check, and then check this once
+    per-frame inside the soak test -- i definitely *dont* want the scratch
+    falling back to malloc inside soak test.
 
-    Can I infer the type on normal delete with C++11? Probably.
+    Alternatively, add a flag so it asserts if it has to fallback to scratch,
+    but disable this by default because otherwise it won't pass the unit test.
 
-    ----------
+    -------------
 
-    Allocator interface for PROTOCOL_NEW and PROTOCOL_DELETE is a bit naff.
-
-    Can use new C++11 typeof to make it suck a lot less.
-
-    It's annoying to have to pass the allocator in twice when creating
-    an object which itself takes the allocator in the constructor params.`
+    I would like the scratch allocator to be more resilient in  debug builds, 
+    eg. for it to have safety checks, eg. missing magic # where expected, assert.
 
     --------------------
 
@@ -159,10 +176,6 @@ WOULD BE NICE:
     --------------------
 
     I don't like the bool ipv6. Use address type instead, eg. ADDRESS_IPV6
-
-    --------------------
-
-    Prefix all #define names with PROTOCOL_, eg. PROTOCOL_PLATFORM_WINDOWS
 
     --------------------
 
@@ -181,14 +194,6 @@ WOULD BE NICE:
     -------------------
 
     Remove std::string usage from Resolver interface and DNSResolver. (How?!)
-
-    ----------------------
-
-    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
-
-    Grab the big endian check from sophist.h and anything else useful.
-
-    Fix the bitpacker to do bswap when necessary for big endian.
 
     ----------------------
 
@@ -247,15 +252,6 @@ WOULD BE NICE:
     the received fragment data to a bitfield
 
     We only need one bit per-fragment, "has it been received?"
-
-    -----------------
-
-    Removed the htonl and ntohl calls inside bitpacker.
-
-    On windows these calls are apparently slow (call out to DLL)
-
-    I need to provide my own efficient byteswap functions in common.h,
-    eg. fast_ntonl, or just bswap if big endian in/out.
 
     ----------------
 

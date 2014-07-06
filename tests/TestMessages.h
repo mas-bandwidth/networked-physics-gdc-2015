@@ -42,7 +42,7 @@ struct TestMessage : public Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        serialize_check( stream, 0xDEADBEEF );
+        check( serialize_check( stream, 0xDEADBEEF ) );
     }
 
     void SerializeRead( ReadStream & stream )
@@ -68,11 +68,11 @@ class TestMessageFactory : public MessageFactory
 {
 public:
 
-    TestMessageFactory()
+    TestMessageFactory( Allocator & allocator )
+        : MessageFactory( allocator )
     {
-        // todo: convert to custom allocator
-        Register( MESSAGE_BLOCK, [] { return new BlockMessage(); } );
-        Register( MESSAGE_TEST,  [] { return new TestMessage();  } );
+        Register( MESSAGE_BLOCK, [&allocator] { return PROTOCOL_NEW( allocator, BlockMessage ); } );
+        Register( MESSAGE_TEST,  [&allocator] { return PROTOCOL_NEW( allocator, TestMessage );  } );
     }
 };
 

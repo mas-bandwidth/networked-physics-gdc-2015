@@ -13,8 +13,8 @@ void test_dns_resolve()
     resolver.Resolve( google_hostname );
 
     auto google_entry = resolver.GetEntry( google_hostname );
-    assert( google_entry );
-    assert( google_entry->status == RESOLVE_IN_PROGRESS );
+    check( google_entry );
+    check( google_entry->status == RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -34,9 +34,9 @@ void test_dns_resolve()
     }
 
     google_entry = resolver.GetEntry( google_hostname );
-    assert( google_entry );
-    assert( google_entry->status == RESOLVE_SUCCEEDED );
-    assert( google_entry->result.numAddresses );
+    check( google_entry );
+    check( google_entry->status == RESOLVE_SUCCEEDED );
+    check( google_entry->result.numAddresses );
 }
 
 void test_dns_resolve_with_port()
@@ -50,8 +50,8 @@ void test_dns_resolve_with_port()
     resolver.Resolve( google_hostname );
 
     auto google_entry = resolver.GetEntry( google_hostname );
-    assert( google_entry );
-    assert( google_entry->status == RESOLVE_IN_PROGRESS );
+    check( google_entry );
+    check( google_entry->status == RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -71,11 +71,11 @@ void test_dns_resolve_with_port()
     }
 
     google_entry = resolver.GetEntry( google_hostname );
-    assert( google_entry );
-    assert( google_entry->status == RESOLVE_SUCCEEDED );
-    assert( google_entry->result.numAddresses );
+    check( google_entry );
+    check( google_entry->status == RESOLVE_SUCCEEDED );
+    check( google_entry->result.numAddresses );
     for ( int i = 0; i < google_entry->result.numAddresses; ++i )
-        assert( google_entry->result.address[i].GetPort() == 5000 );
+        check( google_entry->result.address[i].GetPort() == 5000 );
 }
 
 void test_dns_resolve_failure()
@@ -91,8 +91,8 @@ void test_dns_resolve_failure()
     resolver.Resolve( garbage_hostname );
 
     auto entry = resolver.GetEntry( garbage_hostname );
-    assert( entry );
-    assert( entry->status == RESOLVE_IN_PROGRESS );
+    check( entry );
+    check( entry->status == RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -112,7 +112,7 @@ void test_dns_resolve_failure()
     }
 
     entry = resolver.GetEntry( garbage_hostname );
-    assert( entry );
+    check( entry );
 
-    assert( entry->status == RESOLVE_FAILED );
+    check( entry->status == RESOLVE_FAILED );
 }

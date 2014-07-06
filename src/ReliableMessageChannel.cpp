@@ -16,7 +16,7 @@ namespace protocol
 
     ReliableMessageChannelData::~ReliableMessageChannelData()
     {
-        Allocator & a = memory::default_scratch_allocator();
+        Allocator & a = memory::scratch_allocator();
 
         if ( fragment )
         {
@@ -53,7 +53,7 @@ namespace protocol
             }
             else
             {
-                Allocator & a = memory::default_scratch_allocator();
+                Allocator & a = memory::scratch_allocator();
                 fragment = (uint8_t*) a.Allocate( config.blockFragmentSize );
                 assert( fragment );
             }
@@ -76,7 +76,7 @@ namespace protocol
 
             if ( Stream::IsReading )
             {
-                Allocator & a = memory::default_scratch_allocator();
+                Allocator & a = memory::scratch_allocator();
                 messages = (Message**) a.Allocate( numMessages * sizeof( Message* ) );
             }
 
@@ -303,7 +303,10 @@ namespace protocol
             printf( "sent large block %d\n", (int) m_sendMessageId );
 */
 
-        bool result = m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
+        #ifndef NDEBUG
+        bool result = 
+        #endif
+            m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
         assert( result );
 
         auto entry = m_sendQueue->Find( m_sendMessageId );
@@ -378,7 +381,7 @@ namespace protocol
 
     ChannelData * ReliableMessageChannel::CreateData()
     {
-        return PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
+        return PROTOCOL_NEW( memory::scratch_allocator(), ReliableMessageChannelData, m_config );
     }
 
     ChannelData * ReliableMessageChannel::GetData( uint16_t sequence )
@@ -437,12 +440,12 @@ namespace protocol
 
 //                printf( "sending fragment %d\n", (int) fragmentId );
 
-            auto data = PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
+            auto data = PROTOCOL_NEW( memory::scratch_allocator(), ReliableMessageChannelData, m_config );
             data->largeBlock = 1;
             data->blockSize = block.GetSize();
             data->blockId = m_oldestUnackedMessageId;
             data->fragmentId = fragmentId;
-            Allocator & a = memory::default_scratch_allocator();
+            Allocator & a = memory::scratch_allocator();
             data->fragment = (uint8_t*) a.Allocate( m_config.blockFragmentSize );
             assert( data->fragment );
 //                printf( "allocate fragment %p (send fragment)\n", data->fragment );
@@ -542,10 +545,11 @@ namespace protocol
 
             // construct channel data for packet
 
-            auto data = PROTOCOL_NEW( memory::default_scratch_allocator(), ReliableMessageChannelData, m_config );
+            Allocator & allocator = memory::scratch_allocator();
 
-            Allocator & a = memory::default_scratch_allocator();
-            data->messages = (Message**) a.Allocate( numMessageIds * sizeof( Message* ) );
+            auto data = PROTOCOL_NEW( allocator, ReliableMessageChannelData, m_config );
+
+            data->messages = (Message**) allocator.Allocate( numMessageIds * sizeof( Message* ) );
             assert( data->messages );
 //                printf( "allocate messages %p (get data)\n", data->messages );
             data->numMessages = numMessageIds;
@@ -763,7 +767,10 @@ namespace protocol
                 }
                 else if ( !m_receiveQueue->Find( messageId ) )
                 {
-                    bool result = m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
+                    #ifndef NDEBUG
+                    bool result = 
+                    #endif
+                        m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
                     assert( result );
                     m_config.messageFactory->AddRef( message );
                 }

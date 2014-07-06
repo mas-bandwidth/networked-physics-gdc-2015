@@ -14,7 +14,7 @@ class FakeChannelStructure : public ChannelStructure
 {
 public:
     FakeChannelStructure()
-        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
+        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
     {
         AddChannel( "fake channel", [this] { return PROTOCOL_NEW( GetChannelAllocator(), FakeChannel ); }, [] { return nullptr; } );
         Lock();
@@ -29,7 +29,7 @@ void test_connection()
     {
         FakeChannelStructure channelStructure;
 
-        TestPacketFactory packetFactory( &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = PACKET_CONNECTION;
@@ -45,7 +45,7 @@ void test_connection()
         {
             auto packet = connection.WritePacket();
 
-            assert( packet );
+            check( packet );
 
             connection.ReadPacket( packet );
             packetFactory.Destroy( packet );
@@ -55,10 +55,10 @@ void test_connection()
                 break;
         }
 
-        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
-        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
-        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
-        assert( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
+        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
+        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
+        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
+        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
     }
     memory::shutdown();
 }
@@ -89,10 +89,9 @@ class AckChannelStructure : public ChannelStructure
     int * ackedPackets = nullptr;
 public:
     AckChannelStructure( int * _ackedPackets )
-        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
+        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
     {
         ackedPackets = _ackedPackets;
-        // todo: convert to custom allocator
         AddChannel( "ack channel", [this] { return PROTOCOL_NEW( GetChannelAllocator(), AckChannel, ackedPackets ); }, [] { return nullptr; } );
         Lock();
     }
@@ -114,7 +113,7 @@ void test_acks()
 
         AckChannelStructure channelStructure( ackedPackets );
 
-        TestPacketFactory packetFactory( &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = PACKET_CONNECTION;
@@ -128,7 +127,7 @@ void test_acks()
         {
             auto packet = connection.WritePacket();
 
-            assert( packet );
+            check( packet );
 
             if ( rand() % 100 == 0 )
             {
@@ -160,11 +159,11 @@ void test_acks()
 
             // an acked packet *must* have been received
             if ( ackedPackets[i] && !receivedPackets[i] )
-                assert( false );
+                check( false );
         }
 
-        assert( numAckedPackets > 0 );
-        assert( numReceivedPackets >= numAckedPackets );
+        check( numAckedPackets > 0 );
+        check( numReceivedPackets >= numAckedPackets );
 
     //    printf( "%d packets received, %d packets acked\n", numReceivedPackets, numAckedPackets );
     }

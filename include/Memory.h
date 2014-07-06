@@ -12,11 +12,11 @@ namespace protocol
 
 	namespace memory
 	{
-		void initialize( uint32_t scratch_buffer_size = 4 * 1024 * 1024 );
+		void initialize( uint32_t scratch_buffer_size = 8 * 1024 * 1024 );
 
 		Allocator & default_allocator();
 		
-		Allocator & default_scratch_allocator();
+		Allocator & scratch_allocator();
 		
 		void shutdown();
 	}
@@ -27,7 +27,7 @@ namespace protocol
 	{
 	public:
 		
-		TempAllocator( Allocator & backing = memory::default_scratch_allocator() )
+		TempAllocator( Allocator & backing = memory::scratch_allocator() )
 			: m_backing( backing ), m_chunk_size( 4*1024 )
 		{
 			m_p = m_start = m_buffer;
@@ -127,7 +127,7 @@ namespace protocol
 	{
 		uint32_t m_total_allocated;
 
-		#if DEBUG_MEMORY_LEAKS
+		#if PROTOCOL_DEBUG_MEMORY_LEAKS
 		std::map<void*,int> m_alloc_map;
 		#endif
 
@@ -142,7 +142,7 @@ namespace protocol
 
 		~MallocAllocator()
 		{
-			#if DEBUG_MEMORY_LEAKS
+			#if PROTOCOL_DEBUG_MEMORY_LEAKS
 			if ( m_alloc_map.size() )
 			{
 				printf( "you leaked memory!\n" );
@@ -171,7 +171,7 @@ namespace protocol
 			void * p = data_pointer( h, align );
 			fill( h, p, ts );
 			m_total_allocated += ts;
-			#if DEBUG_MEMORY_LEAKS
+			#if PROTOCOL_DEBUG_MEMORY_LEAKS
 			m_alloc_map[p] = 1;
 			#endif
 			return p;
@@ -181,7 +181,7 @@ namespace protocol
 		{
 			if ( !p )
 				return;
-			#if DEBUG_MEMORY_LEAKS
+			#if PROTOCOL_DEBUG_MEMORY_LEAKS
 			auto itor = m_alloc_map.find( p );
 			assert( itor != m_alloc_map.end() );
 			m_alloc_map.erase( p );
@@ -265,8 +265,10 @@ namespace protocol
 			// If the buffer is exhausted use the backing allocator instead.
 			if ( IsAllocated( p ) )
 			{
-				// hack: I want to know if this happens!
-				assert( false );
+				/*
+				const bool tempMemoryIsExhausted = true;
+				assert( !tempMemoryIsExhausted );
+				*/
 				return m_backing.Allocate( size, align );
 			}
 
@@ -282,8 +284,6 @@ namespace protocol
 
 			if ( p < m_begin || p >= m_end )
 			{
-				// hack: I want to know if this happens!
-				assert( false );
 				m_backing.Free( p );
 				return;
 			}
@@ -321,7 +321,7 @@ namespace protocol
 		}
 	};
 
-	// new and delete macros
+	// macros
 
 #if defined( _MSC_VER )
 	#define _ALLOW_KEYWORD_MACROS

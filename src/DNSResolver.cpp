@@ -72,7 +72,8 @@ namespace protocol
         if ( itor != map.end() )
             return;
 
-        auto entry = new ResolveEntry();           // todo: instead of allocating here have some "max resolves" or something in a pool
+        // todo: convert to custom allocator
+        auto entry = new ResolveEntry();
         entry->status = RESOLVE_IN_PROGRESS;
         const int ipv6 = m_ipv6;
         entry->future = async( std::launch::async, [name, ipv6, entry] () -> ResolveResult

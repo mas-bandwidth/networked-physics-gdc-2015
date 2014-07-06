@@ -39,8 +39,10 @@ namespace protocol
         ~Message() 
         { 
             assert( m_magic == 0x12345 );
-            assert( m_refCount == 0 ); 
+            assert( m_refCount == 0 );
+            #ifndef NDEBUG
             m_magic = 0;
+            #endif
         }
 
     private:

@@ -165,15 +165,15 @@ class TestPacketFactory : public PacketFactory
 
 public:
 
-    TestPacketFactory( ChannelStructure * channelStructure = nullptr )
+    TestPacketFactory( Allocator & allocator, ChannelStructure * channelStructure = nullptr )
+        : PacketFactory( allocator )
     {
         m_channelStructure = channelStructure;
  
-        // todo: convert to custom allocator       
-        Register( PACKET_CONNECTION, [this] { assert( m_channelStructure ); return new ConnectionPacket( PACKET_CONNECTION, m_channelStructure ); } );
-        Register( PACKET_CONNECT,    [] { return new ConnectPacket();    } );
-        Register( PACKET_UPDATE,     [] { return new UpdatePacket();     } );
-        Register( PACKET_DISCONNECT, [] { return new DisconnectPacket(); } );
+        Register( PACKET_CONNECTION, [&allocator, this] { assert( m_channelStructure ); return PROTOCOL_NEW( allocator, ConnectionPacket, PACKET_CONNECTION, m_channelStructure ); } );
+        Register( PACKET_CONNECT,    [&allocator] { return PROTOCOL_NEW( allocator, ConnectPacket );    } );
+        Register( PACKET_UPDATE,     [&allocator] { return PROTOCOL_NEW( allocator, UpdatePacket );     } );
+        Register( PACKET_DISCONNECT, [&allocator] { return PROTOCOL_NEW( allocator, DisconnectPacket ); } );
     }
 };
 

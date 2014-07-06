@@ -18,13 +18,13 @@ namespace protocol
     {
         Allocator * allocator;
         PacketFactory * packetFactory;
-        int stateChance;                    // 1 in n chance to pick a new state per-update
+        int stateChance;                    // 1 in n chance to change state per-update
         int numPackets;                     // number of packets to buffer
 
         NetworkSimulatorConfig()
         {   
             allocator = nullptr;            // allocator used for allocations with the same life cycle as this object.
-            packetFactory = nullptr;        // packet factory. must be specified -- we need it to delete buffered packets in destructor.
+            packetFactory = nullptr;        // packet factory. must be specified -- we need it to destroy buffered packets in destructor.
             stateChance = 1000;             // 1 in every 1000 chance per-update by default
             numPackets = 1024;              // buffer up to 1024 packets by default
         }

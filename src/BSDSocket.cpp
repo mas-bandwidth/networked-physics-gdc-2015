@@ -7,12 +7,12 @@
 #include "BSDSocket.h"
 #include "Memory.h"
 
-#if PLATFORM == PLATFORM_WINDOWS
+#if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
 
     #include <winsock2.h>
     #pragma comment( lib, "wsock32.lib" )
 
-#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+#elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
 
     #include <sys/socket.h>
     #include <sys/types.h>
@@ -106,7 +106,7 @@ namespace protocol
 
         // set non-blocking io
 
-        #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
     
             int nonBlocking = 1;
             if ( fcntl( m_socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
@@ -116,7 +116,7 @@ namespace protocol
                 return;
             }
         
-        #elif PLATFORM == PLATFORM_WINDOWS
+        #elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
     
             DWORD nonBlocking = 1;
             if ( ioctlsocket( m_socket, FIONBIO, &nonBlocking ) != 0 )
@@ -143,9 +143,9 @@ namespace protocol
 
         if ( m_socket != 0 )
         {
-            #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
+            #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
             close( m_socket );
-            #elif PLATFORM == PLATFORM_WINDOWS
+            #elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
             closesocket( m_socket );
             #else
             #error unsupported platform
@@ -392,7 +392,7 @@ namespace protocol
         assert( size > 0 );
         assert( m_socket );
 
-        #if PLATFORM == PLATFORM_WINDOWS
+        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
         typedef int socklen_t;
         #endif
         

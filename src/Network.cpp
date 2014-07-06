@@ -15,7 +15,7 @@ namespace protocol
 
         bool result = true;
 
-        #if PLATFORM == PLATFORM_WINDOWS
+        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
         WSADATA WsaData;         
         result = WSAStartup( MAKEWORD(2,2), &WsaData ) == NO_ERROR;
         #endif
@@ -30,7 +30,7 @@ namespace protocol
     {
         assert( s_networkInitialized );
 
-        #if PLATFORM == PLATFORM_WINDOWS
+        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
         WSACleanup();
         #endif
 

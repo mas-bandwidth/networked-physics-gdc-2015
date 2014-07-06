@@ -5,7 +5,7 @@ solution "Protocol"
 --    pchsource "src/Common.cpp"
     includedirs { "include", "." }
     platforms { "x64", "x32" }
-    configurations { "Debug", "Release" }
+    configurations { "Release", "Debug" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI" }
     configuration "Release"
         flags { "OptimizeSpeed" }

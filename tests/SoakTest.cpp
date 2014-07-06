@@ -13,7 +13,7 @@ class TestChannelStructure : public ChannelStructure
 public:
 
     TestChannelStructure( MessageFactory & messageFactory )
-        : ChannelStructure( memory::default_allocator(), memory::default_scratch_allocator() )
+        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
     {
         m_config.maxMessagesPerPacket = 256;
         m_config.sendQueueSize = 2048;
@@ -58,11 +58,11 @@ void soak_test()
     printf( "[soak test]\n" );
 #endif
 
-    TestMessageFactory messageFactory;
+    TestMessageFactory messageFactory( memory::default_allocator() );
 
     TestChannelStructure channelStructure( messageFactory );
 
-    TestPacketFactory packetFactory( &channelStructure );
+    TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
     const int MaxPacketSize = 4096;
 
@@ -120,7 +120,7 @@ void soak_test()
             {
                 // bitpacked message
                 auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-                assert( message );
+                check( message );
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
@@ -156,7 +156,7 @@ void soak_test()
         WriteStream writeStream( buffer, MaxPacketSize );
         writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
-        assert( !writeStream.IsOverflow() );
+        check( !writeStream.IsOverflow() );
 
         packetFactory.Destroy( writePacket );
         writePacket = nullptr;
@@ -164,7 +164,7 @@ void soak_test()
         ReadStream readStream( buffer, MaxPacketSize );
         auto readPacket = (ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
         readPacket->SerializeRead( readStream );
-        assert( !readStream.IsOverflow() );
+        check( !readStream.IsOverflow() );
 
         connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
 
@@ -180,8 +180,8 @@ void soak_test()
             if ( !message )
                 break;
 
-            assert( message->GetId() == numMessagesReceived % 65536 );
-            assert( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
+            check( message->GetId() == numMessagesReceived % 65536 );
+            check( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
 
             if ( message->GetType() == MESSAGE_TEST )
             {
@@ -198,10 +198,10 @@ void soak_test()
                 if ( block.GetSize() <= messageChannelConfig.maxSmallBlockSize )
                 {
                     const int index = numMessagesReceived % 32;
-                    assert( block.GetSize() == index + 1 );
+                    check( block.GetSize() == index + 1 );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        assert( data[i] == ( index + i ) % 256 );
+                        check( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
 #endif
@@ -209,10 +209,10 @@ void soak_test()
                 else
                 {
                     const int index = numMessagesReceived % 4;
-                    assert( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
+                    check( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        assert( data[i] == ( index + i ) % 256 );
+                        check( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
 #endif
@@ -234,9 +234,9 @@ void soak_test()
                     status.numFragments );
 #endif
 
-        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
-        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-        assert( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
+        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
     }

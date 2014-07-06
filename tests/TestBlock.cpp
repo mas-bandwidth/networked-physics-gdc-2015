@@ -14,10 +14,10 @@ void test_block()
         const int BlockSize = 256 * 1024;
         Allocator & a = memory::default_allocator();
         Block * block = PROTOCOL_NEW( a, Block, a, BlockSize );
-        assert( block );
-        assert( block->GetAllocator() == &memory::default_allocator() );
-        assert( block->GetSize() == BlockSize );
-        assert( block->IsValid() );
+        check( block );
+        check( block->GetAllocator() == &memory::default_allocator() );
+        check( block->GetSize() == BlockSize );
+        check( block->IsValid() );
         uint8_t * data = block->GetData();
         memset( data, 0, BlockSize );
         PROTOCOL_DELETE( a, Block, block );
