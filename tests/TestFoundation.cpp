@@ -3,6 +3,7 @@
 #include "Hash.h"
 #include "Queue.h"
 #include "StringStream.h"
+#include <string.h>
 #include <algorithm>
 
 using namespace protocol;

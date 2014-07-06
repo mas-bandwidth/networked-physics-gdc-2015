@@ -1,5 +1,6 @@
 #include "Address.h"
 #include "Memory.h"
+#include <string.h>
 
 using namespace protocol;
 

@@ -1,3 +1,7 @@
+#include "Config.h"
+
+#if PROTOCOL_USE_RESOLVER
+
 #include "DNSResolver.h"
 
 using namespace protocol;
@@ -116,3 +120,8 @@ void test_dns_resolve_failure()
 
     check( entry->status == RESOLVE_FAILED );
 }
+
+#else
+
+enum { Dummy };
+#endif

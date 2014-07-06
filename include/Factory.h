@@ -3,6 +3,9 @@
 
 #include "Common.h"
 
+// todo: replace this!
+#include <map>
+
 namespace protocol
 {
     template <typename T> class Factory

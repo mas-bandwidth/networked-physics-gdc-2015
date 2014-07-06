@@ -1,4 +1,8 @@
 #include "MicroAllocator.h"
+#include <memory.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 /*!
 **

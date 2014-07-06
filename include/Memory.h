@@ -127,9 +127,9 @@ namespace protocol
 	{
 		uint32_t m_total_allocated;
 
-		#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if PROTOCOL_DEBUG_MEMORY_LEAKS
 		std::map<void*,int> m_alloc_map;
-		#endif
+#endif
 
 		static inline uint32_t size_with_padding( uint32_t size, uint32_t align ) 
 		{
@@ -142,7 +142,7 @@ namespace protocol
 
 		~MallocAllocator()
 		{
-			#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if PROTOCOL_DEBUG_MEMORY_LEAKS
 			if ( m_alloc_map.size() )
 			{
 				printf( "you leaked memory!\n" );
@@ -155,7 +155,7 @@ namespace protocol
 				}
 				exit(1);
 			}
-			#endif
+#endif
 			if ( m_total_allocated != 0 )
 			{
 				printf( "you leaked memory! %d bytes still allocated\n", m_total_allocated );
@@ -171,9 +171,9 @@ namespace protocol
 			void * p = data_pointer( h, align );
 			fill( h, p, ts );
 			m_total_allocated += ts;
-			#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if PROTOCOL_DEBUG_MEMORY_LEAKS
 			m_alloc_map[p] = 1;
-			#endif
+#endif
 			return p;
 		}
 
@@ -181,11 +181,11 @@ namespace protocol
 		{
 			if ( !p )
 				return;
-			#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if PROTOCOL_DEBUG_MEMORY_LEAKS
 			auto itor = m_alloc_map.find( p );
 			assert( itor != m_alloc_map.end() );
 			m_alloc_map.erase( p );
-			#endif
+#endif
 			Header * h = header( p );
 			m_total_allocated -= h->size;
 			assert( m_total_allocated >= 0 );

@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Network.h"
+#include <time.h>
 
 using namespace protocol;
 
@@ -99,11 +100,11 @@ int main()
         test_bsd_socket_send_and_receive_multiple_ipv4();
         test_bsd_socket_send_and_receive_multiple_ipv6();
 
-        /*
+#if PROTOCOL_USE_RESOLVER
         test_dns_resolve();
         test_dns_resolve_with_port();
         test_dns_resolve_failure();
-        */
+#endif
 
         test_connection();
         test_acks();
@@ -114,9 +115,11 @@ int main()
         test_reliable_message_channel_mixture();
 
         test_client_initial_state();
+#if PROTOCOL_USE_RESOLVER
         test_client_resolve_hostname_failure();
         test_client_resolve_hostname_timeout();
         test_client_resolve_hostname_success();
+#endif
         test_client_connection_request_timeout();
         test_client_connection_request_denied();
         test_client_connection_challenge();

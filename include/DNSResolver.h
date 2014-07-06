@@ -6,6 +6,10 @@
 #ifndef PROTOCOL_DNS_RESOLVER_H
 #define PROTOCOL_DNS_RESOLVER_H
 
+#include "Config.h"
+
+#if PROTOCOL_USE_RESOLVER
+
 #include "Resolver.h"
 
 struct addrinfo;
@@ -39,5 +43,7 @@ namespace protocol
         ResolveMap in_progress;
     };
 }
+
+#endif
 
 #endif

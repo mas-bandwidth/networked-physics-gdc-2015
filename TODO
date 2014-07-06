@@ -4,8 +4,6 @@ DONE:
 
     Verify unit tests pass in release build!
 
-
-
 TODO:
 
     ----------------------
@@ -41,6 +39,10 @@ TODO:
     benefits of short compile times.
 
     Split back up into Types.h
+
+    ------------------
+
+    Clean up or remove the resolver via #ifdef. I don't like including STL
 
     ------------------
 

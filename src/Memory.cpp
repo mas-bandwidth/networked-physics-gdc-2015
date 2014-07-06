@@ -1,4 +1,5 @@
 #include "Memory.h"
+#include <new>
 
 namespace protocol
 {
@@ -10,11 +11,11 @@ namespace protocol
 
 		MallocAllocator * default_allocator;
 
-	#if USE_SCRATCH_ALLOCATOR
+#if USE_SCRATCH_ALLOCATOR
 		ScratchAllocator * scratch_allocator;
-	#else
+#else
 		MallocAllocator * scratch_allocator;
-	#endif
+#endif
 
 		MemoryGlobals() : default_allocator( nullptr ), scratch_allocator( nullptr ) {}
 	};
@@ -28,11 +29,11 @@ namespace protocol
 			uint8_t * p = memory_globals.buffer;
 			memory_globals.default_allocator = new (p) MallocAllocator();
 			p += sizeof( MallocAllocator );
-		#if USE_SCRATCH_ALLOCATOR
+#if USE_SCRATCH_ALLOCATOR
 			memory_globals.scratch_allocator = new (p) ScratchAllocator( *memory_globals.default_allocator, temporary_memory );
-		#else
+#else
 			memory_globals.scratch_allocator = new (p) MallocAllocator();
-		#endif
+#endif
 		}
 
 		Allocator & default_allocator() 
@@ -49,11 +50,11 @@ namespace protocol
 
 		void shutdown() 
 		{
-		#if USE_SCRATCH_ALLOCATOR
+#if USE_SCRATCH_ALLOCATOR
 			memory_globals.scratch_allocator->~ScratchAllocator();
-		#else
+#else
 			memory_globals.scratch_allocator->~MallocAllocator();
-		#endif
+#endif
 			memory_globals.default_allocator->~MallocAllocator();
 			memory_globals = MemoryGlobals();
 		}

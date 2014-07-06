@@ -9,6 +9,9 @@
 #include "Common.h"
 #include "Allocator.h"
 
+// todo: what is the specific header for std::function?!
+#include <queue>
+
 namespace protocol
 {
     /*

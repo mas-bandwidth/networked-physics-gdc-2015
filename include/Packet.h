@@ -9,6 +9,9 @@
 #include "Common.h"
 #include "Address.h"
 
+// todo: remove this
+#include <queue>
+
 namespace protocol
 {
     class PacketFactory;

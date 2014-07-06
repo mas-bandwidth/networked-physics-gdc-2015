@@ -380,7 +380,7 @@ namespace protocol
 
         client.address = address;
         client.clientGuid = packet->clientGuid;
-        client.serverGuid = GenerateGuid();
+        client.serverGuid = generate_guid();
         client.lastPacketTime = m_timeBase.time;
         client.state = SERVER_CLIENT_STATE_SENDING_CHALLENGE;
     }

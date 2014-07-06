@@ -4,6 +4,7 @@
 */
 
 #include "BitPacker.h"
+#include <string.h>
 
 namespace protocol
 {

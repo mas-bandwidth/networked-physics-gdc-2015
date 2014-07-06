@@ -4,9 +4,15 @@
 */
 
 #include "Common.h"
+#include <time.h>
 
 namespace protocol
 {
+    uint64_t generate_guid()
+    {
+        return ( uint64_t( rand() ) << 32 ) | time( nullptr );
+    }
+
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed )
     {
         const uint64_t m = 0xc6a4a7935bd1e995ULL;

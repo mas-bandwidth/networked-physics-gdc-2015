@@ -5,6 +5,7 @@
 
 #include "Channel.h"
 #include "Memory.h"
+#include <string.h>
 
 namespace protocol
 {

@@ -28,7 +28,11 @@ namespace protocol
         float connectedSendRate = 30.0f;                        // client send rate *after* being connected, eg. connection packets
 
         Block * block = nullptr;                                // data block sent to server on connect. optional.
+
+        #if PROTOCOL_USE_RESOLVER
         Resolver * resolver = nullptr;                          // optional resolver used to to lookup server address by hostname.
+        #endif
+        
         NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets. required.
         ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
     };
@@ -84,7 +88,9 @@ namespace protocol
 
         uint32_t GetExtendedError() const;
 
+        #if PROTOCOL_USE_RESOLVER
         Resolver * GetResolver() const;
+        #endif
 
         NetworkInterface * GetNetworkInterface() const;
 
@@ -94,7 +100,9 @@ namespace protocol
 
         void UpdateNetworkInterface();
 
+        #if PROTOCOL_USE_RESOLVER
         void UpdateResolver();
+        #endif
 
         void UpdateConnection();
 

@@ -7,6 +7,8 @@
 #include "TestMessages.h"
 #include "TestCHannelStructure.h"
 #include "ReliableMessageChannel.h"
+#include <thread>
+#include <chrono>
 
 using namespace protocol;
 
@@ -42,11 +44,15 @@ void test_client_initial_state()
         check( client.GetError() == CLIENT_ERROR_NONE );
         check( client.GetState() == CLIENT_STATE_DISCONNECTED );
         check( client.GetNetworkInterface() == &networkInterface );
+#if PROTOCOL_USE_RESOLVER
         check( client.GetResolver() == nullptr );
+#endif
     }
 
     memory::shutdown();
 }
+
+#if PROTOCOL_USE_RESOLVER
 
 void test_client_resolve_hostname_failure()
 {
@@ -229,6 +235,8 @@ void test_client_resolve_hostname_success()
         check( client.GetError() == CLIENT_ERROR_NONE );
     }
 }
+
+#endif
 
 void test_client_connection_request_timeout()
 {

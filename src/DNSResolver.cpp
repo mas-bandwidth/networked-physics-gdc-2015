@@ -4,6 +4,9 @@
 */
 
 #include "DNSResolver.h"
+
+#if PROTOCOL_USE_RESOLVER
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -118,3 +121,5 @@ namespace protocol
             return nullptr;
     }
 }
+
+#endif

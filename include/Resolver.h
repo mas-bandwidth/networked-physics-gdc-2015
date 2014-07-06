@@ -6,9 +6,12 @@
 #ifndef PROTOCOL_RESOLVER_H
 #define PROTOCOL_RESOLVER_H
 
+#include "Config.h"
+
+#if PROTOCOL_USE_RESOLVER
+
 #include "Common.h"
 #include "Address.h"
-
 #include <future>
 #include <string>
 
@@ -47,5 +50,7 @@ namespace protocol
         virtual ResolveEntry * GetEntry( const std::string & name ) = 0;
     };
 }
+
+#endif
 
 #endif

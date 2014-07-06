@@ -6,6 +6,8 @@
 #include "Address.h"
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <memory.h>
+#include <string.h>
 
 namespace protocol
 {

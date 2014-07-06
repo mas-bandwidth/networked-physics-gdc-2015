@@ -54,7 +54,7 @@ namespace protocol
 
         m_state = CLIENT_STATE_SENDING_CONNECTION_REQUEST;
         m_address = address;
-        m_clientGuid = GenerateGuid();
+        m_clientGuid = generate_guid();
 
 //            printf( "connect: set client guid = %llx\n", m_clientGuid );
     }
@@ -74,10 +74,11 @@ namespace protocol
             return;
         }
 
+#if PROTOCOL_USE_RESOLVER
+
         // ok, it's really a hostname. go into the resolving hostname state
 
-//            printf( "resolving hostname: \"%s\"\n", hostname );
-
+        // todo: should *probably* be a runtime check here -- eg. set error state if resolver is null
         assert( m_config.resolver );
 
         m_config.resolver->Resolve( hostname );
@@ -86,6 +87,8 @@ namespace protocol
         m_lastPacketReceiveTime = m_timeBase.time;
         strncpy( m_hostname, hostname, MaxHostName - 1 );
         m_hostname[MaxHostName-1] = '\0';
+
+#endif
     }
 
     void Client::Disconnect()
@@ -137,10 +140,14 @@ namespace protocol
         return m_extendedError;
     }
 
+#if PROTOCOL_USE_RESOLVER
+
     Resolver * Client::GetResolver() const
     {
         return m_config.resolver;
     }
+
+#endif
 
     NetworkInterface * Client::GetNetworkInterface() const
     {
@@ -156,7 +163,9 @@ namespace protocol
     {
         m_timeBase = timeBase;
 
+#if PROTOCOL_USE_RESOLVER
         UpdateResolver();
+#endif
      
         UpdateConnection();
 
@@ -173,6 +182,8 @@ namespace protocol
     {
         m_config.networkInterface->Update( m_timeBase );
     }
+
+#if PROTOCOL_USE_RESOLVER
 
     void Client::UpdateResolver()
     {
@@ -205,6 +216,8 @@ namespace protocol
             Connect( address );
         }
     }
+
+#endif
 
     void Client::UpdateConnection()
     {

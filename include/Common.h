@@ -9,9 +9,8 @@
 #include "Config.h"
 #include "Enums.h"
 #include "Constants.h"
-#include <cassert>
-#include <queue>
-#include <map>
+#include <cassert>          // todo: replace with custom assert macro (PROTOCOL_ASSERT)
+#include <stdio.h>          // todo: replace with custom logging header
 
 namespace protocol
 {
@@ -120,10 +119,7 @@ namespace protocol
         virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
     };
 
-    inline uint64_t GenerateGuid()
-    {
-        return ( uint64_t(rand()) << 32 ) | time( nullptr );
-    }
+    uint64_t generate_guid();
 
     inline int random_int( int min, int max )
     {
@@ -172,6 +168,7 @@ namespace protocol
 
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed );
 
+    // todo: must become PROTOCOL_CHECK
     #define check( condition )                                                                                                          \
     do                                                                                                                                  \
     {                                                                                                                                   \

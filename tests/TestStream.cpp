@@ -1,4 +1,5 @@
 #include "Stream.h"
+#include <string.h>     // todo: just for memset? blegh
 
 using namespace protocol;
 
