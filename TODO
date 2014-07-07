@@ -1,12 +1,6 @@
 DONE:
 
-    Add a "check" macro that works in release.
-
-    Verify unit tests pass in release build!
-
 TODO:
-
-    ----------------------
 
     Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
 
@@ -17,6 +11,13 @@ TODO:
     Remove the sophist header.
 
     --------------------
+
+    assert should become "PROTOCOL_ASSERT". This needs to be redefined
+    to call a user specified assert function.
+
+    check should become "PROTOCOL_CHECK"
+
+    ----------------------
 
     Fix the bitpacker to do bswap when necessary for big endian.
 
@@ -39,10 +40,6 @@ TODO:
     benefits of short compile times.
 
     Split back up into Types.h
-
-    ------------------
-
-    Clean up or remove the resolver via #ifdef. I don't like including STL
 
     ------------------
 

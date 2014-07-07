@@ -1,3 +1,18 @@
+Sunday Evening, July 6th, 2014:
+-------------------------------
+
+    Add a "check" macro that works in release.
+
+    Verify unit tests pass in release build!
+
+    Clean up or remove the resolver via #ifdef. I don't like including STL
+
+    Added PROTOCOL_USE_RESOLVER so it can be compiled out.
+
+    Reduce headers further inside Common.h and make todo notes
+    where things need to be cleaned up.
+
+
 Saturday Morning, July 5th, 2014:
 ---------------------------------
 

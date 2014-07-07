@@ -25,7 +25,7 @@ namespace protocol
 
         while ( data != end )
         {
-            #ifdef PROTOCOL_BIG_ENDIAN
+            #if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN
                 uint64 k = *data++;
                 uint8_t * p = (uint8_t*) &k;
                 uint8_t c;

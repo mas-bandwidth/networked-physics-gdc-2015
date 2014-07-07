@@ -16,6 +16,7 @@ extern void test_pointer_arithmetic();
 extern void test_string_stream();
 
 extern void test_sequence();
+extern void test_endian();
 extern void test_address4();
 extern void test_address6();
 extern void test_message_factory();
@@ -85,6 +86,7 @@ int main()
         test_string_stream();
 
         test_sequence();
+        test_endian();
         test_address4();
         test_address6();
         test_message_factory();
