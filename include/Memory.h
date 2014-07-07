@@ -3,6 +3,8 @@
 
 #include "Common.h"
 #include "Allocator.h"
+#include <stdio.h>			// todo: replace with Log.h
+#include <stdlib.h>
 
 namespace protocol
 {
@@ -159,9 +161,9 @@ namespace protocol
 			if ( m_total_allocated != 0 )
 			{
 				printf( "you leaked memory! %d bytes still allocated\n", m_total_allocated );
-				exit(1);
+				PROTOCOL_ASSERT( !"leaked memory" );
 			}
-			assert( m_total_allocated == 0 );
+			PROTOCOL_ASSERT( m_total_allocated == 0 );
 		}
 
 		void * Allocate( uint32_t size, uint32_t align )
@@ -183,12 +185,12 @@ namespace protocol
 				return;
 #if PROTOCOL_DEBUG_MEMORY_LEAKS
 			auto itor = m_alloc_map.find( p );
-			assert( itor != m_alloc_map.end() );
+			PROTOCOL_ASSERT( itor != m_alloc_map.end() );
 			m_alloc_map.erase( p );
 #endif
 			Header * h = header( p );
 			m_total_allocated -= h->size;
-			assert( m_total_allocated >= 0 );
+			PROTOCOL_ASSERT( m_total_allocated >= 0 );
 			free( h );
 		}
 
@@ -225,7 +227,7 @@ namespace protocol
 
 		~ScratchAllocator() 
 		{
-			assert( m_free == m_allocate );			// You leaked memory!
+			PROTOCOL_ASSERT( m_free == m_allocate );			// You leaked memory!
 
 			m_backing.Free( m_begin );
 		}
@@ -242,7 +244,7 @@ namespace protocol
 
 		void * Allocate( uint32_t size, uint32_t align ) 
 		{
-			assert( align % 4 == 0 );
+			PROTOCOL_ASSERT( align % 4 == 0 );
 
 			size = ( ( size + 3 ) / 4 ) * 4;
 
@@ -267,7 +269,7 @@ namespace protocol
 			{
 				/*
 				const bool tempMemoryIsExhausted = true;
-				assert( !tempMemoryIsExhausted );
+				PROTOCOL_ASSERT( !tempMemoryIsExhausted );
 				*/
 				return m_backing.Allocate( size, align );
 			}
@@ -290,7 +292,7 @@ namespace protocol
 
 			// Mark this slot as free
 			Header * h = header( p );
-			assert( (h->size & 0x80000000u ) == 0 );
+			PROTOCOL_ASSERT( (h->size & 0x80000000u ) == 0 );
 			h->size = h->size | 0x80000000u;
 
 			// Advance the free pointer past all free slots.

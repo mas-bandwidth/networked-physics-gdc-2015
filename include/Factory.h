@@ -36,12 +36,12 @@ namespace protocol
         virtual T * Create( int type )
         {
             auto itor = create_map.find( type );
-            assert( itor != create_map.end() );
+            PROTOCOL_ASSERT( itor != create_map.end() );
             if ( itor != create_map.end() )
             {
                 T * obj = itor->second();
-                assert( obj );
-                assert( obj->GetType() == type );
+                PROTOCOL_ASSERT( obj );
+                PROTOCOL_ASSERT( obj->GetType() == type );
                 return obj;
             }
             else

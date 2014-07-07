@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_BLOCK_H
@@ -31,12 +31,12 @@ namespace protocol
 
         Block( Allocator & allocator, int bytes )
         {
-            assert( bytes > 0 );
+            PROTOCOL_ASSERT( bytes > 0 );
             m_allocator = &allocator;
             m_data = (uint8_t*) allocator.Allocate( bytes );
 //            printf( "allocate block data %p (%d)\n", m_data, bytes );
             m_size = bytes;
-            assert( m_data );
+            PROTOCOL_ASSERT( m_data );
         }
 
         ~Block()
@@ -54,9 +54,9 @@ namespace protocol
             // connect this block class to the memory passed in
             // this block class now *owns* the block data and 
             // will free it when the message is destroyed.
-            assert( m_data == nullptr );
-            assert( data );
-            assert( size > 0 );
+            PROTOCOL_ASSERT( m_data == nullptr );
+            PROTOCOL_ASSERT( data );
+            PROTOCOL_ASSERT( size > 0 );
             m_allocator = &allocator;
             m_data = data;
             m_size = size;
@@ -78,8 +78,8 @@ namespace protocol
             if ( !m_data )
                 return;
 //          printf( "free block data %p (%d)\n", m_data, m_size );
-            assert( m_allocator );
-            assert( m_size > 0 );
+            PROTOCOL_ASSERT( m_allocator );
+            PROTOCOL_ASSERT( m_size > 0 );
             m_allocator->Free( m_data );
             m_data = nullptr;
             m_size = 0;

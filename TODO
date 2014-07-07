@@ -1,45 +1,32 @@
-DONE:
-
-TODO:
-
-    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
-
-    Grab the big endian check from sophist.h and anything else useful.
-
-    Update the LICENCE to incorporate the sophist.
-
-    Remove the sophist header.
-
-    --------------------
+pDONE:
 
     assert should become "PROTOCOL_ASSERT". This needs to be redefined
     to call a user specified assert function.
 
     check should become "PROTOCOL_CHECK"
 
-    ----------------------
+    Code is ugly but, hey that's how it goes when you make a library.
+
+TODO:
+
+    Now move the function pointer for assert and check handling
+    into the C++ so we don't need to rely on stdio/cassert etc.
+    at the include file level.
+
+    ------------------
 
     Fix the bitpacker to do bswap when necessary for big endian.
 
     I need to provide my own efficient byteswap functions in Common.h,
     eg. fast_ntonl, or just bswap if big endian in/out.
 
-    --------------------
-
-    I really want my own custom allocator so I can create as much
-    memory as I want to use, and allocate from that. 
-
-    This should be implemented as the "default allocator"
-
-    Don't use malloc. Add a #define to drop back to malloc though.
-
-    ------------------
+    ----------------------
 
     Now that I have a .h/.cpp split, the way I have structured
     the bitsquid containers means that I am not getting the full
     benefits of short compile times.
 
-    Split back up into Types.h
+    Split back up into Types.h and clean up the rest of the bitsquid code!
 
     ------------------
 

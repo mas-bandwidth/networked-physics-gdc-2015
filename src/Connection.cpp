@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Connection.h"
@@ -10,8 +10,8 @@ namespace protocol
 {
     Connection::Connection( const ConnectionConfig & config ) : m_config( config )
     {
-        assert( config.packetFactory );
-        assert( config.channelStructure );
+        PROTOCOL_ASSERT( config.packetFactory );
+        PROTOCOL_ASSERT( config.channelStructure );
 
         m_allocator = config.allocator ? config.allocator : &memory::default_allocator();
 
@@ -23,7 +23,7 @@ namespace protocol
         for ( int i = 0; i < m_numChannels; ++i )
         {
             m_channels[i] = config.channelStructure->CreateChannel( i );
-            assert( m_channels[i] );
+            PROTOCOL_ASSERT( m_channels[i] );
         }
 
         Reset();
@@ -31,13 +31,13 @@ namespace protocol
 
     Connection::~Connection()
     {
-        assert( m_sentPackets );
-        assert( m_receivedPackets );
-        assert( m_channels );
+        PROTOCOL_ASSERT( m_sentPackets );
+        PROTOCOL_ASSERT( m_receivedPackets );
+        PROTOCOL_ASSERT( m_channels );
 
         for ( int i = 0; i < m_numChannels; ++i )
         {
-            assert( m_channels[i] );
+            PROTOCOL_ASSERT( m_channels[i] );
             m_config.channelStructure->DestroyChannel( m_channels[i] );
         }
 
@@ -50,8 +50,8 @@ namespace protocol
 
     Channel * Connection::GetChannel( int index )
     {
-        assert( index >= 0 );
-        assert( index < m_numChannels );
+        PROTOCOL_ASSERT( index >= 0 );
+        PROTOCOL_ASSERT( index < m_numChannels );
         return m_channels[index];
     }
 
@@ -96,8 +96,8 @@ namespace protocol
 
     int Connection::GetChannelError( int channelIndex ) const
     {
-        assert( channelIndex >= 0 );
-        assert( channelIndex < m_numChannels );
+        PROTOCOL_ASSERT( channelIndex >= 0 );
+        PROTOCOL_ASSERT( channelIndex < m_numChannels );
         return m_channels[channelIndex]->GetError();
     }
 
@@ -132,9 +132,9 @@ namespace protocol
         if ( m_error != CONNECTION_ERROR_NONE )
             return false;
 
-        assert( packet );
-        assert( packet->GetType() == m_config.packetType );
-        assert( packet->numChannels == m_numChannels );
+        PROTOCOL_ASSERT( packet );
+        PROTOCOL_ASSERT( packet->GetType() == m_config.packetType );
+        PROTOCOL_ASSERT( packet->numChannels == m_numChannels );
 
         if ( packet->numChannels != m_numChannels )
             return false;
@@ -169,8 +169,8 @@ namespace protocol
 
     uint64_t Connection::GetCounter( int index ) const
     {
-        assert( index >= 0 );
-        assert( index < CONNECTION_COUNTER_NUM_COUNTERS );
+        PROTOCOL_ASSERT( index >= 0 );
+        PROTOCOL_ASSERT( index < CONNECTION_COUNTER_NUM_COUNTERS );
         return m_counters[index];
     }
 

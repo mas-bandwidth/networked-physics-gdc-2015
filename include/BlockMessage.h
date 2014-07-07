@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_BLOCK_MESSAGE_H
@@ -21,9 +21,9 @@ namespace protocol
 
         void Connect( Block & block )
         {
-            assert( block.IsValid() );
+            PROTOCOL_ASSERT( block.IsValid() );
             Allocator * allocator = block.GetAllocator();
-            assert( allocator );
+            PROTOCOL_ASSERT( allocator );
             uint8_t * data = block.GetData();
             int size = block.GetSize();
             m_block.Connect( *allocator, data, size );       // we now own the block data

@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Channel.h"
@@ -17,8 +17,8 @@ namespace protocol
 
     ChannelStructure::~ChannelStructure()
     {
-        assert( m_channelAllocator );
-        assert( m_channelDataAllocator );
+        PROTOCOL_ASSERT( m_channelAllocator );
+        PROTOCOL_ASSERT( m_channelDataAllocator );
         m_channelAllocator = nullptr;
         m_channelDataAllocator = nullptr;
     }
@@ -27,12 +27,12 @@ namespace protocol
                                        CreateChannelFunction createChannel,
                                        CreateChannelDataFunction createChannelData )
     {
-        assert( !m_locked );
+        PROTOCOL_ASSERT( !m_locked );
 
         if ( m_locked )
             return;
 
-        assert( m_numChannels < MaxChannels - 1 );
+        PROTOCOL_ASSERT( m_numChannels < MaxChannels - 1 );
 
         ChannelEntry & entry = m_channelEntries[m_numChannels];
 
@@ -61,38 +61,38 @@ namespace protocol
 
     const char * ChannelStructure::GetChannelName( int channelIndex ) const
     {
-        assert( channelIndex >= 0 );
-        assert( channelIndex < m_numChannels );
+        PROTOCOL_ASSERT( channelIndex >= 0 );
+        PROTOCOL_ASSERT( channelIndex < m_numChannels );
         return m_channelEntries[channelIndex].name;
     }
 
     Channel * ChannelStructure::CreateChannel( int channelIndex )
     {
-        assert( m_locked );
-        assert( channelIndex >= 0 );
-        assert( channelIndex < m_numChannels );
+        PROTOCOL_ASSERT( m_locked );
+        PROTOCOL_ASSERT( channelIndex >= 0 );
+        PROTOCOL_ASSERT( channelIndex < m_numChannels );
         return m_channelEntries[channelIndex].createChannel();
     }
 
     void ChannelStructure::DestroyChannel( Channel * channel )
     {
-        assert( channel );
-        assert( m_channelAllocator );
+        PROTOCOL_ASSERT( channel );
+        PROTOCOL_ASSERT( m_channelAllocator );
         PROTOCOL_DELETE( *m_channelAllocator, Channel, channel );
     }
 
     ChannelData * ChannelStructure::CreateChannelData( int channelIndex )
     {
-        assert( m_locked );
-        assert( channelIndex >= 0 );
-        assert( channelIndex < m_numChannels );
+        PROTOCOL_ASSERT( m_locked );
+        PROTOCOL_ASSERT( channelIndex >= 0 );
+        PROTOCOL_ASSERT( channelIndex < m_numChannels );
         return m_channelEntries[channelIndex].createChannelData();
     }
 
     void ChannelStructure::DestroyChannelData( ChannelData * channelData )
     {
-        assert( channelData );
-        assert( m_channelDataAllocator );
+        PROTOCOL_ASSERT( channelData );
+        PROTOCOL_ASSERT( m_channelDataAllocator );
         PROTOCOL_DELETE( *m_channelDataAllocator, ChannelData, channelData );
     }
 

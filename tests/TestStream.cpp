@@ -1,4 +1,5 @@
 #include "Stream.h"
+#include <stdio.h>
 #include <string.h>     // todo: just for memset? blegh
 
 using namespace protocol;
@@ -103,14 +104,14 @@ void test_stream()
 
     // verify read object matches written object
 
-    check( readObject.a == writeObject.a );
-    check( readObject.b == writeObject.b );
-    check( readObject.c == writeObject.c );
-    check( readObject.d == writeObject.d );
-    check( readObject.e == writeObject.e );
-    check( readObject.f == writeObject.f );
-    check( readObject.g == writeObject.g );
-    check( readObject.numItems == writeObject.numItems );
+    PROTOCOL_CHECK( readObject.a == writeObject.a );
+    PROTOCOL_CHECK( readObject.b == writeObject.b );
+    PROTOCOL_CHECK( readObject.c == writeObject.c );
+    PROTOCOL_CHECK( readObject.d == writeObject.d );
+    PROTOCOL_CHECK( readObject.e == writeObject.e );
+    PROTOCOL_CHECK( readObject.f == writeObject.f );
+    PROTOCOL_CHECK( readObject.g == writeObject.g );
+    PROTOCOL_CHECK( readObject.numItems == writeObject.numItems );
     for ( int i = 0; i < readObject.numItems; ++i )
-        check( readObject.items[i] == writeObject.items[i] );
+        PROTOCOL_CHECK( readObject.items[i] == writeObject.items[i] );
 }

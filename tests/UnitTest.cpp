@@ -1,6 +1,8 @@
 #include "Common.h"
 #include "Network.h"
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 using namespace protocol;
 
@@ -70,7 +72,7 @@ int main()
         return 1;
     }
 
-    assert( IsNetworkInitialized() );
+    PROTOCOL_ASSERT( IsNetworkInitialized() );
 
     while ( true )
     {

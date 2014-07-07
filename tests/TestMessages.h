@@ -42,7 +42,7 @@ struct TestMessage : public Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        check( serialize_check( stream, 0xDEADBEEF ) );
+        PROTOCOL_CHECK( serialize_PROTOCOL_CHECK( stream, 0xDEADBEEF ) );
     }
 
     void SerializeRead( ReadStream & stream )

@@ -37,7 +37,7 @@ void test_reliable_message_channel_messages()
             for ( int i = 0; i < NumMessagesSent; ++i )
             {
                 auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-                check( message );
+                PROTOCOL_CHECK( message );
                 message->sequence = i;
                 messageChannel->SendMessage( message );
             }
@@ -59,8 +59,8 @@ void test_reliable_message_channel_messages()
             while ( true )
             {  
                 auto writePacket = connection.WritePacket();
-                check( writePacket );
-                check( writePacket->GetType() == PACKET_CONNECTION );
+                PROTOCOL_CHECK( writePacket );
+                PROTOCOL_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
                 uint8_t buffer[MaxPacketSize];
 
@@ -72,8 +72,8 @@ void test_reliable_message_channel_messages()
 
                 ReadStream readStream( buffer, MaxPacketSize );
                 auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-                check( readPacket );
-                check( readPacket->GetType() == PACKET_CONNECTION );
+                PROTOCOL_CHECK( readPacket );
+                PROTOCOL_CHECK( readPacket->GetType() == PACKET_CONNECTION );
                 readPacket->SerializeRead( readStream );
 
                 simulator.SendPacket( address, readPacket );
@@ -85,15 +85,15 @@ void test_reliable_message_channel_messages()
 
                 if ( packet )
                 {
-                    check( packet->GetType() == PACKET_CONNECTION );
+                    PROTOCOL_CHECK( packet->GetType() == PACKET_CONNECTION );
                     connection.ReadPacket( static_cast<ConnectionPacket*>( packet ) );
                     packetFactory.Destroy( packet );
                     packet = nullptr;
                 }
 
-                check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-                check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-                check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+                PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+                PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+                PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
                 while ( true )
                 {
@@ -102,12 +102,12 @@ void test_reliable_message_channel_messages()
                     if ( !message )
                         break;
 
-                    check( message->GetId() == numMessagesReceived );
-                    check( message->GetType() == MESSAGE_TEST );
+                    PROTOCOL_CHECK( message->GetId() == numMessagesReceived );
+                    PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
 
                     auto testMessage = static_cast<TestMessage*>( message );
 
-                    check( testMessage->sequence == numMessagesReceived );
+                    PROTOCOL_CHECK( testMessage->sequence == numMessagesReceived );
 
                     ++numMessagesReceived;
 
@@ -119,9 +119,9 @@ void test_reliable_message_channel_messages()
 
                 connection.Update( timeBase );
 
-                check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
-                check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-                check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+                PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+                PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+                PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
                 timeBase.time += timeBase.deltaTime;
 
@@ -189,8 +189,8 @@ void test_reliable_message_channel_small_blocks()
         while ( true )
         {
             auto writePacket = connection.WritePacket();
-            check( writePacket );
-            check( writePacket->GetType() == PACKET_CONNECTION );
+            PROTOCOL_CHECK( writePacket );
+            PROTOCOL_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
             uint8_t buffer[MaxPacketSize];
 
@@ -203,8 +203,8 @@ void test_reliable_message_channel_small_blocks()
 
             ReadStream readStream( buffer, MaxPacketSize );
             auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-            check( readPacket );
-            check( readPacket->GetType() == PACKET_CONNECTION );
+            PROTOCOL_CHECK( readPacket );
+            PROTOCOL_CHECK( readPacket->GetType() == PACKET_CONNECTION );
             readPacket->SerializeRead( readStream );
 
             simulator.SendPacket( address, readPacket );
@@ -220,9 +220,9 @@ void test_reliable_message_channel_small_blocks()
                 packet = nullptr;
             }
 
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -231,17 +231,17 @@ void test_reliable_message_channel_small_blocks()
                 if ( !message )
                     break;
 
-                check( message->GetId() == numMessagesReceived );
-                check( message->GetType() == MESSAGE_BLOCK );
+                PROTOCOL_CHECK( message->GetId() == numMessagesReceived );
+                PROTOCOL_CHECK( message->GetType() == MESSAGE_BLOCK );
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
                 Block & block = blockMessage->GetBlock();
 
-                check( block.GetSize() == numMessagesReceived + 1 );
+                PROTOCOL_CHECK( block.GetSize() == numMessagesReceived + 1 );
                 const uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
-                    check( data[i] == ( numMessagesReceived + i ) % 256 );
+                    PROTOCOL_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );
 
                 ++numMessagesReceived;
 
@@ -250,9 +250,9 @@ void test_reliable_message_channel_small_blocks()
 
             connection.Update( timeBase );
 
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             if ( numMessagesReceived == NumMessagesSent )
                 break;
@@ -317,8 +317,8 @@ void test_reliable_message_channel_large_blocks()
         while ( true )
         {  
             auto writePacket = connection.WritePacket();
-            check( writePacket );
-            check( writePacket->GetType() == PACKET_CONNECTION );
+            PROTOCOL_CHECK( writePacket );
+            PROTOCOL_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
             uint8_t buffer[MaxPacketSize];
 
@@ -331,8 +331,8 @@ void test_reliable_message_channel_large_blocks()
 
             ReadStream readStream( buffer, MaxPacketSize );
             auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-            check( readPacket );
-            check( readPacket->GetType() == PACKET_CONNECTION );
+            PROTOCOL_CHECK( readPacket );
+            PROTOCOL_CHECK( readPacket->GetType() == PACKET_CONNECTION );
             readPacket->SerializeRead( readStream );
 
             simulator.SendPacket( address, readPacket );
@@ -348,9 +348,9 @@ void test_reliable_message_channel_large_blocks()
                 packet = nullptr;
             }
         
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -359,8 +359,8 @@ void test_reliable_message_channel_large_blocks()
                 if ( !message )
                     break;
 
-                check( message->GetId() == numMessagesReceived );
-                check( message->GetType() == MESSAGE_BLOCK );
+                PROTOCOL_CHECK( message->GetId() == numMessagesReceived );
+                PROTOCOL_CHECK( message->GetType() == MESSAGE_BLOCK );
 
                 auto blockMessage = static_cast<BlockMessage*>( message );
 
@@ -368,10 +368,10 @@ void test_reliable_message_channel_large_blocks()
 
 //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                check( block.GetSize() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
+                PROTOCOL_CHECK( block.GetSize() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
                 const uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
-                    check( data[i] == ( numMessagesReceived + i ) % 256 );
+                    PROTOCOL_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );
 
                 ++numMessagesReceived;
 
@@ -383,16 +383,16 @@ void test_reliable_message_channel_large_blocks()
 
             connection.Update( timeBase );
 
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             timeBase.time += timeBase.deltaTime;
 
             iteration++;
         }
 
-        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
+        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
     }
     memory::shutdown();
 }
@@ -428,8 +428,8 @@ void test_reliable_message_channel_mixture()
             if ( rand() % 10 )
             {
                 auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-                check( message );
-                check( message->GetType() == MESSAGE_TEST );
+                PROTOCOL_CHECK( message );
+                PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
                 message->sequence = i;
                 messageChannel->SendMessage( message );
             }
@@ -460,8 +460,8 @@ void test_reliable_message_channel_mixture()
         while ( true )
         {  
             auto writePacket = connection.WritePacket();
-            check( writePacket );
-            check( writePacket->GetType() == PACKET_CONNECTION );
+            PROTOCOL_CHECK( writePacket );
+            PROTOCOL_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
             uint8_t buffer[MaxPacketSize];
 
@@ -489,9 +489,9 @@ void test_reliable_message_channel_mixture()
                 packet = nullptr;
             }
             
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-            check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
+            PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
 
             while ( true )
             {
@@ -500,11 +500,11 @@ void test_reliable_message_channel_mixture()
                 if ( !message )
                     break;
 
-                check( message->GetId() == numMessagesReceived );
+                PROTOCOL_CHECK( message->GetId() == numMessagesReceived );
 
                 if ( message->GetType() == MESSAGE_BLOCK )
                 {
-                    check( message->GetType() == MESSAGE_BLOCK );
+                    PROTOCOL_CHECK( message->GetType() == MESSAGE_BLOCK );
 
                     auto blockMessage = static_cast<BlockMessage*>( message );
 
@@ -512,20 +512,20 @@ void test_reliable_message_channel_mixture()
 
     //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                    check( block.GetSize() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
+                    PROTOCOL_CHECK( block.GetSize() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        check( data[i] == ( numMessagesReceived + i ) % 256 );
+                        PROTOCOL_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );
                 }
                 else
                 {
-                    check( message->GetType() == MESSAGE_TEST );
+                    PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
 
     //                printf( "received message %d\n", message->GetId() );
 
                     auto testMessage = static_cast<TestMessage*>( message );
 
-                    check( testMessage->sequence == numMessagesReceived );
+                    PROTOCOL_CHECK( testMessage->sequence == numMessagesReceived );
                 }
 
                 ++numMessagesReceived;
@@ -538,16 +538,16 @@ void test_reliable_message_channel_mixture()
 
             connection.Update( timeBase );
 
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-            check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
             timeBase.time += timeBase.deltaTime;
 
             iteration++;
         }
 
-        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
+        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == NumMessagesSent );
     }
     memory::shutdown();
 }

@@ -12,6 +12,12 @@ Sunday Evening, July 6th, 2014:
     Reduce headers further inside Common.h and make todo notes
     where things need to be cleaned up.
 
+    Add a runtime test that verifies the PROTOCOL_BIG_ENDIAN is correct.
+
+    Grab the big endian check from sophist.h and anything else useful.
+
+    Remove the sophist Platform.h. Nothing else useful in it.
+
 
 Saturday Morning, July 5th, 2014:
 ---------------------------------

@@ -14,9 +14,9 @@ void test_packet_factory()
         auto updatePacket = packetFactory.Create( PACKET_UPDATE );
         auto disconnectPacket = packetFactory.Create( PACKET_DISCONNECT );
 
-        check( connectPacket->GetType() == PACKET_CONNECT );
-        check( updatePacket->GetType() == PACKET_UPDATE );
-        check( disconnectPacket->GetType() == PACKET_DISCONNECT );
+        PROTOCOL_CHECK( connectPacket->GetType() == PACKET_CONNECT );
+        PROTOCOL_CHECK( updatePacket->GetType() == PACKET_UPDATE );
+        PROTOCOL_CHECK( disconnectPacket->GetType() == PACKET_DISCONNECT );
 
         packetFactory.Destroy( connectPacket );
         packetFactory.Destroy( updatePacket );

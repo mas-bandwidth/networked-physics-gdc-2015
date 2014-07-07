@@ -1,7 +1,12 @@
+/*
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
+*/
+
 #ifndef PROTOCOL_ENUMS_H
 #define PROTOCOL_ENUMS_H
 
-#include <assert.h>
+#include "Common.h"
 
 namespace protocol
 {
@@ -61,7 +66,7 @@ namespace protocol
             case CLIENT_STATE_READY_FOR_CONNECTION:             return "ready for connection";
             case CLIENT_STATE_CONNECTED:                        return "connected";
             default: 
-                assert( 0 );
+                PROTOCOL_ASSERT( 0 );
                 return "???";
         }
     }
@@ -88,7 +93,7 @@ namespace protocol
             case CLIENT_ERROR_CONNECTION_TIMED_OUT:             return "connection timed out";
             case CLIENT_ERROR_CONNECTION_ERROR:                 return "connection error";
             default:
-                assert( false );
+                PROTOCOL_ASSERT( false );
                 return "???";
         }
     }

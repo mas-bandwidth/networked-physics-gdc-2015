@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Network.h"
@@ -11,7 +11,7 @@ namespace protocol
 
     bool InitializeNetwork()     
     {         
-        assert( !s_networkInitialized );
+        PROTOCOL_ASSERT( !s_networkInitialized );
 
         bool result = true;
 
@@ -28,7 +28,7 @@ namespace protocol
 
     void ShutdownNetwork()
     {
-        assert( s_networkInitialized );
+        PROTOCOL_ASSERT( s_networkInitialized );
 
         #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
         WSACleanup();

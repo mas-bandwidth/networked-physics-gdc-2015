@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_MESSAGE_H
@@ -19,27 +19,27 @@ namespace protocol
 
         Message( int type ) : m_refCount(1), m_id(0), m_type(type)
         {
-            assert( m_magic == 0x12345 );
+            PROTOCOL_ASSERT( m_magic == 0x12345 );
         }
 
-        int GetId() const { assert( m_magic == 0x12345 ); return m_id; }
-        int GetType() const { assert( m_magic == 0x12345 ); return m_type; }
+        int GetId() const { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_id; }
+        int GetType() const { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_type; }
 
-        void SetId( uint16_t id ) { assert( m_magic == 0x12345 ); m_id = id; }
+        void SetId( uint16_t id ) { PROTOCOL_ASSERT( m_magic == 0x12345 ); m_id = id; }
 
-        bool IsBlock() const { assert( m_magic == 0x12345 ); return m_type == BlockMessageType; }
+        bool IsBlock() const { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_type == BlockMessageType; }
 
-        int GetRefCount() { assert( m_magic == 0x12345 ); return m_refCount; }
+        int GetRefCount() { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_refCount; }
 
     protected:
 
         void AddRef() { m_refCount++; }
-        void Release() { assert( m_magic == 0x12345 ); assert( m_refCount > 0 ); m_refCount--; }
+        void Release() { PROTOCOL_ASSERT( m_magic == 0x12345 ); PROTOCOL_ASSERT( m_refCount > 0 ); m_refCount--; }
 
         ~Message() 
         { 
-            assert( m_magic == 0x12345 );
-            assert( m_refCount == 0 );
+            PROTOCOL_ASSERT( m_magic == 0x12345 );
+            PROTOCOL_ASSERT( m_refCount == 0 );
             #ifndef NDEBUG
             m_magic = 0;
             #endif

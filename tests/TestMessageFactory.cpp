@@ -12,14 +12,14 @@ void test_message_factory()
         TestMessageFactory messageFactory( memory::default_allocator() );
 
         auto testMessage = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-        check( testMessage );
-        check( testMessage->GetRefCount() == 1 );
-        check( testMessage->GetType() == MESSAGE_TEST );
+        PROTOCOL_CHECK( testMessage );
+        PROTOCOL_CHECK( testMessage->GetRefCount() == 1 );
+        PROTOCOL_CHECK( testMessage->GetType() == MESSAGE_TEST );
 
         auto blockMessage = (BlockMessage*) messageFactory.Create( MESSAGE_BLOCK );
-        check( blockMessage );
-        check( blockMessage->GetRefCount() == 1 );
-        check( blockMessage->GetType() == MESSAGE_BLOCK );
+        PROTOCOL_CHECK( blockMessage );
+        PROTOCOL_CHECK( blockMessage->GetRefCount() == 1 );
+        PROTOCOL_CHECK( blockMessage->GetType() == MESSAGE_BLOCK );
 
         Block block( memory::default_allocator(), 1024 );
         uint8_t * data = block.GetData();

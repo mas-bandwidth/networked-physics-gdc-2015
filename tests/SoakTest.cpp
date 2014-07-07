@@ -120,7 +120,7 @@ void soak_test()
             {
                 // bitpacked message
                 auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-                check( message );
+                PROTOCOL_CHECK( message );
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
@@ -156,7 +156,7 @@ void soak_test()
         WriteStream writeStream( buffer, MaxPacketSize );
         writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
-        check( !writeStream.IsOverflow() );
+        PROTOCOL_CHECK( !writeStream.IsOverflow() );
 
         packetFactory.Destroy( writePacket );
         writePacket = nullptr;
@@ -164,7 +164,7 @@ void soak_test()
         ReadStream readStream( buffer, MaxPacketSize );
         auto readPacket = (ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
         readPacket->SerializeRead( readStream );
-        check( !readStream.IsOverflow() );
+        PROTOCOL_CHECK( !readStream.IsOverflow() );
 
         connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
 
@@ -180,8 +180,8 @@ void soak_test()
             if ( !message )
                 break;
 
-            check( message->GetId() == numMessagesReceived % 65536 );
-            check( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
+            PROTOCOL_CHECK( message->GetId() == numMessagesReceived % 65536 );
+            PROTOCOL_CHECK( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
 
             if ( message->GetType() == MESSAGE_TEST )
             {
@@ -198,10 +198,10 @@ void soak_test()
                 if ( block.GetSize() <= messageChannelConfig.maxSmallBlockSize )
                 {
                     const int index = numMessagesReceived % 32;
-                    check( block.GetSize() == index + 1 );
+                    PROTOCOL_CHECK( block.GetSize() == index + 1 );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        check( data[i] == ( index + i ) % 256 );
+                        PROTOCOL_CHECK( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
 #endif
@@ -209,10 +209,10 @@ void soak_test()
                 else
                 {
                     const int index = numMessagesReceived % 4;
-                    check( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
+                    PROTOCOL_CHECK( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        check( data[i] == ( index + i ) % 256 );
+                        PROTOCOL_CHECK( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
 #endif
@@ -234,9 +234,9 @@ void soak_test()
                     status.numFragments );
 #endif
 
-        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
-        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-        check( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
+        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
     }

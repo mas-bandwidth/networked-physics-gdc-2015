@@ -1,3 +1,8 @@
+/*
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
+*/
+
 #ifndef PROTOCOL_ARRAY_H
 #define PROTOCOL_ARRAY_H
 

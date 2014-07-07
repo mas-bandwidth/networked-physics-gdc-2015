@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Address.h"
@@ -72,7 +72,7 @@ namespace protocol
         }
         else
         {
-            assert( false );
+            PROTOCOL_ASSERT( false );
             Clear();
         }
     }
@@ -113,7 +113,7 @@ namespace protocol
         // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
         // 2. otherwise try to parse as raw IPv6 address, parse using inet_pton
 
-        assert( address_in );
+        PROTOCOL_ASSERT( address_in );
 
         char buffer[256];
         char * address = buffer;
@@ -186,13 +186,13 @@ namespace protocol
 
     uint32_t Address::GetAddress4() const
     {
-        assert( m_type == ADDRESS_IPV4 );
+        PROTOCOL_ASSERT( m_type == ADDRESS_IPV4 );
         return m_address4;
     }
 
     const uint16_t * Address::GetAddress6() const
     {
-        assert( m_type == ADDRESS_IPV6 );
+        PROTOCOL_ASSERT( m_type == ADDRESS_IPV6 );
         return m_address6;
     }
 

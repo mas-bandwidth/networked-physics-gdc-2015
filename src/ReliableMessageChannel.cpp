@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "ReliableMessageChannel.h"
@@ -28,7 +28,7 @@ namespace protocol
         {
             for ( int i = 0; i < numMessages; ++i )
             {
-                assert( messages[i] );
+                PROTOCOL_ASSERT( messages[i] );
                 config.messageFactory->Release( messages[i] );
                 messages[i] = nullptr;
             }
@@ -49,13 +49,13 @@ namespace protocol
         {
             if ( Stream::IsWriting )
             {
-                assert( fragment );
+                PROTOCOL_ASSERT( fragment );
             }
             else
             {
                 Allocator & a = memory::scratch_allocator();
                 fragment = (uint8_t*) a.Allocate( config.blockFragmentSize );
-                assert( fragment );
+                PROTOCOL_ASSERT( fragment );
             }
 
             serialize_bits( stream, blockId, 16 );
@@ -65,14 +65,14 @@ namespace protocol
         }
         else
         {
-            assert( config.messageFactory );
+            PROTOCOL_ASSERT( config.messageFactory );
 
             if ( Stream::IsWriting )
-                assert( numMessages > 0 );
+                PROTOCOL_ASSERT( numMessages > 0 );
 
             serialize_int( stream, numMessages, 1, config.maxMessagesPerPacket );
 
-            assert( numMessages > 0 );
+            PROTOCOL_ASSERT( numMessages > 0 );
 
             if ( Stream::IsReading )
             {
@@ -80,7 +80,7 @@ namespace protocol
                 messages = (Message**) a.Allocate( numMessages * sizeof( Message* ) );
             }
 
-            assert( messages );
+            PROTOCOL_ASSERT( messages );
 
             int messageTypes[numMessages];
             uint16_t messageIds[numMessages];
@@ -89,7 +89,7 @@ namespace protocol
             {
                 for ( int i = 0; i < numMessages; ++i )
                 {
-                    assert( messages[i] );
+                    PROTOCOL_ASSERT( messages[i] );
                     messageTypes[i] = messages[i]->GetType();
                     messageIds[i] = messages[i]->GetId();
                 }
@@ -133,20 +133,20 @@ namespace protocol
                 {
                     messages[i] = config.messageFactory->Create( messageTypes[i] );
 
-                    assert( messages[i] );
-                    assert( messages[i]->GetType() == messageTypes[i] );
+                    PROTOCOL_ASSERT( messages[i] );
+                    PROTOCOL_ASSERT( messages[i]->GetType() == messageTypes[i] );
 
                     messages[i]->SetId( messageIds[i] );
 
                     if ( Stream::IsReading && messageTypes[i] == BlockMessageType )
                     {
-                        assert( config.smallBlockAllocator );
+                        PROTOCOL_ASSERT( config.smallBlockAllocator );
                         BlockMessage * blockMessage = static_cast<BlockMessage*>( messages[i] );
                         blockMessage->SetAllocator( *config.smallBlockAllocator );
                     }
                 }
 
-                assert( messages[i] );
+                PROTOCOL_ASSERT( messages[i] );
 
                 serialize_object( stream, *messages[i] );
             }
@@ -172,11 +172,11 @@ namespace protocol
 
     ReliableMessageChannel::ReliableMessageChannel( const ReliableMessageChannelConfig & config ) : m_config( config )
     {
-        assert( config.messageFactory );
-        assert( config.messageAllocator );
-        assert( config.smallBlockAllocator );
-        assert( config.largeBlockAllocator );
-        assert( config.maxSmallBlockSize <= MaxSmallBlockSize );
+        PROTOCOL_ASSERT( config.messageFactory );
+        PROTOCOL_ASSERT( config.messageAllocator );
+        PROTOCOL_ASSERT( config.smallBlockAllocator );
+        PROTOCOL_ASSERT( config.largeBlockAllocator );
+        PROTOCOL_ASSERT( config.maxSmallBlockSize <= MaxSmallBlockSize );
 
         m_allocator = config.allocator ? config.allocator : &memory::default_allocator();
 
@@ -203,17 +203,17 @@ namespace protocol
     {
         Reset();
 
-        assert( m_sendQueue );
-        assert( m_sentPackets );
-        assert( m_receiveQueue );
+        PROTOCOL_ASSERT( m_sendQueue );
+        PROTOCOL_ASSERT( m_sentPackets );
+        PROTOCOL_ASSERT( m_receiveQueue );
 
         PROTOCOL_DELETE( *m_allocator, SlidingWindow<SendQueueEntry>, m_sendQueue );
         PROTOCOL_DELETE( *m_allocator, SlidingWindow<SentPacketEntry>, m_sentPackets );
         PROTOCOL_DELETE( *m_allocator, SlidingWindow<ReceiveQueueEntry>, m_receiveQueue );
 
-        assert( m_sentPacketMessageIds );
-        assert( m_sendLargeBlock.fragments );
-        assert( m_receiveLargeBlock.fragments );
+        PROTOCOL_ASSERT( m_sentPacketMessageIds );
+        PROTOCOL_ASSERT( m_sendLargeBlock.fragments );
+        PROTOCOL_ASSERT( m_receiveLargeBlock.fragments );
 
         PROTOCOL_DELETE_ARRAY( *m_allocator, m_sentPacketMessageIds, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
         PROTOCOL_DELETE_ARRAY( *m_allocator, m_sendLargeBlock.fragments, m_maxBlockFragments );
@@ -229,10 +229,10 @@ namespace protocol
 
     void ReliableMessageChannel::Reset()
     {
-        assert( m_sendQueue );
-        assert( m_sentPackets );
-        assert( m_receiveQueue );
-        assert( m_sentPacketMessageIds );
+        PROTOCOL_ASSERT( m_sendQueue );
+        PROTOCOL_ASSERT( m_sentPackets );
+        PROTOCOL_ASSERT( m_receiveQueue );
+        PROTOCOL_ASSERT( m_sentPacketMessageIds );
 
         m_error = 0;
 
@@ -273,11 +273,11 @@ namespace protocol
 
     void ReliableMessageChannel::SendMessage( Message * message )
     {
-        assert( message );
+        PROTOCOL_ASSERT( message );
 
 //      printf( "queue message for send: %d\n", m_sendMessageId );
 
-        assert( CanSendMessage() );
+        PROTOCOL_ASSERT( CanSendMessage() );
 
         if ( !CanSendMessage() )
         {
@@ -307,15 +307,15 @@ namespace protocol
         bool result = 
         #endif
             m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
-        assert( result );
+        PROTOCOL_ASSERT( result );
 
         auto entry = m_sendQueue->Find( m_sendMessageId );
 
-        assert( entry );
-        assert( entry->valid );
-        assert( entry->sequence == m_sendMessageId );
-        assert( entry->message );
-        assert( entry->message->GetId() == m_sendMessageId );
+        PROTOCOL_ASSERT( entry );
+        PROTOCOL_ASSERT( entry->valid );
+        PROTOCOL_ASSERT( entry->sequence == m_sendMessageId );
+        PROTOCOL_ASSERT( entry->message );
+        PROTOCOL_ASSERT( entry->message->GetId() == m_sendMessageId );
 
         if ( !largeBlock )
         {
@@ -327,7 +327,7 @@ namespace protocol
             {
                 printf( "measure stream overflow on message type %d: %d bits written, max is %d\n", message->GetType(), measureStream.GetBitsWritten(), measureStream.GetTotalBits() );
             }
-            assert( !measureStream.IsOverflow() );
+            PROTOCOL_ASSERT( !measureStream.IsOverflow() );
             entry->measuredBits = measureStream.GetBitsWritten() + m_messageOverheadBits;
 
 //              printf( "message %d is %d bits\n", (int) m_sendMessageId, entity->measuredBits );
@@ -343,7 +343,7 @@ namespace protocol
 //            printf( "send block: %d bytes\n", block->size() );
 
         auto blockMessage = (BlockMessage*) m_config.messageFactory->Create( BlockMessageType );
-        assert( blockMessage );
+        PROTOCOL_ASSERT( blockMessage );
         blockMessage->Connect( block );
 
         SendMessage( blockMessage );
@@ -358,8 +358,8 @@ namespace protocol
         auto message = entry->message;
 
         #ifndef NDEBUG
-        assert( message );
-        assert( message->GetId() == m_receiveMessageId );
+        PROTOCOL_ASSERT( message );
+        PROTOCOL_ASSERT( message->GetId() == m_receiveMessageId );
         #endif
 
 //            printf( "dequeue for receive: %d\n", message->GetId() );
@@ -397,13 +397,13 @@ namespace protocol
                 and send these fragments until they are all acked.
             */
 
-            assert( firstEntry->message->GetType() == BlockMessageType );
+            PROTOCOL_ASSERT( firstEntry->message->GetType() == BlockMessageType );
 
             BlockMessage & blockMessage = static_cast<BlockMessage&>( *firstEntry->message );
 
             Block & block = blockMessage.GetBlock();
 
-            assert( block.GetSize() > m_config.maxSmallBlockSize );
+            PROTOCOL_ASSERT( block.GetSize() > m_config.maxSmallBlockSize );
 
             if ( !m_sendLargeBlock.active )
             {
@@ -415,13 +415,13 @@ namespace protocol
 
 //                    printf( "sending block %d in %d fragments\n", (int) firstMessageId, m_sendLargeBlock.numFragments );
 
-                assert( m_sendLargeBlock.numFragments >= 0 );
-                assert( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
+                PROTOCOL_ASSERT( m_sendLargeBlock.numFragments >= 0 );
+                PROTOCOL_ASSERT( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
 
                 memset( &m_sendLargeBlock.fragments[0], 0, sizeof( SendFragmentData ) * m_sendLargeBlock.numFragments );
             }
 
-            assert( m_sendLargeBlock.active );
+            PROTOCOL_ASSERT( m_sendLargeBlock.active );
 
             int fragmentId = -1;
             for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
@@ -447,7 +447,7 @@ namespace protocol
             data->fragmentId = fragmentId;
             Allocator & a = memory::scratch_allocator();
             data->fragment = (uint8_t*) a.Allocate( m_config.blockFragmentSize );
-            assert( data->fragment );
+            PROTOCOL_ASSERT( data->fragment );
 //                printf( "allocate fragment %p (send fragment)\n", data->fragment );
 
             //printf( "create fragment %p\n", data->fragment );
@@ -457,14 +457,14 @@ namespace protocol
             if ( fragmentRemainder && fragmentId == m_sendLargeBlock.numFragments - 1 )
                 fragmentBytes = fragmentRemainder;
 
-            assert( fragmentBytes >= 0 );
-            assert( fragmentBytes <= m_config.blockFragmentSize );
+            PROTOCOL_ASSERT( fragmentBytes >= 0 );
+            PROTOCOL_ASSERT( fragmentBytes <= m_config.blockFragmentSize );
             uint8_t * src = &( block.GetData()[fragmentId*m_config.blockFragmentSize] );
             uint8_t * dst = data->fragment;
             memcpy( dst, src, fragmentBytes );
 
             auto sentPacketData = m_sentPackets->InsertFast( sequence );
-            assert( sentPacketData );
+            PROTOCOL_ASSERT( sentPacketData );
             sentPacketData->acked = 0;
             sentPacketData->largeBlock = 1;
             sentPacketData->blockId = m_oldestUnackedMessageId;
@@ -482,7 +482,7 @@ namespace protocol
                 per-packet, but stop before the next large block.
             */
 
-            assert( !m_sendLargeBlock.active );
+            PROTOCOL_ASSERT( !m_sendLargeBlock.active );
 
             // gather messages to include in the packet
 
@@ -518,8 +518,8 @@ namespace protocol
                     break;
             }
 
-            assert( numMessageIds >= 0 );
-            assert( numMessageIds <= m_config.maxMessagesPerPacket );
+            PROTOCOL_ASSERT( numMessageIds >= 0 );
+            PROTOCOL_ASSERT( numMessageIds <= m_config.maxMessagesPerPacket );
 
             // if there are no messages then we don't have any data to send
 
@@ -529,7 +529,7 @@ namespace protocol
             // add sent packet data containing message ids included in this packet
 
             auto sentPacketData = m_sentPackets->InsertFast( sequence );
-            assert( sentPacketData );
+            PROTOCOL_ASSERT( sentPacketData );
             sentPacketData->largeBlock = 0;
             sentPacketData->acked = 0;
             sentPacketData->timeSent = m_timeBase.time;
@@ -550,14 +550,14 @@ namespace protocol
             auto data = PROTOCOL_NEW( allocator, ReliableMessageChannelData, m_config );
 
             data->messages = (Message**) allocator.Allocate( numMessageIds * sizeof( Message* ) );
-            assert( data->messages );
+            PROTOCOL_ASSERT( data->messages );
 //                printf( "allocate messages %p (get data)\n", data->messages );
             data->numMessages = numMessageIds;
             for ( int i = 0; i < numMessageIds; ++i )
             {
                 auto entry = m_sendQueue->Find( messageIds[i] );
-                assert( entry );
-                assert( entry->message );
+                PROTOCOL_ASSERT( entry );
+                PROTOCOL_ASSERT( entry->message );
                 data->messages[i] = entry->message;
                 m_config.messageFactory->AddRef( entry->message );
             }
@@ -570,7 +570,7 @@ namespace protocol
 
     bool ReliableMessageChannel::ProcessData( uint16_t sequence, ChannelData * channelData )
     {
-        assert( channelData );
+        PROTOCOL_ASSERT( channelData );
 
 //          printf( "process data %d\n", sequence );
 
@@ -630,8 +630,8 @@ namespace protocol
 
                 const int numFragments = (int) ceil( data->blockSize / (float)m_config.blockFragmentSize );
 
-                assert( numFragments >= 0 );
-                assert( numFragments <= m_maxBlockFragments );
+                PROTOCOL_ASSERT( numFragments >= 0 );
+                PROTOCOL_ASSERT( numFragments <= m_maxBlockFragments );
 
                 if ( numFragments < 0 || numFragments > m_maxBlockFragments )
                 {
@@ -647,14 +647,14 @@ namespace protocol
                 m_receiveLargeBlock.blockId = data->blockId;
                 m_receiveLargeBlock.blockSize = data->blockSize;
 
-                assert( m_config.largeBlockAllocator );
+                PROTOCOL_ASSERT( m_config.largeBlockAllocator );
                 uint8_t * blockData = (uint8_t*) m_config.largeBlockAllocator->Allocate( data->blockSize );
                 m_receiveLargeBlock.block.Connect( *m_config.largeBlockAllocator, blockData, data->blockSize );
                 
                 memset( &m_receiveLargeBlock.fragments[0], 0, sizeof( ReceiveFragmentData ) * numFragments );
             }
 
-            assert( m_receiveLargeBlock.active );
+            PROTOCOL_ASSERT( m_receiveLargeBlock.active );
 
             if ( data->blockId != m_receiveLargeBlock.blockId )
             {
@@ -662,9 +662,9 @@ namespace protocol
                 return false;
             }
 
-            assert( data->blockId == m_receiveLargeBlock.blockId );
-            assert( data->blockSize == m_receiveLargeBlock.blockSize );
-            assert( data->fragmentId < m_receiveLargeBlock.numFragments );
+            PROTOCOL_ASSERT( data->blockId == m_receiveLargeBlock.blockId );
+            PROTOCOL_ASSERT( data->blockSize == m_receiveLargeBlock.blockSize );
+            PROTOCOL_ASSERT( data->fragmentId < m_receiveLargeBlock.numFragments );
 
             if ( data->blockId != m_receiveLargeBlock.blockId )
             {
@@ -704,8 +704,8 @@ namespace protocol
 
 //                    printf( "fragment bytes = %d\n", fragmentBytes );
 
-                assert( fragmentBytes >= 0 );
-                assert( fragmentBytes <= m_config.blockFragmentSize );
+                PROTOCOL_ASSERT( fragmentBytes >= 0 );
+                PROTOCOL_ASSERT( fragmentBytes <= m_config.blockFragmentSize );
                 uint8_t * src = data->fragment;
                 uint8_t * dst = &( block.GetData()[data->fragmentId*m_config.blockFragmentSize] );
                 memcpy( dst, src, fragmentBytes );
@@ -717,7 +717,7 @@ namespace protocol
 //                        printf( "received large block %d (%d bytes)\n", m_receiveLargeBlock.blockId, m_receiveLargeBlock.block->size() );
 
                     auto blockMessage = (BlockMessage*) m_config.messageFactory->Create( BlockMessageType );
-                    assert( blockMessage );
+                    PROTOCOL_ASSERT( blockMessage );
                     blockMessage->Connect( m_receiveLargeBlock.block );
                     blockMessage->SetId( m_receiveLargeBlock.blockId );
 
@@ -725,7 +725,7 @@ namespace protocol
 
                     m_receiveLargeBlock.active = false;
 
-                    assert( !m_receiveLargeBlock.block.IsValid() );
+                    PROTOCOL_ASSERT( !m_receiveLargeBlock.block.IsValid() );
                 }
             }
         }
@@ -746,13 +746,13 @@ namespace protocol
 
             // process messages included in this packet data
 
-            assert( data->messages );
+            PROTOCOL_ASSERT( data->messages );
 
             for ( int i = 0; i < data->numMessages; ++i )
             {
                 auto message = data->messages[i];
 
-                assert( message );
+                PROTOCOL_ASSERT( message );
 
                 const uint16_t messageId = message->GetId();
 
@@ -771,7 +771,7 @@ namespace protocol
                     bool result = 
                     #endif
                         m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
-                    assert( result );
+                    PROTOCOL_ASSERT( result );
                     m_config.messageFactory->AddRef( message );
                 }
                 
@@ -801,7 +801,7 @@ namespace protocol
             ++m_oldestUnackedMessageId;
         }
 
-        assert( !sequence_greater_than( m_oldestUnackedMessageId, stopMessageId ) );
+        PROTOCOL_ASSERT( !sequence_greater_than( m_oldestUnackedMessageId, stopMessageId ) );
     }
 
     void ReliableMessageChannel::ProcessAck( uint16_t ack )
@@ -822,8 +822,8 @@ namespace protocol
                 
                 if ( sendQueueEntry )
                 {
-                    assert( sendQueueEntry->message );
-                    assert( sendQueueEntry->message->GetId() == messageId );
+                    PROTOCOL_ASSERT( sendQueueEntry->message );
+                    PROTOCOL_ASSERT( sendQueueEntry->message->GetId() == messageId );
 
 //                        printf( "acked message %d\n", messageId );
 
@@ -837,7 +837,7 @@ namespace protocol
         }
         else if ( m_sendLargeBlock.active && m_sendLargeBlock.blockId == sentPacket->blockId )
         {
-            assert( sentPacket->fragmentId < m_sendLargeBlock.numFragments );
+            PROTOCOL_ASSERT( sentPacket->fragmentId < m_sendLargeBlock.numFragments );
 
             auto & fragment = m_sendLargeBlock.fragments[sentPacket->fragmentId];
 
@@ -859,7 +859,7 @@ namespace protocol
                     m_sendLargeBlock.active = false;
 
                     auto sendQueueEntry = m_sendQueue->Find( sentPacket->blockId );
-                    assert( sendQueueEntry );
+                    PROTOCOL_ASSERT( sendQueueEntry );
 
                     m_config.messageFactory->Release( sendQueueEntry->message );                    
                     sendQueueEntry->message = nullptr;
@@ -880,8 +880,8 @@ namespace protocol
 
     uint64_t ReliableMessageChannel::GetCounter( int index ) const
     {
-        assert( index >= 0 );
-        assert( index < RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS );
+        PROTOCOL_ASSERT( index >= 0 );
+        PROTOCOL_ASSERT( index < RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS );
         return m_counters[index];
     }
 

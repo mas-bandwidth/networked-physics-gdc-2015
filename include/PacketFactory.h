@@ -43,9 +43,9 @@ namespace protocol
             {
                 printf( "you leaked packets!\n" );
                 printf( "%d packets leaked\n", num_allocated_packets );
-                exit( 1 );
+                PROTOCOL_ASSERT( !"leaked packets" );
             }
-            assert( num_allocated_packets == 0 );
+            PROTOCOL_ASSERT( num_allocated_packets == 0 );
         }
 
         Packet * Create( int type )
@@ -56,7 +56,7 @@ namespace protocol
             printf( "create packet %p\n", packet );
             allocated_packets[packet] = 1;
             auto itor = allocated_packets.find( packet );
-            assert( itor != allocated_packets.end() );
+            PROTOCOL_ASSERT( itor != allocated_packets.end() );
             #endif
             
             num_allocated_packets++;
@@ -66,19 +66,19 @@ namespace protocol
 
         void Destroy( Packet * packet )
         {
-            assert( packet );
+            PROTOCOL_ASSERT( packet );
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "destroy packet %p\n", packet );
             auto itor = allocated_packets.find( packet );
-            assert( itor != allocated_packets.end() );
+            PROTOCOL_ASSERT( itor != allocated_packets.end() );
             allocated_packets.erase( packet );
             #endif
 
-            assert( num_allocated_packets > 0 );
+            PROTOCOL_ASSERT( num_allocated_packets > 0 );
             num_allocated_packets--;
 
-            assert( m_allocator );
+            PROTOCOL_ASSERT( m_allocator );
 
             PROTOCOL_DELETE( *m_allocator, Packet, packet );
         }

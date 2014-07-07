@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Network.h"
@@ -35,14 +35,14 @@ namespace protocol
     BSDSocket::BSDSocket( const BSDSocketConfig & config )
         : m_config( config )
     {
-        assert( IsNetworkInitialized() );
+        PROTOCOL_ASSERT( IsNetworkInitialized() );
 
-        assert( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
-        assert( m_config.maxPacketSize > 0 );
+        PROTOCOL_ASSERT( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
+        PROTOCOL_ASSERT( m_config.maxPacketSize > 0 );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
-        assert( m_allocator );
+        PROTOCOL_ASSERT( m_allocator );
 
         m_receiveBuffer = (uint8_t*) m_allocator->Allocate( m_config.maxPacketSize );
 
@@ -185,8 +185,8 @@ namespace protocol
             m_config.packetFactory->Destroy( packet );
             return;
         }
-        assert( packet );
-        assert( address.IsValid() );
+        PROTOCOL_ASSERT( packet );
+        PROTOCOL_ASSERT( address.IsValid() );
         packet->SetAddress( address );
         m_send_queue.push( packet );
     }
@@ -219,14 +219,14 @@ namespace protocol
 
     PacketFactory & BSDSocket::GetPacketFactory() const
     {
-        assert( m_config.packetFactory );
+        PROTOCOL_ASSERT( m_config.packetFactory );
         return *m_config.packetFactory;
     }
 
     uint64_t BSDSocket::GetCounter( int index ) const
     {
-        assert( index >= 0 );
-        assert( index < BSD_SOCKET_COUNTER_NUM_COUNTERS );
+        PROTOCOL_ASSERT( index >= 0 );
+        PROTOCOL_ASSERT( index < BSD_SOCKET_COUNTER_NUM_COUNTERS );
         return m_counters[index];
     }
 
@@ -260,7 +260,7 @@ namespace protocol
 
             stream.Flush();
 
-            assert( !stream.IsOverflow() );
+            PROTOCOL_ASSERT( !stream.IsOverflow() );
 
             if ( stream.IsOverflow() )
             {
@@ -272,7 +272,7 @@ namespace protocol
             const int bytes = stream.GetBytesWritten();
             const uint8_t * data = stream.GetData();
 
-            assert( bytes <= m_config.maxPacketSize );
+            PROTOCOL_ASSERT( bytes <= m_config.maxPacketSize );
             if ( bytes > m_config.maxPacketSize )
             {
                 m_counters[BSD_SOCKET_COUNTER_PACKET_TOO_LARGE_TO_SEND]++;
@@ -314,8 +314,8 @@ namespace protocol
             stream.Align();
 
             auto packet = m_config.packetFactory->Create( packetType );
-            assert( packet );
-            assert( packet->GetType() == packetType );
+            PROTOCOL_ASSERT( packet );
+            PROTOCOL_ASSERT( packet->GetType() == packetType );
             if ( !packet )
             {
 //                printf( "failed to create packet of type %d\n", packetType );
@@ -325,7 +325,7 @@ namespace protocol
 
             packet->SerializeRead( stream );
 
-            assert( !stream.IsOverflow() );
+            PROTOCOL_ASSERT( !stream.IsOverflow() );
             if ( stream.IsOverflow() )
             {
                 m_counters[BSD_SOCKET_COUNTER_SERIALIZE_READ_OVERFLOW]++;
@@ -347,10 +347,10 @@ namespace protocol
 
     bool BSDSocket::SendPacketInternal( const Address & address, const uint8_t * data, size_t bytes )
     {
-        assert( m_socket );
-        assert( address.IsValid() );
-        assert( bytes > 0 );
-        assert( bytes <= m_config.maxPacketSize );
+        PROTOCOL_ASSERT( m_socket );
+        PROTOCOL_ASSERT( address.IsValid() );
+        PROTOCOL_ASSERT( bytes > 0 );
+        PROTOCOL_ASSERT( bytes <= m_config.maxPacketSize );
 
         bool result = false;
 
@@ -388,9 +388,9 @@ namespace protocol
 
     int BSDSocket::ReceivePacketInternal( Address & sender, void * data, int size )
     {
-        assert( data );
-        assert( size > 0 );
-        assert( m_socket );
+        PROTOCOL_ASSERT( data );
+        PROTOCOL_ASSERT( size > 0 );
+        PROTOCOL_ASSERT( m_socket );
 
         #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
         typedef int socklen_t;
@@ -413,7 +413,7 @@ namespace protocol
 
         sender = Address( from );
 
-        assert( result >= 0 );
+        PROTOCOL_ASSERT( result >= 0 );
 
         m_counters[BSD_SOCKET_COUNTER_PACKETS_RECEIVED]++;
 

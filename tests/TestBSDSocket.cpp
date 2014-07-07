@@ -52,7 +52,7 @@ void test_bsd_socket_send_and_receive_ipv4()
 
         while ( true )
         {
-            check( iterations++ < 10 );
+            PROTOCOL_CHECK( iterations++ < 10 );
 
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
@@ -62,9 +62,9 @@ void test_bsd_socket_send_and_receive_ipv4()
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
 
-            check( *connectPacket == connectPacketTemplate );
-            check( *updatePacket == updatePacketTemplate );
-            check( *disconnectPacket == disconnectPacketTemplate );
+            PROTOCOL_CHECK( *connectPacket == connectPacketTemplate );
+            PROTOCOL_CHECK( *updatePacket == updatePacketTemplate );
+            PROTOCOL_CHECK( *disconnectPacket == disconnectPacketTemplate );
 
             interface.SendPacket( address, connectPacket );
             interface.SendPacket( address, updatePacket );
@@ -80,14 +80,14 @@ void test_bsd_socket_send_and_receive_ipv4()
                 if ( !packet )
                     break;
 
-                check( packet->GetAddress() == address );
+                PROTOCOL_CHECK( packet->GetAddress() == address );
 
                 switch ( packet->GetType() )
                 {
                     case PACKET_CONNECT:
                     {
                         auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                        check( *recv_connectPacket == connectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_connectPacket == connectPacketTemplate );
                         receivedConnectPacket = true;
                     }
                     break;
@@ -95,7 +95,7 @@ void test_bsd_socket_send_and_receive_ipv4()
                     case PACKET_UPDATE:
                     {
                         auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                        check( *recv_updatePacket == updatePacketTemplate );
+                        PROTOCOL_CHECK( *recv_updatePacket == updatePacketTemplate );
                         receivedUpdatePacket = true;
                     }
                     break;
@@ -103,7 +103,7 @@ void test_bsd_socket_send_and_receive_ipv4()
                     case PACKET_DISCONNECT:
                     {
                         auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                        check( *recv_disconnectPacket == disconnectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_disconnectPacket == disconnectPacketTemplate );
                         receivedDisconnectPacket = true;
                     }
                     break;
@@ -165,7 +165,7 @@ void test_bsd_socket_send_and_receive_ipv6()
 
         while ( true )
         {
-            check( iterations++ < 10 );
+            PROTOCOL_CHECK( iterations++ < 10 );
 
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
@@ -175,9 +175,9 @@ void test_bsd_socket_send_and_receive_ipv6()
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
 
-            check( *connectPacket == connectPacketTemplate );
-            check( *updatePacket == updatePacketTemplate );
-            check( *disconnectPacket == disconnectPacketTemplate );
+            PROTOCOL_CHECK( *connectPacket == connectPacketTemplate );
+            PROTOCOL_CHECK( *updatePacket == updatePacketTemplate );
+            PROTOCOL_CHECK( *disconnectPacket == disconnectPacketTemplate );
 
             interface.SendPacket( address, connectPacket );
             interface.SendPacket( address, updatePacket );
@@ -193,14 +193,14 @@ void test_bsd_socket_send_and_receive_ipv6()
                 if ( !packet )
                     break;
 
-                check( packet->GetAddress() == address );
+                PROTOCOL_CHECK( packet->GetAddress() == address );
 
                 switch ( packet->GetType() )
                 {
                     case PACKET_CONNECT:
                     {
                         auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                        check( *recv_connectPacket == connectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_connectPacket == connectPacketTemplate );
                         receivedConnectPacket = true;
                     }
                     break;
@@ -208,7 +208,7 @@ void test_bsd_socket_send_and_receive_ipv6()
                     case PACKET_UPDATE:
                     {
                         auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                        check( *recv_updatePacket == updatePacketTemplate );
+                        PROTOCOL_CHECK( *recv_updatePacket == updatePacketTemplate );
                         receivedUpdatePacket = true;
                     }
                     break;
@@ -216,7 +216,7 @@ void test_bsd_socket_send_and_receive_ipv6()
                     case PACKET_DISCONNECT:
                     {
                         auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                        check( *recv_disconnectPacket == disconnectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_disconnectPacket == disconnectPacketTemplate );
                         receivedDisconnectPacket = true;
                     }
                     break;
@@ -286,7 +286,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
 
         while ( true )
         {
-            check( iterations++ < 4 );
+            PROTOCOL_CHECK( iterations++ < 4 );
 
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
@@ -296,9 +296,9 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
 
-            check( *connectPacket == connectPacketTemplate );
-            check( *updatePacket == updatePacketTemplate );
-            check( *disconnectPacket == disconnectPacketTemplate );
+            PROTOCOL_CHECK( *connectPacket == connectPacketTemplate );
+            PROTOCOL_CHECK( *updatePacket == updatePacketTemplate );
+            PROTOCOL_CHECK( *disconnectPacket == disconnectPacketTemplate );
 
             interface_sender.SendPacket( receiver_address, connectPacket );
             interface_sender.SendPacket( receiver_address, updatePacket );
@@ -315,14 +315,14 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
                 if ( !packet )
                     break;
 
-                check( packet->GetAddress() == sender_address );
+                PROTOCOL_CHECK( packet->GetAddress() == sender_address );
 
                 switch ( packet->GetType() )
                 {
                     case PACKET_CONNECT:
                     {
                         auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                        check( *recv_connectPacket == connectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_connectPacket == connectPacketTemplate );
                         receivedConnectPacket = true;
                     }
                     break;
@@ -330,7 +330,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
                     case PACKET_UPDATE:
                     {
                         auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                        check( *recv_updatePacket == updatePacketTemplate );
+                        PROTOCOL_CHECK( *recv_updatePacket == updatePacketTemplate );
                         receivedUpdatePacket = true;
                     }
                     break;
@@ -338,7 +338,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
                     case PACKET_DISCONNECT:
                     {
                         auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                        check( *recv_disconnectPacket == disconnectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_disconnectPacket == disconnectPacketTemplate );
                         receivedDisconnectPacket = true;
                     }
                     break;
@@ -406,7 +406,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
 
         while ( true )
         {
-            check( iterations++ < 4 );
+            PROTOCOL_CHECK( iterations++ < 4 );
 
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
@@ -416,9 +416,9 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
             *updatePacket = updatePacketTemplate;
             *disconnectPacket = disconnectPacketTemplate;
 
-            check( *connectPacket == connectPacketTemplate );
-            check( *updatePacket == updatePacketTemplate );
-            check( *disconnectPacket == disconnectPacketTemplate );
+            PROTOCOL_CHECK( *connectPacket == connectPacketTemplate );
+            PROTOCOL_CHECK( *updatePacket == updatePacketTemplate );
+            PROTOCOL_CHECK( *disconnectPacket == disconnectPacketTemplate );
 
             interface_sender.SendPacket( receiver_address, connectPacket );
             interface_sender.SendPacket( receiver_address, updatePacket );
@@ -435,14 +435,14 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
                 if ( !packet )
                     break;
 
-                check( packet->GetAddress() == sender_address );
+                PROTOCOL_CHECK( packet->GetAddress() == sender_address );
 
                 switch ( packet->GetType() )
                 {
                     case PACKET_CONNECT:
                     {
                         auto recv_connectPacket = static_cast<ConnectPacket*>( packet );
-                        check( *recv_connectPacket == connectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_connectPacket == connectPacketTemplate );
                         receivedConnectPacket = true;
                     }
                     break;
@@ -450,7 +450,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
                     case PACKET_UPDATE:
                     {
                         auto recv_updatePacket = static_cast<UpdatePacket*>( packet );
-                        check( *recv_updatePacket == updatePacketTemplate );
+                        PROTOCOL_CHECK( *recv_updatePacket == updatePacketTemplate );
                         receivedUpdatePacket = true;
                     }
                     break;
@@ -458,7 +458,7 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
                     case PACKET_DISCONNECT:
                     {
                         auto recv_disconnectPacket = static_cast<DisconnectPacket*>( packet );
-                        check( *recv_disconnectPacket == disconnectPacketTemplate );
+                        PROTOCOL_CHECK( *recv_disconnectPacket == disconnectPacketTemplate );
                         receivedDisconnectPacket = true;
                     }
                     break;

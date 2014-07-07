@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "NetworkSimulator.h"
@@ -11,7 +11,7 @@ namespace protocol
 {
     NetworkSimulator::NetworkSimulator( const NetworkSimulatorConfig & config ) : m_config( config )
     {
-        assert( m_config.packetFactory );
+        PROTOCOL_ASSERT( m_config.packetFactory );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
@@ -23,7 +23,7 @@ namespace protocol
 
     NetworkSimulator::~NetworkSimulator()
     {
-        assert( m_packets );
+        PROTOCOL_ASSERT( m_packets );
 
         for ( int i = 0; i < m_config.numPackets; ++i )
         {
@@ -39,7 +39,7 @@ namespace protocol
 
     void NetworkSimulator::AddState( const NetworkSimulatorState & state )
     {
-        assert( m_numStates < MaxSimulatorStates - 1 );
+        PROTOCOL_ASSERT( m_numStates < MaxSimulatorStates - 1 );
         m_states[m_numStates++] = state;
         if ( m_numStates == 1 )
             m_state = m_states[0];
@@ -47,7 +47,7 @@ namespace protocol
 
     void NetworkSimulator::SendPacket( const Address & address, Packet * packet )
     {
-        assert( packet );
+        PROTOCOL_ASSERT( packet );
 
         if ( random_int( 0, 99 ) < m_state.packetLoss )
         {
@@ -115,7 +115,7 @@ namespace protocol
 
     PacketFactory & NetworkSimulator::GetPacketFactory() const
     {
-        assert( m_config.packetFactory );
+        PROTOCOL_ASSERT( m_config.packetFactory );
         return *m_config.packetFactory;
     }
 }

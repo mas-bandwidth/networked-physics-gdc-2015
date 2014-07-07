@@ -211,9 +211,9 @@ public:
   inline void deallocate(void *p,MicroHeap *heap,MicroChunkUpdate *update)
   {
 #ifdef _DEBUG
-    assert(mUsedCount);
+    PROTOCOL_ASSERT(mUsedCount);
     NxU8 *s = (NxU8 *)p;
-    assert( s >= mData && s < mDataEnd );
+    PROTOCOL_ASSERT( s >= mData && s < mDataEnd );
 #endif
     MemoryHeader *mh = mFreeList;
     mFreeList = (MemoryHeader *)p;
@@ -438,7 +438,7 @@ public:
     chunkBase = mAlloc[5].init(chunkBase,256,chunkSize,heap);
     mChunkEnd = chunkBase;
 
-    assert(chunkBase <= mBaseMemEnd );
+    PROTOCOL_ASSERT(chunkBase <= mBaseMemEnd );
 
   }
 
@@ -460,7 +460,7 @@ public:
   {
     void *ret = 0;
 //    Lock();
-   assert( size <= 256 );
+   PROTOCOL_ASSERT( size <= 256 );
    if ( size <= 256 )
    {
      ret = mFixedAllocators[size]->allocate(this);
@@ -521,9 +521,9 @@ public:
     if ( s >= mChunkStart && s < mChunkEnd )
     {
         NxU32 index = (NxU32)(s-mChunkStart)/mChunkSize;
-        assert(index>=0 && index < 6 );
+        PROTOCOL_ASSERT(index>=0 && index < 6 );
         ret = &mAlloc[index].mChunks.mChunks[0];
-        assert( ret->isInside(s) );
+        PROTOCOL_ASSERT( ret->isInside(s) );
     }
     else if ( mMicroChunkCount )
     {
@@ -539,13 +539,13 @@ public:
 #ifdef _DEBUG
                 if (ret )
                 {
-                    assert( ret->isInside(s) );
+                    PROTOCOL_ASSERT( ret->isInside(s) );
                 }
                 else 
                 {
                     for (NxU32 i=0; i<mMicroChunkCount; i++)
                     {
-                        assert( !mMicroChunks[i].inside(s) );
+                        PROTOCOL_ASSERT( !mMicroChunks[i].inside(s) );
                     }
                 }
 #endif
@@ -557,7 +557,7 @@ public:
                     if ( mMicroChunks[i].inside(s) )
                     {
                         ret = mMicroChunks[i].mChunk;
-                        assert( ret->isInside(s) );
+                        PROTOCOL_ASSERT( ret->isInside(s) );
                         mLastMicroChunk = &mMicroChunks[i];
                         break;
                     }
@@ -567,7 +567,7 @@ public:
     }
 #ifdef _DEBUG
     if ( ret )
-        assert( ret->isInside(s) );
+        PROTOCOL_ASSERT( ret->isInside(s) );
 #endif
 //    Unlock();
     return ret;
@@ -643,7 +643,7 @@ public:
         }
     }
 #ifdef _DEBUG
-    assert(removed);
+    PROTOCOL_ASSERT(removed);
 #endif
   }
 
@@ -673,7 +673,7 @@ public:
     if ( s >= mChunkStart && s < mChunkEnd )
     {
         NxU32 index = (NxU32)(s-mChunkStart)/mChunkSize;
-        assert(index>=0 && index < 6 );
+        PROTOCOL_ASSERT(index>=0 && index < 6 );
         ret = &mAlloc[index].mChunks.mChunks[0];
     }
     else if ( mMicroChunkCount )

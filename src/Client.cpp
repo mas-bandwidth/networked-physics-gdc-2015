@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Client.h"
@@ -11,8 +11,8 @@ namespace protocol
     Client::Client( const ClientConfig & config )
         : m_config( config )
     {
-        assert( m_config.networkInterface );
-        assert( m_config.channelStructure );
+        PROTOCOL_ASSERT( m_config.networkInterface );
+        PROTOCOL_ASSERT( m_config.channelStructure );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
@@ -31,12 +31,12 @@ namespace protocol
 
     Client::~Client()
     {
-        assert( m_allocator );
+        PROTOCOL_ASSERT( m_allocator );
 
         Disconnect();
 
-        assert( m_connection );
-        assert( m_packetFactory );      // IMPORTANT: packet factory pointer is not owned by us
+        PROTOCOL_ASSERT( m_connection );
+        PROTOCOL_ASSERT( m_packetFactory );      // IMPORTANT: packet factory pointer is not owned by us
 
         PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
         
@@ -79,7 +79,7 @@ namespace protocol
         // ok, it's really a hostname. go into the resolving hostname state
 
         // todo: should *probably* be a runtime check here -- eg. set error state if resolver is null
-        assert( m_config.resolver );
+        PROTOCOL_ASSERT( m_config.resolver );
 
         m_config.resolver->Resolve( hostname );
         
@@ -364,7 +364,7 @@ namespace protocol
                             else
                             {
                                 // todo: implement client block send to server
-                                assert( false );
+                                PROTOCOL_ASSERT( false );
                             }
                         }
                     }
@@ -402,7 +402,7 @@ namespace protocol
 
     void Client::ProcessDisconnected( DisconnectedPacket * packet )
     {
-        assert( packet );
+        PROTOCOL_ASSERT( packet );
 
         if ( packet->GetAddress() != m_address )
             return;

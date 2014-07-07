@@ -38,13 +38,13 @@ namespace protocol
 
 		Allocator & default_allocator() 
 		{
-			assert( memory_globals.default_allocator );
+			PROTOCOL_ASSERT( memory_globals.default_allocator );
 			return *memory_globals.default_allocator;
 		}
 
 		Allocator & scratch_allocator() 
 		{
-			assert( memory_globals.scratch_allocator );
+			PROTOCOL_ASSERT( memory_globals.scratch_allocator );
 			return *memory_globals.scratch_allocator;
 		}
 

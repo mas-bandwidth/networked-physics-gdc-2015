@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_STREAM_H
@@ -23,9 +23,9 @@ namespace protocol
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
-            assert( min < max );
-            assert( value >= min );
-            assert( value <= max );
+            PROTOCOL_ASSERT( min < max );
+            PROTOCOL_ASSERT( value >= min );
+            PROTOCOL_ASSERT( value <= max );
             const int bits = bits_required( min, max );
             uint32_t unsigned_value = value - min;
             m_writer.WriteBits( unsigned_value, bits );
@@ -33,8 +33,8 @@ namespace protocol
 
         void SerializeBits( uint32_t value, int bits )
         {
-            assert( bits > 0 );
-            assert( bits <= 32 );
+            PROTOCOL_ASSERT( bits > 0 );
+            PROTOCOL_ASSERT( bits <= 32 );
             m_writer.WriteBits( value, bits );
         }
 
@@ -117,7 +117,7 @@ namespace protocol
 
         void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
-            assert( min < max );
+            PROTOCOL_ASSERT( min < max );
             const int bits = bits_required( min, max );
             uint32_t unsigned_value = m_reader.ReadBits( bits );
             value = (int32_t) unsigned_value + min;
@@ -125,8 +125,8 @@ namespace protocol
 
         void SerializeBits( uint32_t & value, int bits )
         {
-            assert( bits > 0 );
-            assert( bits <= 32 );
+            PROTOCOL_ASSERT( bits > 0 );
+            PROTOCOL_ASSERT( bits <= 32 );
             uint32_t read_value = m_reader.ReadBits( bits );
             value = read_value;
         }
@@ -152,7 +152,7 @@ namespace protocol
             Align();
             uint32_t value = 0;
             SerializeBits( value, 32 );
-            assert( value == magic );
+            PROTOCOL_ASSERT( value == magic );
             return value == magic;
         }
 
@@ -177,17 +177,17 @@ namespace protocol
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
-            assert( min < max );
-            assert( value >= min );
-            assert( value <= max );
+            PROTOCOL_ASSERT( min < max );
+            PROTOCOL_ASSERT( value >= min );
+            PROTOCOL_ASSERT( value <= max );
             const int bits = bits_required( min, max );
             m_bitsWritten += bits;
         }
 
         void SerializeBits( uint32_t value, int bits )
         {
-            assert( bits > 0 );
-            assert( bits <= 32 );
+            PROTOCOL_ASSERT( bits > 0 );
+            PROTOCOL_ASSERT( bits <= 32 );
             m_bitsWritten += bits;
         }
 
@@ -264,28 +264,28 @@ namespace protocol
     #define serialize_int( stream, value, min, max )            \
         do                                                      \
         {                                                       \
-            assert( min < max );                                \
+            PROTOCOL_ASSERT( min < max );                                \
             int32_t int32_value;                                \
             if ( Stream::IsWriting )                            \
             {                                                   \
-                assert( value >= min );                         \
-                assert( value <= max );                         \
+                PROTOCOL_ASSERT( value >= min );                         \
+                PROTOCOL_ASSERT( value <= max );                         \
                 int32_value = (int32_t) value;                  \
             }                                                   \
             stream.SerializeInteger( int32_value, min, max );   \
             if ( Stream::IsReading )                            \
             {                                                   \
                 value = (decltype(value)) int32_value;          \
-                assert( value >= min );                         \
-                assert( value <= max );                         \
+                PROTOCOL_ASSERT( value >= min );                         \
+                PROTOCOL_ASSERT( value <= max );                         \
             }                                                   \
         } while (0)
 
     #define serialize_bits( stream, value, bits )               \
         do                                                      \
         {                                                       \
-            assert( bits > 0 );                                 \
-            assert( bits <= 32 );                               \
+            PROTOCOL_ASSERT( bits > 0 );                                 \
+            PROTOCOL_ASSERT( bits <= 32 );                               \
             uint32_t uint32_value;                              \
             if ( Stream::IsWriting )                            \
                 uint32_value = (uint32_t) value;                \
@@ -330,7 +330,7 @@ namespace protocol
         int numBytes;
         if ( Stream::IsWriting )
         {
-            assert( block.IsValid() );
+            PROTOCOL_ASSERT( block.IsValid() );
             numBytes = (int) block.GetSize();
         }
 
@@ -340,10 +340,10 @@ namespace protocol
         
         if ( Stream::IsReading )
         {
-            assert( numBytes > 0 );
-            assert( numBytes <= maxBytes );
+            PROTOCOL_ASSERT( numBytes > 0 );
+            PROTOCOL_ASSERT( numBytes <= maxBytes );
             Allocator * allocator = block.GetAllocator();
-            assert( allocator );
+            PROTOCOL_ASSERT( allocator );
             uint8_t * data = (uint8_t*) allocator->Allocate( numBytes );
             block.Connect( *allocator, data, numBytes );
         }
@@ -356,9 +356,9 @@ namespace protocol
         uint32_t difference;
         if ( Stream::IsWriting )
         {
-            assert( previous < current );
+            PROTOCOL_ASSERT( previous < current );
             difference = current - previous;
-            assert( difference >= 0 );
+            PROTOCOL_ASSERT( difference >= 0 );
         }
 
         bool oneBit;
@@ -438,7 +438,7 @@ namespace protocol
             current = (decltype(current)) value;
     }
 
-    template <typename Stream> bool serialize_check( Stream & stream, uint32_t magic )
+    template <typename Stream> bool serialize_PROTOCOL_CHECK( Stream & stream, uint32_t magic )
     {
         return stream.Check( magic );
     }

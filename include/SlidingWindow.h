@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef SLIDING_WINDOW_H
@@ -17,7 +17,7 @@ namespace protocol
 
         SlidingWindow( Allocator & allocator, int size )
         {
-            assert( size > 0 );
+            PROTOCOL_ASSERT( size > 0 );
             m_size = size;
             m_first_entry = true;
             m_sequence = 0;
@@ -28,8 +28,8 @@ namespace protocol
 
         ~SlidingWindow()
         {
-            assert( m_entries );
-            assert( m_allocator );
+            PROTOCOL_ASSERT( m_entries );
+            PROTOCOL_ASSERT( m_allocator );
             m_allocator->Free( m_entries );
             m_allocator = nullptr;
             m_entries = nullptr;
@@ -45,7 +45,7 @@ namespace protocol
 
         bool Insert( const T & entry )
         {
-            assert( entry.valid );
+            PROTOCOL_ASSERT( entry.valid );
 
             if ( m_first_entry )
             {
@@ -123,8 +123,8 @@ namespace protocol
 
         T * GetAtIndex( int index )
         {
-            assert( index >= 0 );
-            assert( index < m_size );
+            PROTOCOL_ASSERT( index >= 0 );
+            PROTOCOL_ASSERT( index < m_size );
             return m_entries[index].valid ? &m_entries[index] : nullptr;
         }
 

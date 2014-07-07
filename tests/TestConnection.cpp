@@ -45,7 +45,7 @@ void test_connection()
         {
             auto packet = connection.WritePacket();
 
-            check( packet );
+            PROTOCOL_CHECK( packet );
 
             connection.ReadPacket( packet );
             packetFactory.Destroy( packet );
@@ -55,10 +55,10 @@ void test_connection()
                 break;
         }
 
-        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
-        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
-        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
-        check( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
+        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
+        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
+        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
+        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
     }
     memory::shutdown();
 }
@@ -127,7 +127,7 @@ void test_acks()
         {
             auto packet = connection.WritePacket();
 
-            check( packet );
+            PROTOCOL_CHECK( packet );
 
             if ( rand() % 100 == 0 )
             {
@@ -159,11 +159,11 @@ void test_acks()
 
             // an acked packet *must* have been received
             if ( ackedPackets[i] && !receivedPackets[i] )
-                check( false );
+                PROTOCOL_CHECK( false );
         }
 
-        check( numAckedPackets > 0 );
-        check( numReceivedPackets >= numAckedPackets );
+        PROTOCOL_CHECK( numAckedPackets > 0 );
+        PROTOCOL_CHECK( numReceivedPackets >= numAckedPackets );
 
     //    printf( "%d packets received, %d packets acked\n", numReceivedPackets, numAckedPackets );
     }

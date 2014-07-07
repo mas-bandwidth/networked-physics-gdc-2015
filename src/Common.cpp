@@ -1,16 +1,52 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Common.h"
 #include <time.h>
+#include <stdio.h>      // todo: replace with Log.h
+#include <stdlib.h>
 
 namespace protocol
 {
+    void AssertHandler( const char * condition, 
+                        const char * function,
+                        const char * file,
+                        int line )
+    {
+        printf( "Assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+        exit(1);                                                                                                                    
+    }
+
+    void CheckHandler( const char * condition, 
+                       const char * function,
+                       const char * file,
+                       int line )
+    {
+        printf( "Check failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+        exit(1);                                                                                                                    
+    }
+
     uint64_t generate_guid()
     {
         return ( uint64_t( rand() ) << 32 ) | time( nullptr );
+    }
+
+    int random_int( int min, int max )
+    {
+        PROTOCOL_ASSERT( max > min );
+        int result = min + rand() % ( max - min + 1 );
+        PROTOCOL_ASSERT( result >= min );
+        PROTOCOL_ASSERT( result <= max );
+        return result;
+    }
+
+    float random_float( float min, float max )
+    {
+        const int res = 10000000;
+        double scale = ( rand() % res ) / double( res - 1 );
+        return (float) ( min + (double) ( max - min ) * scale );
     }
 
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed )

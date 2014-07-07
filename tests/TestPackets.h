@@ -170,7 +170,7 @@ public:
     {
         m_channelStructure = channelStructure;
  
-        Register( PACKET_CONNECTION, [&allocator, this] { assert( m_channelStructure ); return PROTOCOL_NEW( allocator, ConnectionPacket, PACKET_CONNECTION, m_channelStructure ); } );
+        Register( PACKET_CONNECTION, [&allocator, this] { PROTOCOL_ASSERT( m_channelStructure ); return PROTOCOL_NEW( allocator, ConnectionPacket, PACKET_CONNECTION, m_channelStructure ); } );
         Register( PACKET_CONNECT,    [&allocator] { return PROTOCOL_NEW( allocator, ConnectPacket );    } );
         Register( PACKET_UPDATE,     [&allocator] { return PROTOCOL_NEW( allocator, UpdatePacket );     } );
         Register( PACKET_DISCONNECT, [&allocator] { return PROTOCOL_NEW( allocator, DisconnectPacket ); } );

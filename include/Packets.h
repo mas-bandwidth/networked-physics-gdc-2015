@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_PACKETS_H
@@ -246,7 +246,7 @@ namespace protocol
 
         ConnectionPacket( int type, ChannelStructure * _channelStructure ) : Packet( type )
         {
-            assert( _channelStructure );
+            PROTOCOL_ASSERT( _channelStructure );
             channelStructure = _channelStructure;
             numChannels = channelStructure->GetNumChannels();
             memset( channelData, 0, sizeof( ChannelData* ) * numChannels );
@@ -256,7 +256,7 @@ namespace protocol
 
         ~ConnectionPacket()
         {
-            assert( channelStructure );
+            PROTOCOL_ASSERT( channelStructure );
 
             for ( int i = 0; i < numChannels; ++i )
             {
@@ -274,7 +274,7 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            assert( channelStructure );
+            PROTOCOL_ASSERT( channelStructure );
 
             // IMPORTANT: Insert non-frequently changing values here
             // This helps LZ dictionary based compressors do a good job!
@@ -309,7 +309,7 @@ namespace protocol
                     if ( has_data )
                     {
                         channelData[i] = channelStructure->CreateChannelData( i );
-                        assert( channelData[i] );
+                        PROTOCOL_ASSERT( channelData[i] );
                     }
                 }
             }
@@ -328,7 +328,7 @@ namespace protocol
                 else
                     ack_delta = (int)sequence + 65536 - ack;
 
-                assert( ack_delta > 0 );
+                PROTOCOL_ASSERT( ack_delta > 0 );
                 
                 ack_in_range = ack_delta <= 128;
             }
@@ -397,7 +397,7 @@ namespace protocol
         ClientServerPacketFactory( Allocator & allocator, ChannelStructure * channelStructure )
             : PacketFactory( allocator )
         {
-            assert( channelStructure );
+            PROTOCOL_ASSERT( channelStructure );
 
             Register( CLIENT_SERVER_PACKET_CONNECTION_REQUEST,   [&allocator] { return PROTOCOL_NEW( allocator, ConnectionRequestPacket );   } );
             Register( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE,   [&allocator] { return PROTOCOL_NEW( allocator, ChallengeResponsePacket );   } );

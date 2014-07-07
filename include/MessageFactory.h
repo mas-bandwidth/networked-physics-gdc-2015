@@ -26,7 +26,7 @@ namespace protocol
 
         ~MessageFactory()
         {
-            assert( m_allocator );
+            PROTOCOL_ASSERT( m_allocator );
             m_allocator = nullptr;
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
@@ -48,20 +48,20 @@ namespace protocol
                 printf( "%d messages leaked\n", num_allocated_messages );
                 exit(1);
             }
-            assert( num_allocated_messages == 0 );
+            PROTOCOL_ASSERT( num_allocated_messages == 0 );
         }
 
         Message * Create( int type )
         {
             Message * message = Factory<Message>::Create( type );
 
-            assert( message );
+            PROTOCOL_ASSERT( message );
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "create message %p\n", message );
             allocated_messages[message] = 1;
             auto itor = allocated_messages.find( message );
-            assert( itor != allocated_messages.end() );
+            PROTOCOL_ASSERT( itor != allocated_messages.end() );
             #endif
 
             num_allocated_messages++;
@@ -75,20 +75,20 @@ namespace protocol
             printf( "addref message %p (%d->%d)\n", message, message->GetRefCount(), message->GetRefCount()+1 );
             #endif
             
-            assert( message );
+            PROTOCOL_ASSERT( message );
             
             message->AddRef();
         }
 
         void Release( Message * message )
         {
-            assert( message );
+            PROTOCOL_ASSERT( message );
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "release message %p (%d->%d)\n", message, message->GetRefCount(), message->GetRefCount()-1 );
             #endif
 
-            assert( message );
+            PROTOCOL_ASSERT( message );
             
             message->Release();
             
@@ -97,13 +97,13 @@ namespace protocol
                 #if PROTOCOL_DEBUG_MEMORY_LEAKS
                 printf( "destroy message %p\n", message );
                 auto itor = allocated_messages.find( message );
-                assert( itor != allocated_messages.end() );
+                PROTOCOL_ASSERT( itor != allocated_messages.end() );
                 allocated_messages.erase( message );
                 #endif
             
                 num_allocated_messages--;
 
-                assert( m_allocator );
+                PROTOCOL_ASSERT( m_allocator );
 
                 PROTOCOL_DELETE( *m_allocator, Message, message );
             }

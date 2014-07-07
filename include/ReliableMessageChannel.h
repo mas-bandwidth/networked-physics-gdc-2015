@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
@@ -102,7 +102,7 @@ namespace protocol
             SendQueueEntry()
                 : valid(0) {}
             SendQueueEntry( Message * _message, uint16_t _sequence, bool _largeBlock )
-                : message( _message ), timeLastSent(-1), sequence( _sequence ), valid(1), largeBlock(_largeBlock), measuredBits(0) { assert( _message ); }
+                : message( _message ), timeLastSent(-1), sequence( _sequence ), valid(1), largeBlock(_largeBlock), measuredBits(0) { PROTOCOL_ASSERT( _message ); }
         };
 
         struct SentPacketEntry
@@ -127,7 +127,7 @@ namespace protocol
             ReceiveQueueEntry()
                 : valid(0) {}
             ReceiveQueueEntry( Message * _message, uint16_t _sequence )
-                : message( _message ), sequence( _sequence ), valid(1) { assert( _message ); }
+                : message( _message ), sequence( _sequence ), valid(1) { PROTOCOL_ASSERT( _message ); }
         };
 
         struct SendFragmentData

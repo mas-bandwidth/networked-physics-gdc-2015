@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "Server.h"
@@ -11,9 +11,9 @@ namespace protocol
     Server::Server( const ServerConfig & config )
         : m_config( config )
     {
-        assert( m_config.networkInterface );
-        assert( m_config.channelStructure );
-        assert( m_config.maxClients >= 1 );
+        PROTOCOL_ASSERT( m_config.networkInterface );
+        PROTOCOL_ASSERT( m_config.channelStructure );
+        PROTOCOL_ASSERT( m_config.maxClients >= 1 );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
@@ -36,13 +36,13 @@ namespace protocol
 
     Server::~Server()
     {
-        assert( m_allocator );
-        assert( m_clients );
-        assert( m_packetFactory );
+        PROTOCOL_ASSERT( m_allocator );
+        PROTOCOL_ASSERT( m_clients );
+        PROTOCOL_ASSERT( m_packetFactory );
 
         for ( int i = 0; i < m_numClients; ++i )
         {
-            assert( m_clients[i].connection );
+            PROTOCOL_ASSERT( m_clients[i].connection );
             PROTOCOL_DELETE( *m_allocator, Connection, m_clients[i].connection );
             m_clients[i].connection = nullptr;
         }
@@ -81,8 +81,8 @@ namespace protocol
 
     void Server::DisconnectClient( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         auto & client = m_clients[clientIndex];
 
@@ -103,15 +103,15 @@ namespace protocol
 
     ServerClientState Server::GetClientState( int clientIndex ) const
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
         return m_clients[clientIndex].state;
     }
 
     Connection * Server::GetClientConnection( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
         return m_clients[clientIndex].connection;
     }
 
@@ -151,12 +151,12 @@ namespace protocol
 
     void Server::UpdateSendingChallenge( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         ClientData & client = m_clients[clientIndex];
 
-        assert( client.state == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
+        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_SENDING_CHALLENGE );
 
         if ( client.accumulator > 1.0 / m_config.connectingSendRate )
         {
@@ -173,27 +173,27 @@ namespace protocol
 
     void Server::UpdateSendingServerData( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
         #endif
 
-        assert( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
+        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
         // todo: not implemented yet
-        assert( false );
+        PROTOCOL_ASSERT( false );
     }
 
     void Server::UpdateRequestingClientData( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         ClientData & client = m_clients[clientIndex];
 
-        assert( client.state == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
+        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
 
         if ( client.accumulator > 1.0 / m_config.connectingSendRate )
         {
@@ -212,29 +212,29 @@ namespace protocol
 
     void Server::UpdateReceivingClientData( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
         #endif
 
-        assert( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
+        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
 
         // todo: not implemented yet
-        assert( false );
+        PROTOCOL_ASSERT( false );
     }
 
     void Server::UpdateConnected( int clientIndex )
     {
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         ClientData & client = m_clients[clientIndex];
 
-        assert( client.state == SERVER_CLIENT_STATE_CONNECTED );
+        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_CONNECTED );
 
-        assert( client.connection );
+        PROTOCOL_ASSERT( client.connection );
 
         client.connection->Update( m_timeBase );
 
@@ -278,7 +278,7 @@ namespace protocol
 
     void Server::UpdateNetworkInterface()
     {
-        assert( m_config.networkInterface );
+        PROTOCOL_ASSERT( m_config.networkInterface );
 
         m_config.networkInterface->Update( m_timeBase );
     }
@@ -321,7 +321,7 @@ namespace protocol
 
     void Server::ProcessConnectionRequestPacket( ConnectionRequestPacket * packet )
     {
-        assert( packet );
+        PROTOCOL_ASSERT( packet );
 
 //            printf( "server received connection request packet\n" );
 
@@ -373,8 +373,8 @@ namespace protocol
 
 //            printf( "incoming client connection at index %d\n", clientIndex );
 
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         ClientData & client = m_clients[clientIndex];
 
@@ -387,7 +387,7 @@ namespace protocol
 
     void Server::ProcessChallengeResponsePacket( ChallengeResponsePacket * packet )
     {
-        assert( packet );
+        PROTOCOL_ASSERT( packet );
 
 //            printf( "server received challenge response packet\n" );
 
@@ -419,7 +419,7 @@ namespace protocol
 
     void Server::ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet )
     {
-        assert( packet );
+        PROTOCOL_ASSERT( packet );
 
 //            printf( "server received ready for connection packet\n" );
 
@@ -430,8 +430,8 @@ namespace protocol
             return;
         }
 
-        assert( clientIndex >= 0 );
-        assert( clientIndex < m_numClients );
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
 
         ClientData & client = m_clients[clientIndex];
 
@@ -456,7 +456,7 @@ namespace protocol
 
     void Server::ProcessConnectionPacket( ConnectionPacket * packet )
     {
-        assert( packet );
+        PROTOCOL_ASSERT( packet );
 
 //            printf( "server received connection packet\n" );
 
@@ -488,7 +488,7 @@ namespace protocol
             
             if ( m_clients[i].address == address )
             {
-                assert( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
+                PROTOCOL_ASSERT( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
                 return i;
             }
         }
@@ -504,7 +504,7 @@ namespace protocol
             
             if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid )
             {
-                assert( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
+                PROTOCOL_ASSERT( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
                 return i;
             }
         }
@@ -534,7 +534,7 @@ namespace protocol
         client.clientGuid = 0;
         client.serverGuid = 0;
 
-        assert( client.connection );
+        PROTOCOL_ASSERT( client.connection );
         client.connection->Reset();
     }
 }

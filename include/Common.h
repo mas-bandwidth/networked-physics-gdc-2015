@@ -1,16 +1,51 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_COMMON_H
 #define PROTOCOL_COMMON_H
 
 #include "Config.h"
-#include "Enums.h"
 #include "Constants.h"
-#include <cassert>          // todo: replace with custom assert macro (PROTOCOL_ASSERT)
-#include <stdio.h>          // todo: replace with custom logging header
+#include <stdint.h>
+
+namespace protocol
+{
+    extern void AssertHandler( const char * condition, 
+                               const char * function,
+                               const char * file,
+                               int line );
+
+    extern void CheckHandler( const char * condition, 
+                              const char * function,
+                              const char * file,
+                              int line );
+}
+
+#ifndef NDEBUG
+#define PROTOCOL_ASSERT( condition )                                            \
+do                                                                              \
+{                                                                               \
+    if ( !(condition) )                                                         \
+    {                                                                           \
+        AssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );          \
+    }                                                                           \
+} while(0)
+#else
+#define PROTOCOL_ASSERT( condition ) do {} while(0)
+#endif
+
+#define PROTOCOL_CHECK( condition )                                             \
+do                                                                              \
+{                                                                               \
+    if ( !(condition) )                                                         \
+    {                                                                           \
+        CheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );           \
+    }                                                                           \
+} while(0)
+
+#include "Enums.h"
 
 namespace protocol
 {
@@ -98,44 +133,11 @@ namespace protocol
         return sequence_greater_than( s2, s1 );
     }
 
-    struct TimeBase
-    {
-        TimeBase() : time(0), deltaTime(0) {}
-
-        double time;                    // frame time. 0.0 is start of process
-        double deltaTime;               // delta time this frame in seconds.
-    };
-
-    class Object
-    {  
-    public:
-
-        virtual ~Object() {}
-
-        virtual void SerializeRead( class ReadStream & stream ) = 0;
-
-        virtual void SerializeWrite( class WriteStream & stream ) = 0;
-
-        virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
-    };
-
     uint64_t generate_guid();
 
-    inline int random_int( int min, int max )
-    {
-        assert( max > min );
-        int result = min + rand() % ( max - min + 1 );
-        assert( result >= min );
-        assert( result <= max );
-        return result;
-    }
+    int random_int( int min, int max );
 
-    inline float random_float( float min, float max )
-    {
-        const int res = 10000000;
-        double scale = ( rand() % res ) / double( res - 1 );
-        return (float) ( min + (double) ( max - min ) * scale );
-    }
+    float random_float( float min, float max );
 
     inline void * align_forward( void * p, uint32_t align )
     {
@@ -168,16 +170,27 @@ namespace protocol
 
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed );
 
-    // todo: must become PROTOCOL_CHECK
-    #define check( condition )                                                                                                          \
-    do                                                                                                                                  \
-    {                                                                                                                                   \
-        if ( !(condition) )                                                                                                             \
-        {                                                                                                                               \
-            printf( "Check failed: ( %s ), function %s, file %s, line %d\n", #condition, __FUNCTION__, __FILE__, __LINE__ );            \
-            exit(1);                                                                                                                    \
-        }                                                                                                                               \
-    } while(0)
+    struct TimeBase
+    {
+        TimeBase() : time(0), deltaTime(0) {}
+
+        double time;                    // frame time. 0.0 is start of process
+        double deltaTime;               // delta time this frame in seconds.
+    };
+
+    class Object
+    {  
+    public:
+
+        virtual ~Object() {}
+
+        virtual void SerializeRead( class ReadStream & stream ) = 0;
+
+        virtual void SerializeWrite( class WriteStream & stream ) = 0;
+
+        virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
+    };
+
 }
 
 #endif

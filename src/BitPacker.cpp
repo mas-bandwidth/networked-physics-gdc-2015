@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library
-    Copyright (c) 2013-2014 Glenn Fiedler <glenn.fiedler@gmail.com>
+    Network Protocol Library.
+    Copyright (c) 2014 The Network Protocol Company, Inc.
 */
 
 #include "BitPacker.h"
@@ -11,8 +11,8 @@ namespace protocol
     BitWriter::BitWriter( void * data, int bytes )
         : m_data( (uint32_t*)data ), m_numWords( bytes / 4 )
     {
-        assert( data );
-        assert( ( bytes % 4 ) == 0 );           // IMPORTANT: buffer size must be a multiple of four!
+        PROTOCOL_ASSERT( data );
+        PROTOCOL_ASSERT( ( bytes % 4 ) == 0 );           // IMPORTANT: buffer size must be a multiple of four!
         m_numBits = m_numWords * 32;
         m_bitsWritten = 0;
         m_scratch = 0;
@@ -23,10 +23,10 @@ namespace protocol
 
     void BitWriter::WriteBits( uint32_t value, int bits )
     {
-        assert( bits > 0 );
-        assert( bits <= 32 );
+        PROTOCOL_ASSERT( bits > 0 );
+        PROTOCOL_ASSERT( bits <= 32 );
 
-        assert( m_bitsWritten + bits <= m_numBits );
+        PROTOCOL_ASSERT( m_bitsWritten + bits <= m_numBits );
 
         if ( m_bitsWritten + bits > m_numBits )
         {
@@ -42,7 +42,7 @@ namespace protocol
 
         if ( m_bitIndex >= 32 )
         {
-            assert( m_wordIndex < m_numWords );
+            PROTOCOL_ASSERT( m_wordIndex < m_numWords );
             m_data[m_wordIndex] = uint32_t( m_scratch >> 32 ); //htonl( uint32_t( m_scratch >> 32 ) );
             m_scratch <<= 32;
             m_bitIndex -= 32;
@@ -59,13 +59,13 @@ namespace protocol
         {
             uint32_t zero = 0;
             WriteBits( zero, 8 - remainderBits );
-            assert( m_bitsWritten % 8 == 0 );
+            PROTOCOL_ASSERT( m_bitsWritten % 8 == 0 );
         }
     }
 
     void BitWriter::WriteBytes( const uint8_t * data, int bytes )
     {
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
         if ( m_bitsWritten + bytes * 8 >= m_numBits )
         {
             m_overflow = true;
@@ -74,7 +74,7 @@ namespace protocol
 
         // write head bytes
 
-        assert( m_bitIndex == 0 || m_bitIndex == 8 || m_bitIndex == 16 || m_bitIndex == 24 );
+        PROTOCOL_ASSERT( m_bitIndex == 0 || m_bitIndex == 8 || m_bitIndex == 16 || m_bitIndex == 24 );
 
         int headBytes = ( 4 - m_bitIndex / 8 ) % 4;
         if ( headBytes > bytes )
@@ -84,40 +84,40 @@ namespace protocol
         if ( headBytes == bytes )
             return;
 
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
         // write words
 
         int numWords = ( bytes - headBytes ) / 4;
         if ( numWords > 0 )
         {
-            assert( m_bitIndex == 0 );
+            PROTOCOL_ASSERT( m_bitIndex == 0 );
             memcpy( &m_data[m_wordIndex], data + headBytes, numWords * 4 );
             m_bitsWritten += numWords * 32;
             m_wordIndex += numWords;
             m_scratch = 0;
         }
 
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
         // write tail
 
         int tailStart = headBytes + numWords * 4;
         int tailBytes = bytes - tailStart;
-        assert( tailBytes >= 0 && tailBytes < 4 );
+        PROTOCOL_ASSERT( tailBytes >= 0 && tailBytes < 4 );
         for ( int i = 0; i < tailBytes; ++i )
             WriteBits( data[tailStart+i], 8 );
 
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
-        assert( headBytes + numWords * 4 + tailBytes == bytes );
+        PROTOCOL_ASSERT( headBytes + numWords * 4 + tailBytes == bytes );
     }
 
     void BitWriter::FlushBits()
     {
         if ( m_bitIndex != 0 )
         {
-            assert( m_wordIndex < m_numWords );
+            PROTOCOL_ASSERT( m_wordIndex < m_numWords );
             if ( m_wordIndex >= m_numWords )
             {
                 m_overflow = true;
@@ -130,8 +130,8 @@ namespace protocol
     BitReader::BitReader( const void * data, int bytes )
         : m_data( (const uint32_t*)data ), m_numWords( bytes / 4 )
     {
-        assert( data );
-        assert( ( bytes % 4 ) == 0 );           // IMPORTANT: buffer size must be a multiple of four!
+        PROTOCOL_ASSERT( data );
+        PROTOCOL_ASSERT( ( bytes % 4 ) == 0 );           // IMPORTANT: buffer size must be a multiple of four!
         m_numBits = m_numWords * 32;
         m_bitsRead = 0;
         m_bitIndex = 0;
@@ -142,9 +142,9 @@ namespace protocol
 
     uint32_t BitReader::ReadBits( int bits )
     {
-        assert( bits > 0 );
-        assert( bits <= 32 );
-        assert( m_bitsRead + bits <= m_numBits );
+        PROTOCOL_ASSERT( bits > 0 );
+        PROTOCOL_ASSERT( bits <= 32 );
+        PROTOCOL_ASSERT( m_bitsRead + bits <= m_numBits );
 
         if ( m_bitsRead + bits > m_numBits )
         {
@@ -154,7 +154,7 @@ namespace protocol
 
         m_bitsRead += bits;
 
-        assert( m_bitIndex < 32 );
+        PROTOCOL_ASSERT( m_bitIndex < 32 );
 
         if ( m_bitIndex + bits < 32 )
         {
@@ -164,7 +164,7 @@ namespace protocol
         else
         {
             m_wordIndex++;
-            assert( m_wordIndex < m_numWords );
+            PROTOCOL_ASSERT( m_wordIndex < m_numWords );
             const uint32_t a = 32 - m_bitIndex;
             const uint32_t b = bits - a;
             m_scratch <<= a;
@@ -189,15 +189,15 @@ namespace protocol
             ReadBits( 8 - remainderBits );
             #else
             uint32_t value = ReadBits( 8 - remainderBits );
-            assert( value == 0 );
-            assert( m_bitsRead % 8 == 0 );
+            PROTOCOL_ASSERT( value == 0 );
+            PROTOCOL_ASSERT( m_bitsRead % 8 == 0 );
             #endif
         }
     }
 
     void BitReader::ReadBytes( uint8_t * data, int bytes )
     {
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
         if ( m_bitsRead + bytes * 8 >= m_numBits )
         {
@@ -208,7 +208,7 @@ namespace protocol
 
         // read head bytes
 
-        assert( m_bitIndex == 0 || m_bitIndex == 8 || m_bitIndex == 16 || m_bitIndex == 24 );
+        PROTOCOL_ASSERT( m_bitIndex == 0 || m_bitIndex == 8 || m_bitIndex == 16 || m_bitIndex == 24 );
 
         int headBytes = ( 4 - m_bitIndex / 8 ) % 4;
         if ( headBytes > bytes )
@@ -218,32 +218,32 @@ namespace protocol
         if ( headBytes == bytes )
             return;
 
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
         // read words
 
         int numWords = ( bytes - headBytes ) / 4;
         if ( numWords > 0 )
         {
-            assert( m_bitIndex == 0 );
+            PROTOCOL_ASSERT( m_bitIndex == 0 );
             memcpy( data + headBytes, &m_data[m_wordIndex], numWords * 4 );
             m_bitsRead += numWords * 32;
             m_wordIndex += numWords;
             m_scratch = m_data[m_wordIndex];//ntohl( m_data[m_wordIndex] );
         }
 
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
         // write tail
 
         int tailStart = headBytes + numWords * 4;
         int tailBytes = bytes - tailStart;
-        assert( tailBytes >= 0 && tailBytes < 4 );
+        PROTOCOL_ASSERT( tailBytes >= 0 && tailBytes < 4 );
         for ( int i = 0; i < tailBytes; ++i )
             data[tailStart+i] = ReadBits( 8 );
 
-        assert( GetAlignBits() == 0 );
+        PROTOCOL_ASSERT( GetAlignBits() == 0 );
 
-        assert( headBytes + numWords * 4 + tailBytes == bytes );
+        PROTOCOL_ASSERT( headBytes + numWords * 4 + tailBytes == bytes );
     }
 }
