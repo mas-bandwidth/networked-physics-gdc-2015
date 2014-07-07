@@ -12,43 +12,62 @@
 
 namespace protocol
 {
-    extern void AssertHandler( const char * condition, 
-                               const char * function,
-                               const char * file,
-                               int line );
+    extern void DefaultAssertHandler( const char * condition, 
+                                      const char * function,
+                                      const char * file,
+                                      int line );
 
-    extern void CheckHandler( const char * condition, 
-                              const char * function,
-                              const char * file,
-                              int line );
+    extern void DefaultCheckHandler( const char * condition, 
+                                     const char * function,
+                                     const char * file,
+                                     int line );
 }
 
 #ifndef NDEBUG
-#define PROTOCOL_ASSERT( condition )                                                \
-do                                                                                  \
-{                                                                                   \
-    if ( !(condition) )                                                             \
-    {                                                                               \
-        protocol::AssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );    \
-    }                                                                               \
+#define PROTOCOL_ASSERT( condition )                                                        \
+do                                                                                          \
+{                                                                                           \
+    if ( !(condition) )                                                                     \
+    {                                                                                       \
+        protocol::DefaultAssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );     \
+    }                                                                                       \
 } while(0)
 #else
 #define PROTOCOL_ASSERT( condition ) do {} while(0)
 #endif
 
-#define PROTOCOL_CHECK( condition )                                                 \
-do                                                                                  \
-{                                                                                   \
-    if ( !(condition) )                                                             \
-    {                                                                               \
-        protocol::CheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );     \
-    }                                                                               \
+#define PROTOCOL_CHECK( condition )                                                         \
+do                                                                                          \
+{                                                                                           \
+    if ( !(condition) )                                                                     \
+    {                                                                                       \
+        protocol::DefaultCheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );      \
+    }                                                                                       \
 } while(0)
 
 #include "Enums.h"
+#include "Log.h"
 
 namespace protocol
 {
+    inline uint32_t host_to_network( uint32_t value )
+    {
+#if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN
+        return __builtin_bswap32( value );
+#else
+        return value;
+#endif
+    }
+
+    inline uint32_t network_to_host( uint32_t value )
+    {
+#if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN
+        return __builtin_bswap32( value );
+#else
+        return value;
+#endif
+    }
+
     template <uint32_t x> struct PopCount
     {
         enum {   a = x - ( ( x >> 1 )       & 0x55555555 ),

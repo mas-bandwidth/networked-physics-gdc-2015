@@ -1,24 +1,6 @@
-pDONE:
-
-    assert should become "PROTOCOL_ASSERT". This needs to be redefined
-    to call a user specified assert function.
-
-    check should become "PROTOCOL_CHECK"
-
-    Code is ugly but, hey that's how it goes when you make a library.
+DONE:
 
 TODO:
-
-    Now move the function pointer for assert and check handling
-    into the C++ so we don't need to rely on stdio/cassert etc.
-    at the include file level.
-
-    ------------------
-
-    Fix the bitpacker to do bswap when necessary for big endian.
-
-    I need to provide my own efficient byteswap functions in Common.h,
-    eg. fast_ntonl, or just bswap if big endian in/out.
 
     ----------------------
 
@@ -28,13 +10,21 @@ TODO:
 
     Split back up into Types.h and clean up the rest of the bitsquid code!
 
-    ------------------
+    -----------------------
 
-    Replace all *runtime* STL usage with bitsquid containers.
+    Replace <queue> with bitsquid queue in Packet.h
 
-    Still OK to use STL for other structures like memory leak tracking.
+    Update code that uses PacketQueue to use new bitsquid queue.
 
-    ------------------
+    ----------------------
+
+    Replace <map> in Factory.h with bitsquid hash
+
+    ----------------------
+
+    ...
+
+    ----------------------
 
 
 
@@ -73,7 +63,9 @@ TODO:
 
     Once server has acks for every fragment, go into the requesting client block state.
 
-    Client should store, and make the server data block accessible via accessor.
+    Client should have the opportunity to process the data block from the server,
+    it should not *store* it verbatim, but process it and have the opportunity to
+    extract data from it.
 
     Add unit test to verify it's working, make sure to check the block size and contents match.
 
@@ -105,6 +97,18 @@ TODO:
 
     a) writing the fragments, and not sending them out too rapidly
     b) on the receive side collating the fragments and reassembling them.
+
+    ------------------------
+
+    Where does fragmentation and reassembly live?
+
+    Ideally, I would like for it to be in the connection layer
+    or at least somewhere that it doesn't need to be implemented
+    from scratch with each different network interface implementation.
+
+    Is this possible?
+
+    Maybe it should just be at the interface level.
 
     ------------------------
 

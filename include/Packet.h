@@ -43,6 +43,7 @@ namespace protocol
         Packet & operator = ( const Packet & other );
     };
 
+    // todo: replace with bitsquid queue
     typedef std::queue<Packet*> PacketQueue;
 }
 

@@ -7,7 +7,7 @@
 #define PROTOCOL_ARRAY_H
 
 #include "Allocator.h"
-#include <string.h>			// todo: just for memcpy? blegh
+#include <string.h>
 
 namespace protocol
 {

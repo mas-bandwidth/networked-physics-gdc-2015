@@ -62,8 +62,8 @@ What do I want my library to achieve?
 
     5. It should be designed to work well with LZ dictionary based compression (done)
 
-    6. It should be extremely fast, eg. low CPU cost for packet read and write (in progress)
+    6. It should be extremely fast, eg. low CPU cost for packet read and write (done)
 
-    7. It should support send tables, entities, snapshots, delta encoding and interpolation.
+    7. It should support send tables, entities, snapshots, delta encoding, interpolation and client side prediction (in progress)
 
 ------------------------------------------------------------------------------------------------------------

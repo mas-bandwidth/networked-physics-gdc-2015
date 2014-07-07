@@ -25,7 +25,6 @@ namespace protocol
     {
         PROTOCOL_ASSERT( bits > 0 );
         PROTOCOL_ASSERT( bits <= 32 );
-
         PROTOCOL_ASSERT( m_bitsWritten + bits <= m_numBits );
 
         if ( m_bitsWritten + bits > m_numBits )
@@ -43,7 +42,7 @@ namespace protocol
         if ( m_bitIndex >= 32 )
         {
             PROTOCOL_ASSERT( m_wordIndex < m_numWords );
-            m_data[m_wordIndex] = uint32_t( m_scratch >> 32 ); //htonl( uint32_t( m_scratch >> 32 ) );
+            m_data[m_wordIndex] = host_to_network( uint32_t( m_scratch >> 32 ) );
             m_scratch <<= 32;
             m_bitIndex -= 32;
             m_wordIndex++;
@@ -123,7 +122,7 @@ namespace protocol
                 m_overflow = true;
                 return;
             }
-            m_data[m_wordIndex++] = uint32_t( m_scratch >> 32 );//htonl( uint32_t( m_scratch >> 32 ) );
+            m_data[m_wordIndex++] = host_to_network( uint32_t( m_scratch >> 32 ) );
         }
     }
 
@@ -136,7 +135,7 @@ namespace protocol
         m_bitsRead = 0;
         m_bitIndex = 0;
         m_wordIndex = 0;
-        m_scratch = m_data[0];//ntohl( m_data[0] );
+        m_scratch = network_to_host( m_data[0] );
         m_overflow = false;
     }
 
@@ -168,7 +167,7 @@ namespace protocol
             const uint32_t a = 32 - m_bitIndex;
             const uint32_t b = bits - a;
             m_scratch <<= a;
-            m_scratch |= m_data[m_wordIndex];//ntohl( m_data[m_wordIndex] );
+            m_scratch |= network_to_host( m_data[m_wordIndex] );
             m_scratch <<= b;
             m_bitIndex = b;
         }
@@ -229,7 +228,7 @@ namespace protocol
             memcpy( data + headBytes, &m_data[m_wordIndex], numWords * 4 );
             m_bitsRead += numWords * 32;
             m_wordIndex += numWords;
-            m_scratch = m_data[m_wordIndex];//ntohl( m_data[m_wordIndex] );
+            m_scratch = network_to_host( m_data[m_wordIndex] );
         }
 
         PROTOCOL_ASSERT( GetAlignBits() == 0 );

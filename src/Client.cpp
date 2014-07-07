@@ -88,6 +88,10 @@ namespace protocol
         strncpy( m_hostname, hostname, MaxHostName - 1 );
         m_hostname[MaxHostName-1] = '\0';
 
+#else
+
+        // todo: if we don't have a resolver we should set an error here
+
 #endif
     }
 

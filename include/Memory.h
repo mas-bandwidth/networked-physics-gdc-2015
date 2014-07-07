@@ -3,7 +3,7 @@
 
 #include "Common.h"
 #include "Allocator.h"
-#include <stdio.h>			// todo: replace with Log.h
+#include <stdio.h>
 #include <stdlib.h>
 
 namespace protocol

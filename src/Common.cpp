@@ -5,24 +5,24 @@
 
 #include "Common.h"
 #include <time.h>
-#include <stdio.h>      // todo: replace with Log.h
+#include <stdio.h>
 #include <stdlib.h>
 
 namespace protocol
 {
-    void AssertHandler( const char * condition, 
-                        const char * function,
-                        const char * file,
-                        int line )
+    void DefaultAssertHandler( const char * condition, 
+                               const char * function,
+                               const char * file,
+                               int line )
     {
         printf( "Assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
         exit(1);                                                                                                                    
     }
 
-    void CheckHandler( const char * condition, 
-                       const char * function,
-                       const char * file,
-                       int line )
+    void DefaultCheckHandler( const char * condition, 
+                              const char * function,
+                              const char * file,
+                              int line )
     {
         printf( "Check failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
         exit(1);                                                                                                                    

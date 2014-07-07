@@ -18,6 +18,29 @@ Sunday Evening, July 6th, 2014:
 
     Remove the sophist Platform.h. Nothing else useful in it.
 
+    assert should become "PROTOCOL_ASSERT". This needs to be redefined
+    to call a user specified assert function.
+
+    check should become "PROTOCOL_CHECK"
+
+    Code is ugly but, hey that's how it goes when you make a library.
+
+    Remove microallocator. It's not what I need
+
+    Now move the function for assert and check handling into the cpp
+    file so we don't need to rely on stdio/cassert in the include.
+
+    Fix the bitpacker to do bswap when necessary for big endian.
+
+    I need to provide my own efficient byteswap functions in Common.h,
+    eg. fast_ntonl, or just bswap if big endian in/out.
+
+    Called these network_to_host and host_to_network respectively.
+
+    Marked places that need conversion to bitsquid classes.
+
+    There are only too places aside from resolver, this shouldn't be too much work.
+
 
 Saturday Morning, July 5th, 2014:
 ---------------------------------

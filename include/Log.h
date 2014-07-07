@@ -6,7 +6,7 @@
 #ifndef PROTOCOL_LOG_H
 #define PROTOCOL_LOG_H
 
-// todo: PROTOCOL_LOG macro, WARN, ERROR etc.
+// PROTOCOL_LOG, PROTOCOL_WARN, PROTOCOL_ERROR etc.
     
 #endif
 
