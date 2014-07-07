@@ -24,25 +24,25 @@ namespace protocol
 }
 
 #ifndef NDEBUG
-#define PROTOCOL_ASSERT( condition )                                            \
-do                                                                              \
-{                                                                               \
-    if ( !(condition) )                                                         \
-    {                                                                           \
-        AssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );          \
-    }                                                                           \
+#define PROTOCOL_ASSERT( condition )                                                \
+do                                                                                  \
+{                                                                                   \
+    if ( !(condition) )                                                             \
+    {                                                                               \
+        protocol::AssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );    \
+    }                                                                               \
 } while(0)
 #else
 #define PROTOCOL_ASSERT( condition ) do {} while(0)
 #endif
 
-#define PROTOCOL_CHECK( condition )                                             \
-do                                                                              \
-{                                                                               \
-    if ( !(condition) )                                                         \
-    {                                                                           \
-        CheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );           \
-    }                                                                           \
+#define PROTOCOL_CHECK( condition )                                                 \
+do                                                                                  \
+{                                                                                   \
+    if ( !(condition) )                                                             \
+    {                                                                               \
+        protocol::CheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );     \
+    }                                                                               \
 } while(0)
 
 #include "Enums.h"
