@@ -1,6 +1,6 @@
 /*
-    Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Network Protocol Library
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_COMMON_H
@@ -139,6 +139,11 @@ namespace protocol
     inline bool is_power_of_two( uint32_t x )
     {
         return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
+    }
+
+    template <typename T> const T & max( const T & a, const T & b )
+    {
+        return ( a > b ) ? a : b;
     }
 
     inline bool sequence_greater_than( uint16_t s1, uint16_t s2 )

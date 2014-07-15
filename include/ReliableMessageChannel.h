@@ -1,12 +1,11 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 #define PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 
-#include "Factory.h"
 #include "Message.h"
 #include "BlockMessage.h"
 #include "MessageFactory.h"

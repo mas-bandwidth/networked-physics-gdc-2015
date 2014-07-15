@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #include "Network.h"
@@ -33,7 +33,9 @@
 namespace protocol 
 {     
     BSDSocket::BSDSocket( const BSDSocketConfig & config )
-        : m_config( config )
+        : m_config( config ), 
+          m_send_queue( config.allocator ? *config.allocator : memory::default_allocator() ),
+          m_receive_queue( config.allocator ? *config.allocator : memory::default_allocator() )
     {
         PROTOCOL_ASSERT( IsNetworkInitialized() );
 
@@ -43,6 +45,9 @@ namespace protocol
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
         PROTOCOL_ASSERT( m_allocator );
+
+        queue::reserve( m_send_queue, m_config.sendQueueSize );
+        queue::reserve( m_receive_queue, m_config.receiveQueueSize );
 
         m_receiveBuffer = (uint8_t*) m_allocator->Allocate( m_config.maxPacketSize );
 
@@ -153,19 +158,22 @@ namespace protocol
             m_socket = 0;
         }
 
-        while ( m_send_queue.size() )
+        for ( int i = 0; i < queue::size( m_send_queue ); ++i )
         {
-            auto packet = m_send_queue.front();
-            m_send_queue.pop();
+            auto packet = m_send_queue[i];
+            PROTOCOL_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
-        while ( m_receive_queue.size() )
+        for ( int i = 0; i < queue::size( m_receive_queue ); ++i )
         {
-            auto packet = m_receive_queue.front();
-            m_receive_queue.pop();
+            auto packet = m_receive_queue[i];
+            PROTOCOL_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
+
+        queue::clear( m_send_queue );
+        queue::clear( m_receive_queue );
     }
 
     bool BSDSocket::IsError() const
@@ -185,20 +193,33 @@ namespace protocol
             m_config.packetFactory->Destroy( packet );
             return;
         }
+
         PROTOCOL_ASSERT( packet );
         PROTOCOL_ASSERT( address.IsValid() );
+        
         packet->SetAddress( address );
-        m_send_queue.push( packet );
+
+        if ( queue::size( m_send_queue ) == m_config.sendQueueSize )
+        {
+            m_config.packetFactory->Destroy( packet );
+            return;
+        }
+
+        queue::push_back( m_send_queue, packet );
     }
 
     Packet * BSDSocket::ReceivePacket()
     {
         if ( m_error )
             return nullptr;
-        if ( m_receive_queue.empty() )
+
+        if ( queue::size( m_receive_queue ) == 0 )
             return nullptr;
-        auto packet = m_receive_queue.front();
-        m_receive_queue.pop();
+
+        auto packet = m_receive_queue[0];
+
+        queue::consume( m_receive_queue, 1 );
+
         return packet;
     }
 
@@ -232,10 +253,11 @@ namespace protocol
 
     void BSDSocket::SendPackets()
     {
-        while ( !m_send_queue.empty() )
+        while ( queue::size( m_send_queue ) )
         {
-            auto packet = m_send_queue.front();
-            m_send_queue.pop();
+            auto packet = m_send_queue[0];
+
+            queue::consume( m_send_queue, 1 );
 
             uint8_t buffer[m_config.maxPacketSize];
 
@@ -246,7 +268,7 @@ namespace protocol
             uint64_t protocolId = m_config.protocolId;
             serialize_uint64( stream, protocolId );
 
-            const int maxPacketType = m_config.packetFactory->GetMaxType();
+            const int maxPacketType = m_config.packetFactory->GetNumTypes() - 1;
             
             int packetType = packet->GetType();
             
@@ -290,6 +312,9 @@ namespace protocol
     {
         while ( true )
         {
+            if ( queue::size( m_receive_queue ) == m_config.receiveQueueSize )
+                break;
+
             Address address;
             int received_bytes = ReceivePacketInternal( address, m_receiveBuffer, m_config.maxPacketSize );
             if ( !received_bytes )
@@ -307,7 +332,7 @@ namespace protocol
                 continue;
             }
 
-            const int maxPacketType = m_config.packetFactory->GetMaxType();
+            const int maxPacketType = m_config.packetFactory->GetNumTypes() - 1;
             int packetType = 0;
             serialize_int( stream, packetType, 0, maxPacketType );
 
@@ -341,7 +366,7 @@ namespace protocol
 
             packet->SetAddress( address );
 
-            m_receive_queue.push( packet );
+            queue::push_back( m_receive_queue, packet );
         }
     }
 

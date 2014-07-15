@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #include "Server.h"
@@ -182,7 +182,7 @@ namespace protocol
 
         PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
-        // todo: not implemented yet
+        // not implemented yet!
         PROTOCOL_ASSERT( false );
     }
 
@@ -221,7 +221,7 @@ namespace protocol
 
         PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
 
-        // todo: not implemented yet
+        // not implemented yet
         PROTOCOL_ASSERT( false );
     }
 
@@ -441,7 +441,7 @@ namespace protocol
             return;
         }
 
-        // todo: should also transition here from received client data state
+        // note: should also transition here from received client data state
 
         if ( client.state != SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA )
         {

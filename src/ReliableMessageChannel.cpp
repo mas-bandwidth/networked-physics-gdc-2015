@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #include "ReliableMessageChannel.h"
@@ -124,7 +124,9 @@ namespace protocol
                 if ( config.align )
                     stream.Align();
 
-                serialize_int( stream, messageTypes[i], 0, config.messageFactory->GetMaxType() );
+                const int maxMessageType = config.messageFactory->GetNumTypes() - 1;
+
+                serialize_int( stream, messageTypes[i], 0, maxMessageType );
 
                 if ( config.align )
                     stream.Align();
@@ -184,8 +186,10 @@ namespace protocol
         m_sentPackets = PROTOCOL_NEW( *m_allocator, SlidingWindow<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
         m_receiveQueue = PROTOCOL_NEW( *m_allocator, SlidingWindow<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
 
+        const int maxMessageType = m_config.messageFactory->GetNumTypes() - 1;
+
         const int MessageIdBits = 16;
-        const int MessageTypeBits = bits_required( 0, m_config.messageFactory->GetMaxType() );
+        const int MessageTypeBits = bits_required( 0, maxMessageType );
         const int MessageAlignOverhead = m_config.align ? 14 : 0;
 
         m_messageOverheadBits = MessageIdBits + MessageTypeBits + MessageAlignOverhead;
@@ -321,7 +325,7 @@ namespace protocol
         {
             typedef MeasureStream Stream;
             const int SmallBlockOverhead = 8;
-            MeasureStream measureStream( std::max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
+            MeasureStream measureStream( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
             message->SerializeMeasure( measureStream );
             if ( measureStream.IsOverflow() )
             {

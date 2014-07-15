@@ -5,6 +5,7 @@
 #include "Allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <new>
 
 namespace protocol
 {

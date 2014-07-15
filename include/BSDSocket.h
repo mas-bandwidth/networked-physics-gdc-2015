@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_BSD_SOCKET_H
@@ -8,6 +8,7 @@
 
 #include "PacketFactory.h"
 #include "NetworkInterface.h"
+#include "Queue.h"
 
 namespace protocol 
 {     
@@ -23,6 +24,8 @@ namespace protocol
             ipv6 = true;
             maxPacketSize = 10*1024;
             packetFactory = nullptr;
+            sendQueueSize = 256;
+            receiveQueueSize = 256;
         }
 
         Allocator * allocator;                      // allocator for long term allocations matching object life cycle. if nullptr then the default allocator is used.
@@ -30,6 +33,8 @@ namespace protocol
         uint16_t port;                              // port to bind UDP socket to
         bool ipv6;                                  // use ipv6 sockets if true
         int maxPacketSize;                          // maximum packet size
+        int sendQueueSize;                          // send queue size between "SendPacket" and sendto. additional sent packets will be dropped.
+        int receiveQueueSize;                       // send queue size between "recvfrom" and "ReceivePacket" function. additional received packets will be dropped.
         PacketFactory * packetFactory;              // packet factory (required)
     };
 
@@ -41,8 +46,8 @@ namespace protocol
         
         int m_socket;
         BSDSocketError m_error;
-        PacketQueue m_send_queue;
-        PacketQueue m_receive_queue;
+        Queue<Packet*> m_send_queue;
+        Queue<Packet*> m_receive_queue;
         uint8_t * m_receiveBuffer;
         uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];
 

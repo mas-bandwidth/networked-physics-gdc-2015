@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_PACKETS_H
@@ -31,7 +31,9 @@ namespace protocol
 
         // bidirectional
 
-        CLIENT_SERVER_PACKET_CONNECTION
+        CLIENT_SERVER_PACKET_CONNECTION,
+
+        NUM_CLIENT_SERVER_PACKETS
     };
 
     struct ConnectionRequestPacket : public Packet
@@ -388,28 +390,6 @@ namespace protocol
 
         ConnectionPacket( const ConnectionPacket & other );
         const ConnectionPacket & operator = ( const ConnectionPacket & other );
-    };
-
-    class ClientServerPacketFactory : public PacketFactory
-    {
-    public:
-
-        ClientServerPacketFactory( Allocator & allocator, ChannelStructure * channelStructure )
-            : PacketFactory( allocator )
-        {
-            PROTOCOL_ASSERT( channelStructure );
-
-            Register( CLIENT_SERVER_PACKET_CONNECTION_REQUEST,   [&allocator] { return PROTOCOL_NEW( allocator, ConnectionRequestPacket );   } );
-            Register( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE,   [&allocator] { return PROTOCOL_NEW( allocator, ChallengeResponsePacket );   } );
-            Register( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION, [&allocator] { return PROTOCOL_NEW( allocator, ReadyForConnectionPacket );  } );
-
-            Register( CLIENT_SERVER_PACKET_CONNECTION_DENIED,    [&allocator] { return PROTOCOL_NEW( allocator, ConnectionDeniedPacket );    } );
-            Register( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE, [&allocator] { return PROTOCOL_NEW( allocator, ConnectionChallengePacket ); } );
-            Register( CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA,  [&allocator] { return PROTOCOL_NEW( allocator, RequestClientDataPacket );   } );
-            Register( CLIENT_SERVER_PACKET_DISCONNECTED,         [&allocator] { return PROTOCOL_NEW( allocator, DisconnectedPacket );        } );
-
-            Register( CLIENT_SERVER_PACKET_CONNECTION, [&allocator, channelStructure] { return PROTOCOL_NEW( allocator, ConnectionPacket, CLIENT_SERVER_PACKET_CONNECTION, channelStructure ); } );
-        }
     };
 }
 

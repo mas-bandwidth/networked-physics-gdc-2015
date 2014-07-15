@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #include "Client.h"
@@ -76,10 +76,12 @@ namespace protocol
 
 #if PROTOCOL_USE_RESOLVER
 
-        // ok, it's really a hostname. go into the resolving hostname state
+        // if we don't have a resolver, we can't resolve the string to an address...
 
-        // todo: should *probably* be a runtime check here -- eg. set error state if resolver is null
-        PROTOCOL_ASSERT( m_config.resolver );
+        if ( !m_config.resolver )
+            DisconnectAndSetError( CLIENT_ERROR_MISSING_RESOLVER );
+
+        // ok, it's probably a hostname. go into the resolving hostname state
 
         m_config.resolver->Resolve( hostname );
         
@@ -90,7 +92,9 @@ namespace protocol
 
 #else
 
-        // todo: if we don't have a resolver we should set an error here
+        // we are configured to never use a resolver. caller must pass in a valid address
+
+        DisconnectAndSetError( CLIENT_ERROR_INVALID_CONNECT_ADDRESS );
 
 #endif
     }
@@ -367,7 +371,7 @@ namespace protocol
                             }
                             else
                             {
-                                // todo: implement client block send to server
+                                // note: implement client block send to server
                                 PROTOCOL_ASSERT( false );
                             }
                         }

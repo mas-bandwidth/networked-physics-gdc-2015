@@ -1,7 +1,6 @@
 #ifndef TEST_MESSAGES_H
 #define TEST_MESSAGES_H
 
-#include "Factory.h"
 #include "Message.h"
 #include "BlockMessage.h"
 #include "MessageFactory.h"
@@ -11,7 +10,8 @@ using namespace protocol;
 enum MessageType
 {
     MESSAGE_BLOCK = BlockMessageType,
-    MESSAGE_TEST
+    MESSAGE_TEST,
+    NUM_MESSAGE_TYPES
 };
 
 inline int GetNumBitsForMessage( uint16_t sequence )
@@ -66,13 +66,27 @@ struct TestMessage : public Message
 
 class TestMessageFactory : public MessageFactory
 {
+    Allocator * m_allocator;
+
 public:
 
     TestMessageFactory( Allocator & allocator )
-        : MessageFactory( allocator )
+        : MessageFactory( allocator, NUM_MESSAGE_TYPES )
     {
-        Register( MESSAGE_BLOCK, [&allocator] { return PROTOCOL_NEW( allocator, BlockMessage ); } );
-        Register( MESSAGE_TEST,  [&allocator] { return PROTOCOL_NEW( allocator, TestMessage );  } );
+        m_allocator = &allocator;
+    }
+
+protected:
+
+    Message * CreateInternal( int type )
+    {
+        switch ( type )
+        {
+            case MESSAGE_BLOCK:     return PROTOCOL_NEW( *m_allocator, BlockMessage );
+            case MESSAGE_TEST:      return PROTOCOL_NEW( *m_allocator, TestMessage );
+            default:
+                return nullptr;
+        }
     }
 };
 

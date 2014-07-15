@@ -1,3 +1,20 @@
+Monday Evening, July 14, 2014:
+------------------------------
+
+    Replace the <queue> usage for "PacketQueue" with something a little bit more intelligent.
+
+    Remove <map> usage inside factory.
+
+    Remove lambda and std::function usage as well.
+
+    Instead of using lambdas, just get normal and make factory a base -- you override
+    the create and destroy functions to implement the factory.
+
+    Remove Factory.h. It adds no value.
+
+    Update the code to work with the new packet factory.
+
+
 Sunday Evening, July 6th, 2014:
 -------------------------------
 

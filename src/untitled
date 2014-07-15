@@ -1,0 +1,32 @@
+        TempAllocator1024 temp;
+
+        Queue<int> q( temp );
+
+        queue::reserve( q, 10 );
+
+        PROTOCOL_CHECK( queue::space( q ) == 10 );
+
+        queue::push_back( q, 11 );
+        queue::push_front( q, 22 );
+
+        PROTOCOL_CHECK( queue::size( q ) == 2 );
+
+        PROTOCOL_CHECK( q[0] == 22 );
+        PROTOCOL_CHECK( q[1] == 11 );
+
+        queue::consume( q, 2 );
+        PROTOCOL_CHECK( queue::size( q ) == 0 );
+
+        int items[] = { 1,2,3,4,5,6,7,8,9,10 };
+
+        queue::push( q, items, 10 );
+        
+        PROTOCOL_CHECK( queue::size(q) == 10 );
+        
+        for ( int i = 0; i < 10; ++i )
+            PROTOCOL_CHECK( q[i] == i + 1 );
+        
+        queue::consume( q, queue::end_front(q) - queue::begin_front(q) );
+        queue::consume( q, queue::end_front(q) - queue::begin_front(q) );
+        
+        PROTOCOL_CHECK( queue::size(q) == 0 );

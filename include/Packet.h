@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_PACKET_H
@@ -8,9 +8,6 @@
 
 #include "Common.h"
 #include "Address.h"
-
-// todo: remove this
-#include <queue>
 
 namespace protocol
 {
@@ -42,9 +39,6 @@ namespace protocol
         Packet( const Packet & other );
         Packet & operator = ( const Packet & other );
     };
-
-    // todo: replace with bitsquid queue
-    typedef std::queue<Packet*> PacketQueue;
 }
 
 #endif

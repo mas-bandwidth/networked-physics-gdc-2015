@@ -91,6 +91,11 @@ namespace protocol
             q.m_size -= n;
         }
 
+        template<typename T> void clear( Queue<T> & q )
+        {
+            queue::consume( q, queue::size(q) );
+        }
+
         template<typename T> void push( Queue<T> & q, const T * items, uint32_t n )
         {
             if ( space(q) < n )

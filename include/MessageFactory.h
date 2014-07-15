@@ -1,13 +1,12 @@
 #ifndef PROTOCOL_MESSAGE_FACTORY_H
 #define PROTOCOL_MESSAGE_FACTORY_H
 
-#include "Factory.h"
 #include "Message.h"
 #include "Memory.h"
 
 namespace protocol
 {
-    class MessageFactory : public Factory<Message>
+    class MessageFactory
     {        
         #if PROTOCOL_DEBUG_MEMORY_LEAKS
         std::map<void*,int> allocated_messages;
@@ -17,11 +16,14 @@ namespace protocol
 
         int num_allocated_messages = 0;
 
+        int m_numTypes;
+
     public:
 
-        MessageFactory( Allocator & allocator )
+        MessageFactory( Allocator & allocator, int numTypes )
         {
             m_allocator = &allocator;
+            m_numTypes = numTypes;
         }
 
         ~MessageFactory()
@@ -53,7 +55,10 @@ namespace protocol
 
         Message * Create( int type )
         {
-            Message * message = Factory<Message>::Create( type );
+            PROTOCOL_ASSERT( type >= 0 );
+            PROTOCOL_ASSERT( type < m_numTypes );
+
+            Message * message = CreateInternal( type );
 
             PROTOCOL_ASSERT( message );
 
@@ -108,6 +113,15 @@ namespace protocol
                 PROTOCOL_DELETE( *m_allocator, Message, message );
             }
         }
+
+        int GetNumTypes() const
+        {
+            return m_numTypes;
+        }
+
+    protected:
+
+        virtual Message * CreateInternal( int type ) = 0;
     };
 }
 

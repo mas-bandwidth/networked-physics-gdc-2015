@@ -1,6 +1,6 @@
 /*
     Network Protocol Library.
-    Copyright (c) 2014 The Network Protocol Company, Inc.
+    Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_ENUMS_H
@@ -79,6 +79,8 @@ namespace protocol
         CLIENT_ERROR_DISCONNECTED_FROM_SERVER,                // client was fully connected to the server, then received a disconnect packet.
         CLIENT_ERROR_CONNECTION_TIMED_OUT,                    // client connection timed out (eg. server stopped responding with packets)
         CLIENT_ERROR_CONNECTION_ERROR,                        // client connection is in error state. see CONNECTION_ERROR_*
+        CLIENT_ERROR_INVALID_CONNECT_ADDRESS,                 // connect address string is not a valid address.
+        CLIENT_ERROR_MISSING_RESOLVER,                        // client connect needs a resolver to resolve address but resolver was null.
         CLIENT_ERROR_COUNT
     };
 
@@ -92,6 +94,8 @@ namespace protocol
             case CLIENT_ERROR_DISCONNECTED_FROM_SERVER:         return "disconnected from server";
             case CLIENT_ERROR_CONNECTION_TIMED_OUT:             return "connection timed out";
             case CLIENT_ERROR_CONNECTION_ERROR:                 return "connection error";
+            case CLIENT_ERROR_INVALID_CONNECT_ADDRESS:          return "invalid connect address";
+            case CLIENT_ERROR_MISSING_RESOLVER:                 return "missing resolver";
             default:
                 PROTOCOL_ASSERT( false );
                 return "???";

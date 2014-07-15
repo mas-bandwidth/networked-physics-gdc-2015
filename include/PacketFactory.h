@@ -2,12 +2,11 @@
 #define PROTOCOL_PACKET_FACTORY_H
 
 #include "Packet.h"
-#include "Factory.h"
 #include "Memory.h"
 
 namespace protocol
 {
-    class PacketFactory : public Factory<Packet>
+    class PacketFactory
     {        
         #if PROTOCOL_DEBUG_MEMORY_LEAKS
         std::map<void*,int> allocated_packets;
@@ -17,11 +16,14 @@ namespace protocol
 
         Allocator * m_allocator;
 
+        int m_numTypes;
+
     public:
 
-        PacketFactory( Allocator & allocator )
+        PacketFactory( Allocator & allocator, int numTypes )
         {
             m_allocator = &allocator;
+            m_numTypes = numTypes;
         }
 
         ~PacketFactory()
@@ -50,7 +52,10 @@ namespace protocol
 
         Packet * Create( int type )
         {
-            Packet * packet = Factory<Packet>::Create( type );
+            PROTOCOL_ASSERT( type >= 0 );
+            PROTOCOL_ASSERT( type < m_numTypes );
+
+            Packet * packet = CreateInternal( type );
             
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "create packet %p\n", packet );
@@ -82,6 +87,15 @@ namespace protocol
 
             PROTOCOL_DELETE( *m_allocator, Packet, packet );
         }
+
+        int GetNumTypes() const
+        {
+            return m_numTypes;
+        }
+
+    protected:
+
+        virtual Packet * CreateInternal( int type ) = 0;     // IMPORTANT: override this to create your own types!
     };
 }
 

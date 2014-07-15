@@ -2,48 +2,6 @@ DONE:
 
 TODO:
 
-    ----------------------
-
-    Now that I have a .h/.cpp split, the way I have structured
-    the bitsquid containers means that I am not getting the full
-    benefits of short compile times.
-
-    Split back up into Types.h and clean up the rest of the bitsquid code!
-
-    -----------------------
-
-    Replace <queue> with bitsquid queue in Packet.h
-
-    Update code that uses PacketQueue to use new bitsquid queue.
-
-    ----------------------
-
-    Replace <map> in Factory.h with bitsquid hash
-
-    ----------------------
-
-    ...
-
-    ----------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     ------------------------
 
     Send a "Disconnect" packet from client -> server on disconnect,
@@ -117,6 +75,7 @@ TODO:
 
 
 
+
     *** SEND TABLES ***
 
     ---------------
@@ -143,7 +102,24 @@ TODO:
 
 WOULD BE NICE:
 
-    -------------
+    ----------------------
+
+    Clean up the resolver so that it doesn't perform dynamic allocations.
+
+    Find a way to move the future into the implementation (cpp)
+    so we don't need #include <future> in a header file.
+
+    Remove std::string usage from Resolver interface and DNSResolver.
+
+    ----------------------
+
+    Now that I have a .h/.cpp split, the way I have structured
+    the bitsquid containers means that I am not getting the full
+    benefits of short compile times.
+
+    Split back up into Types.h and clean up the rest of the bitsquid code!
+
+    ----------------------
 
     Should be able to determine if scratch allocator is being exhausted,
     and falling back to malloc, eg. add a check, and then check this once
@@ -157,11 +133,6 @@ WOULD BE NICE:
 
     I would like the scratch allocator to be more resilient in  debug builds, 
     eg. for it to have safety checks, eg. missing magic # where expected, assert.
-
-    --------------------
-
-    Find a way to move the future into the implementation (cpp)
-    so we don't need #include <future> in a header file.
 
     --------------------
 
@@ -180,10 +151,6 @@ WOULD BE NICE:
     package.buildflags = { "no-exceptions", "no-rtti" }
 
     Will this work with std::future?
-
-    -------------------
-
-    Remove std::string usage from Resolver interface and DNSResolver. (How?!)
 
     ----------------------
 
