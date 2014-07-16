@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -121,5 +121,10 @@ namespace protocol
             return nullptr;
     }
 }
+
+#else
+
+// workaround for "lib/libprotocol.a(DNSResolver.o) has no symbols" when resolver is disabled
+namespace protocol { int resolve_dummy() { return 1; } }
 
 #endif

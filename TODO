@@ -1,17 +1,88 @@
 DONE:
 
-TODO:
-
-    ------------------------
-
-    Send a "Disconnect" packet from client -> server on disconnect,
-    so the slot gets freed up a bit quicker than if it timed out.
-
-    ------------------------
-
     Add code on server to send server data block to client.
 
-    Block must be *constant*. eg. add it as part of server config
+TODO:
+
+    First up you want to include a server block in the config. This block can be null.
+
+    Should the server take ownership of the block? Probably not. Lots of other
+    pointers passed in to server config don't confer ownership. It is nice this
+    way because we don't need to worry about allocators.
+
+    There should also be a config on the client side for the maximum server block size.
+
+    Client should then pre-allocate a block of data for the client to store this data,
+    and have a int m_numDataBytes which starts out as zero. This way as block fragments
+    come in from the server.
+
+    -------------------------
+
+    In reverse, server needs a config "maxClientDataSize"
+
+    Server needs to perform allocation per-client of a block of this size,
+    plu per-client needs m_clientBlockSize which starts out as zero.
+
+    Now the client can send its data block to the server.
+
+    Now I need to work out how the client generates the client data block.
+
+    I think it should initially be passed in the config as well, not owned,
+    assuming that it is some sort of client configuration data that could
+    be passed up, you *should* know it before connect.
+
+    You might want to change it from one connect call to another though,
+    which would make it not a good fit for the config though.
+
+    Should it be passed in to the connect method instead?
+
+    -------------------------
+
+    Add accessors to the client to get the server block size (bytes),
+    may be 0, and a pointer to the server block (always valid)
+
+    -------------------------
+
+    Add accessors to the server to get the client block size (bytes)
+    and a pointer to the client block data. Both accept a client index.
+
+    -------------------------
+
+    Now the outside interface is designed.
+
+    -------------------------
+
+    On the client side, max
+
+    Client and server will need a block allocator for the blocks sent
+    on client connect / disconnect.
+
+    These blocks probably can just be pre-allocated once at startup,
+    eg. to maximum size so we don't have any fragmentation.
+
+    I think this is the best idea. Memory is not a concern,
+    and if it *was* then choose a smaller block size dumbass.
+
+    ------------------------
+
+    Need an LZ compressor for compressing large blocks, and for compressing
+    initial block sent down to client.
+
+    Ideally, LZ4 could be something enabled via config that is used, if it exists
+    this way it is up to the user of the library to ensure they have LZ4 installed.
+
+    I don't want to manage the LZ4 library includes/libs inside my library,
+    if I can avoid it.
+
+    It might be a good idea to see if LZ4 can compress typical packets sent as well,
+    for example, put a bit in the header indicating that the packet is compressed,
+    if LZ4 is enabled, and then decode the packet via LZ4.
+
+    Also make sure to detect if the packet has been made larger via compression
+    that it would be uncompressed, and in that case don't bother to send the
+    compressed version.
+
+    ------------------------
 
     Server sends one block fragment per-packet. No need for complicated reliability.
 
@@ -36,6 +107,22 @@ TODO:
     Make client block accessible per-server, and make sure it is cleared when the client disconnects.
 
     Add test to verify server receives the correct size block and contents from the client.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     ------------------------
 
@@ -113,14 +200,6 @@ WOULD BE NICE:
 
     ----------------------
 
-    Now that I have a .h/.cpp split, the way I have structured
-    the bitsquid containers means that I am not getting the full
-    benefits of short compile times.
-
-    Split back up into Types.h and clean up the rest of the bitsquid code!
-
-    ----------------------
-
     Should be able to determine if scratch allocator is being exhausted,
     and falling back to malloc, eg. add a check, and then check this once
     per-frame inside the soak test -- i definitely *dont* want the scratch
@@ -143,14 +222,6 @@ WOULD BE NICE:
     Restructure so that precompiled headers are used.
 
     Add timing to build steps so the efficiency can be measured.
-
-    --------------------
-
-    Once STL is removed, use this:
-
-    package.buildflags = { "no-exceptions", "no-rtti" }
-
-    Will this work with std::future?
 
     ----------------------
 

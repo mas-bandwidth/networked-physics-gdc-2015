@@ -2,21 +2,10 @@
 #define PROTOCOL_QUEUE_H
 
 #include "Array.h"
+#include "Types.h"
 
 namespace protocol
 {
-    template <typename T> struct Queue
-    {
-        Queue( Allocator & a );
-
-        T & operator [] ( uint32_t i );
-        const T & operator [] ( uint32_t i ) const;
-
-        Array<T> m_data;
-        uint32_t m_size;
-        uint32_t m_offset;
-    };
-
     namespace queue_internal
     {
         template<typename T> void increase_capacity( Queue<T> & q, uint32_t new_capacity )

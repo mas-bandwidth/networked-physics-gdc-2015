@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -27,11 +27,11 @@ namespace protocol
         CLIENT_SERVER_PACKET_CONNECTION_DENIED,                 // server denies request for connection. contains reason int, eg. full, closed etc.
         CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE,              // server response to client connection request.
         CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA,               // server is ready for the client to start sending data to it.
-        CLIENT_SERVER_PACKET_DISCONNECTED,                      // courtesy packet from server to tell the client they have been disconnected. sent for one second after server-side disconnect
 
         // bidirectional
 
-        CLIENT_SERVER_PACKET_CONNECTION,
+        CLIENT_SERVER_PACKET_DISCONNECTED,                      // courtesy packet sent in both directions to indicate that the client slot has been disconnected
+        CLIENT_SERVER_PACKET_CONNECTION,                        // connection packet send both directions once connection established (Connection.cpp)
 
         NUM_CLIENT_SERVER_PACKETS
     };

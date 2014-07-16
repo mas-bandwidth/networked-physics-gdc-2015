@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -307,6 +307,10 @@ namespace protocol
                     ProcessReadyForConnectionPacket( static_cast<ReadyForConnectionPacket*>( packet ) );
                     break;
 
+                case CLIENT_SERVER_PACKET_DISCONNECTED:
+                    ProcessDisconnectedPacket( static_cast<DisconnectedPacket*>( packet ) );
+                    break;
+
                 case CLIENT_SERVER_PACKET_CONNECTION:
                     ProcessConnectionPacket( static_cast<ConnectionPacket*>( packet ) );
                     break;
@@ -323,16 +327,13 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-//            printf( "server received connection request packet\n" );
-
-//            printf( "server received connection request packet: clientGuid = %llx\n", packet->clientGuid );
-
+        // printf( "server received connection request packet: clientGuid = %llx\n", packet->clientGuid );
 
         auto address = packet->GetAddress();
 
         if ( !m_open )
         {
-//                printf( "server is closed. denying connection request\n" );
+            // printf( "server is closed. denying connection request\n" );
 
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
@@ -343,16 +344,10 @@ namespace protocol
             return;
         }
 
-        if ( FindClientIndex( address, packet->clientGuid ) != -1 )
-        {
-//                printf( "ignoring connection request. client already has a slot\n" );
-            return;
-        }
-
         int clientIndex = FindClientIndex( address );
         if ( clientIndex != -1 && m_clients[clientIndex].clientGuid != packet->clientGuid )
         {
-//                printf( "client is already connected. denying connection request\n" );
+            // printf( "client is already connected. denying connection request\n" );
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
@@ -360,10 +355,16 @@ namespace protocol
             return;
         }
 
+        if ( FindClientIndex( address, packet->clientGuid ) != -1 )
+        {
+            // printf( "ignoring connection request. client already has a slot\n" );
+            return;
+        }
+
         clientIndex = FindFreeClientSlot();
         if ( clientIndex == -1 )
         {
-//              printf( "server is full. denying connection request\n" );
+            // printf( "server is full. denying connection request\n" );
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
@@ -371,7 +372,7 @@ namespace protocol
             return;
         }
 
-//            printf( "incoming client connection at index %d\n", clientIndex );
+        // printf( "incoming client connection at index %d\n", clientIndex );
 
         PROTOCOL_ASSERT( clientIndex >= 0 );
         PROTOCOL_ASSERT( clientIndex < m_numClients );
@@ -452,6 +453,29 @@ namespace protocol
         client.accumulator = 0.0;
         client.lastPacketTime = m_timeBase.time;
         client.state = SERVER_CLIENT_STATE_CONNECTED;
+    }
+
+    void Server::ProcessDisconnectedPacket( DisconnectedPacket * packet )
+    {
+        PROTOCOL_ASSERT( packet );
+
+//            printf( "server received disconnected packet\n" );
+
+        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        if ( clientIndex == -1 )
+        {
+//                printf( "found no matching client\n" );
+            return;
+        }
+
+        ClientData & client = m_clients[clientIndex];
+        if ( client.serverGuid != packet->serverGuid )
+        {
+//                printf( "ignoring because server guid doesn't match\n" );
+            return;
+        }
+
+        ResetClientSlot( clientIndex );
     }
 
     void Server::ProcessConnectionPacket( ConnectionPacket * packet )

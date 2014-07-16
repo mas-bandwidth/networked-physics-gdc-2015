@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -105,6 +105,13 @@ namespace protocol
             return;
 
 //            printf( "client disconnect\n" );
+
+        auto packet = (DisconnectedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DISCONNECTED );
+
+        packet->clientGuid = m_clientGuid;
+        packet->serverGuid = m_serverGuid;
+
+        m_config.networkInterface->SendPacket( m_address, packet );
 
         m_connection->Reset();
 

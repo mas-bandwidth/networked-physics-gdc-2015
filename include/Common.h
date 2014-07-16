@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -7,6 +7,7 @@
 #define PROTOCOL_COMMON_H
 
 #include "Config.h"
+#include "Types.h"
 #include "Constants.h"
 #include <stdint.h>
 
@@ -214,7 +215,6 @@ namespace protocol
 
         virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
     };
-
 }
 
 #endif

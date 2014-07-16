@@ -293,7 +293,7 @@ void test_reliable_message_channel_large_blocks()
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {
-            Block block( memory::default_allocator(), ( i + 1 ) * 1024 + i );
+            Block block( memory::default_allocator(), ( i + 1 ) * 64 + i );
             uint8_t * data = block.GetData();
             for ( int j = 0; j < block.GetSize(); ++j )
                 data[j] = ( i + j ) % 256;
@@ -368,7 +368,7 @@ void test_reliable_message_channel_large_blocks()
 
 //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                PROTOCOL_CHECK( block.GetSize() == ( numMessagesReceived + 1 ) * 1024 + numMessagesReceived );
+                PROTOCOL_CHECK( block.GetSize() == ( numMessagesReceived + 1 ) * 64 + numMessagesReceived );
                 const uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
                     PROTOCOL_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );
@@ -421,7 +421,7 @@ void test_reliable_message_channel_mixture()
 
         auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
-        const int NumMessagesSent = 256;
+        const int NumMessagesSent = 64;
 
         for ( int i = 0; i < NumMessagesSent; ++i )
         {

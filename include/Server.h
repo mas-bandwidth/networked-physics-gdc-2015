@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -29,7 +29,7 @@ namespace protocol
         NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets
         ChannelStructure * channelStructure = nullptr;          // defines the connection channel structure
         
-        Block * block = nullptr;                                // data block sent to clients on connect. must be constant, eg. protocol is a function of this
+        Block * block = nullptr;                                // data block sent to clients on connect. must be constant. this block is not owned by us (we don't destroy it)
     };
 
     class Server
@@ -111,6 +111,8 @@ namespace protocol
         void ProcessChallengeResponsePacket( ChallengeResponsePacket * packet );
 
         void ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet );
+
+        void ProcessDisconnectedPacket( DisconnectedPacket * packet );
 
         void ProcessConnectionPacket( ConnectionPacket * packet );
 

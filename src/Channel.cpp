@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -9,69 +9,43 @@
 
 namespace protocol
 {
-    ChannelStructure::ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator )
+    ChannelStructure::ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator, int numChannels )
     {
+        PROTOCOL_ASSERT( numChannels > 0 );
+        m_numChannels = numChannels;
         m_channelAllocator = &channelAllocator;
         m_channelDataAllocator = &channelDataAllocator;
     }
 
     ChannelStructure::~ChannelStructure()
     {
+        PROTOCOL_ASSERT( m_numChannels > 0 );
         PROTOCOL_ASSERT( m_channelAllocator );
         PROTOCOL_ASSERT( m_channelDataAllocator );
+        m_numChannels = 0;
         m_channelAllocator = nullptr;
         m_channelDataAllocator = nullptr;
-    }
-
-    void ChannelStructure::AddChannel( const char * name,
-                                       CreateChannelFunction createChannel,
-                                       CreateChannelDataFunction createChannelData )
-    {
-        PROTOCOL_ASSERT( !m_locked );
-
-        if ( m_locked )
-            return;
-
-        PROTOCOL_ASSERT( m_numChannels < MaxChannels - 1 );
-
-        ChannelEntry & entry = m_channelEntries[m_numChannels];
-
-        strncpy( entry.name, name, MaxChannelName - 1 );
-        entry.name[MaxChannelName-1] = '\0';
-        entry.createChannel = createChannel;
-        entry.createChannelData = createChannelData;
-
-        m_numChannels++;
-    }
-
-    void ChannelStructure::Lock()
-    {
-        m_locked = true;
-    }
-
-    bool ChannelStructure::IsLocked() const
-    {
-        return m_locked;
-    }
-
-    int ChannelStructure::GetNumChannels() const
-    {
-        return m_numChannels;
     }
 
     const char * ChannelStructure::GetChannelName( int channelIndex ) const
     {
         PROTOCOL_ASSERT( channelIndex >= 0 );
         PROTOCOL_ASSERT( channelIndex < m_numChannels );
-        return m_channelEntries[channelIndex].name;
+        return GetChannelNameInternal( channelIndex );
     }
 
     Channel * ChannelStructure::CreateChannel( int channelIndex )
     {
-        PROTOCOL_ASSERT( m_locked );
         PROTOCOL_ASSERT( channelIndex >= 0 );
         PROTOCOL_ASSERT( channelIndex < m_numChannels );
-        return m_channelEntries[channelIndex].createChannel();
+        return CreateChannelInternal( channelIndex );
+    }
+
+    ChannelData * ChannelStructure::CreateChannelData( int channelIndex )
+    {
+        PROTOCOL_ASSERT( channelIndex >= 0 );
+        PROTOCOL_ASSERT( channelIndex < m_numChannels );
+        return CreateChannelDataInternal( channelIndex );
     }
 
     void ChannelStructure::DestroyChannel( Channel * channel )
@@ -79,14 +53,6 @@ namespace protocol
         PROTOCOL_ASSERT( channel );
         PROTOCOL_ASSERT( m_channelAllocator );
         PROTOCOL_DELETE( *m_channelAllocator, Channel, channel );
-    }
-
-    ChannelData * ChannelStructure::CreateChannelData( int channelIndex )
-    {
-        PROTOCOL_ASSERT( m_locked );
-        PROTOCOL_ASSERT( channelIndex >= 0 );
-        PROTOCOL_ASSERT( channelIndex < m_numChannels );
-        return m_channelEntries[channelIndex].createChannelData();
     }
 
     void ChannelStructure::DestroyChannelData( ChannelData * channelData )

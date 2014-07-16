@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -16,7 +16,7 @@ namespace protocol
                                int line )
     {
         printf( "Assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
-        exit(1);                                                                                                                    
+        __builtin_trap();
     }
 
     void DefaultCheckHandler( const char * condition, 
@@ -25,7 +25,7 @@ namespace protocol
                               int line )
     {
         printf( "Check failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
-        exit(1);                                                                                                                    
+        __builtin_trap();
     }
 
     uint64_t generate_guid()

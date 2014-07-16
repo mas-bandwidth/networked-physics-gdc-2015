@@ -1,3 +1,39 @@
+Tuesday Morning, July 15, 2014:
+-------------------------------
+
+    Send a "Disconnected" packet from client -> server on disconnect,
+    so the slot gets freed up a bit quicker than if it timed out.
+
+    Handle the disconnected packet on the server side.
+
+    Add a test that disables timeout and verifies that client disconnects
+    properly on the server, without timing out, eg. that it receives the
+    disconnect packet.
+
+    Note that in order for this to work the client must continue to pump
+    update after disconnect, otherwise the disconnected packet is not sent.
+
+    Todo: Simplify channel structure so that it doesn't require std::function
+
+    eg. give it the same treatment that was given to the factory.
+
+    Boom. That removed the last STL usage and now compile times are *FAST*!!! :D
+
+    Now that I have a .h/.cpp split, the way I have structured
+    the bitsquid containers means that I am not getting the full
+    benefits of short compile times.
+
+    Split back up into Types.h and clean up the rest of the bitsquid code!
+
+    Added Common.h as a precompiled header. Even faster.
+
+    Disabled exceptions via "NoExceptions" in premake.
+
+    See what "Profile" looks like now in release build.
+
+    Looks great. Is primarily bound by allocation and free operations.
+
+
 Monday Evening, July 14, 2014:
 ------------------------------
 

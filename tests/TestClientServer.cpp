@@ -1204,17 +1204,19 @@ void test_client_connection_already_connected()
         PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
         PROTOCOL_CHECK( client.GetExtendedError() == 0 );
 
-        // now connect the client while already connected
+        // now connect a new client while already connected
         // verify the client connect is *denied* with reason already connected.
 
-        client.Connect( "[::1]:10001" );
+        Client newClient( clientConfig );
+
+        newClient.Connect( "[::1]:10001" );
 
         for ( int i = 0; i < 256; ++i )
         {
-            if ( client.HasError() )
+            if ( newClient.HasError() )
                 break;
 
-            client.Update( timeBase );
+            newClient.Update( timeBase );
 
             server.Update( timeBase );
 
@@ -1223,13 +1225,13 @@ void test_client_connection_already_connected()
             timeBase.time += timeBase.deltaTime;
         }
 
-        PROTOCOL_CHECK( client.IsDisconnected() );
-        PROTOCOL_CHECK( !client.IsConnecting() );
-        PROTOCOL_CHECK( !client.IsConnected() );
-        PROTOCOL_CHECK( client.HasError() );
-        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        PROTOCOL_CHECK( client.GetExtendedError() == CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
+        PROTOCOL_CHECK( newClient.IsDisconnected() );
+        PROTOCOL_CHECK( !newClient.IsConnecting() );
+        PROTOCOL_CHECK( !newClient.IsConnected() );
+        PROTOCOL_CHECK( newClient.HasError() );
+        PROTOCOL_CHECK( newClient.GetState() == CLIENT_STATE_DISCONNECTED );
+        PROTOCOL_CHECK( newClient.GetError() == CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        PROTOCOL_CHECK( newClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
     }
 
     memory::shutdown();
@@ -1338,6 +1340,211 @@ void test_client_connection_reconnect()
         PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_CONNECTED );
         PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
         PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+    }
+
+    memory::shutdown();
+}
+
+void test_client_side_disconnect()
+{
+    printf( "test_client_side_disconnect\n" );
+
+    memory::initialize();
+    {
+        TestMessageFactory messageFactory( memory::default_allocator() );
+
+        TestChannelStructure channelStructure( messageFactory );
+
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+
+        // start a server and connect a client. wait until the client is fully connected
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
+
+        ClientConfig clientConfig;
+        clientConfig.channelStructure = &channelStructure;
+        clientConfig.networkInterface = &clientNetworkInterface;
+
+        Client client( clientConfig );
+
+        client.Connect( "[::1]:10001" );
+
+        bsdSocketConfig.port = 10001;
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
+
+        ServerConfig serverConfig;
+        serverConfig.connectedTimeOut = 10000;  // IMPORTANT: effectively disables server side timeout
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = &serverNetworkInterface;
+
+        Server server( serverConfig );
+
+        PROTOCOL_CHECK( server.IsOpen() );
+
+        PROTOCOL_CHECK( client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.1f;
+
+        const int clientIndex = 0;
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            if ( client.GetState() == CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED )
+                break;
+
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnecting() );
+        PROTOCOL_CHECK( client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
+        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+
+        // now disconnect the client on on the client side
+        // verify the server sees the client disconnected packet
+        // and cleans up the slot, rather than slow timeout (disabled)
+
+        client.Disconnect();
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            if ( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED )
+                break;
+
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_DISCONNECTED );
+        PROTOCOL_CHECK( client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
+        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+    }
+
+    memory::shutdown();
+}
+
+void test_server_data_block()
+{
+    printf( "test_server_data_block\n" );
+
+    memory::initialize();
+    {
+        TestMessageFactory messageFactory( memory::default_allocator() );
+
+        TestChannelStructure channelStructure( messageFactory );
+
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+
+        // create a server and set it up with a server block
+
+        const int ServerBlockSize = 10 * 1024 + 11;
+
+        Block serverBlock( memory::default_allocator(), ServerBlockSize );
+        {
+            uint8_t * data = serverBlock.GetData();
+            for ( int i = 0; i < ServerBlockSize; ++i )
+                data[i] = ( 10 + i ) % 256;
+        }
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
+
+        ServerConfig serverConfig;
+        serverConfig.block = &serverBlock;
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = &serverNetworkInterface;
+
+        Server server( serverConfig );
+
+        PROTOCOL_CHECK( server.IsOpen() );
+
+        // start a server with the data block and connect a client
+
+        bsdSocketConfig.port = 10001;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
+
+        ClientConfig clientConfig;
+        clientConfig.channelStructure = &channelStructure;
+        clientConfig.networkInterface = &clientNetworkInterface;
+
+        Client client( clientConfig );
+
+        client.Connect( "[::1]:10000" );
+
+        PROTOCOL_CHECK( client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.1f;
+
+        const int clientIndex = 0;
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            if ( client.GetState() == CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED )
+                break;
+
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnecting() );
+        PROTOCOL_CHECK( client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
+        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+
+        // verify the client is connected and has received the server block
+
+        // todo: ...
     }
 
     memory::shutdown();

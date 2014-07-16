@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -90,49 +90,38 @@ namespace protocol
     {
         Allocator * m_channelAllocator;
         Allocator * m_channelDataAllocator;
-
-        typedef std::function<Channel*()> CreateChannelFunction;
-        typedef std::function<ChannelData*()> CreateChannelDataFunction;
-
-        struct ChannelEntry
-        {
-            char name[MaxChannelName];
-            CreateChannelFunction createChannel;
-            CreateChannelDataFunction createChannelData;
-        };
-
-        bool m_locked = false;
-        int m_numChannels = 0;
-        ChannelEntry m_channelEntries[MaxChannels];
+        int m_numChannels;
  
     public:
 
-        ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator );
+        ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator, int numChannels );
 
         ~ChannelStructure();
 
-        void AddChannel( const char * name,
-                         CreateChannelFunction createChannel,
-                         CreateChannelDataFunction createChannelData );
-
-        void Lock();
-
-        bool IsLocked() const;
-
-        int GetNumChannels() const;
+        int GetNumChannels() const
+        {
+            return m_numChannels;
+        }
 
         const char * GetChannelName( int channelIndex ) const;
 
         Channel * CreateChannel( int channelIndex );
 
-        void DestroyChannel( Channel * channel );
-
         ChannelData * CreateChannelData( int channelIndex );
+
+        void DestroyChannel( Channel * channel );
 
         void DestroyChannelData( ChannelData * channelData );
 
         Allocator & GetChannelAllocator();
+
         Allocator & GetChannelDataAllocator();
+
+    protected:
+
+        virtual const char * GetChannelNameInternal( int channelIndex ) const = 0;
+        virtual Channel * CreateChannelInternal( int channelIndex ) = 0;
+        virtual ChannelData * CreateChannelDataInternal( int channelIndex ) = 0;
     };
 }
 

@@ -13,7 +13,7 @@ class TestChannelStructure : public ChannelStructure
 public:
 
     TestChannelStructure( MessageFactory & messageFactory )
-        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
+        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 )
     {
         m_config.maxMessagesPerPacket = 256;
         m_config.sendQueueSize = 2048;
@@ -26,27 +26,28 @@ public:
         m_config.messageAllocator = &memory::default_allocator();
         m_config.smallBlockAllocator = &memory::default_allocator();
         m_config.largeBlockAllocator = &memory::default_allocator();
-
-        AddChannel( "reliable message channel", 
-                    [this] { return CreateReliableMessageChannel(); }, 
-                    [this] { return CreateReliableMessageChannelData(); } );
-
-        Lock();
-    }
-
-    ReliableMessageChannel * CreateReliableMessageChannel()
-    {
-        return PROTOCOL_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
-    }
-
-    ReliableMessageChannelData * CreateReliableMessageChannelData()
-    {   
-        return PROTOCOL_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const
     {
         return m_config;
+    }
+
+protected:
+
+    const char * GetChannelNameInternal( int channelIndex ) const
+    {
+        return "reliable message channel";
+    }
+
+    Channel * CreateChannelInternal( int channelIndex )
+    {
+        return PROTOCOL_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
+    }
+
+    ChannelData * CreateChannelDataInternal( int channelIndex )
+    {   
+        return PROTOCOL_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
     }
 };
 

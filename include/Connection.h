@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -20,7 +20,6 @@ namespace protocol
     struct ConnectionConfig
     {
         Allocator * allocator = nullptr;
-        uint64_t protocolId = 0;
         int packetType = 0;
         int maxPacketSize = 1024;
         int slidingWindowSize = 256;

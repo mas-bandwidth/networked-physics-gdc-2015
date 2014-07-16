@@ -1,14 +1,14 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #ifndef PROTOCOL_BSD_SOCKET_H
 #define PROTOCOL_BSD_SOCKET_H
 
-#include "PacketFactory.h"
+#include "Types.h"
+    #include "PacketFactory.h"
 #include "NetworkInterface.h"
-#include "Queue.h"
 
 namespace protocol 
 {     

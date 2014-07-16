@@ -13,11 +13,24 @@ public:
 class FakeChannelStructure : public ChannelStructure
 {
 public:
-    FakeChannelStructure()
-        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
+
+    FakeChannelStructure() : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 ) {}
+
+protected:
+
+    const char * GetChannelNameInternal( int channelIndex ) const
     {
-        AddChannel( "fake channel", [this] { return PROTOCOL_NEW( GetChannelAllocator(), FakeChannel ); }, [] { return nullptr; } );
-        Lock();
+        return "fake channel";
+    }
+
+    Channel * CreateChannelInternal( int channeIndex )
+    {
+        return PROTOCOL_NEW( GetChannelAllocator(), FakeChannel );
+    }
+
+    ChannelData * CreateChannelDataInternal( int channeIndex )
+    {
+        return nullptr;
     }
 };
 
@@ -87,13 +100,30 @@ public:
 class AckChannelStructure : public ChannelStructure
 {
     int * ackedPackets = nullptr;
+
 public:
+
     AckChannelStructure( int * _ackedPackets )
-        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator() )
+        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 )
     {
         ackedPackets = _ackedPackets;
-        AddChannel( "ack channel", [this] { return PROTOCOL_NEW( GetChannelAllocator(), AckChannel, ackedPackets ); }, [] { return nullptr; } );
-        Lock();
+    }
+
+protected:
+
+    const char * GetChannelNameInternal( int channelIndex ) const
+    {
+        return "ack channel";
+    }
+
+    Channel * CreateChannelInternal( int channelIndex )
+    {
+        return PROTOCOL_NEW( GetChannelAllocator(), AckChannel, ackedPackets );
+    }
+
+    ChannelData * CreateChannelDataInternal( int channelIndex )
+    {
+        return nullptr;
     }
 };
 

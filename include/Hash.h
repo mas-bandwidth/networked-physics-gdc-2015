@@ -5,21 +5,6 @@
 
 namespace protocol
 {
-    template<typename T> struct Hash
-    {
-    public:
-        Hash(Allocator &a);
-        
-        struct Entry {
-            uint64_t key;
-            uint32_t next;
-            T value;
-        };
-
-        Array<uint32_t> _hash;
-        Array<Entry> _data;
-    };
-
     namespace hash
     {
         /// Returns true if the specified key exists in the hash.
@@ -342,7 +327,6 @@ namespace protocol
                 hash::remove(h, key);
         }
     }
-
 
     template <typename T> Hash<T>::Hash(Allocator &a) :
         _hash(a), _data(a)

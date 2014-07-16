@@ -1,11 +1,12 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
 #include "Network.h"
 #include "BSDSocket.h"
 #include "Memory.h"
+#include "Queue.h"
 
 #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
 

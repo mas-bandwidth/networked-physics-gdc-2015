@@ -1,5 +1,5 @@
 /*
-    Network Protocol Library.
+    Network Protocol Foundation Library.
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */
 
@@ -7,27 +7,11 @@
 #define PROTOCOL_ARRAY_H
 
 #include "Allocator.h"
+#include "Types.h"
 #include <string.h>
 
 namespace protocol
 {
-	template<typename T> struct Array
-	{
-		Array( Allocator & a );
-		~Array();
-
-		Array( const Array & other );
-		Array & operator = ( const Array & other );
-		
-		T & operator [] ( uint32_t i );
-		const T & operator [] ( uint32_t i ) const;
-
-		Allocator * m_allocator;
-		uint32_t m_size;
-		uint32_t m_capacity;
-		T * m_data;
-	};
-
 	namespace array
 	{
 		template<typename T> inline uint32_t size( const Array<T> & a ) 	{ return a.m_size; }
