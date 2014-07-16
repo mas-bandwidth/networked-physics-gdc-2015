@@ -2,13 +2,13 @@ DONE:
 
     Add code on server to send server data block to client.
 
-TODO:
-
     First up you want to include a server block in the config. This block can be null.
 
     Should the server take ownership of the block? Probably not. Lots of other
     pointers passed in to server config don't confer ownership. It is nice this
     way because we don't need to worry about allocators.
+
+TODO:
 
     There should also be a config on the client side for the maximum server block size.
 
@@ -16,52 +16,41 @@ TODO:
     and have a int m_numDataBytes which starts out as zero. This way as block fragments
     come in from the server.
 
-    -------------------------
+    Client should have an accessor function to get the server block num bytes (may be zero)
+    and a pointer to the server block (always valid...)
 
-    In reverse, server needs a config "maxClientDataSize"
-
-    Server needs to perform allocation per-client of a block of this size,
-    plu per-client needs m_clientBlockSize which starts out as zero.
-
-    Now the client can send its data block to the server.
-
-    Now I need to work out how the client generates the client data block.
-
-    I think it should initially be passed in the config as well, not owned,
-    assuming that it is some sort of client configuration data that could
-    be passed up, you *should* know it before connect.
-
-    You might want to change it from one connect call to another though,
-    which would make it not a good fit for the config though.
-
-    Should it be passed in to the connect method instead?
-
-    -------------------------
-
-    Add accessors to the client to get the server block size (bytes),
-    may be 0, and a pointer to the server block (always valid)
-
-    -------------------------
-
-    Add accessors to the server to get the client block size (bytes)
-    and a pointer to the client block data. Both accept a client index.
+    There should be an error on connect if the client block is not large enough.
 
     -------------------------
 
     Now the outside interface is designed.
 
+    Implement the actual block slice sending. We need some safety for header
+    eg. protocolId with the BSD socke tinterface (note that we should probably
+    provide an accessor for that for estimation purposes...)
+
+    This should be reasonably easy:
+
+    1. One packet server -> client containing bytes of block, fragment #,
+       number of bytes included in fragment, plus fragment data.
+
+    2. An ack response packet that includes the fragment #
+
+    The algorithm is simple, server sends acks repeatedly until they are
+    all acked. Linear search left -> right, don't send the same fragment
+    more than once, eg. linear search should start left -> right and remember
+    previous position for next start.
+
+    Client should receive these fragments packets, do bounds checking and
+    basic sanity checks on them, and if everything passes, reply with an
+    ack. Client should *always* reply with an ack packet to every fragment
+    packet sent down, so the server eventually will get acked, even if
+    the ack packet is lost and the server is redundantly sending down
+    the same fragment already received.
+
     -------------------------
 
-    On the client side, max
-
-    Client and server will need a block allocator for the blocks sent
-    on client connect / disconnect.
-
-    These blocks probably can just be pre-allocated once at startup,
-    eg. to maximum size so we don't have any fragmentation.
-
-    I think this is the best idea. Memory is not a concern,
-    and if it *was* then choose a smaller block size dumbass.
+    Now flip it around and implement client -> server blocks
 
     ------------------------
 
