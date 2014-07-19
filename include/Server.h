@@ -88,6 +88,8 @@ namespace protocol
 
         Connection * GetClientConnection( int clientIndex );
 
+    protected:
+
         void UpdateClients();
 
         void UpdateSendingChallenge( int clientIndex );
