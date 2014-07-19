@@ -1,3 +1,23 @@
+Saturday Morning, July 15, 2014:
+--------------------------------
+
+    Add code on server to send server data block to client.
+
+    First up you want to include a server block in the config. This block can be null.
+
+    Should the server take ownership of the block? Probably not. Lots of other
+    pointers passed in to server config don't confer ownership. It is nice this
+    way because we don't need to worry about allocators.
+
+    There should also be a config on the client side for the maximum server block size.
+
+    Client should then pre-allocate a block of data for the client to store this data,
+    and have a int m_numDataBytes which starts out as zero. This way as block fragments
+    come in from the server.
+
+    Client should present the data as a "const Block*" so all block usage is consistent.
+
+
 Tuesday Morning, July 15, 2014:
 -------------------------------
 

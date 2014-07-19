@@ -180,11 +180,16 @@ namespace protocol
         return m_connection;
     }
 
-    const uint8_t * Client::GetServerData( int & serverDataSize ) const
+    const Block * Client::GetServerData() const
     {
         PROTOCOL_ASSERT( m_serverData );
-        serverDataSize = m_serverDataSize;
-        return m_serverData;
+        if ( m_serverDataSize > 0 )
+        {
+            m_serverDataBlock.Connect( *m_allocator, m_serverData, m_serverDataSize );
+            return &m_serverDataBlock;
+        }
+        else
+            return nullptr;
     }
 
     void Client::Update( const TimeBase & timeBase )

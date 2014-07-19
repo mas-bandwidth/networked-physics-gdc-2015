@@ -58,8 +58,11 @@ namespace protocol
         double m_lastPacketReceiveTime = 0.0;
         ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
+
         int m_serverDataSize = 0;
         uint8_t * m_serverData = nullptr;
+        mutable Block m_serverDataBlock;
+
         char m_hostname[MaxHostName];
 
         Client( const Client & other );
@@ -99,7 +102,7 @@ namespace protocol
 
         Connection * GetConnection() const;
 
-        const uint8_t * GetServerData( int & serverDataSize ) const;
+        const Block * GetServerData() const;
 
         void Update( const TimeBase & timeBase );
 

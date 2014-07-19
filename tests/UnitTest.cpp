@@ -62,7 +62,7 @@ extern void test_client_connection_timeout();
 extern void test_client_connection_already_connected();
 extern void test_client_connection_reconnect();
 extern void test_client_side_disconnect();
-extern void test_server_data_block();
+extern void test_client_server_data();
 
 int main()
 {

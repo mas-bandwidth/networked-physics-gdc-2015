@@ -1453,9 +1453,9 @@ void test_client_side_disconnect()
     memory::shutdown();
 }
 
-void test_server_data_block()
+void test_client_server_data()
 {
-    printf( "test_server_data_block\n" );
+    printf( "test_client_server_data\n" );
 
     memory::initialize();
     {
@@ -1465,14 +1465,14 @@ void test_server_data_block()
 
         TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
-        // create a server and set it up with a server block
+        // create a server and set it up with some server data
 
-        const int ServerBlockSize = 10 * 1024 + 11;
+        const int ServerDataSize = 10 * 1024 + 11;
 
-        Block serverBlock( memory::default_allocator(), ServerBlockSize );
+        Block serverData( memory::default_allocator(), ServerDataSize );
         {
-            uint8_t * data = serverBlock.GetData();
-            for ( int i = 0; i < ServerBlockSize; ++i )
+            uint8_t * data = serverData.GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
                 data[i] = ( 10 + i ) % 256;
         }
 
@@ -1484,7 +1484,7 @@ void test_server_data_block()
         BSDSocket serverNetworkInterface( bsdSocketConfig );
 
         ServerConfig serverConfig;
-        serverConfig.block = &serverBlock;
+        serverConfig.serverData = &serverData;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
@@ -1492,7 +1492,7 @@ void test_server_data_block()
 
         PROTOCOL_CHECK( server.IsOpen() );
 
-        // start a server with the data block and connect a client
+        // connect a client to the server and wait the connect to complete
 
         bsdSocketConfig.port = 10001;
         bsdSocketConfig.maxPacketSize = 1024;
@@ -1542,9 +1542,19 @@ void test_server_data_block()
         PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
         PROTOCOL_CHECK( client.GetExtendedError() == 0 );
 
-        // verify the client is connected and has received the server block
+        // verify the client has received the server block
 
-        // todo: ...
+        const Block * clientServerData = client.GetServerData();
+
+        PROTOCOL_CHECK( clientServerData );
+        PROTOCOL_CHECK( clientServerData->IsValid() );
+        PROTOCOL_CHECK( clientServerData->GetData() );
+        PROTOCOL_CHECK( clientServerData->GetSize() == ServerDataSize );
+        {
+            const uint8_t * data = clientServerData->GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
+                PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+        }
     }
 
     memory::shutdown();

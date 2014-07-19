@@ -415,7 +415,7 @@ namespace protocol
 
         client.accumulator = 0.0;
         client.lastPacketTime = m_timeBase.time;
-        client.state = m_config.block ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA;
+        client.state = m_config.serverData ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA;
     }
 
     void Server::ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet )

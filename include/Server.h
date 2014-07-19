@@ -29,7 +29,7 @@ namespace protocol
         NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets
         ChannelStructure * channelStructure = nullptr;          // defines the connection channel structure
         
-        Block * block = nullptr;                                // data block sent to clients on connect. must be constant. this block is not owned by us (we don't destroy it)
+        Block * serverData = nullptr;                           // server data sent to clients on connect. must be constant. this block is not owned by us (we don't destroy it)
     };
 
     class Server
