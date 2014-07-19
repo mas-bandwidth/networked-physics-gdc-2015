@@ -35,6 +35,8 @@ namespace protocol
         
         NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets. required.
         ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
+
+        int maxServerDataSize = 256 * 1024;                     // maximum server data size in bytes. if the server data is larger than this then the connect will fail.
     };
 
     class Client
@@ -56,7 +58,8 @@ namespace protocol
         double m_lastPacketReceiveTime = 0.0;
         ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
-
+        int m_serverDataSize = 0;
+        uint8_t * m_serverData = nullptr;
         char m_hostname[MaxHostName];
 
         Client( const Client & other );
@@ -96,7 +99,11 @@ namespace protocol
 
         Connection * GetConnection() const;
 
+        const uint8_t * GetServerData( int & serverDataSize ) const;
+
         void Update( const TimeBase & timeBase );
+
+    protected:
 
         void UpdateNetworkInterface();
 

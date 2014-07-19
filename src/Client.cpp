@@ -26,6 +26,8 @@ namespace protocol
 
         m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
+        m_serverData = (uint8_t*) m_allocator->Allocate( m_config.maxServerDataSize );
+
         ClearStateData();
     }
 
@@ -36,11 +38,15 @@ namespace protocol
         Disconnect();
 
         PROTOCOL_ASSERT( m_connection );
+        PROTOCOL_ASSERT( m_serverData );
         PROTOCOL_ASSERT( m_packetFactory );      // IMPORTANT: packet factory pointer is not owned by us
 
         PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
-        
+
+        m_allocator->Free( m_serverData );
+
         m_connection = nullptr;
+        m_serverData = nullptr;
         m_packetFactory = nullptr;
     }
 
@@ -172,6 +178,13 @@ namespace protocol
     Connection * Client::GetConnection() const
     {
         return m_connection;
+    }
+
+    const uint8_t * Client::GetServerData( int & serverDataSize ) const
+    {
+        PROTOCOL_ASSERT( m_serverData );
+        serverDataSize = m_serverDataSize;
+        return m_serverData;
     }
 
     void Client::Update( const TimeBase & timeBase )
@@ -467,5 +480,6 @@ namespace protocol
         m_address = Address();
         m_clientGuid = 0;
         m_serverGuid = 0;
+        m_serverDataSize = 0;
     }
 }

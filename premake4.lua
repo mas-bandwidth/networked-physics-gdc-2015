@@ -1,8 +1,8 @@
 solution "Protocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++"
-    pchheader "include/Common.h"
-    pchsource "src/Common.cpp"
+--    pchheader "include/Common.h"
+--    pchsource "src/Common.cpp"
     includedirs { "include", "." }
     platforms { "x64", "x32" }
     configurations { "Debug", "Release" }

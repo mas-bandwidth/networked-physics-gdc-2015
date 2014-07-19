@@ -138,7 +138,9 @@ int main()
         test_client_connection_already_connected();
         test_client_connection_reconnect();
         test_client_side_disconnect();
-        test_server_data_block();
+
+        // work in progress
+        test_client_server_data();
     }
 
     ShutdownNetwork();
