@@ -1,37 +1,6 @@
 DONE:
 
-    Now implement the logic to on the client to process the data block fragment packet.
-
-    Client should take the packet and throw it away if it doesn't match guids.
-
-    Client should also throw away the packet if the fragment size is greater
-    than MaxFragmentSize (constant).
-
-    If the fragment id is out of range, then the client should throw it away.
-
-    Otherwise, client should reply with an ack packet.
-
 TODO:
-
-    --------------------------
-
-    Implement code on server to process the ack, but only if we are in the sending server data block state.
-
-    Each ack being processed, check if it is in range very carefully.
-
-    If in range, then mark than fragment as acked and increase num acked fragments.
-
-    If the num acked fragments equals number of fragments, go to next state.
-
-    --------------------------
-
-    Add code to store the block size in the packet.
-
-    There should be an error on connect if the config max block size is not large enough to store it.
-
-    Implement code on the client to actually store the fragment in the server data block.
-
-    Be very careful about out of range data blocks.
 
     --------------------------
 

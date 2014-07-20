@@ -243,8 +243,10 @@ namespace protocol
     {
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
-        uint32_t fragmentId : 16;
+        uint32_t totalSize = 0;
         uint32_t fragmentSize : 16;
+        uint32_t fragmentId : 16;
+        uint32_t fragmentBytes : 16;
         uint8_t * fragmentData = nullptr;
 
         DataBlockFragmentPacket() : Packet( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT ) 
@@ -269,19 +271,21 @@ namespace protocol
 
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+            serialize_uint32( stream, totalSize );
+            serialize_bits( stream, fragmentSize, 16 );         // fragment size, as per-config
             serialize_bits( stream, fragmentId, 16 );
-            serialize_bits( stream, fragmentSize, 16 );
+            serialize_bits( stream, fragmentBytes, 16 );        // fragment bytes included in this packed. may be *less* than fragment size!
 
             if ( Stream::IsReading )
             {
                 PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
                 if ( fragmentSize <= MaxFragmentSize )
-                    fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( fragmentSize );
+                    fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( fragmentBytes );
             }
 
             PROTOCOL_ASSERT( fragmentData );
 
-            serialize_bytes( stream, fragmentData, fragmentSize );
+            serialize_bytes( stream, fragmentData, fragmentBytes );
         }
 
         void SerializeRead( ReadStream & stream )

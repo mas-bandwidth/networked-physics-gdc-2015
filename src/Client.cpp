@@ -37,9 +37,11 @@ namespace protocol
 
         Disconnect();
 
+        m_serverDataBlock.Disconnect();
+
         PROTOCOL_ASSERT( m_connection );
         PROTOCOL_ASSERT( m_serverData );
-        PROTOCOL_ASSERT( m_packetFactory );      // IMPORTANT: packet factory pointer is not owned by us
+        PROTOCOL_ASSERT( m_packetFactory );                 // IMPORTANT: packet factory pointer is not owned by us
         PROTOCOL_ASSERT( m_config.fragmentSize >= 0 );
         PROTOCOL_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
 
@@ -474,9 +476,15 @@ namespace protocol
         if ( packet->serverGuid != m_serverGuid )
             return;
 
-        // todo: if fragment id is out of range, ignore.
+        if ( packet->totalSize > m_config.maxServerDataSize )
+        {
+            DisconnectAndSetError( CLIENT_ERROR_SERVER_DATA_TOO_LARGE );
+            return;
+        }
 
-        printf( "received fragment: %d\n", packet->fragmentId );
+//        printf( "received fragment: %d\n", packet->fragmentId );
+
+        m_serverDataSize = packet->totalSize;
 
         auto replyPacket = (DataBlockFragmentAckPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK );
         if ( !replyPacket )
@@ -488,9 +496,14 @@ namespace protocol
 
         m_config.networkInterface->SendPacket( m_address, replyPacket );
 
-        // todo: actually store the fragment data in the server block (if not already received)
+        const int start = packet->fragmentId * packet->fragmentSize;
+        const int finish = start + packet->fragmentBytes;
 
-        // todo: mark the fragment as received
+        PROTOCOL_ASSERT( finish <= m_config.maxServerDataSize );
+        if ( finish > m_config.maxServerDataSize )
+            return;
+
+        memcpy( m_serverData + start, packet->fragmentData, packet->fragmentBytes );
 
         m_lastPacketReceiveTime = m_timeBase.time;
     }

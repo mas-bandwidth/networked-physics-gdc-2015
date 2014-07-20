@@ -8,7 +8,7 @@ Saturday Afternoon, July 15, 2014:
     Leave this up to the sender. I suggest a default of 1k fragment blocks
     (MTU is 1200) so this would be nice and dandy with plenty of overhead.
 
-    Added fragmentsPerSecond to both clientd and server send rate.
+    Added fragmentsPerSecond to both client and server send rate.
 
     For the moment, it is set to 60 fragments per-second.
 
@@ -61,6 +61,27 @@ Saturday Afternoon, July 15, 2014:
 
     Add code to actually construct a fragment packet and send it to the client.
 
+    Now implement the logic to on the client to process the data block fragment packet.
+
+    Client should take the packet and throw it away if it doesn't match guids.
+
+    Client should also throw away the packet if the fragment size is greater
+    than MaxFragmentSize (constant).
+
+    If the fragment id is out of range, then the client should throw it away.
+
+    Otherwise, client should reply with an ack packet.
+
+    Make sure that the fragment start offset + fragment bytes in memory does not go past size of block in bytes.
+
+    Actually copy the fragment data into the server block on the client.
+
+    Verify that the unit test passes. It does! Yes!
+
+    There should be an error on connect if the config max block size is not large enough.
+
+    Add a unit test to verify this error triggers when expected.
+
 
 Saturday Morning, July 15, 2014:
 --------------------------------
@@ -80,6 +101,22 @@ Saturday Morning, July 15, 2014:
     come in from the server.
 
     Client should present the data as a "const Block*" so all block usage is consistent.
+
+    Implement code on server to process the ack, but only if we are in the sending server data block state.
+
+    Each ack being processed, check if it is in range very carefully.
+
+    If in range, then mark than fragment as acked and increase num acked fragments.
+
+    If the num acked fragments equals number of fragments, go to next state (requesting client block)
+
+    Client needs to know the fragment size being sent down (for validation)
+
+    Client needs to know total block size.
+
+    We probably need to know the number of fragments in each packet, eg. x/y for validation.
+
+    Need to separately specify the fragment size, and the fragment bytes in the packet (may be different)
 
 
 Tuesday Morning, July 15, 2014:

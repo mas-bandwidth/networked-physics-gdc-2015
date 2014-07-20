@@ -50,7 +50,7 @@ namespace protocol
         TimeBase m_timeBase;
 
         Connection * m_connection;
-        PacketFactory * m_packetFactory;                        // important: we don't own this pointer. it's owned by the network interface
+        PacketFactory * m_packetFactory;                        // IMPORTANT: We don't own this pointer. It's owned by the network interface!
 
         Address m_address;
         ClientState m_state = CLIENT_STATE_DISCONNECTED;

@@ -1453,9 +1453,9 @@ void test_client_side_disconnect()
     memory::shutdown();
 }
 
-void test_client_server_data()
+void test_server_data()
 {
-    printf( "test_client_server_data\n" );
+    printf( "test_server_data\n" );
 
     memory::initialize();
     {
@@ -1533,7 +1533,6 @@ void test_client_server_data()
             timeBase.time += timeBase.deltaTime;
         }
 
-        /*
         PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
         PROTOCOL_CHECK( !client.IsDisconnected() );
         PROTOCOL_CHECK( !client.IsConnecting() );
@@ -1556,7 +1555,99 @@ void test_client_server_data()
             for ( int i = 0; i < ServerDataSize; ++i )
                 PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
         }
-        */
+    }
+
+    memory::shutdown();
+}
+
+void test_server_data_too_large()
+{
+    printf( "test_server_data_too_large\n" );
+
+    memory::initialize();
+    {
+        TestMessageFactory messageFactory( memory::default_allocator() );
+
+        TestChannelStructure channelStructure( messageFactory );
+
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+
+        // create a server and set it up with some server data
+
+        const int ServerDataSize = 10 * 1024 + 11;
+
+        Block serverData( memory::default_allocator(), ServerDataSize );
+        {
+            uint8_t * data = serverData.GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
+                data[i] = ( 10 + i ) % 256;
+        }
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1200;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
+
+        ServerConfig serverConfig;
+        serverConfig.serverData = &serverData;
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = &serverNetworkInterface;
+
+        Server server( serverConfig );
+
+        PROTOCOL_CHECK( server.IsOpen() );
+
+        // connect a client with a config that doesn't have enough room for the server data
+
+        bsdSocketConfig.port = 10001;
+        bsdSocketConfig.maxPacketSize = 1200;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
+
+        ClientConfig clientConfig;
+        clientConfig.maxServerDataSize = 22;
+        clientConfig.channelStructure = &channelStructure;
+        clientConfig.networkInterface = &clientNetworkInterface;
+
+        Client client( clientConfig );
+
+        client.Connect( "[::1]:10000" );
+
+        PROTOCOL_CHECK( client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.1f;
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            if ( client.HasError() )
+                break;
+
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        // verify the client is in error state with server block too large error
+
+        PROTOCOL_CHECK( client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_DISCONNECTED );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_SERVER_DATA_TOO_LARGE );
+        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
     }
 
     memory::shutdown();

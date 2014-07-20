@@ -133,6 +133,8 @@ namespace protocol
 
         void ProcessDisconnectedPacket( DisconnectedPacket * packet );
 
+        void ProcessDataBlockFragmentAckPacket( DataBlockFragmentAckPacket * packet );
+
         void ProcessConnectionPacket( ConnectionPacket * packet );
 
         int FindClientIndex( const Address & address ) const;
