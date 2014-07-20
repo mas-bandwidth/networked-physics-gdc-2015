@@ -20,19 +20,19 @@ namespace protocol
 
         CLIENT_SERVER_PACKET_CONNECTION_REQUEST,                // client is requesting a connection.
         CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE,                // client response to server connection challenge.
-        CLIENT_SERVER_PACKET_READY_FOR_CONNECTION,              // client is ready for connection packets
 
         // server -> client
 
         CLIENT_SERVER_PACKET_CONNECTION_DENIED,                 // server denies request for connection. contains reason int, eg. full, closed etc.
         CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE,              // server response to client connection request.
-        CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA,               // server is ready for the client to start sending data to it.
 
         // bidirectional
 
-        CLIENT_SERVER_PACKET_DISCONNECTED,                      // courtesy packet sent in both directions to indicate that the client slot has been disconnected
+        CLIENT_SERVER_PACKET_READY_FOR_CONNECTION,              // client/server are ready for connection packets. when both are ready the connection is established.
         CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT,               // a fragment of a data block being sent down.
         CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK,           // ack for a received data block fragment.
+        CLIENT_SERVER_PACKET_DISCONNECTED,                      // courtesy packet sent in both directions to indicate that the client slot has been disconnected
+
         CLIENT_SERVER_PACKET_CONNECTION,                        // connection packet send both directions once connection established (Connection.cpp)
 
         NUM_CLIENT_SERVER_PACKETS
@@ -152,70 +152,12 @@ namespace protocol
         }
     };
 
-    struct RequestClientDataPacket : public Packet
-    {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
-
-        RequestClientDataPacket() : Packet( CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA ) {}
-
-        template <typename Stream> void Serialize( Stream & stream )
-        {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
-        }
-
-        void SerializeRead( ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( MeasureStream & stream )
-        {
-            Serialize( stream );
-        }
-    };
-
     struct ReadyForConnectionPacket : public Packet
     {
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
 
         ReadyForConnectionPacket() : Packet( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION ) {}
-
-        template <typename Stream> void Serialize( Stream & stream )
-        {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
-        }
-
-        void SerializeRead( ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( MeasureStream & stream )
-        {
-            Serialize( stream );
-        }
-    };
-
-    struct DisconnectedPacket : public Packet
-    {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
-
-        DisconnectedPacket() : Packet( CLIENT_SERVER_PACKET_DISCONNECTED ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
@@ -320,6 +262,35 @@ namespace protocol
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
             serialize_bits( stream, fragmentId, 16 );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
+    };
+
+    struct DisconnectedPacket : public Packet
+    {
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+
+        DisconnectedPacket() : Packet( CLIENT_SERVER_PACKET_DISCONNECTED ) {}
+
+        template <typename Stream> void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
         }
 
         void SerializeRead( ReadStream & stream )

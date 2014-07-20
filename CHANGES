@@ -1,3 +1,102 @@
+Sunday Morning, July 16, 2014:
+------------------------------
+
+    Design the server interface for getting client data, eg. should be same as client
+    interface for getting server data, but accept a client index.
+
+    If the client is not fully connected, make sure the client data is null.
+
+    Should the same thing be done for server data on the client? I think so.
+
+    Disable the m_lastPacketReceived time while in the receiving server data
+    state, as this will ensure that the connect times out if it takes longer
+    than this time for the data block to come down. This is intended.
+
+    It seems silly that we don't send the client and server data at the same time. 
+
+    Should probably send at the same time, and have the client just decide that 
+    it has finished sending its data, and when that is true, send "ready for connection"
+    packets, and the server can do the same, send "ready for connection" once it has
+    finished sending its data.
+
+    When the server is in the ready for connection state, and receives a ready for
+    connection packet from the client, I think that would be the condition that takes
+    the server to fully connected.
+
+    This means that I should rename the concept of "request client data" and make that
+    server, ready for connection instead.
+
+    If I start by doing this, I think it will be less work than to implement and
+    refactor the client data sending state machine after it is working.
+
+    So lets start here.
+
+    Restructure the state machine so there is no "waiting for client data" state
+    on the server, only a concept of "server ready for connection" state, with
+    ready for connection packets sent down to client instead.
+
+    Now make sure all the existing tests pass. 
+
+    To do this I need code on the server that detects that the client
+    is ready for connection, and the server is in ready for connection
+    state, so in that case -- go to connected state.
+
+    Also fixed a bug where server client data was not being fully cleared
+    between client connections, meaning that reconnect would fail.
+
+    On the client side:
+
+        a) the number of fragments in the block
+        b) the ack array for the fragments
+        c) num acked fragments so we know when finished sending
+
+    What data structures do we need on the server side per-client?
+
+        a) memory to store the client data
+        b) size of the client data
+        c) block (so it can be returned to caller) &block
+
+    Implement the server side first, it's easiest.
+
+    Added client data block per-client on the server.
+
+    Implemented accessor Block * GetClientData( int clientIndex )
+
+    Added code to allocate and free the per-client data block on the server.
+
+    Now implement the client side. Needs to be an array of fragments,
+    calculation of num fragments, and num acked on the client side,
+    and the client needs to go into "sending client data" state and
+    send this through, using the same logic that the server is using
+    right now.
+
+    Client needs fragment index. Added.
+
+    Client also needs accumulator, eg. time last fragment sent.
+
+    Implement update function "UpdateSendClientData"
+
+    Actually, client needs a whole lotta stuff.
+
+        int fragmentIndex;
+        int numFragments;
+        int numAckedFragments;
+        double lastFragmentSendTime;
+        uint8_t * ackedFragment;
+
+    Added new function UpdateSendClientData
+
+    Need to make sure client goes into sending client data state if
+    the client has data to send. Right now it does not appear to be.
+
+    Fixed. Also removed superflous "block" in client config.
+
+    OK. Finished converting over the logic for client sending fragments.
+
+    Appears to be working properly, eg. client is cycling across fragments
+    and looping with modulus # client data fragments.
+
+
 Saturday Afternoon, July 15, 2014:
 ----------------------------------
 

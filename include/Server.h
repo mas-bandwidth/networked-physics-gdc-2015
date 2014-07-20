@@ -30,12 +30,16 @@ namespace protocol
         ChannelStructure * channelStructure = nullptr;          // defines the connection channel structure
         
         Block * serverData = nullptr;                           // server data sent to clients on connect. must be constant. this block is not owned by us (we don't destroy it)
+        int maxClientDataSize = 64 * 1024;                      // maximum size for data received from client on connect. if the server data is larger than this then the connect will fail.
         int fragmentSize = 1024;                                // send server data in 1k fragments by default. good size given that MTU is typically 1200 bytes.
         int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
     };
 
     class Server
     {
+        // todo: may want to do a hot/cold split for fast O(n) lookup of client data
+        // per-client data structure below is getting a bit large -- eg. ClientIndexData
+
         struct ClientData
         {
             Address address;                                        // the client address that started this connection.
@@ -46,27 +50,45 @@ namespace protocol
             ServerClientState state;                                // the current state of this client slot.
             Connection * connection;                                // connection object, once in SERVER_CLIENT_Connected state this becomes active.
             int fragmentIndex;                                      // current fragment that is being processed. search for next fragment to send starts here.
+            int numFragments;                                       // number of fragments allocated in "ackedFragment"  array. used for clearing.
             int numAckedFragments;                                  // number of acked fragments. used to detect when the block has been fully transferred.
             double lastFragmentSendTime;                            // time that a fragment was last sent. used enforce fragments per-second in config.
             uint8_t * ackedFragment;                                // entry n is true if fragment n is server block has been acked.
+            bool readyForConnection;                                // set to true once the client is ready for a connection to start, eg. client has sent their client data across (if any)
+            int clientDataSize;                                     // client data size in bytes
+            uint8_t * clientData;                                   // client data pointer
+            Block clientDataBlock;
 
             ClientData()
+            {
+                connection = nullptr;
+                ackedFragment = nullptr;
+                clientData = nullptr;
+                numFragments = 0;
+                Clear();
+            }
+
+            void Clear()
             {
                 accumulator = 0;
                 lastPacketTime = 0;
                 clientGuid = 0;
                 serverGuid = 0;
                 state = SERVER_CLIENT_STATE_DISCONNECTED;
-                connection = nullptr;
                 fragmentIndex = 0;
                 lastFragmentSendTime = 0.0;
-                ackedFragment = nullptr;
                 numAckedFragments = 0;
+                readyForConnection = false;
+                if ( ackedFragment )
+                    memset( ackedFragment, 0, numFragments );
+                clientDataSize = 0;
+                clientDataBlock.Disconnect();
             }
 
             ~ClientData()
             {
                 PROTOCOL_ASSERT( ackedFragment == nullptr );
+                PROTOCOL_ASSERT( clientData == nullptr );
             }
         };
 
@@ -105,6 +127,8 @@ namespace protocol
 
         Connection * GetClientConnection( int clientIndex );
 
+        const Block * GetClientData( int clientIndex ) const;
+
     protected:
 
         void UpdateClients();
@@ -113,9 +137,7 @@ namespace protocol
 
         void UpdateSendingServerData( int clientIndex );
 
-        void UpdateRequestingClientData( int clientIndex );
-
-        void UpdateReceivingClientData( int clientIndex );
+        void UpdateReadyForConnection( int clientIndex );
 
         void UpdateConnected( int clientIndex );
 

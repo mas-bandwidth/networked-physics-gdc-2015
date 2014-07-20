@@ -184,15 +184,14 @@ protected:
         {
             case CLIENT_SERVER_PACKET_CONNECTION_REQUEST:       return PROTOCOL_NEW( *m_allocator, ConnectionRequestPacket );
             case CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE:       return PROTOCOL_NEW( *m_allocator, ChallengeResponsePacket );
-            case CLIENT_SERVER_PACKET_READY_FOR_CONNECTION:     return PROTOCOL_NEW( *m_allocator, ReadyForConnectionPacket );
 
             case CLIENT_SERVER_PACKET_CONNECTION_DENIED:        return PROTOCOL_NEW( *m_allocator, ConnectionDeniedPacket );
             case CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE:     return PROTOCOL_NEW( *m_allocator, ConnectionChallengePacket );
-            case CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA:      return PROTOCOL_NEW( *m_allocator, RequestClientDataPacket );
 
-            case CLIENT_SERVER_PACKET_DISCONNECTED:             return PROTOCOL_NEW( *m_allocator, DisconnectedPacket );
+            case CLIENT_SERVER_PACKET_READY_FOR_CONNECTION:     return PROTOCOL_NEW( *m_allocator, ReadyForConnectionPacket );
             case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT:      return PROTOCOL_NEW( *m_allocator, DataBlockFragmentPacket );
             case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK:  return PROTOCOL_NEW( *m_allocator, DataBlockFragmentAckPacket );
+            case CLIENT_SERVER_PACKET_DISCONNECTED:             return PROTOCOL_NEW( *m_allocator, DisconnectedPacket );
 
             case PACKET_CONNECTION:     return PROTOCOL_NEW( *m_allocator, ConnectionPacket, PACKET_CONNECTION, m_channelStructure );
 

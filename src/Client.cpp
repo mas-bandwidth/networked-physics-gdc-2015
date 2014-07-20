@@ -14,6 +14,8 @@ namespace protocol
         PROTOCOL_ASSERT( m_config.networkInterface );
         PROTOCOL_ASSERT( m_config.channelStructure );
 
+        m_hostname[0] = '\0';
+
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
         m_packetFactory = &m_config.networkInterface->GetPacketFactory();
@@ -26,7 +28,17 @@ namespace protocol
 
         m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
-        m_serverData = (uint8_t*) m_allocator->Allocate( m_config.maxServerDataSize );
+        if ( m_config.maxServerDataSize > 0 )
+            m_serverData = (uint8_t*) m_allocator->Allocate( m_config.maxServerDataSize );
+
+        if ( m_config.clientData )
+        {
+            const int bytes = m_config.clientData->GetSize();
+            m_numClientDataFragments = bytes / m_config.fragmentSize + ( ( bytes % m_config.fragmentSize ) ? 1 : 0 );
+//            printf( "client data: %d bytes, %d fragments\n", bytes, m_numClientDataFragments );
+            m_ackedFragment = (uint8_t*) m_allocator->Allocate( m_numClientDataFragments );
+            memset( m_ackedFragment, 0, m_numClientDataFragments );
+        }
 
         ClearStateData();
     }
@@ -41,7 +53,7 @@ namespace protocol
 
         PROTOCOL_ASSERT( m_connection );
         PROTOCOL_ASSERT( m_serverData );
-        PROTOCOL_ASSERT( m_packetFactory );                 // IMPORTANT: packet factory pointer is not owned by us
+        PROTOCOL_ASSERT( m_packetFactory );
         PROTOCOL_ASSERT( m_config.fragmentSize >= 0 );
         PROTOCOL_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
 
@@ -49,9 +61,12 @@ namespace protocol
 
         m_allocator->Free( m_serverData );
 
+        m_allocator->Free( m_ackedFragment );
+
         m_connection = nullptr;
         m_serverData = nullptr;
-        m_packetFactory = nullptr;
+        m_ackedFragment = nullptr;
+        m_packetFactory = nullptr;          // IMPORTANT: packet factory pointer is not owned by us
     }
 
     void Client::Connect( const Address & address )
@@ -128,6 +143,12 @@ namespace protocol
         ClearStateData();
         
         m_state = CLIENT_STATE_DISCONNECTED;
+        m_address = Address();
+        m_hostname[0] = '\0';
+        m_serverDataSize = 0;
+        m_serverDataBlock.Disconnect();
+        m_fragmentIndex = 0;
+        memset( m_ackedFragment, 0, m_numClientDataFragments );
     }
 
     bool Client::IsDisconnected() const
@@ -187,7 +208,7 @@ namespace protocol
     const Block * Client::GetServerData() const
     {
         PROTOCOL_ASSERT( m_serverData );
-        if ( m_serverDataSize > 0 )
+        if ( m_serverDataSize > 0 && m_state == CLIENT_STATE_CONNECTED )
         {
             m_serverDataBlock.Connect( *m_allocator, m_serverData, m_serverDataSize );
             return &m_serverDataBlock;
@@ -211,6 +232,8 @@ namespace protocol
         UpdateNetworkInterface();
         
         UpdateReceivePackets();
+
+        UpdateSendClientData();
 
         UpdateTimeout();
     }
@@ -385,34 +408,31 @@ namespace protocol
                     {
                         ProcessDataBlockFragment( (DataBlockFragmentPacket*) packet );
                     }
-                    else if ( type == CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA )
+                    else if ( type == CLIENT_SERVER_PACKET_READY_FOR_CONNECTION )
                     {
-                        auto requestClientDataPacket = static_cast<RequestClientDataPacket*>( packet );
+                        auto readyForConnectionPacket = static_cast<ReadyForConnectionPacket*>( packet );
 
-                        if ( requestClientDataPacket->GetAddress() == m_address &&
-                             requestClientDataPacket->clientGuid == m_clientGuid &&
-                             requestClientDataPacket->serverGuid == m_serverGuid )
+                        if ( readyForConnectionPacket->GetAddress() == m_address &&
+                             readyForConnectionPacket->clientGuid == m_clientGuid &&
+                             readyForConnectionPacket->serverGuid == m_serverGuid )
                         {
-//                                printf( "received request client data packet from server\n" );
-
-                            if ( !m_config.block )
+                            if ( !m_config.clientData )
                             {
-//                                    printf( "client is ready for connection\n" );
-
                                 m_state = CLIENT_STATE_READY_FOR_CONNECTION;
                                 m_lastPacketReceiveTime = m_timeBase.time;
                             }
                             else
                             {
-                                // note: implement client block send to server
-                                PROTOCOL_ASSERT( false );
+                                m_state = CLIENT_STATE_SENDING_CLIENT_DATA;
+                                m_lastPacketReceiveTime = m_timeBase.time;
                             }
                         }
                     }
                 }
                 break;
 
-                case CLIENT_STATE_RECEIVING_SERVER_DATA:
+                case CLIENT_STATE_SENDING_CLIENT_DATA:
+//                case CLIENT_STATE_READY_FOR_CONNECTION:
                 {
                     if ( type == CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT )
                     {
@@ -448,6 +468,63 @@ namespace protocol
 
             m_packetFactory->Destroy( packet );
         }
+    }
+
+    void Client::UpdateSendClientData()
+    {
+        if ( m_state != CLIENT_STATE_SENDING_CLIENT_DATA )
+            return;
+
+        PROTOCOL_ASSERT( m_config.clientData );
+        PROTOCOL_ASSERT( m_config.clientData->GetSize() );
+
+        const double timeBetweenFragments = 1.0 / m_config.fragmentsPerSecond;
+
+        if ( m_lastFragmentSendTime + timeBetweenFragments >= m_timeBase.time )
+            return;
+
+        m_lastFragmentSendTime = m_timeBase.time;
+
+        PROTOCOL_ASSERT( m_numAckedFragments < m_numClientDataFragments );
+
+        for ( int i = 0; i < m_numClientDataFragments; ++i )
+        {
+            if ( !m_ackedFragment[m_fragmentIndex] )
+                break;
+            m_fragmentIndex++;
+            m_fragmentIndex %= m_numClientDataFragments;
+        }
+
+        printf( "client send fragment %d\n", m_fragmentIndex );
+
+        PROTOCOL_ASSERT( m_fragmentIndex >= 0 );
+        PROTOCOL_ASSERT( m_fragmentIndex < m_numClientDataFragments );
+        PROTOCOL_ASSERT( !m_ackedFragment[m_fragmentIndex] );
+
+        auto packet = (DataBlockFragmentPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT );
+
+        int fragmentBytes = m_config.fragmentSize;
+        if ( m_fragmentIndex == m_numClientDataFragments - 1 )
+            fragmentBytes = ( m_numClientDataFragments * m_config.fragmentSize ) - m_config.clientData->GetSize();
+
+        PROTOCOL_ASSERT( fragmentBytes > 0 );
+        PROTOCOL_ASSERT( fragmentBytes <= MaxFragmentSize );
+
+        packet->clientGuid = m_clientGuid;
+        packet->serverGuid = m_serverGuid;
+        packet->totalSize = m_config.clientData->GetSize();
+        packet->fragmentSize = m_config.fragmentSize;
+        packet->fragmentId = m_fragmentIndex;
+        packet->fragmentBytes = fragmentBytes;
+        packet->fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( packet->fragmentSize );
+
+        const uint8_t * clientData = m_config.clientData->GetData();
+
+        memcpy( packet->fragmentData, clientData + m_fragmentIndex * m_config.fragmentSize, fragmentBytes );
+
+        m_config.networkInterface->SendPacket( m_address, packet );
+
+        m_fragmentIndex = ( m_fragmentIndex + 1 ) % m_numClientDataFragments;
     }
 
     void Client::ProcessDisconnected( DisconnectedPacket * packet )
@@ -513,6 +590,8 @@ namespace protocol
         if ( IsDisconnected() )
             return;
 
+        // todo: change this so the timeout before connection is applied since connect start time
+
         const double timeout = IsConnected() ? m_config.connectedTimeOut : m_config.connectingTimeOut;
 
         if ( m_lastPacketReceiveTime + timeout < m_timeBase.time )
@@ -544,6 +623,5 @@ namespace protocol
         m_address = Address();
         m_clientGuid = 0;
         m_serverGuid = 0;
-        m_serverDataSize = 0;
     }
 }

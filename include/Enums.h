@@ -46,7 +46,6 @@ namespace protocol
         CLIENT_STATE_RESOLVING_HOSTNAME,                      // client is resolving hostname to address using the supplied resolver.
         CLIENT_STATE_SENDING_CONNECTION_REQUEST,              // client is sending connection request packets to the server address.
         CLIENT_STATE_SENDING_CHALLENGE_RESPONSE,              // client has received a connection challenge from server and is sending response packets.
-        CLIENT_STATE_RECEIVING_SERVER_DATA,                   // client is receiving a data block from the server.
         CLIENT_STATE_SENDING_CLIENT_DATA,                     // client is sending their own data block up to the server.
         CLIENT_STATE_READY_FOR_CONNECTION,                    // client is ready for the server to start sending connection packets.
         CLIENT_STATE_CONNECTED,                               // client is fully connected to the server. connection packets may now be processed.
@@ -61,7 +60,6 @@ namespace protocol
             case CLIENT_STATE_RESOLVING_HOSTNAME:               return "resolving hostname";
             case CLIENT_STATE_SENDING_CONNECTION_REQUEST:       return "sending connection request";
             case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:       return "sending challenge response";
-            case CLIENT_STATE_RECEIVING_SERVER_DATA:            return "receiving server data";
             case CLIENT_STATE_SENDING_CLIENT_DATA:              return "sending client data";
             case CLIENT_STATE_READY_FOR_CONNECTION:             return "ready for connection";
             case CLIENT_STATE_CONNECTED:                        return "connected";
@@ -116,8 +114,7 @@ namespace protocol
         SERVER_CLIENT_STATE_DISCONNECTED,                       // client is disconnected. default state.
         SERVER_CLIENT_STATE_SENDING_CHALLENGE,                  // responding with connection challenge waiting for challenge response
         SERVER_CLIENT_STATE_SENDING_SERVER_DATA,                // sending server data to client
-        SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA,             // requesting client data
-        SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA,              // receiving client data
+        SERVER_CLIENT_STATE_READY_FOR_CONNECTION,               // server side is ready for connection. once client is also ready the connection is established.
         SERVER_CLIENT_STATE_CONNECTED                           // client is fully connected. connection packets are now exchanged.
     };
 

@@ -27,8 +27,6 @@ namespace protocol
         float connectingSendRate = 10.0f;                       // client send rate while connecting
         float connectedSendRate = 30.0f;                        // client send rate *after* being connected, eg. connection packets
 
-        Block * block = nullptr;                                // data block sent to server on connect. optional.
-
         #if PROTOCOL_USE_RESOLVER
         Resolver * resolver = nullptr;                          // optional resolver used to to lookup server address by hostname.
         #endif
@@ -36,7 +34,8 @@ namespace protocol
         NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets. required.
         ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
 
-        int maxServerDataSize = 256 * 1024;                     // maximum server data size in bytes. if the server data is larger than this then the connect will fail.
+        Block * clientData = nullptr;                           // data sent from client to server on connect. must be constant. this block is not owned by us (we don't destroy it)
+        int maxServerDataSize = 256 * 1024;                     // maximum size for data received from server on connect. if the server data is larger than this then the connect will fail.
         int fragmentSize = 1024;                                // send client data in 1k fragments by default. a good size given that MTU is typically 1200 bytes.
         int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
     };
@@ -64,6 +63,12 @@ namespace protocol
         int m_serverDataSize = 0;
         uint8_t * m_serverData = nullptr;
         mutable Block m_serverDataBlock;
+
+        int m_numClientDataFragments = 0;
+        int m_fragmentIndex = 0;
+        int m_numAckedFragments = 0;
+        double m_lastFragmentSendTime = 0.0;
+        uint8_t * m_ackedFragment = nullptr;
 
         char m_hostname[MaxHostName];
 
@@ -121,6 +126,8 @@ namespace protocol
         void UpdateSendPackets();
 
         void UpdateReceivePackets();
+
+        void UpdateSendClientData();
 
         void ProcessDisconnected( DisconnectedPacket * packet );
 

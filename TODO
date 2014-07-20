@@ -2,10 +2,33 @@ DONE:
 
 TODO:
 
-    --------------------------
 
 
 
+
+
+
+
+
+
+
+    ---------------------------
+
+    Server and client should both have a concept of connect timeout.
+
+    eg. the number of seconds between a connect starting, and timing out
+    regardless of packets exchanged -- this is important, to ensure that
+    a malicious client can't just take up a slot but not fully connect,
+    and also to make sure that connect state machine bugs don't stall
+    out a slot, but will time out that slot connect, worst case.
+
+    ---------------------------
+
+    Add a unit test that verifies reconnect works properly with client
+    and server data, this will ensure that the client and server data
+    to do with fragments is properly cleared between connections.
+
+    ---------------------------
 
 
 
@@ -37,48 +60,6 @@ TODO:
     Also make sure to detect if the packet has been made larger via compression
     that it would be uncompressed, and in that case don't bother to send the
     compressed version.
-
-    ------------------------
-
-    Server sends one block fragment per-packet. No need for complicated reliability.
-
-    Client replies with a separate packet acking each fragment he sees. Nothing complicated.
-
-    Server just keeps sending them until all acked.
-
-    Once server has acks for every fragment, go into the requesting client block state.
-
-    Client should have the opportunity to process the data block from the server,
-    it should not *store* it verbatim, but process it and have the opportunity to
-    extract data from it.
-
-    Add unit test to verify it's working, make sure to check the block size and contents match.
-
-    ------------------------
-
-    Some thing in reverse for client -> server block.
-
-    Once the block transfers have completed, go to connected state.
-
-    Make client block accessible per-server, and make sure it is cleared when the client disconnects.
-
-    Add test to verify server receives the correct size block and contents from the client.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     ------------------------
 

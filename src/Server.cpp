@@ -46,9 +46,13 @@ namespace protocol
 
             if ( m_numServerDataFragments )
             {
+                m_clients[i].numFragments = m_numServerDataFragments;
                 m_clients[i].ackedFragment = (uint8_t*) m_allocator->Allocate( m_numServerDataFragments );
                 memset( m_clients[i].ackedFragment, 0, m_numServerDataFragments );
             }
+
+            if ( m_config.maxClientDataSize > 0 )
+                m_clients[i].clientData = (uint8_t*) m_allocator->Allocate( m_config.maxClientDataSize );
         }
     }
 
@@ -68,6 +72,14 @@ namespace protocol
             {
                 m_allocator->Free( m_clients[i].ackedFragment );
                 m_clients[i].ackedFragment = nullptr;
+            }
+
+            if ( m_clients[i].clientData )
+            {
+                m_allocator->Free( m_clients[i].clientData );
+                m_clients[i].clientData = nullptr;
+                m_clients[i].clientDataSize = 0;
+                m_clients[i].clientDataBlock.Disconnect();
             }
         }
 
@@ -139,6 +151,22 @@ namespace protocol
         return m_clients[clientIndex].connection;
     }
 
+    const Block * Server::GetClientData( int clientIndex ) const
+    {
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
+
+        ClientData & client = m_clients[clientIndex];
+        
+        if ( client.state == SERVER_CLIENT_STATE_CONNECTED && client.clientDataSize )
+        {
+            client.clientDataBlock.Connect( *m_allocator, client.clientData, client.clientDataSize );
+            return &client.clientDataBlock;
+        }
+        else
+            return nullptr;
+    }
+
     void Server::UpdateClients()
     {
         for ( int i = 0; i < m_numClients; ++i )
@@ -153,12 +181,8 @@ namespace protocol
                     UpdateSendingServerData( i );
                     break;
 
-                case SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA:
-                    UpdateRequestingClientData( i );
-                    break;
-
-                case SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA:
-                    UpdateReceivingClientData( i );
+                case SERVER_CLIENT_STATE_READY_FOR_CONNECTION:
+                    UpdateReadyForConnection( i );
                     break;
 
                 case SERVER_CLIENT_STATE_CONNECTED:
@@ -170,6 +194,12 @@ namespace protocol
             }
 
             UpdateTimeouts( i );
+
+            if ( m_clients[i].state == SERVER_CLIENT_STATE_READY_FOR_CONNECTION && m_clients[i].readyForConnection )
+            {
+                m_clients[i].state = SERVER_CLIENT_STATE_CONNECTED;
+                m_clients[i].accumulator = 0.0f;
+            }
         }
     }
 
@@ -258,31 +288,7 @@ namespace protocol
         client.fragmentIndex = ( client.fragmentIndex + 1 ) % m_numServerDataFragments;
     }
 
-    void Server::UpdateRequestingClientData( int clientIndex )
-    {
-        PROTOCOL_ASSERT( clientIndex >= 0 );
-        PROTOCOL_ASSERT( clientIndex < m_numClients );
-
-        ClientData & client = m_clients[clientIndex];
-
-        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA );
-
-        if ( client.accumulator > 1.0 / m_config.connectingSendRate )
-        {
-//                printf( "sent request client data packet\n" );
-
-            auto packet = (RequestClientDataPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA );
-
-            packet->clientGuid = client.clientGuid;
-            packet->serverGuid = client.serverGuid;
-
-            m_config.networkInterface->SendPacket( client.address, packet );
-
-            client.accumulator = 0.0;
-        }
-    }
-
-    void Server::UpdateReceivingClientData( int clientIndex )
+    void Server::UpdateReadyForConnection( int clientIndex )
     {
         PROTOCOL_ASSERT( clientIndex >= 0 );
         PROTOCOL_ASSERT( clientIndex < m_numClients );
@@ -291,10 +297,19 @@ namespace protocol
         ClientData & client = m_clients[clientIndex];
         #endif
 
-        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_RECEIVING_CLIENT_DATA );
+        PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_READY_FOR_CONNECTION );
 
-        // not implemented yet
-        PROTOCOL_ASSERT( false );
+        if ( client.accumulator > 1.0 / m_config.connectingSendRate )
+        {
+            auto packet = (ReadyForConnectionPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION );
+
+            packet->clientGuid = client.clientGuid;
+            packet->serverGuid = client.serverGuid;
+
+            m_config.networkInterface->SendPacket( client.address, packet );
+
+            client.accumulator = 0.0;
+        }
     }
 
     void Server::UpdateConnected( int clientIndex )
@@ -491,21 +506,16 @@ namespace protocol
 
         client.accumulator = 0.0;
         client.lastPacketTime = m_timeBase.time;
-        client.state = m_config.serverData ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA;
+        client.state = m_config.serverData ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
     }
 
     void Server::ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet )
     {
         PROTOCOL_ASSERT( packet );
 
-//            printf( "server received ready for connection packet\n" );
-
         const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
         if ( clientIndex == -1 )
-        {
-//                printf( "found no matching client\n" );
             return;
-        }
 
         PROTOCOL_ASSERT( clientIndex >= 0 );
         PROTOCOL_ASSERT( clientIndex < m_numClients );
@@ -513,22 +523,15 @@ namespace protocol
         ClientData & client = m_clients[clientIndex];
 
         if ( client.serverGuid != packet->serverGuid )
-        {
-//              printf( "client server guid does not match\n" );
             return;
-        }
 
-        // note: should also transition here from received client data state
-
-        if ( client.state != SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA )
-        {
-//                printf( "ignoring because client slot is not in correct state\n" );
+        if ( client.state != SERVER_CLIENT_STATE_SENDING_SERVER_DATA &&
+             client.state != SERVER_CLIENT_STATE_READY_FOR_CONNECTION )
             return;
-        }
 
         client.accumulator = 0.0;
         client.lastPacketTime = m_timeBase.time;
-        client.state = SERVER_CLIENT_STATE_CONNECTED;
+        client.readyForConnection = true;
     }
 
     void Server::ProcessDataBlockFragmentAckPacket( DataBlockFragmentAckPacket * packet )
@@ -569,7 +572,7 @@ namespace protocol
 
                 client.accumulator = 0.0;
                 client.lastPacketTime = m_timeBase.time;
-                client.state = SERVER_CLIENT_STATE_REQUESTING_CLIENT_DATA;
+                client.state = SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
             }
         }
     }
@@ -654,12 +657,7 @@ namespace protocol
 
         ClientData & client = m_clients[clientIndex];
 
-        client.state = SERVER_CLIENT_STATE_DISCONNECTED;
-        client.address = Address();
-        client.accumulator = 0.0;
-        client.lastPacketTime = 0.0;
-        client.clientGuid = 0;
-        client.serverGuid = 0;
+        client.Clear();
 
         PROTOCOL_ASSERT( client.connection );
 

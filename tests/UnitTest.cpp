@@ -64,7 +64,10 @@ extern void test_client_connection_reconnect();
 extern void test_client_side_disconnect();
 
 extern void test_server_data();
+extern void test_client_data();
+extern void test_client_and_server_data();
 extern void test_server_data_too_large();
+extern void test_client_data_too_large();
 
 int main()
 {
@@ -142,7 +145,10 @@ int main()
         test_client_side_disconnect();
 
         test_server_data();
+        test_client_data();
+        test_client_and_server_data();
         test_server_data_too_large();
+        test_client_data_too_large();
     }
 
     ShutdownNetwork();
