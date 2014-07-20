@@ -37,6 +37,8 @@ namespace protocol
         ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
 
         int maxServerDataSize = 256 * 1024;                     // maximum server data size in bytes. if the server data is larger than this then the connect will fail.
+        int fragmentSize = 1024;                                // send client data in 1k fragments by default. a good size given that MTU is typically 1200 bytes.
+        int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
     };
 
     class Client
@@ -121,6 +123,8 @@ namespace protocol
         void UpdateReceivePackets();
 
         void ProcessDisconnected( DisconnectedPacket * packet );
+
+        void ProcessDataBlockFragment( DataBlockFragmentPacket * packet );
 
         void UpdateTimeout();
 

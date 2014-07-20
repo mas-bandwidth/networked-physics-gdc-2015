@@ -31,6 +31,8 @@ namespace protocol
         // bidirectional
 
         CLIENT_SERVER_PACKET_DISCONNECTED,                      // courtesy packet sent in both directions to indicate that the client slot has been disconnected
+        CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT,               // a fragment of a data block being sent down.
+        CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK,           // ack for a received data block fragment.
         CLIENT_SERVER_PACKET_CONNECTION,                        // connection packet send both directions once connection established (Connection.cpp)
 
         NUM_CLIENT_SERVER_PACKETS
@@ -219,6 +221,101 @@ namespace protocol
         {
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
+    };
+
+    struct DataBlockFragmentPacket : public Packet
+    {
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+        uint32_t fragmentId : 16;
+        uint32_t fragmentSize : 16;
+        uint8_t * fragmentData = nullptr;
+
+        DataBlockFragmentPacket() : Packet( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT ) 
+        {
+            fragmentId = 0;
+            fragmentSize = 0;
+        }
+
+        ~DataBlockFragmentPacket()
+        {
+            if ( fragmentData )
+            {
+                memory::scratch_allocator().Free( fragmentData );
+                fragmentData = nullptr;
+            }
+        }
+
+        template <typename Stream> void Serialize( Stream & stream )
+        {
+            if ( Stream::IsWriting )
+                PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
+
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
+            serialize_bits( stream, fragmentId, 16 );
+            serialize_bits( stream, fragmentSize, 16 );
+
+            if ( Stream::IsReading )
+            {
+                PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
+                if ( fragmentSize <= MaxFragmentSize )
+                    fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( fragmentSize );
+            }
+
+            PROTOCOL_ASSERT( fragmentData );
+
+            serialize_bytes( stream, fragmentData, fragmentSize );
+        }
+
+        void SerializeRead( ReadStream & stream )
+        {
+            Serialize( stream );
+        }
+
+        void SerializeWrite( WriteStream & stream )
+        {
+            Serialize( stream );
+        }
+    
+        void SerializeMeasure( MeasureStream & stream )
+        {
+            Serialize( stream );
+        }
+    };
+
+    struct DataBlockFragmentAckPacket : public Packet
+    {
+        uint64_t clientGuid = 0;
+        uint64_t serverGuid = 0;
+        uint32_t fragmentId : 16;
+
+        DataBlockFragmentAckPacket() : Packet( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK ) 
+        {
+            fragmentId = 0;
+        }
+
+        template <typename Stream> void Serialize( Stream & stream )
+        {
+            serialize_uint64( stream, clientGuid );
+            serialize_uint64( stream, serverGuid );
+            serialize_bits( stream, fragmentId, 16 );
         }
 
         void SerializeRead( ReadStream & stream )

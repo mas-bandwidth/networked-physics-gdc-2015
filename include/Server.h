@@ -30,6 +30,8 @@ namespace protocol
         ChannelStructure * channelStructure = nullptr;          // defines the connection channel structure
         
         Block * serverData = nullptr;                           // server data sent to clients on connect. must be constant. this block is not owned by us (we don't destroy it)
+        int fragmentSize = 1024;                                // send server data in 1k fragments by default. good size given that MTU is typically 1200 bytes.
+        int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
     };
 
     class Server
@@ -43,6 +45,10 @@ namespace protocol
             uint64_t serverGuid;                                    // the server guid generated randomly on connection request unique to this client.
             ServerClientState state;                                // the current state of this client slot.
             Connection * connection;                                // connection object, once in SERVER_CLIENT_Connected state this becomes active.
+            int fragmentIndex;                                      // current fragment that is being processed. search for next fragment to send starts here.
+            int numAckedFragments;                                  // number of acked fragments. used to detect when the block has been fully transferred.
+            double lastFragmentSendTime;                            // time that a fragment was last sent. used enforce fragments per-second in config.
+            uint8_t * ackedFragment;                                // entry n is true if fragment n is server block has been acked.
 
             ClientData()
             {
@@ -52,6 +58,15 @@ namespace protocol
                 serverGuid = 0;
                 state = SERVER_CLIENT_STATE_DISCONNECTED;
                 connection = nullptr;
+                fragmentIndex = 0;
+                lastFragmentSendTime = 0.0;
+                ackedFragment = nullptr;
+                numAckedFragments = 0;
+            }
+
+            ~ClientData()
+            {
+                PROTOCOL_ASSERT( ackedFragment == nullptr );
             }
         };
 
@@ -67,6 +82,8 @@ namespace protocol
         ClientData * m_clients = nullptr;
 
         PacketFactory * m_packetFactory = nullptr;                  // important: we don't own this pointer. it comes from the network interface
+
+        int m_numServerDataFragments = 0;
 
     public:
 

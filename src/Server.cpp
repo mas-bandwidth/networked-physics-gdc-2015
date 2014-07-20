@@ -14,6 +14,8 @@ namespace protocol
         PROTOCOL_ASSERT( m_config.networkInterface );
         PROTOCOL_ASSERT( m_config.channelStructure );
         PROTOCOL_ASSERT( m_config.maxClients >= 1 );
+        PROTOCOL_ASSERT( m_config.fragmentSize >= 0 );
+        PROTOCOL_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
@@ -27,11 +29,24 @@ namespace protocol
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
 
+        if ( m_config.serverData )
+        {
+            const int bytes = m_config.serverData->GetSize();
+            m_numServerDataFragments = bytes / m_config.fragmentSize + ( ( bytes % m_config.fragmentSize ) ? 1 : 0 );
+//            printf( "server data: %d bytes, %d fragments\n", bytes, m_numServerDataFragments );
+        }
+
         m_numClients = m_config.maxClients;
 
         m_clients = PROTOCOL_NEW_ARRAY( *m_allocator, ClientData, m_numClients );
+
         for ( int i = 0; i < m_numClients; ++i )
+        {
             m_clients[i].connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
+
+            if ( m_numServerDataFragments )
+                m_clients[i].ackedFragment = (uint8_t*) m_allocator->Allocate( m_numServerDataFragments );
+        }
     }
 
     Server::~Server()
@@ -45,6 +60,12 @@ namespace protocol
             PROTOCOL_ASSERT( m_clients[i].connection );
             PROTOCOL_DELETE( *m_allocator, Connection, m_clients[i].connection );
             m_clients[i].connection = nullptr;
+
+            if ( m_clients[i].ackedFragment )
+            {
+                m_allocator->Free( m_clients[i].ackedFragment );
+                m_clients[i].ackedFragment = nullptr;
+            }
         }
 
         PROTOCOL_DELETE_ARRAY( *m_allocator, m_clients, m_numClients );
@@ -176,14 +197,58 @@ namespace protocol
         PROTOCOL_ASSERT( clientIndex >= 0 );
         PROTOCOL_ASSERT( clientIndex < m_numClients );
 
+        PROTOCOL_ASSERT( m_config.serverData );
+        PROTOCOL_ASSERT( m_config.serverData->GetSize() );
+
         #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
         #endif
 
         PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
-        // not implemented yet!
-        PROTOCOL_ASSERT( false );
+        const double timeBetweenFragments = 1.0 / m_config.fragmentsPerSecond;
+
+        if ( client.lastFragmentSendTime + timeBetweenFragments >= m_timeBase.time )
+            return;
+
+        client.lastFragmentSendTime = m_timeBase.time;
+
+        PROTOCOL_ASSERT( client.numAckedFragments < m_numServerDataFragments );
+
+        for ( int i = 0; i < m_numServerDataFragments; ++i )
+        {
+            if ( client.ackedFragment[client.fragmentIndex] )
+                client.fragmentIndex = ( client.fragmentIndex + 1 ) % m_numServerDataFragments;
+        }
+
+        PROTOCOL_ASSERT( client.fragmentIndex >= 0 );
+        PROTOCOL_ASSERT( client.fragmentIndex < m_numServerDataFragments );
+        PROTOCOL_ASSERT( !client.ackedFragment[client.fragmentIndex] );
+
+        printf( "send fragment %d\n", client.fragmentIndex );
+
+        auto packet = (DataBlockFragmentPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT );
+
+        int fragmentSize = m_config.fragmentSize;
+        if ( client.fragmentIndex == m_numServerDataFragments - 1 )
+            fragmentSize = ( m_numServerDataFragments * fragmentSize ) - m_config.serverData->GetSize();
+
+        PROTOCOL_ASSERT( fragmentSize > 0 );
+        PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
+
+        packet->clientGuid = client.clientGuid;
+        packet->serverGuid = client.serverGuid;
+        packet->fragmentId = client.fragmentIndex;
+        packet->fragmentSize = fragmentSize;
+        packet->fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( packet->fragmentSize );
+
+        const uint8_t * serverData = m_config.serverData->GetData();
+
+        memcpy( packet->fragmentData, serverData + client.fragmentIndex * m_config.fragmentSize, fragmentSize );
+
+        m_config.networkInterface->SendPacket( client.address, packet );
+
+        client.fragmentIndex = ( client.fragmentIndex + 1 ) % m_numServerDataFragments;
     }
 
     void Server::UpdateRequestingClientData( int clientIndex )

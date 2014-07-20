@@ -15,6 +15,7 @@ namespace protocol
     const int MaxResolveAddresses = 8;
     const int MaxHostName = 256;
     const int MaxChannelName = 64;
+    const int MaxFragmentSize = 1024;
 }
 
 #endif

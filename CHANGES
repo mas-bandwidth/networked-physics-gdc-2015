@@ -1,3 +1,67 @@
+Saturday Afternoon, July 15, 2014:
+----------------------------------
+
+    Added data block fragment, and data block fragment ack packets.
+
+    So there is the question of how large the packets should be for sending.
+
+    Leave this up to the sender. I suggest a default of 1k fragment blocks
+    (MTU is 1200) so this would be nice and dandy with plenty of overhead.
+
+    Added fragmentsPerSecond to both clientd and server send rate.
+
+    For the moment, it is set to 60 fragments per-second.
+
+    This means that 64k would take just over a second to transfer down.
+
+    This is a very good argument for compression (LZ4) of the client and
+    server data blocks.
+
+    Server needs this member data:
+
+        a) number of fragments in the server data
+
+    Server needs data per-client:
+
+        a) last fragment send time (initially zero)
+        b) an array of uint8_t initially memset to zero
+        c) an index into the current fragment id (where search for next send starts)
+        d) number of acked fragments. this tells us when to stop!
+
+    Server needs to create the fragment acked array in constructor, per-client,
+    next to the place where the connection is created.
+
+    Server also needs to clean it up, because the ClientData struct doesn't
+    have enough context to actually perform the cleanup.
+
+    Now implement the logic to send fragment
+
+        1. Detect if enough time has passed to send a fragment
+
+        2. If it has, then set last fragment send time and construct a packet
+
+        3. When constructing a packet, start at fragment index and seach for the first
+           unacked packet. Assert that the number of acked packets is < the number of
+           fragments.
+
+        4. Construct and send a data block fragment packet to the client.
+
+        5. Go to the next fragment index so sends cycle across different packets.
+
+    Added MaxFragmentSize = 1024 in Constants.h
+
+    I want this because I want there to be a maximum amount on the fragment
+    bytes being passed in for allocation, so packets can't be constructed
+    maliciously to create gigantic fragment memory blocks.
+
+    I don't think it's worth the effort right now to do a dynamic max fragment,
+    so I just added a MaxFragmentSize in Constants.h instead.
+
+    Extend the test packet factory to create the new packet types.
+
+    Add code to actually construct a fragment packet and send it to the client.
+
+
 Saturday Morning, July 15, 2014:
 --------------------------------
 

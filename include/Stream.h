@@ -294,11 +294,6 @@ namespace protocol
                 value = (decltype(value)) uint32_value;         \
         } while (0)
 
-    template <typename Stream> void serialize_bytes( Stream & stream, uint8_t * data, int bytes )
-    {
-        stream.SerializeBytes( data, bytes );        
-    }
-
     template <typename Stream> void serialize_bool( Stream & stream, bool & value )
     {
         serialize_bits( stream, value, 1 );
@@ -321,6 +316,11 @@ namespace protocol
         serialize_bits( stream, hi, 32 );
         if ( Stream::IsReading )
             value = ( uint64_t(hi) << 32 ) | lo;
+    }
+
+    template <typename Stream> void serialize_bytes( Stream & stream, uint8_t * data, int bytes )
+    {
+        stream.SerializeBytes( data, bytes );        
     }
 
     template <typename Stream> void serialize_block( Stream & stream, Block & block, int maxBytes )
@@ -438,7 +438,7 @@ namespace protocol
             current = (decltype(current)) value;
     }
 
-    template <typename Stream> bool serialize_PROTOCOL_CHECK( Stream & stream, uint32_t magic )
+    template <typename Stream> bool serialize_check( Stream & stream, uint32_t magic )
     {
         return stream.Check( magic );
     }

@@ -40,6 +40,8 @@ namespace protocol
         PROTOCOL_ASSERT( m_connection );
         PROTOCOL_ASSERT( m_serverData );
         PROTOCOL_ASSERT( m_packetFactory );      // IMPORTANT: packet factory pointer is not owned by us
+        PROTOCOL_ASSERT( m_config.fragmentSize >= 0 );
+        PROTOCOL_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
 
         PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
 
@@ -377,7 +379,11 @@ namespace protocol
 
                 case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:
                 {
-                    if ( type == CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA )
+                    if ( type == CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT )
+                    {
+                        ProcessDataBlockFragment( (DataBlockFragmentPacket*) packet );
+                    }
+                    else if ( type == CLIENT_SERVER_PACKET_REQUEST_CLIENT_DATA )
                     {
                         auto requestClientDataPacket = static_cast<RequestClientDataPacket*>( packet );
 
@@ -400,6 +406,15 @@ namespace protocol
                                 PROTOCOL_ASSERT( false );
                             }
                         }
+                    }
+                }
+                break;
+
+                case CLIENT_STATE_RECEIVING_SERVER_DATA:
+                {
+                    if ( type == CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT )
+                    {
+                        ProcessDataBlockFragment( (DataBlockFragmentPacket*) packet );
                     }
                 }
                 break;
@@ -447,6 +462,37 @@ namespace protocol
             return;
 
         DisconnectAndSetError( CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
+    }
+
+    void Client::ProcessDataBlockFragment( DataBlockFragmentPacket * packet )
+    {
+        PROTOCOL_ASSERT( packet );
+
+        if ( packet->clientGuid != m_clientGuid )
+            return;
+
+        if ( packet->serverGuid != m_serverGuid )
+            return;
+
+        // todo: if fragment id is out of range, ignore.
+
+        printf( "received fragment: %d\n", packet->fragmentId );
+
+        auto replyPacket = (DataBlockFragmentAckPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK );
+        if ( !replyPacket )
+            return;
+
+        replyPacket->clientGuid = m_clientGuid;
+        replyPacket->serverGuid = m_serverGuid;
+        replyPacket->fragmentId = packet->fragmentId;
+
+        m_config.networkInterface->SendPacket( m_address, replyPacket );
+
+        // todo: actually store the fragment data in the server block (if not already received)
+
+        // todo: mark the fragment as received
+
+        m_lastPacketReceiveTime = m_timeBase.time;
     }
 
     void Client::UpdateTimeout()
