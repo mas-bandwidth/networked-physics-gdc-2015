@@ -2,6 +2,36 @@ DONE:
 
 TODO:
 
+    Now implement the server receiving client data fragments
+    and sending back an ack reply to the client.
+
+    Finally, implement client processing ack replies and determining
+    when the server has received all client data fragments, and going
+    to the ready for connection state.
+
+    Implement code on the server side to disconnect a client
+    if the client data is too large, and find a way to store this
+    error code on the server side (counter?) such that it can be
+    tested for.
+
+    Next, test both client and server data together work properly.
+
+    Finally, extend unit tests with client and server data to handle
+    multiple clients and reconnect cases.
+
+    Finally, to make sure everything is totally OK with the client/server
+    setup, implement a soak test, eg. soak_client_server and split the
+    other existing soak test into soak_protocol.
+
+    Also create profile_protocol and profile_client_server premake projects.
+
+    Make sure the client/server is stable via soaking, including random
+    disconnects, reconnects, data too large to connect too small (both sides)
+    and so on.
+
+    Inside the client/server connection soak test, between client and server
+    make sure to implement the entirety of the protocol soak test across
+    client and server, to make sure it is a real world test.
 
 
 
