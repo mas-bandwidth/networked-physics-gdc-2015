@@ -30,6 +30,8 @@ namespace protocol
         PROTOCOL_ASSERT( m_data );
         PROTOCOL_ASSERT( m_receivedFragment );
 
+        m_block.Disconnect();
+
         m_allocator->Free( m_data );
         m_allocator->Free( m_receivedFragment );
 
@@ -44,18 +46,73 @@ namespace protocol
         m_numFragments = 0;
         m_numReceivedFragments = 0;
         m_error = 0;
+        m_block.Disconnect();
         memset( m_receivedFragment, 0, m_maxFragments );
     }
 
     void DataBlockReceiver::ReceiveFragment( int blockSize, int numFragments, int fragmentId, int fragmentBytes, uint8_t * fragmentData )
     {
-        // todo
+        if ( blockSize > m_maxBlockSize )
+        {
+            m_error = DATA_BLOCK_RECEIVER_ERROR_BLOCK_TOO_LARGE;
+            return;
+        }
+
+        if ( m_error != 0 )
+            return;
+
+        // 1. intensive validation!
+
+        if ( m_blockSize == 0 )
+            m_blockSize = blockSize;
+
+        if ( m_blockSize != blockSize )
+            return;
+
+        if ( m_numFragments > m_maxFragments )
+            return;
+
+        if ( m_numFragments == 0 )
+            m_numFragments = numFragments;
+
+        if ( m_numFragments != numFragments )
+            return;
+
+        if ( fragmentId >= m_numFragments )
+            return;
+
+        const int start = fragmentId * m_fragmentSize;
+        const int finish = start + fragmentBytes;
+
+        PROTOCOL_ASSERT( finish <= m_blockSize );
+        if ( finish > m_blockSize )
+            return;
+
+        // 2. send an ack and process the fragment
+
+        SendAck( fragmentId );
+
+        if ( !m_receivedFragment[fragmentId] )
+        {
+            m_receivedFragment[fragmentId] = 1;
+            m_numReceivedFragments++;
+
+            PROTOCOL_ASSERT( m_numReceivedFragments >= 0 );
+            PROTOCOL_ASSERT( m_numReceivedFragments <= m_numFragments );
+
+            memcpy( m_data + start, fragmentData, fragmentBytes );
+        }
     }
 
     Block * DataBlockReceiver::GetBlock()
     {
-        // todo
-        return nullptr;
+        if ( ReceiveCompleted() )
+        {
+            m_block.Connect( *m_allocator, m_data, m_blockSize );
+            return &m_block;
+        }
+        else
+            return nullptr;
     }
 }
 

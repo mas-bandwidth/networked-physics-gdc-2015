@@ -7,10 +7,10 @@
 #define PROTOCOL_DATA_BLOCK_RECEIVER_H
 
 #include "Common.h"
+#include "Block.h"
 
 namespace protocol
 {
-    class Block;
     class Allocator;
 
     class DataBlockReceiver
@@ -29,9 +29,14 @@ namespace protocol
 
         int GetNumFragments() const { return m_numFragments; }
         int GetNumReceivedFragments() const { return m_numReceivedFragments; }
+        bool ReceiveCompleted() const { return m_numReceivedFragments == m_numFragments; }
 
         bool IsError() const { return m_error != 0; }
         int GetError() const { return m_error; }
+
+    protected:
+
+        virtual void SendAck( int fragmentId ) = 0;
 
     private:
 
@@ -45,6 +50,7 @@ namespace protocol
         int m_numReceivedFragments;
         uint8_t * m_receivedFragment;
         int m_error;
+        Block m_block;
     };
 }
 

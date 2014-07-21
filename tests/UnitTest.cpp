@@ -63,6 +63,9 @@ extern void test_client_connection_already_connected();
 extern void test_client_connection_reconnect();
 extern void test_client_side_disconnect();
 
+extern void test_data_block_send_and_receive();
+extern void test_data_block_send_and_receive_packet_loss();
+
 extern void test_server_data();
 extern void test_client_data();
 extern void test_client_and_server_data();
@@ -143,6 +146,9 @@ int main()
         test_client_connection_already_connected();
         test_client_connection_reconnect();
         test_client_side_disconnect();
+
+        test_data_block_send_and_receive();
+        test_data_block_send_and_receive_packet_loss();
 
         test_server_data();
         test_client_data();

@@ -3,6 +3,7 @@
 #include "TestPackets.h"
 #include "NetworkSimulator.h"
 #include "ReliableMessageChannel.h"
+#include <time.h>
 
 using namespace protocol;
 

@@ -12,35 +12,47 @@ DONE:
     this way the reciever can determine the maximum number of fragments
     from the max data block size.
 
+    Implemented data block receiver.
+
+    Over to unit testing now.
+
 TODO:
 
-    
+    Create test classes that derive from the data block sender and receiver.
+
+    Setup a test without packet loss.
+
+    Setup a test with packet loss (50%). Make sure packet loss applies to 
+    both directions, eg. fragments as well as acks!
 
     --------------------------
 
-    Unit test these classes.
+    Now rework the client and server to use the data block sender and receiver
+    instead of manually implementing this logic. This will require deriving
+    new classes for the sender and receiver per-client and server.
 
-    Rework the client and server data block send to use these classes.
+    Make sure to handle the error cases on the receiver, eg. data block too large.
+
+    Verify that the client data unit test passes.
+
+    Create a unit test that has both client and server data block.
+
+
+
+
+
+
+
+
+
+
+
 
     --------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-    -------------------------
-
-    Test both client and server data together work properly.
-
-    Finally, extend unit tests with client and server data to handle
+    Extend unit tests with client and server data to handle
     multiple clients and reconnect cases.
+
 
     Finally, to make sure everything is totally OK with the client/server
     setup, implement a soak test, eg. soak_client_server and split the
