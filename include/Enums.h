@@ -149,6 +149,12 @@ namespace protocol
         RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY,
         RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS
     };
+
+    enum DataBlockReceiverError
+    {
+        DATA_BLOCK_RECEIVER_ERROR_NONE = 0,
+        DATA_BLOCK_RECEIVER_ERROR_BLOCK_TOO_LARGE
+    };
 }
 
 #endif

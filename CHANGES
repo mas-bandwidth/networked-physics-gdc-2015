@@ -1,4 +1,22 @@
-Sunday Morning, July 16, 2014:
+Sunday Evening, July 20, 2014:
+------------------------------
+
+    I'm not happy with the complexity of block fragment send and receive
+    code that is cut and pasted between client and server.
+
+    To resolve this, create new helper classes "BlockSender" and "BlockReceiver".
+
+    The client will still have to do the actual packet payload, but
+    these classes will handle all the tricky allocation, all the logic
+    and can be reused across client and server (and for reservation data)
+    trivially.
+
+    Data block sender class is finished.
+
+    Wait, there is more. Extended to include ProcessAck function.
+
+
+Sunday Morning, July 20, 2014:
 ------------------------------
 
     Design the server interface for getting client data, eg. should be same as client
@@ -97,7 +115,7 @@ Sunday Morning, July 16, 2014:
     and looping with modulus # client data fragments.
 
 
-Saturday Afternoon, July 15, 2014:
+Saturday Afternoon, July 19, 2014:
 ----------------------------------
 
     Added data block fragment, and data block fragment ack packets.
@@ -182,7 +200,7 @@ Saturday Afternoon, July 15, 2014:
     Add a unit test to verify this error triggers when expected.
 
 
-Saturday Morning, July 15, 2014:
+Saturday Morning, July 19, 2014:
 --------------------------------
 
     Add code on server to send server data block to client.

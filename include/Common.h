@@ -10,6 +10,7 @@
 #include "Types.h"
 #include "Constants.h"
 #include <stdint.h>
+#include <string.h>     // todo: move this out of here. create my own functions for memcpy, memset etc. including this slows down compile times
 
 namespace protocol
 {

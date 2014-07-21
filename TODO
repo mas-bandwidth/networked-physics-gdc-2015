@@ -1,20 +1,43 @@
 DONE:
 
+    Now need a data block receiver class.
+
+    Sketching it out, a lot of params required for ProcessFragment function.
+
+    In order for the receiver to know when the send is completed, it is
+    necessary to include the number of fragments in the fragment packet.
+
+    In order for the receiver to be able to pre-allocate the receive fragments
+    it is necessary for the sender and receiver to agree on the fragment size,
+    this way the reciever can determine the maximum number of fragments
+    from the max data block size.
+
 TODO:
 
-    Now implement the server receiving client data fragments
-    and sending back an ack reply to the client.
+    
 
-    Finally, implement client processing ack replies and determining
-    when the server has received all client data fragments, and going
-    to the ready for connection state.
+    --------------------------
 
-    Implement code on the server side to disconnect a client
-    if the client data is too large, and find a way to store this
-    error code on the server side (counter?) such that it can be
-    tested for.
+    Unit test these classes.
 
-    Next, test both client and server data together work properly.
+    Rework the client and server data block send to use these classes.
+
+    --------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+    -------------------------
+
+    Test both client and server data together work properly.
 
     Finally, extend unit tests with client and server data to handle
     multiple clients and reconnect cases.
@@ -29,9 +52,7 @@ TODO:
     disconnects, reconnects, data too large to connect too small (both sides)
     and so on.
 
-    Inside the client/server connection soak test, between client and server
-    make sure to implement the entirety of the protocol soak test across
-    client and server, to make sure it is a real world test.
+    --------------------------
 
 
 

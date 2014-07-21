@@ -22,6 +22,8 @@ namespace protocol
 
     public:
 
+        // todo: move more of block into .cpp file
+
         Block()
         {
             m_allocator = nullptr;

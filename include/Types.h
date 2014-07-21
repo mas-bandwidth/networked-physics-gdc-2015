@@ -1,10 +1,12 @@
 #ifndef PROTOCOL_TYPES_H
 #define PROTOCOL_TYPES_H
 
-#include "Allocator.h"
+#include <stdint.h>
 
 namespace protocol
 {
+    class Allocator;
+
     template<typename T> struct Array
     {
         Array( Allocator & a );

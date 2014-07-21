@@ -35,7 +35,6 @@ namespace protocol
         {
             const int bytes = m_config.clientData->GetSize();
             m_numClientDataFragments = bytes / m_config.fragmentSize + ( ( bytes % m_config.fragmentSize ) ? 1 : 0 );
-//            printf( "client data: %d bytes, %d fragments\n", bytes, m_numClientDataFragments );
             m_ackedFragment = (uint8_t*) m_allocator->Allocate( m_numClientDataFragments );
             memset( m_ackedFragment, 0, m_numClientDataFragments );
         }

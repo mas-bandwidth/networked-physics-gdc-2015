@@ -7,11 +7,11 @@
 #define PROTOCOL_CHANNEL_H
 
 #include "Common.h"
-#include "Allocator.h"
-#include <functional>
 
 namespace protocol
 {
+    class Allocator;
+
     /*
         Channel data is passed to the serializer per-packet
         and is how a channel specifies what data should be
