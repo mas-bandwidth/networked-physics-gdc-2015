@@ -44,6 +44,8 @@ namespace protocol
         {
             m_clients[i].connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
+            // todo
+            /*
             if ( m_numServerDataFragments )
             {
                 m_clients[i].numFragments = m_numServerDataFragments;
@@ -53,6 +55,7 @@ namespace protocol
 
             if ( m_config.maxClientDataSize > 0 )
                 m_clients[i].clientData = (uint8_t*) m_allocator->Allocate( m_config.maxClientDataSize );
+                */
         }
     }
 
@@ -68,6 +71,8 @@ namespace protocol
             PROTOCOL_DELETE( *m_allocator, Connection, m_clients[i].connection );
             m_clients[i].connection = nullptr;
 
+            // todo
+            /*
             if ( m_clients[i].ackedFragment )
             {
                 m_allocator->Free( m_clients[i].ackedFragment );
@@ -81,6 +86,7 @@ namespace protocol
                 m_clients[i].clientDataSize = 0;
                 m_clients[i].clientDataBlock.Disconnect();
             }
+            */
         }
 
         PROTOCOL_DELETE_ARRAY( *m_allocator, m_clients, m_numClients );
@@ -156,8 +162,10 @@ namespace protocol
         PROTOCOL_ASSERT( clientIndex >= 0 );
         PROTOCOL_ASSERT( clientIndex < m_numClients );
 
+        // todo
+        /*
         ClientData & client = m_clients[clientIndex];
-        
+
         if ( client.state == SERVER_CLIENT_STATE_CONNECTED && client.clientDataSize )
         {
             client.clientDataBlock.Connect( *m_allocator, client.clientData, client.clientDataSize );
@@ -165,6 +173,9 @@ namespace protocol
         }
         else
             return nullptr;
+            */
+
+        return nullptr;
     }
 
     void Server::UpdateClients()
@@ -239,6 +250,8 @@ namespace protocol
 
         PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
+        // todo
+        /*
         const double timeBetweenFragments = 1.0 / m_config.fragmentsPerSecond;
 
         if ( client.lastFragmentSendTime + timeBetweenFragments >= m_timeBase.time )
@@ -286,6 +299,7 @@ namespace protocol
         m_config.networkInterface->SendPacket( client.address, packet );
 
         client.fragmentIndex = ( client.fragmentIndex + 1 ) % m_numServerDataFragments;
+        */
     }
 
     void Server::UpdateReadyForConnection( int clientIndex )
@@ -546,6 +560,8 @@ namespace protocol
         if ( client.serverGuid != packet->serverGuid )
             return;
         
+        // todo
+        /*
         const int fragmentId = packet->fragmentId;
 
         if ( fragmentId > m_numServerDataFragments )
@@ -575,6 +591,7 @@ namespace protocol
                 client.state = SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
             }
         }
+        */
     }
 
     void Server::ProcessDisconnectedPacket( DisconnectedPacket * packet )

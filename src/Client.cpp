@@ -28,6 +28,8 @@ namespace protocol
 
         m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
+        // todo
+        /*
         if ( m_config.maxServerDataSize > 0 )
             m_serverData = (uint8_t*) m_allocator->Allocate( m_config.maxServerDataSize );
 
@@ -38,6 +40,7 @@ namespace protocol
             m_ackedFragment = (uint8_t*) m_allocator->Allocate( m_numClientDataFragments );
             memset( m_ackedFragment, 0, m_numClientDataFragments );
         }
+        */
 
         ClearStateData();
     }
@@ -48,23 +51,19 @@ namespace protocol
 
         Disconnect();
 
+        // todo
+        /*
         m_serverDataBlock.Disconnect();
+        */
 
         PROTOCOL_ASSERT( m_connection );
-        PROTOCOL_ASSERT( m_serverData );
         PROTOCOL_ASSERT( m_packetFactory );
         PROTOCOL_ASSERT( m_config.fragmentSize >= 0 );
         PROTOCOL_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
 
         PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
 
-        m_allocator->Free( m_serverData );
-
-        m_allocator->Free( m_ackedFragment );
-
         m_connection = nullptr;
-        m_serverData = nullptr;
-        m_ackedFragment = nullptr;
         m_packetFactory = nullptr;          // IMPORTANT: packet factory pointer is not owned by us
     }
 
@@ -144,10 +143,8 @@ namespace protocol
         m_state = CLIENT_STATE_DISCONNECTED;
         m_address = Address();
         m_hostname[0] = '\0';
-        m_serverDataSize = 0;
-        m_serverDataBlock.Disconnect();
-        m_fragmentIndex = 0;
-        memset( m_ackedFragment, 0, m_numClientDataFragments );
+
+        // todo: disconnect clear sender and receiver
     }
 
     bool Client::IsDisconnected() const
@@ -206,6 +203,8 @@ namespace protocol
 
     const Block * Client::GetServerData() const
     {
+        // todo
+        /*
         PROTOCOL_ASSERT( m_serverData );
         if ( m_serverDataSize > 0 && m_state == CLIENT_STATE_CONNECTED )
         {
@@ -213,6 +212,7 @@ namespace protocol
             return &m_serverDataBlock;
         }
         else
+        */
             return nullptr;
     }
 
@@ -477,6 +477,8 @@ namespace protocol
         PROTOCOL_ASSERT( m_config.clientData );
         PROTOCOL_ASSERT( m_config.clientData->GetSize() );
 
+        // todo
+        /*
         const double timeBetweenFragments = 1.0 / m_config.fragmentsPerSecond;
 
         if ( m_lastFragmentSendTime + timeBetweenFragments >= m_timeBase.time )
@@ -524,6 +526,7 @@ namespace protocol
         m_config.networkInterface->SendPacket( m_address, packet );
 
         m_fragmentIndex = ( m_fragmentIndex + 1 ) % m_numClientDataFragments;
+        */
     }
 
     void Client::ProcessDisconnected( DisconnectedPacket * packet )
@@ -552,6 +555,8 @@ namespace protocol
         if ( packet->serverGuid != m_serverGuid )
             return;
 
+        // todo
+        /*
         if ( packet->totalSize > m_config.maxServerDataSize )
         {
             DisconnectAndSetError( CLIENT_ERROR_SERVER_DATA_TOO_LARGE );
@@ -582,6 +587,7 @@ namespace protocol
         memcpy( m_serverData + start, packet->fragmentData, packet->fragmentBytes );
 
         m_lastPacketReceiveTime = m_timeBase.time;
+        */
     }
 
     void Client::UpdateTimeout()

@@ -15,6 +15,33 @@ Sunday Evening, July 20, 2014:
 
     Wait, there is more. Extended to include ProcessAck function.
 
+    Now need a data block receiver class.
+
+    Sketching it out, a lot of params required for ProcessFragment function.
+
+    In order for the receiver to know when the send is completed, it is
+    necessary to include the number of fragments in the fragment packet.
+
+    In order for the receiver to be able to pre-allocate the receive fragments
+    it is necessary for the sender and receiver to agree on the fragment size,
+    this way the reciever can determine the maximum number of fragments
+    from the max data block size.
+
+    Implemented data block receiver.
+
+    Over to unit testing now.
+
+    Found an error in the calculation of the last fragment size.
+
+    Create test classes that derive from the data block sender and receiver.
+
+    Setup a test without packet loss.
+
+    Verify block size and contents are correct.
+
+    Setup a test with packet loss (50%). Make sure packet loss applies to 
+    both directions, eg. fragments as well as acks!
+
 
 Sunday Morning, July 20, 2014:
 ------------------------------

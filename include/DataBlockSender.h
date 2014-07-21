@@ -19,7 +19,7 @@ namespace protocol
 
         DataBlockSender( Allocator & allocator, Block & dataBlock, int fragmentSize, int fragmentsPerSecond );
 
-        ~DataBlockSender();
+        virtual ~DataBlockSender();
 
         void Clear();
 

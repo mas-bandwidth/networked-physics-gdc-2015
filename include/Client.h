@@ -60,6 +60,8 @@ namespace protocol
         ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
 
+        // todo
+        /*
         int m_serverDataSize = 0;
         uint8_t * m_serverData = nullptr;
         mutable Block m_serverDataBlock;
@@ -69,6 +71,7 @@ namespace protocol
         int m_numAckedFragments = 0;
         double m_lastFragmentSendTime = 0.0;
         uint8_t * m_ackedFragment = nullptr;
+        */
 
         char m_hostname[MaxHostName];
 

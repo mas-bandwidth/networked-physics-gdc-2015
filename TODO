@@ -1,31 +1,6 @@
 DONE:
 
-    Now need a data block receiver class.
-
-    Sketching it out, a lot of params required for ProcessFragment function.
-
-    In order for the receiver to know when the send is completed, it is
-    necessary to include the number of fragments in the fragment packet.
-
-    In order for the receiver to be able to pre-allocate the receive fragments
-    it is necessary for the sender and receiver to agree on the fragment size,
-    this way the reciever can determine the maximum number of fragments
-    from the max data block size.
-
-    Implemented data block receiver.
-
-    Over to unit testing now.
-
 TODO:
-
-    Create test classes that derive from the data block sender and receiver.
-
-    Setup a test without packet loss.
-
-    Setup a test with packet loss (50%). Make sure packet loss applies to 
-    both directions, eg. fragments as well as acks!
-
-    --------------------------
 
     Now rework the client and server to use the data block sender and receiver
     instead of manually implementing this logic. This will require deriving
@@ -37,7 +12,7 @@ TODO:
 
     Create a unit test that has both client and server data block.
 
-
+    --------------------------
 
 
 

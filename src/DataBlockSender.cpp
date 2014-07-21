@@ -70,7 +70,7 @@ namespace protocol
 
         int fragmentBytes = m_fragmentSize;
         if ( m_fragmentIndex == m_numFragments - 1 )
-            fragmentBytes = ( m_numFragments * m_fragmentSize ) - m_dataBlock->GetSize();
+            fragmentBytes = m_dataBlock->GetSize() - ( m_numFragments - 1 ) * m_fragmentSize;
 
         PROTOCOL_ASSERT( fragmentBytes > 0 );
         PROTOCOL_ASSERT( fragmentBytes <= MaxFragmentSize );

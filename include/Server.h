@@ -49,22 +49,13 @@ namespace protocol
             uint64_t serverGuid;                                    // the server guid generated randomly on connection request unique to this client.
             ServerClientState state;                                // the current state of this client slot.
             Connection * connection;                                // connection object, once in SERVER_CLIENT_Connected state this becomes active.
-            int fragmentIndex;                                      // current fragment that is being processed. search for next fragment to send starts here.
-            int numFragments;                                       // number of fragments allocated in "ackedFragment"  array. used for clearing.
-            int numAckedFragments;                                  // number of acked fragments. used to detect when the block has been fully transferred.
-            double lastFragmentSendTime;                            // time that a fragment was last sent. used enforce fragments per-second in config.
-            uint8_t * ackedFragment;                                // entry n is true if fragment n is server block has been acked.
             bool readyForConnection;                                // set to true once the client is ready for a connection to start, eg. client has sent their client data across (if any)
-            int clientDataSize;                                     // client data size in bytes
-            uint8_t * clientData;                                   // client data pointer
-            Block clientDataBlock;
+
+            // todo: data block send and receive
 
             ClientData()
             {
                 connection = nullptr;
-                ackedFragment = nullptr;
-                clientData = nullptr;
-                numFragments = 0;
                 Clear();
             }
 
@@ -75,20 +66,8 @@ namespace protocol
                 clientGuid = 0;
                 serverGuid = 0;
                 state = SERVER_CLIENT_STATE_DISCONNECTED;
-                fragmentIndex = 0;
-                lastFragmentSendTime = 0.0;
-                numAckedFragments = 0;
                 readyForConnection = false;
-                if ( ackedFragment )
-                    memset( ackedFragment, 0, numFragments );
-                clientDataSize = 0;
-                clientDataBlock.Disconnect();
-            }
-
-            ~ClientData()
-            {
-                PROTOCOL_ASSERT( ackedFragment == nullptr );
-                PROTOCOL_ASSERT( clientData == nullptr );
+                // todo: clear data block send and receive
             }
         };
 

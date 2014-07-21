@@ -19,11 +19,11 @@ namespace protocol
 
         DataBlockReceiver( Allocator & allocator, int fragmentSize, int maxBlockSize );
 
-        ~DataBlockReceiver();
+        virtual ~DataBlockReceiver();
 
         void Clear();
 
-        void ReceiveFragment( int blockSize, int numFragments, int fragmentId, int fragmentBytes, uint8_t * fragmentData );
+        void ProcessFragment( int blockSize, int numFragments, int fragmentId, int fragmentBytes, uint8_t * fragmentData );
 
         Block * GetBlock();
 

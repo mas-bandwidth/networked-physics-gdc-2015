@@ -50,7 +50,7 @@ namespace protocol
         memset( m_receivedFragment, 0, m_maxFragments );
     }
 
-    void DataBlockReceiver::ReceiveFragment( int blockSize, int numFragments, int fragmentId, int fragmentBytes, uint8_t * fragmentData )
+    void DataBlockReceiver::ProcessFragment( int blockSize, int numFragments, int fragmentId, int fragmentBytes, uint8_t * fragmentData )
     {
         if ( blockSize > m_maxBlockSize )
         {
@@ -108,6 +108,7 @@ namespace protocol
     {
         if ( ReceiveCompleted() )
         {
+            m_block.Disconnect();
             m_block.Connect( *m_allocator, m_data, m_blockSize );
             return &m_block;
         }
