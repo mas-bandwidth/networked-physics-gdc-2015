@@ -1,10 +1,25 @@
 DONE:
 
-TODO:
-
     Now rework the client and server to use the data block sender and receiver
     instead of manually implementing this logic. This will require deriving
     new classes for the sender and receiver per-client and server.
+
+    Stripped out or commented out the old code.
+
+    Now to implement the sender and receiver classes that the client and server should use.
+
+    Where do they go? I'm guessing a ClientServer.h/cpp might be the right place?
+
+    Decided on ClientServerDataBlock.h/cpp
+
+    Added ClientServerInfo struct to pass a bunch of data from Client/Server
+    needed by the block sender and receiver -- eg. SetInfo. This needs to be
+    done once the client guid, server guid and address are known for that client.
+
+TODO:
+
+
+    -------------------------
 
     Make sure to handle the error cases on the receiver, eg. data block too large.
 
