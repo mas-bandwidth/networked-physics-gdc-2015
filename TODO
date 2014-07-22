@@ -2,14 +2,12 @@ DONE:
 
 TODO:
 
-    -------------------------
-
-    Clean up the code a bit
-
     --------------------------
 
     Extend unit tests with client and server data to handle
     multiple clients and reconnect cases.
+
+    --------------------------
 
     Finally, to make sure everything is totally OK with the client/server
     setup, implement a soak test, eg. soak_client_server and split the
@@ -17,13 +15,11 @@ TODO:
 
     Also create profile_protocol and profile_client_server premake projects.
 
-    Make sure the client/server is stable via soaking, including random
-    disconnects, reconnects, data too large to connect too small (both sides)
-    and so on.
-
     --------------------------
 
+    Look at this in the profiler. Are there any obvious bottlenecks?
 
+    --------------------------
 
 
 

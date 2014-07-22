@@ -1,6 +1,7 @@
 #include "Address.h"
 #include "Memory.h"
 #include <string.h>
+#include <arpa/inet.h>
 
 using namespace protocol;
 

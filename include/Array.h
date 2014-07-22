@@ -8,7 +8,6 @@
 
 #include "Allocator.h"
 #include "Types.h"
-#include <string.h>
 
 namespace protocol
 {

@@ -10,7 +10,21 @@
 #include "Types.h"
 #include "Constants.h"
 #include <stdint.h>
-#include <string.h>     // todo: move this out of here. create my own functions for memcpy, memset etc. including this slows down compile times
+#include <stddef.h>
+
+extern "C"
+{
+    extern void * memset( void * str, int c, size_t n );
+    extern void * memcpy( void * dst, const void * src, size_t n );
+    extern void * malloc( size_t size );
+    extern void free( void * ptr );
+    extern int rand();
+    extern void srand( unsigned int seed );
+    extern int atoi( const char * string );
+    extern int printf( const char * format, ... );
+    extern int snprintf( char * str, size_t size, const char * format, ... );
+    extern void exit( int result );
+}
 
 namespace protocol
 {

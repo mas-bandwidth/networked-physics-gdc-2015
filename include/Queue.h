@@ -3,6 +3,7 @@
 
 #include "Array.h"
 #include "Types.h"
+#include <string.h>
 
 namespace protocol
 {

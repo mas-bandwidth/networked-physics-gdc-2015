@@ -1,7 +1,5 @@
 #include "Common.h"
 #include "Memory.h"
-#include <string.h>
-#include <new>
 
 using namespace protocol;
 
