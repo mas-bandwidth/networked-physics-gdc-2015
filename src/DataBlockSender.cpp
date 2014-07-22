@@ -4,6 +4,7 @@
 */
 
 #include "DataBlockSender.h"
+#include "Allocator.h"
 #include "Block.h"
 #include <string.h>
 

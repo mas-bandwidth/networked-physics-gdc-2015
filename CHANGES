@@ -1,3 +1,15 @@
+Monday Evening, July 21, 2014:
+------------------------------
+
+    Now get client data working.
+
+    It's passing.
+
+    Make sure to handle client data too large on the server, eg. check for error state on the reciever.
+
+    Next, client data and server data in the same test.
+
+
 Monday Morning, July 21, 2014:
 ------------------------------
 

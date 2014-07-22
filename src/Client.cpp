@@ -483,11 +483,11 @@ namespace protocol
 
         PROTOCOL_ASSERT( m_dataBlockSender );
 
-        printf( "update send client data\n" );
+//        printf( "update send client data\n" );
 
         if ( m_dataBlockSender->SendCompleted() )
         {
-            printf( "ready for connection\n" );
+//            printf( "ready for connection\n" );
             m_state = CLIENT_STATE_READY_FOR_CONNECTION;
             return;
         }
@@ -538,7 +538,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        printf( "process fragment ack %d\n", packet->fragmentId );
+//        printf( "process fragment ack %d\n", packet->fragmentId );
 
         if ( packet->clientGuid != m_clientGuid )
             return;
@@ -556,8 +556,6 @@ namespace protocol
     {
         if ( IsDisconnected() )
             return;
-
-        // todo: change this so the timeout before connection is applied since connect start time
 
         const double timeout = IsConnected() ? m_config.connectedTimeOut : m_config.connectingTimeOut;
 

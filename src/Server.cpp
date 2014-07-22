@@ -499,7 +499,7 @@ namespace protocol
         if ( !client.dataBlockReceiver )
             return;
 
-        printf( "process data block fragment %d\n", packet->fragmentId );
+//        printf( "process data block fragment %d\n", packet->fragmentId );
 
         client.dataBlockReceiver->ProcessFragment( packet->blockSize,
                                                    packet->numFragments,

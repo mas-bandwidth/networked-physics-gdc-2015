@@ -38,9 +38,6 @@ namespace protocol
 
     class Server
     {
-        // todo: may want to do a hot/cold split for fast O(n) lookup of client data
-        // per-client data structure below is getting a bit large -- eg. ClientIndexData
-
         struct ClientData
         {
             Address address;                                        // the client address that started this connection.

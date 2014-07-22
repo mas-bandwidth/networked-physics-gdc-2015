@@ -1,33 +1,15 @@
 DONE:
 
-    Now get client data working.
-
-    It's passing.
-
-    Make sure to handle client data too large on the server, eg. check for error state on the reciever.
-
 TODO:
 
-    Next, client data and server data in the same test.
-
     -------------------------
 
-    Now clean up the code!!!!
-
-    -------------------------
-
-
-
-
-
-
-
+    Clean up the code a bit
 
     --------------------------
 
     Extend unit tests with client and server data to handle
     multiple clients and reconnect cases.
-
 
     Finally, to make sure everything is totally OK with the client/server
     setup, implement a soak test, eg. soak_client_server and split the
@@ -50,39 +32,9 @@ TODO:
 
 
 
-    ---------------------------
-
-    Server and client should both have a concept of connect timeout.
-
-    eg. the number of seconds between a connect starting, and timing out
-    regardless of packets exchanged -- this is important, to ensure that
-    a malicious client can't just take up a slot but not fully connect,
-    and also to make sure that connect state machine bugs don't stall
-    out a slot, but will time out that slot connect, worst case.
-
-    ---------------------------
-
-    Add a unit test that verifies reconnect works properly with client
-    and server data, this will ensure that the client and server data
-    to do with fragments is properly cleared between connections.
-
-    ---------------------------
-
-
-
-
-
-
-
-
-
-    -----------------------------
-
-    Now flip it around and implement client -> server blocks
-
     ------------------------
 
-    Need an LZ compressor for compressing large blocks, and for compressing
+    Implement LZ compressor for compressing large blocks, and for compressing
     initial block sent down to client.
 
     Ideally, LZ4 could be something enabled via config that is used, if it exists
@@ -173,6 +125,18 @@ WOULD BE NICE:
     could encode against something transmitted from server to client.
 
     eg. send table, num classes, num properties in a class and so on.
+
+    This is actually quite important, and is the whole reason why I went
+    to such an effort to implement the client and server data so early.
+
+    ----------------------------
+
+    May be a good idea to offer a small block of data (less than one packet)
+    that is included in the challenge response.
+
+    The reason is that it could be game specific, and would inform the client
+    of what it should be doing, eg. precache this level, so it doesn't have to
+    wait for the server and data client exchange before doing that.
 
     ----------------------------
 
