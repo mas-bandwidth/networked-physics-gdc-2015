@@ -106,7 +106,7 @@ namespace protocol
 
     Block * DataBlockReceiver::GetBlock()
     {
-        if ( ReceiveCompleted() )
+        if ( ReceiveCompleted() && m_blockSize > 0 )
         {
             m_block.Disconnect();
             m_block.Connect( *m_allocator, m_data, m_blockSize );

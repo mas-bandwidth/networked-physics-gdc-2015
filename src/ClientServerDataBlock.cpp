@@ -15,8 +15,9 @@ namespace protocol
 
         packet->clientGuid = m_info.clientGuid;
         packet->serverGuid = m_info.serverGuid;
-        packet->totalSize = GetBlockSize();
+        packet->blockSize = GetBlockSize();
         packet->fragmentSize = GetFragmentSize();
+        packet->numFragments = GetNumFragments();
         packet->fragmentId = fragmentId;
         packet->fragmentBytes = fragmentBytes;
         packet->fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( packet->fragmentSize );

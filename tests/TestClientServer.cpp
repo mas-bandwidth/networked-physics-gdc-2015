@@ -1564,10 +1564,6 @@ void test_client_data()
 {
     printf( "test_client_data\n" );
 
-// todo
-
-#if 0
-
     memory::initialize();
     {
         TestMessageFactory messageFactory( memory::default_allocator() );
@@ -1653,27 +1649,22 @@ void test_client_data()
         PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
         PROTOCOL_CHECK( client.GetExtendedError() == 0 );
 
-        // todo
-        /*
         // verify the server has received the client block
 
-        const Block * clientServerData = client.GetServerData();
+        const Block * serverClientData = server.GetClientData( clientIndex );
 
-        PROTOCOL_CHECK( clientServerData );
-        PROTOCOL_CHECK( clientServerData->IsValid() );
-        PROTOCOL_CHECK( clientServerData->GetData() );
-        PROTOCOL_CHECK( clientServerData->GetSize() == ServerDataSize );
+        PROTOCOL_CHECK( serverClientData );
+        PROTOCOL_CHECK( serverClientData->IsValid() );
+        PROTOCOL_CHECK( serverClientData->GetData() );
+        PROTOCOL_CHECK( serverClientData->GetSize() == ClientDataSize );
         {
-            const uint8_t * data = clientServerData->GetData();
-            for ( int i = 0; i < ServerDataSize; ++i )
+            const uint8_t * data = serverClientData->GetData();
+            for ( int i = 0; i < ClientDataSize; ++i )
                 PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
         }
-        */
     }
 
     memory::shutdown();
-
-#endif
 }
 
 void test_client_and_server_data()
@@ -1769,8 +1760,8 @@ void test_server_data_too_large()
         PROTOCOL_CHECK( !client.IsConnected() );
         PROTOCOL_CHECK( client.HasError() );
         PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_DISCONNECTED );
-        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_SERVER_DATA_TOO_LARGE );
-        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_DATA_BLOCK_ERROR );
+        PROTOCOL_CHECK( client.GetExtendedError() == DATA_BLOCK_RECEIVER_ERROR_BLOCK_TOO_LARGE );
     }
 
     memory::shutdown();

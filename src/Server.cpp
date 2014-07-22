@@ -29,13 +29,6 @@ namespace protocol
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
 
-        if ( m_config.serverData )
-        {
-            const int bytes = m_config.serverData->GetSize();
-            m_numServerDataFragments = bytes / m_config.fragmentSize + ( ( bytes % m_config.fragmentSize ) ? 1 : 0 );
-//            printf( "server data: %d bytes, %d fragments\n", bytes, m_numServerDataFragments );
-        }
-
         m_numClients = m_config.maxClients;
 
         m_clients = PROTOCOL_NEW_ARRAY( *m_allocator, ClientData, m_numClients );
@@ -44,18 +37,11 @@ namespace protocol
         {
             m_clients[i].connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
-            // todo
-            /*
-            if ( m_numServerDataFragments )
-            {
-                m_clients[i].numFragments = m_numServerDataFragments;
-                m_clients[i].ackedFragment = (uint8_t*) m_allocator->Allocate( m_numServerDataFragments );
-                memset( m_clients[i].ackedFragment, 0, m_numServerDataFragments );
-            }
+            if ( m_config.serverData )
+                m_clients[i].dataBlockSender = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.serverData, m_config.fragmentSize, m_config.fragmentsPerSecond );
 
             if ( m_config.maxClientDataSize > 0 )
-                m_clients[i].clientData = (uint8_t*) m_allocator->Allocate( m_config.maxClientDataSize );
-                */
+                m_clients[i].dataBlockReceiver = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxClientDataSize );
         }
     }
 
@@ -71,22 +57,17 @@ namespace protocol
             PROTOCOL_DELETE( *m_allocator, Connection, m_clients[i].connection );
             m_clients[i].connection = nullptr;
 
-            // todo
-            /*
-            if ( m_clients[i].ackedFragment )
+            if ( m_clients[i].dataBlockSender )
             {
-                m_allocator->Free( m_clients[i].ackedFragment );
-                m_clients[i].ackedFragment = nullptr;
+                PROTOCOL_DELETE( *m_allocator, ClientServerDataBlockSender, m_clients[i].dataBlockSender );
+                m_clients[i].dataBlockSender = nullptr;
             }
 
-            if ( m_clients[i].clientData )
+            if ( m_clients[i].dataBlockReceiver )
             {
-                m_allocator->Free( m_clients[i].clientData );
-                m_clients[i].clientData = nullptr;
-                m_clients[i].clientDataSize = 0;
-                m_clients[i].clientDataBlock.Disconnect();
+                PROTOCOL_DELETE( *m_allocator, ClientServerDataBlockReceiver, m_clients[i].dataBlockReceiver );
+                m_clients[i].dataBlockReceiver = nullptr;
             }
-            */
         }
 
         PROTOCOL_DELETE_ARRAY( *m_allocator, m_clients, m_numClients );
@@ -162,20 +143,9 @@ namespace protocol
         PROTOCOL_ASSERT( clientIndex >= 0 );
         PROTOCOL_ASSERT( clientIndex < m_numClients );
 
-        // todo
-        /*
         ClientData & client = m_clients[clientIndex];
 
-        if ( client.state == SERVER_CLIENT_STATE_CONNECTED && client.clientDataSize )
-        {
-            client.clientDataBlock.Connect( *m_allocator, client.clientData, client.clientDataSize );
-            return &client.clientDataBlock;
-        }
-        else
-            return nullptr;
-            */
-
-        return nullptr;
+        return client.dataBlockReceiver ? client.dataBlockReceiver->GetBlock() : nullptr;
     }
 
     void Server::UpdateClients()
@@ -244,62 +214,11 @@ namespace protocol
         PROTOCOL_ASSERT( m_config.serverData );
         PROTOCOL_ASSERT( m_config.serverData->GetSize() );
 
-        #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
-        #endif
 
         PROTOCOL_ASSERT( client.state == SERVER_CLIENT_STATE_SENDING_SERVER_DATA );
 
-        // todo
-        /*
-        const double timeBetweenFragments = 1.0 / m_config.fragmentsPerSecond;
-
-        if ( client.lastFragmentSendTime + timeBetweenFragments >= m_timeBase.time )
-            return;
-
-        client.lastFragmentSendTime = m_timeBase.time;
-
-        PROTOCOL_ASSERT( client.numAckedFragments < m_numServerDataFragments );
-
-        for ( int i = 0; i < m_numServerDataFragments; ++i )
-        {
-            if ( !client.ackedFragment[client.fragmentIndex] )
-                break;
-            client.fragmentIndex++;
-            client.fragmentIndex %= m_numServerDataFragments;
-        }
-
-//        printf( "send fragment %d\n", client.fragmentIndex );
-
-        PROTOCOL_ASSERT( client.fragmentIndex >= 0 );
-        PROTOCOL_ASSERT( client.fragmentIndex < m_numServerDataFragments );
-        PROTOCOL_ASSERT( !client.ackedFragment[client.fragmentIndex] );
-
-        auto packet = (DataBlockFragmentPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT );
-
-        int fragmentBytes = m_config.fragmentSize;
-        if ( client.fragmentIndex == m_numServerDataFragments - 1 )
-            fragmentBytes = ( m_numServerDataFragments * m_config.fragmentSize ) - m_config.serverData->GetSize();
-
-        PROTOCOL_ASSERT( fragmentBytes > 0 );
-        PROTOCOL_ASSERT( fragmentBytes <= MaxFragmentSize );
-
-        packet->clientGuid = client.clientGuid;
-        packet->serverGuid = client.serverGuid;
-        packet->totalSize = m_config.serverData->GetSize();
-        packet->fragmentSize = m_config.fragmentSize;
-        packet->fragmentId = client.fragmentIndex;
-        packet->fragmentBytes = fragmentBytes;
-        packet->fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( packet->fragmentSize );
-
-        const uint8_t * serverData = m_config.serverData->GetData();
-
-        memcpy( packet->fragmentData, serverData + client.fragmentIndex * m_config.fragmentSize, fragmentBytes );
-
-        m_config.networkInterface->SendPacket( client.address, packet );
-
-        client.fragmentIndex = ( client.fragmentIndex + 1 ) % m_numServerDataFragments;
-        */
+        client.dataBlockSender->Update( m_timeBase );
     }
 
     void Server::UpdateReadyForConnection( int clientIndex )
@@ -412,6 +331,10 @@ namespace protocol
                     ProcessDisconnectedPacket( static_cast<DisconnectedPacket*>( packet ) );
                     break;
 
+                case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT:
+                    ProcessDataBlockFragmentPacket( static_cast<DataBlockFragmentPacket*>( packet ) );
+                    break;
+
                 case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK:
                     ProcessDataBlockFragmentAckPacket( static_cast<DataBlockFragmentAckPacket*>( packet ) );
                     break;
@@ -489,6 +412,19 @@ namespace protocol
         client.serverGuid = generate_guid();
         client.lastPacketTime = m_timeBase.time;
         client.state = SERVER_CLIENT_STATE_SENDING_CHALLENGE;
+
+        ClientServerInfo info;
+        info.address = address;
+        info.clientGuid = client.clientGuid;
+        info.serverGuid = client.serverGuid;
+        info.packetFactory = m_packetFactory;
+        info.networkInterface = m_config.networkInterface;
+
+        if ( client.dataBlockSender )
+            client.dataBlockSender->SetInfo( info );
+
+        if ( client.dataBlockReceiver )
+            client.dataBlockReceiver->SetInfo( info );
     }
 
     void Server::ProcessChallengeResponsePacket( ChallengeResponsePacket * packet )
@@ -548,6 +484,36 @@ namespace protocol
         client.readyForConnection = true;
     }
 
+    void Server::ProcessDataBlockFragmentPacket( DataBlockFragmentPacket * packet )
+    {
+        PROTOCOL_ASSERT( packet );
+
+        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        if ( clientIndex == -1 )
+            return;
+        
+        ClientData & client = m_clients[clientIndex];
+        if ( client.serverGuid != packet->serverGuid )
+            return;
+        
+        if ( !client.dataBlockReceiver )
+            return;
+
+        printf( "process data block fragment %d\n", packet->fragmentId );
+
+        client.dataBlockReceiver->ProcessFragment( packet->blockSize,
+                                                   packet->numFragments,
+                                                   packet->fragmentId, 
+                                                   packet->fragmentBytes,
+                                                   packet->fragmentData );
+
+        if ( client.dataBlockReceiver->IsError() )
+        {
+            ResetClientSlot( clientIndex );
+            return;
+        }
+    }
+
     void Server::ProcessDataBlockFragmentAckPacket( DataBlockFragmentAckPacket * packet )
     {
         PROTOCOL_ASSERT( packet );
@@ -560,38 +526,20 @@ namespace protocol
         if ( client.serverGuid != packet->serverGuid )
             return;
         
-        // todo
-        /*
-        const int fragmentId = packet->fragmentId;
-
-        if ( fragmentId > m_numServerDataFragments )
+        if ( !client.dataBlockSender )
             return;
 
-        PROTOCOL_ASSERT( fragmentId >= 0 );
-        PROTOCOL_ASSERT( fragmentId <= m_numServerDataFragments );
+        if ( client.dataBlockSender->SendCompleted() )
+            return;
 
-//        printf( "received fragment ack %d\n", fragmentId );
+        client.dataBlockSender->ProcessAck( packet->fragmentId );
 
-        if ( !client.ackedFragment[fragmentId] )
+        if ( client.dataBlockSender->SendCompleted() )
         {
-            client.ackedFragment[fragmentId] = 1;
-            client.numAckedFragments++;
-
-//            printf( "%d/%d fragments acked\n", client.numAckedFragments, m_numServerDataFragments );
-
-            PROTOCOL_ASSERT( client.numAckedFragments >= 0 );
-            PROTOCOL_ASSERT( client.numAckedFragments <= m_numServerDataFragments );
-
-            if ( client.numAckedFragments == m_numServerDataFragments )
-            {
-//                printf( "all fragments acked\n" );
-
-                client.accumulator = 0.0;
-                client.lastPacketTime = m_timeBase.time;
-                client.state = SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
-            }
+            client.accumulator = 0.0;
+            client.lastPacketTime = m_timeBase.time;
+            client.state = SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
         }
-        */
     }
 
     void Server::ProcessDisconnectedPacket( DisconnectedPacket * packet )

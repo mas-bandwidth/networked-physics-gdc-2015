@@ -1,3 +1,41 @@
+Monday Morning, July 21, 2014:
+------------------------------
+
+    Sketched out the like cycle of data block sender and receiver in Server.h/cpp
+
+    Now need to make sure that they are cleared properly in disconnect.
+
+    Update the sender inside SERVER_CLIENT_STATE_SENDING_SERVER_DATA
+
+    Hook up get client data on server to redirect to receiver.
+
+    Hook up to process ack packet on server.
+
+    On server hook up client server info at the earliest point it is known,
+    for example, on the server side this is probably on the transition to
+    the sending challenge response state.
+
+    Now on the client create the same sender and receiver objects.
+
+    Set the client server info at the point where the client and server
+    guids are known (eg. when connection is pending and we start sending
+    the challenge response back)
+
+    Hook up the get server data to the receiver.
+
+    Noted that I probably want the client/server data ASAP, and perhaps
+    before the connection is strictly established (it may be required
+    to actually serialize )
+
+    Hook up the code to process the block fragment to go to receiver.
+
+    Actually works now.
+
+    Added code to handle data block reciever and set error on the client.
+
+    Both server data tests pass now.
+
+
 Sunday Evening, July 20, 2014:
 ------------------------------
 
@@ -41,6 +79,22 @@ Sunday Evening, July 20, 2014:
 
     Setup a test with packet loss (50%). Make sure packet loss applies to 
     both directions, eg. fragments as well as acks!
+
+    Now rework the client and server to use the data block sender and receiver
+    instead of manually implementing this logic. This will require deriving
+    new classes for the sender and receiver per-client and server.
+
+    Stripped out or commented out the old code.
+
+    Now to implement the sender and receiver classes that the client and server should use.
+
+    Where do they go? I'm guessing a ClientServer.h/cpp might be the right place?
+
+    Decided on ClientServerDataBlock.h/cpp
+
+    Added ClientServerInfo struct to pass a bunch of data from Client/Server
+    needed by the block sender and receiver -- eg. SetInfo. This needs to be
+    done once the client guid, server guid and address are known for that client.
 
 
 Sunday Morning, July 20, 2014:

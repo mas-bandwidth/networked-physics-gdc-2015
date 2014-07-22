@@ -10,6 +10,7 @@
 #include "Resolver.h"
 #include "Connection.h"
 #include "NetworkInterface.h"
+#include "ClientServerDataBlock.h"
 
 namespace protocol
 {
@@ -60,18 +61,8 @@ namespace protocol
         ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
 
-        // todo
-        /*
-        int m_serverDataSize = 0;
-        uint8_t * m_serverData = nullptr;
-        mutable Block m_serverDataBlock;
-
-        int m_numClientDataFragments = 0;
-        int m_fragmentIndex = 0;
-        int m_numAckedFragments = 0;
-        double m_lastFragmentSendTime = 0.0;
-        uint8_t * m_ackedFragment = nullptr;
-        */
+        ClientServerDataBlockSender * m_dataBlockSender = nullptr;
+        ClientServerDataBlockReceiver * m_dataBlockReceiver = nullptr;
 
         char m_hostname[MaxHostName];
 
@@ -135,6 +126,8 @@ namespace protocol
         void ProcessDisconnected( DisconnectedPacket * packet );
 
         void ProcessDataBlockFragment( DataBlockFragmentPacket * packet );
+
+        void ProcessDataBlockFragmentAck( DataBlockFragmentAckPacket * packet );
 
         void UpdateTimeout();
 

@@ -185,8 +185,9 @@ namespace protocol
     {
         uint64_t clientGuid = 0;
         uint64_t serverGuid = 0;
-        uint32_t totalSize = 0;
+        uint32_t blockSize = 0;
         uint32_t fragmentSize : 16;
+        uint32_t numFragments : 16;
         uint32_t fragmentId : 16;
         uint32_t fragmentBytes : 16;
         uint8_t * fragmentData = nullptr;
@@ -213,10 +214,11 @@ namespace protocol
 
             serialize_uint64( stream, clientGuid );
             serialize_uint64( stream, serverGuid );
-            serialize_uint32( stream, totalSize );
-            serialize_bits( stream, fragmentSize, 16 );         // fragment size, as per-config
+            serialize_uint32( stream, blockSize );
+            serialize_bits( stream, numFragments, 16 );
+            serialize_bits( stream, fragmentSize, 16 );
             serialize_bits( stream, fragmentId, 16 );
-            serialize_bits( stream, fragmentBytes, 16 );        // fragment bytes included in this packed. may be *less* than fragment size!
+            serialize_bits( stream, fragmentBytes, 16 );        // actual fragment bytes included in this packed. may be *less* than fragment size!
 
             if ( Stream::IsReading )
             {

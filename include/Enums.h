@@ -79,7 +79,7 @@ namespace protocol
         CLIENT_ERROR_CONNECTION_ERROR,                        // client connection is in error state. see CONNECTION_ERROR_*
         CLIENT_ERROR_INVALID_CONNECT_ADDRESS,                 // connect address string is not a valid address.
         CLIENT_ERROR_MISSING_RESOLVER,                        // client connect needs a resolver to resolve address but resolver was null.
-        CLIENT_ERROR_SERVER_DATA_TOO_LARGE,                   // server data was too large to store. increase the max server block size in client config.
+        CLIENT_ERROR_DATA_BLOCK_ERROR,                        // data block receiver is in error state. error x is set to data block error #
         CLIENT_ERROR_COUNT
     };
 
@@ -95,7 +95,7 @@ namespace protocol
             case CLIENT_ERROR_CONNECTION_ERROR:                 return "connection error";
             case CLIENT_ERROR_INVALID_CONNECT_ADDRESS:          return "invalid connect address";
             case CLIENT_ERROR_MISSING_RESOLVER:                 return "missing resolver";
-            case CLIENT_ERROR_SERVER_DATA_TOO_LARGE:            return "server data too large";
+            case CLIENT_ERROR_DATA_BLOCK_ERROR:                 return "data block error";
             default:
                 PROTOCOL_ASSERT( false );
                 return "???";
