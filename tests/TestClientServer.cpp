@@ -1806,6 +1806,369 @@ void test_client_and_server_data()
     memory::shutdown();
 }
 
+void test_client_and_server_data_reconnect()
+{
+    printf( "test_client_and_server_data_reconnect\n" );
+
+    memory::initialize();
+    {
+        TestMessageFactory messageFactory( memory::default_allocator() );
+
+        TestChannelStructure channelStructure( messageFactory );
+
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+
+        // start a server and connect a client. wait until the client is fully connected
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1200;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
+
+        const int ClientDataSize = 10 * 1024 + 11;
+
+        Block clientData( memory::default_allocator(), ClientDataSize );
+        {
+            uint8_t * data = clientData.GetData();
+            for ( int i = 0; i < ClientDataSize; ++i )
+                data[i] = ( 10 + i ) % 256;
+        }
+
+        ClientConfig clientConfig;
+        clientConfig.clientData = &clientData;
+        clientConfig.channelStructure = &channelStructure;
+        clientConfig.networkInterface = &clientNetworkInterface;
+
+        Client client( clientConfig );
+
+        client.Connect( "[::1]:10001" );
+
+        bsdSocketConfig.port = 10001;
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
+
+        const int ServerDataSize = 10 * 1024 + 11;
+
+        Block serverData( memory::default_allocator(), ServerDataSize );
+        {
+            uint8_t * data = serverData.GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
+                data[i] = ( 10 + i ) % 256;
+        }
+
+        ServerConfig serverConfig;
+        serverConfig.serverData = &serverData;
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = &serverNetworkInterface;
+
+        Server server( serverConfig );
+
+        PROTOCOL_CHECK( server.IsOpen() );
+
+        PROTOCOL_CHECK( client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.1f;
+
+        const int clientIndex = 0;
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            if ( client.GetState() == CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED )
+                break;
+
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnecting() );
+        PROTOCOL_CHECK( client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
+        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+
+        // verify the client has received the server block
+
+        const Block * clientServerData = client.GetServerData();
+
+        PROTOCOL_CHECK( clientServerData );
+        PROTOCOL_CHECK( clientServerData->IsValid() );
+        PROTOCOL_CHECK( clientServerData->GetData() );
+        PROTOCOL_CHECK( clientServerData->GetSize() == ServerDataSize );
+        {
+            const uint8_t * data = clientServerData->GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
+                PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+        }
+
+        // verify the server has received the client block
+
+        const Block * serverClientData = server.GetClientData( clientIndex );
+
+        PROTOCOL_CHECK( serverClientData );
+        PROTOCOL_CHECK( serverClientData->IsValid() );
+        PROTOCOL_CHECK( serverClientData->GetData() );
+        PROTOCOL_CHECK( serverClientData->GetSize() == ClientDataSize );
+        {
+            const uint8_t * data = serverClientData->GetData();
+            for ( int i = 0; i < ClientDataSize; ++i )
+                PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+        }
+
+        // now disconnect the client on the server and call connect again
+        // with a new client that has a different client data block.
+
+        server.DisconnectClient( clientIndex );
+
+        const int NewClientDataSize = 5 * 1024 + 23;
+
+        Block newClientData( memory::default_allocator(), NewClientDataSize );
+        {
+            uint8_t * data = newClientData.GetData();
+            for ( int i = 0; i < NewClientDataSize; ++i )
+                data[i] = ( 26 + i ) % 256;
+        }
+
+        clientConfig.clientData = &newClientData;
+
+        Client newClient( clientConfig );
+
+        newClient.Connect( "[::1]:10001" );
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            if ( newClient.GetState() == CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED )
+                break;
+
+            newClient.Update( timeBase );
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( !newClient.IsDisconnected() );
+        PROTOCOL_CHECK( !newClient.IsConnecting() );
+        PROTOCOL_CHECK( newClient.IsConnected() );
+        PROTOCOL_CHECK( !newClient.HasError() );
+        PROTOCOL_CHECK( newClient.GetState() == CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( newClient.GetError() == CLIENT_ERROR_NONE );
+        PROTOCOL_CHECK( newClient.GetExtendedError() == 0 );
+
+        // verify the new client has received the server block
+
+        const Block * newClientServerData = newClient.GetServerData();
+
+        PROTOCOL_CHECK( newClientServerData );
+        PROTOCOL_CHECK( newClientServerData->IsValid() );
+        PROTOCOL_CHECK( newClientServerData->GetData() );
+        PROTOCOL_CHECK( newClientServerData->GetSize() == ServerDataSize );
+        {
+            const uint8_t * data = newClientServerData->GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
+                PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+        }
+
+        // verify the server has received the client block
+
+        const Block * serverNewClientData = server.GetClientData( clientIndex );
+
+        PROTOCOL_CHECK( serverNewClientData );
+        PROTOCOL_CHECK( serverNewClientData->IsValid() );
+        PROTOCOL_CHECK( serverNewClientData->GetData() );
+        PROTOCOL_CHECK( serverNewClientData->GetSize() == NewClientDataSize );
+        {
+            const uint8_t * data = serverClientData->GetData();
+            for ( int i = 0; i < NewClientDataSize; ++i )
+                PROTOCOL_CHECK( data[i] == ( 26 + i ) % 256 );
+        }
+    }
+
+    memory::shutdown();
+}
+
+void test_client_and_server_data_multiple_clients()
+{
+    printf( "test_client_and_server_data_multiple_clients\n" );
+
+    memory::initialize();
+    {
+        TestMessageFactory messageFactory( memory::default_allocator() );
+
+        TestChannelStructure channelStructure( messageFactory );
+
+        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+
+        // create a server on port 10000
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1200;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
+
+        const int NumClients = 4;
+
+        const int ServerDataSize = 10 * 1024 + 11;
+
+        Block serverData( memory::default_allocator(), ServerDataSize );
+        {
+            uint8_t * data = serverData.GetData();
+            for ( int i = 0; i < ServerDataSize; ++i )
+                data[i] = ( 10 + i ) % 256;
+        }
+
+        ServerConfig serverConfig;
+        serverConfig.serverData = &serverData;
+        serverConfig.maxClients = NumClients;
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = &serverNetworkInterface;
+
+        Server server( serverConfig );
+
+        PROTOCOL_CHECK( server.IsOpen() );
+
+        // connect the maximum number of clients to the server
+        // and wait until they are all fully connected.
+
+        Client * clients[NumClients];
+        NetworkInterface * clientInterface[NumClients];
+
+        bsdSocketConfig.port = 0;
+
+        Block * clientData[NumClients];
+
+        for ( int i = 0; i < NumClients; ++i )
+        {
+            auto clientNetworkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+
+            PROTOCOL_CHECK( clientNetworkInterface );
+
+            const int clientDataSize = 2000 + i * 1024 + i;
+
+            clientData[i] = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
+            {
+                uint8_t * data = clientData[i]->GetData();
+                for ( int j = 0; j < clientDataSize; ++j )
+                    data[j] = ( i + j ) % 256;
+            }
+
+            ClientConfig clientConfig;
+            clientConfig.clientData = clientData[i];
+            clientConfig.channelStructure = &channelStructure;
+            clientConfig.networkInterface = clientNetworkInterface;
+
+            auto client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
+
+            PROTOCOL_CHECK( client );
+
+            client->Connect( "[::1]:10000" );
+
+            PROTOCOL_CHECK( client->IsConnecting() );
+            PROTOCOL_CHECK( !client->IsDisconnected() );
+            PROTOCOL_CHECK( !client->IsConnected() );
+            PROTOCOL_CHECK( !client->HasError() );
+            PROTOCOL_CHECK( client->GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+
+            clients[i] = client;
+            clientInterface[i] = clientNetworkInterface;
+        }
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.1f;
+
+        for ( int i = 0; i < 256; ++i )
+        {
+            int numConnectedClients = 0;
+            for ( auto client : clients )
+            {
+                if ( client->GetState() == CLIENT_STATE_CONNECTED )
+                    numConnectedClients++;
+
+                client->Update( timeBase );
+            }
+
+            if ( numConnectedClients == serverConfig.maxClients )
+                break;
+
+            server.Update( timeBase );
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        for ( int i = 0; i < serverConfig.maxClients; ++i )
+        {
+            PROTOCOL_CHECK( server.GetClientState(i) == SERVER_CLIENT_STATE_CONNECTED );
+
+            const Block * serverClientData = server.GetClientData( i );
+
+            PROTOCOL_CHECK( serverClientData );
+            PROTOCOL_CHECK( serverClientData->IsValid() );
+            PROTOCOL_CHECK( serverClientData->GetData() );
+            PROTOCOL_CHECK( serverClientData->GetSize() == clientData[i]->GetSize() );
+            {
+                const uint8_t * data = serverClientData->GetData();
+                const int size = serverClientData->GetSize();
+                for ( int j = 0; j < size; ++j )
+                    PROTOCOL_CHECK( data[j] == ( i + j ) % 256 );
+            }
+        }
+
+        for ( auto client : clients )
+        {
+            PROTOCOL_CHECK( !client->IsDisconnected() );
+            PROTOCOL_CHECK( !client->IsConnecting() );
+            PROTOCOL_CHECK( client->IsConnected() );
+            PROTOCOL_CHECK( !client->HasError() );
+            PROTOCOL_CHECK( client->GetState() == CLIENT_STATE_CONNECTED );
+            PROTOCOL_CHECK( client->GetError() == CLIENT_ERROR_NONE );
+            PROTOCOL_CHECK( client->GetExtendedError() == 0 );
+
+            const Block * clientServerData = client->GetServerData();
+
+            PROTOCOL_CHECK( clientServerData );
+            PROTOCOL_CHECK( clientServerData->IsValid() );
+            PROTOCOL_CHECK( clientServerData->GetData() );
+            PROTOCOL_CHECK( clientServerData->GetSize() == ServerDataSize );
+            {
+                const uint8_t * data = clientServerData->GetData();
+                for ( int i = 0; i < ServerDataSize; ++i )
+                    PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+            }
+        }
+
+        for ( int i = 0; i < NumClients; ++i )
+        {
+            PROTOCOL_DELETE( memory::default_allocator(), Client, clients[i] );
+            PROTOCOL_DELETE( memory::default_allocator(), Block, clientData[i] );
+        }
+
+        for ( int i = 0; i < NumClients; ++i )
+            PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInterface[i] );
+    }
+
+    memory::shutdown(); 
+}
+
 void test_server_data_too_large()
 {
     printf( "test_server_data_too_large\n" );

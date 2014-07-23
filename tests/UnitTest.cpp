@@ -69,6 +69,8 @@ extern void test_data_block_send_and_receive_packet_loss();
 extern void test_server_data();
 extern void test_client_data();
 extern void test_client_and_server_data();
+extern void test_client_and_server_data_reconnect();
+extern void test_client_and_server_data_multiple_clients();
 extern void test_server_data_too_large();
 
 int main()
@@ -152,6 +154,8 @@ int main()
         test_server_data();
         test_client_data();
         test_client_and_server_data();
+        test_client_and_server_data_reconnect();
+        test_client_and_server_data_multiple_clients();
         test_server_data_too_large();
     }
 

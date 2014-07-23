@@ -52,7 +52,7 @@ void test_reliable_message_channel_messages()
             NetworkSimulatorConfig simulatorConfig;
             simulatorConfig.packetFactory = &packetFactory;
             NetworkSimulator simulator( simulatorConfig );
-            simulator.AddState( { 1.0f, 1.0f, 90 } );
+            simulator.AddState( { 1.0f, 1.0f, 25 } );
 
             int iteration = 0;
 
@@ -184,7 +184,7 @@ void test_reliable_message_channel_small_blocks()
         NetworkSimulatorConfig simulatorConfig;
         simulatorConfig.packetFactory = &packetFactory;
         NetworkSimulator simulator( simulatorConfig );
-        simulator.AddState( { 1.0f, 1.0f, 90 } );
+        simulator.AddState( { 1.0f, 1.0f, 25 } );
 
         while ( true )
         {
@@ -312,7 +312,7 @@ void test_reliable_message_channel_large_blocks()
         NetworkSimulatorConfig simulatorConfig;
         simulatorConfig.packetFactory = &packetFactory;
         NetworkSimulator simulator( simulatorConfig );
-        simulator.AddState( { 1.0f, 1.0f, 90 } );
+        simulator.AddState( { 1.0f, 1.0f, 25 } );
 
         while ( true )
         {  
@@ -455,7 +455,7 @@ void test_reliable_message_channel_mixture()
         NetworkSimulatorConfig simulatorConfig;
         simulatorConfig.packetFactory = &packetFactory;
         NetworkSimulator simulator( simulatorConfig );
-        simulator.AddState( { 1.0f, 1.0f, 90 } );
+        simulator.AddState( { 1.0f, 1.0f, 25 } );
 
         while ( true )
         {  
