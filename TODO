@@ -1,15 +1,8 @@
 DONE:
 
-    Added test for reconnect with server and client data blocks.
+    Sketch out new soak_protocol and soak_client_server in premake.
 
 TODO:
-
-    Add a multiple client test with server and client data blocks,
-    eg. connect max numbers of clients, each client with different
-    client data and verify the server has the correct client data
-    for each client.
-
-    --------------------------
 
     Implement a client server soak test.
 

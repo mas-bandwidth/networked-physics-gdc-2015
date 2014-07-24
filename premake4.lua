@@ -23,16 +23,30 @@ project "UnitTest"
     location "build"
     targetdir "bin"
 
-project "SoakTest"
+project "SoakProtocol"
     kind "ConsoleApp"
-    files { "tests/SoakTest.cpp" }
+    files { "tests/SoakProtocol.cpp" }
     links { "protocol" }
     targetdir "bin"
     location "build"
 
-project "Profile"
+project "SoakClientServer"
     kind "ConsoleApp"
-    files { "tests/Profile.cpp" }
+    files { "tests/SoakClientServer.cpp" }
+    links { "protocol" }
+    targetdir "bin"
+    location "build"
+
+project "ProfileProtocol"
+    kind "ConsoleApp"
+    files { "tests/ProfileProtocol.cpp" }
+    links { "protocol" }
+    targetdir "bin"
+    location "build"
+
+project "ProfileClientServer"
+    kind "ConsoleApp"
+    files { "tests/ProfileClientServer.cpp" }
     links { "protocol" }
     targetdir "bin"
     location "build"
@@ -97,7 +111,7 @@ if not os.is "windows" then
     newaction
     {
         trigger     = "test",
-        description = "Build and run all unit tests",
+        description = "Build and run unit tests",
         valid_kinds = premake.action.get("gmake").valid_kinds,
         valid_languages = premake.action.get("gmake").valid_languages,
         valid_tools = premake.action.get("gmake").valid_tools,
@@ -111,30 +125,60 @@ if not os.is "windows" then
 
     newaction
     {
-        trigger     = "soak",
-        description = "Build and run soak test",
+        trigger     = "soak_protocol",
+        description = "Build and run protocol soak test",
         valid_kinds = premake.action.get("gmake").valid_kinds,
         valid_languages = premake.action.get("gmake").valid_languages,
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 SoakTest" == 0 then
-                os.execute "cd bin; ./SoakTest"
+            if os.execute "make -j32 SoakProtocol" == 0 then
+                os.execute "cd bin; ./SoakProtocol"
             end
         end
     }
 
     newaction
     {
-        trigger     = "profile",
-        description = "Build and run profile",
+        trigger     = "soak_client_server",
+        description = "Build and run client/server soak test",
         valid_kinds = premake.action.get("gmake").valid_kinds,
         valid_languages = premake.action.get("gmake").valid_languages,
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 Profile" == 0 then
-                os.execute "cd bin; ./Profile"
+            if os.execute "make -j32 SoakClientServer" == 0 then
+                os.execute "cd bin; ./SoakClientServer"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "profile_protocol",
+        description = "Build and run protocol profile",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j32 ProfileProtocol" == 0 then
+                os.execute "cd bin; ./ProfileProtocol"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "profile_client_server",
+        description = "Build and run client server profile",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j32 ProfileClientServer" == 0 then
+                os.execute "cd bin; ./ProfileClientServer"
             end
         end
     }
