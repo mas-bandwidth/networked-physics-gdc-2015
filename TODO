@@ -1,33 +1,13 @@
 DONE:
 
-    Sketch out new soak_protocol and soak_client_server in premake.
-
 TODO:
 
-    Implement a client server soak test.
+    How to detect when things are broken? 
 
-    In this test there should be n clients and m servers.
+    At minimum we should exchange messages back and forth between
+    client and server to verify the connection is actually functional.
 
-    Clients randomly try to connect to a server by index.
-
-    Clients randomly disconnect from a server while connected.
-
-    There should be more clients than there are available slots.
-
-    Ideally clients would remain connected to a server for a
-    reasonable amount of time, vs. continually connecting and
-    disconnecting.
-
-    Clients exchange basic heartbeat messages, eg. hello, response
-    between client and server, to make sure the protocol is functional,
-    we track the time sense the last message received for connected
-    clients and if it exceeds two seconds then it is an error.
-
-    If a client times out for any reason (during connect, or after connect)
-    then this is an error condition. Clients should always be cleanly
-    told they cannot connect, should not be dirty disconnected.
-
-    --------------------------
+    Is there anything else that could be an error?
 
     Look at this in the profiler. Are there any obvious bottlenecks?
 
@@ -123,6 +103,8 @@ TODO:
 
 
 WOULD BE NICE:
+
+    Would be nice to create an address by string, and then have a port override arg
 
     -----------------------------
 
