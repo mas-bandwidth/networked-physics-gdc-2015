@@ -79,6 +79,8 @@ namespace protocol
         m_clientGuid = generate_guid();
 
 //            printf( "connect: set client guid = %llx\n", m_clientGuid );
+
+        m_lastPacketReceiveTime = m_timeBase.time;          // IMPORTANT: otherwise times out immediately after connect once time value gets large
     }
 
     void Client::Connect( const char * hostname )

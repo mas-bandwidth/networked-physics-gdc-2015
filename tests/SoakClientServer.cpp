@@ -14,6 +14,8 @@ using namespace protocol;
 
 struct ClientInfo
 {
+    int state;
+    int serverIndex;
     Client * client;
     Block * clientData;
     NetworkInterface * networkInterface;
@@ -85,7 +87,7 @@ void soak_test()
 
     ClientInfo clientInfo[NumClients];
 
-    for( int i = 0; i < NumClients; ++i )
+    for ( int i = 0; i < NumClients; ++i )
     {
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = BaseClientPort + i;
@@ -107,13 +109,15 @@ void soak_test()
         clientConfig.networkInterface = clientInfo[i].networkInterface;
 
         clientInfo[i].client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
+        clientInfo[i].state = 0;
+        clientInfo[i].serverIndex = -1;
     }
 
     TimeBase timeBase;
     timeBase.deltaTime = 1.0 / 60.0;
 
     while ( true )
-    //for ( int iteration = 0; iteration < 1024; ++iteration )
+    //for ( int i = 0; i < 10000; ++i )
     {
         for ( int i = 0; i < NumServers; ++i )
         {
@@ -124,12 +128,29 @@ void soak_test()
         {
             clientInfo[i].client->Update( timeBase );
 
+            const int oldState = clientInfo[i].state;
+            const int newState = clientInfo[i].state = clientInfo[i].client->GetState();
+            if ( newState != oldState )
+            {
+                if ( newState == CLIENT_STATE_CONNECTED )
+                {
+                    printf( "%09.2f - client %d successfully connected to server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
+                }
+
+                if ( newState == CLIENT_STATE_DISCONNECTED )
+                {
+                    printf( "%09.2f - client %d failed to connect to or was disconnected from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
+                }
+            }
+
             if ( clientInfo[i].client->IsConnected() )
             {
                 if ( ( rand() % 100 ) == 0 )
                 {
-                    printf( "disconnect client %d\n", i );
+                    printf( "%09.2f - disconnect client %d from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
                     clientInfo[i].client->Disconnect();
+                    clientInfo[i].state = 0;
+                    clientInfo[i].serverIndex = -1;
                 }
             }
 
@@ -138,8 +159,9 @@ void soak_test()
                 if ( ( rand() % 200 ) == 0 )
                 {
                     const int serverIndex = rand() % NumServers;
-                    printf( "connect client %d to server %d\n", i, serverIndex );
-                    clientInfo[i].client->Connect( serverInfo[serverIndex].address );                    
+                    printf( "%09.2f - connect client %d to server %d\n", timeBase.time, i, serverIndex );
+                    clientInfo[i].client->Connect( serverInfo[serverIndex].address ); 
+                    clientInfo[i].serverIndex = serverIndex;                  
                 }
             }
         }
@@ -149,6 +171,12 @@ void soak_test()
 
     for ( int i = 0; i < NumServers; ++i )
     {
+        printf( "server %d:\n", i );
+        for ( int j = 0; j < NumClientsPerServer; ++j )
+        {
+            printf( " - client slot %d: %s\n", j, GetServerClientStateName( serverInfo[i].server->GetClientState( j ) ) );
+        }
+
         PROTOCOL_DELETE( memory::default_allocator(), Server, serverInfo[i].server );
         PROTOCOL_DELETE( memory::default_allocator(), Block, serverInfo[i].serverData );
         PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, serverInfo[i].networkInterface );
@@ -156,6 +184,8 @@ void soak_test()
 
     for ( int i = 0; i < NumClients; ++i )
     {
+        printf( "client %d: %s\n", i, GetClientStateName( clientInfo[i].client->GetState() ) );
+
         PROTOCOL_DELETE( memory::default_allocator(), Client, clientInfo[i].client );
         PROTOCOL_DELETE( memory::default_allocator(), Block, clientInfo[i].clientData );
         PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInfo[i].networkInterface );

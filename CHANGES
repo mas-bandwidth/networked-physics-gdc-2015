@@ -1,3 +1,41 @@
+Friday Morning, July 26, 2014:
+------------------------------
+
+    Back to client/server soak test.
+    
+    How to detect when things are broken? 
+
+    Detect connect and disconnect via state and print it.
+
+    The soak test seems to reach a steady state where clients are continually
+    trying to connect, but I see no clients disconnecting from servers.
+
+    This indicates to me that the servers are getting stuck in a state
+    where they are no longer able to accept connections.
+
+    It seems that this happens even with a sleep, so it's not socket starvation.
+
+    What is happening? Are client slots not timing out or something?
+
+    It definitely seems like a bug!
+
+    Note: Still happens even if I sleep for 10ms on each iteration!
+
+    Server client slots are stuck in "Sending challenge".
+
+    What state are the clients in?
+
+    Mostly disconnected.
+
+    Theory: clients are timing out immediately after connect because the
+    last packet receive time is so old (from a previous session).
+
+    Make sure to bump the last packet receive time to the current time
+    at the point of connect, so it doesn't time out right away.
+
+    Yes indeed. That was it! :D
+
+
 Thursday Evening, July 25, 2014:
 --------------------------------
 

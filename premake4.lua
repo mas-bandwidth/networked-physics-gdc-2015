@@ -58,6 +58,7 @@ if _ACTION == "clean" then
     os.rmdir "build"
     if not os.is "windows" then
         os.execute "rm -f Protocol.zip"
+        os.execute "rm *.txt"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"

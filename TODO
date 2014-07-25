@@ -4,6 +4,15 @@ TODO:
 
     -----------------------
 
+    On connect should verify that the client and server data are correct.
+
+    All disconnects should be clean.
+
+    Exchange messages between client and server and if no messages
+    are received for several seconds then that is an error.
+
+    -----------------------
+
     Implement safer clean disconnect, eg. send disconnect packets once per-second
     for n seconds until ack, vs. what is done now, a single packet which can be
     lost!
@@ -11,32 +20,6 @@ TODO:
     Bring back tests that were broken. Make sure they work now.
 
     -----------------------
-
-    Back to client/server soak test.
-    
-    How to detect when things are broken? 
-
-    If any client or server client slots are in timeout then that should be an error.
-
-    All disconnects should be clean.
-
-    -----------------------
-
-    Detect connect and disconnect via state and print it.
-
-    -----------------------
-
-    At minimum we should exchange messages back and forth between
-    client and server to verify the connection is actually functional.
-
-    On connect should verify that the client and server data are correct.
-
-    Is there anything else that could be an error?
-
-    Look at this in the profiler. Are there any obvious bottlenecks?
-
-    --------------------------
-
 
 
 
@@ -46,7 +29,7 @@ TODO:
 
     ------------------------
 
-    Implement LZ compressor for compressing large blocks, and for compressing
+    Integrate LZ compressor for compressing large blocks, and for compressing
     initial block sent down to client.
 
     Ideally, LZ4 could be something enabled via config that is used, if it exists
@@ -59,9 +42,13 @@ TODO:
     for example, put a bit in the header indicating that the packet is compressed,
     if LZ4 is enabled, and then decode the packet via LZ4.
 
-    Also make sure to detect if the packet has been made larger via compression
-    that it would be uncompressed, and in that case don't bother to send the
-    compressed version.
+    This would have to live at the network interface level, presumably.
+
+    Potentially set a minimum packet size or block size for LZ compression,
+    and even then, check if the compressed packet/block is larger than uncompressed
+    and send uncompressed instead.
+
+    Per-packet or block (large block), we would need a bit indicating if compressed.
 
     ------------------------
 

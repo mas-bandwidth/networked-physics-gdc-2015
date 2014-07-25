@@ -118,6 +118,21 @@ namespace protocol
         SERVER_CLIENT_STATE_CONNECTED                           // client is fully connected. connection packets are now exchanged.
     };
 
+    inline const char * GetServerClientStateName( int clientState )
+    {
+        switch ( clientState )
+        {
+            case SERVER_CLIENT_STATE_DISCONNECTED:              return "disconnected";
+            case SERVER_CLIENT_STATE_SENDING_CHALLENGE:         return "sending challenge";
+            case SERVER_CLIENT_STATE_SENDING_SERVER_DATA:       return "sending server data";
+            case SERVER_CLIENT_STATE_READY_FOR_CONNECTION:      return "ready for connection";
+            case SERVER_CLIENT_STATE_CONNECTED:                 return "connected";
+            default: 
+                PROTOCOL_ASSERT( 0 );
+                return "???";
+        }
+    }
+
     enum ConnectionCounters
     {
         CONNECTION_COUNTER_PACKETS_READ,                        // number of packets read
