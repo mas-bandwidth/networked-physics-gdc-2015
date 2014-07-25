@@ -66,6 +66,8 @@ do                                                                              
 
 namespace protocol
 {
+    void sleep_milliseconds( uint32_t milliseconds );
+
     inline uint32_t host_to_network( uint32_t value )
     {
 #if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN

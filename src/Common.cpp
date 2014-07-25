@@ -6,6 +6,10 @@
 #include "Common.h"
 #include <time.h>
 
+#if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+#include <unistd.h>
+#endif
+
 namespace protocol
 {
     void DefaultAssertHandler( const char * condition, 
@@ -24,6 +28,17 @@ namespace protocol
     {
         printf( "Check failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
         __builtin_trap();
+    }
+
+    void sleep_milliseconds( uint32_t milliseconds )
+    {
+        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+            usleep( milliseconds * 1000);
+        #elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+            Sleep( milliseconds );
+        #else
+            #error need sleep_milliseconds implementation for this platform!
+        #endif
     }
 
     uint64_t generate_guid()

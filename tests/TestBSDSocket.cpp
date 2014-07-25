@@ -2,10 +2,6 @@
 #include "BSDSocket.h"
 #include "TestPackets.h"
 
-// todo: these are probably slowing down compile significantly
-#include <chrono>
-#include <thread>
-
 using namespace protocol;
 
 void test_bsd_socket_send_and_receive_ipv4()
@@ -31,13 +27,9 @@ void test_bsd_socket_send_and_receive_ipv4()
         TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
 
-        std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
-
         bool receivedConnectPacket = false;
         bool receivedUpdatePacket = false;
         bool receivedDisconnectPacket = false;
-
-        int iterations = 0;
 
         ConnectPacket connectPacketTemplate;
         UpdatePacket updatePacketTemplate;
@@ -53,8 +45,6 @@ void test_bsd_socket_send_and_receive_ipv4()
 
         while ( true )
         {
-            PROTOCOL_CHECK( iterations++ < 10 );
-
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
             auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
@@ -72,8 +62,6 @@ void test_bsd_socket_send_and_receive_ipv4()
             interface.SendPacket( address, disconnectPacket );
 
             interface.Update( timeBase );
-
-            std::this_thread::sleep_for( ms );
 
             while ( true )
             {
@@ -144,8 +132,6 @@ void test_bsd_socket_send_and_receive_ipv6()
         TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
 
-        std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
-
         bool receivedConnectPacket = false;
         bool receivedUpdatePacket = false;
         bool receivedDisconnectPacket = false;
@@ -162,12 +148,8 @@ void test_bsd_socket_send_and_receive_ipv6()
 
         disconnectPacketTemplate.x = -100;
 
-        int iterations = 0;
-
         while ( true )
         {
-            PROTOCOL_CHECK( iterations++ < 10 );
-
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
             auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
@@ -185,8 +167,6 @@ void test_bsd_socket_send_and_receive_ipv6()
             interface.SendPacket( address, disconnectPacket );
 
             interface.Update( timeBase );
-
-            std::this_thread::sleep_for( ms );
 
             while ( true )
             {
@@ -265,8 +245,6 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
         TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
 
-        std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
-
         bool receivedConnectPacket = false;
         bool receivedUpdatePacket = false;
         bool receivedDisconnectPacket = false;
@@ -283,12 +261,8 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
 
         disconnectPacketTemplate.x = -100;
 
-        int iterations = 0;
-
         while ( true )
         {
-            PROTOCOL_CHECK( iterations++ < 4 );
-
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
             auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
@@ -307,8 +281,6 @@ void test_bsd_socket_send_and_receive_multiple_ipv4()
 
             interface_sender.Update( timeBase );
             interface_receiver.Update( timeBase );
-
-            std::this_thread::sleep_for( ms );
 
             while ( true )
             {
@@ -385,8 +357,6 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
         TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
 
-        std::chrono::milliseconds ms( (int) ( timeBase.deltaTime * 1000 ) );
-
         bool receivedConnectPacket = false;
         bool receivedUpdatePacket = false;
         bool receivedDisconnectPacket = false;
@@ -403,12 +373,8 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
 
         disconnectPacketTemplate.x = -100;
 
-        int iterations = 0;
-
         while ( true )
         {
-            PROTOCOL_CHECK( iterations++ < 4 );
-
             auto connectPacket = (ConnectPacket*) packetFactory.Create( PACKET_CONNECT );
             auto updatePacket = (UpdatePacket*) packetFactory.Create( PACKET_UPDATE );
             auto disconnectPacket = (DisconnectPacket*) packetFactory.Create( PACKET_DISCONNECT );
@@ -427,8 +393,6 @@ void test_bsd_socket_send_and_receive_multiple_ipv6()
 
             interface_sender.Update( timeBase );
             interface_receiver.Update( timeBase );
-
-            std::this_thread::sleep_for( ms );
 
             while ( true )
             {

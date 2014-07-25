@@ -2,10 +2,34 @@ DONE:
 
 TODO:
 
+    -----------------------
+
+    Implement safer clean disconnect, eg. send disconnect packets once per-second
+    for n seconds until ack, vs. what is done now, a single packet which can be
+    lost!
+
+    Bring back tests that were broken. Make sure they work now.
+
+    -----------------------
+
+    Back to client/server soak test.
+    
     How to detect when things are broken? 
+
+    If any client or server client slots are in timeout then that should be an error.
+
+    All disconnects should be clean.
+
+    -----------------------
+
+    Detect connect and disconnect via state and print it.
+
+    -----------------------
 
     At minimum we should exchange messages back and forth between
     client and server to verify the connection is actually functional.
+
+    On connect should verify that the client and server data are correct.
 
     Is there anything else that could be an error?
 
@@ -103,6 +127,8 @@ TODO:
 
 
 WOULD BE NICE:
+
+    -----------------------------
 
     Would be nice to create an address by string, and then have a port override arg
 

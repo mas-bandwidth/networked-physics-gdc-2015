@@ -1,0 +1,340 @@
+==== Building protocol (debug64) ====
+==== Building UnitTest (debug64) ====
+TestClientServer.cpp
+Linking UnitTest
+test_memory
+test_scratch
+test_temp_allocator
+test_array
+test hash
+test_multi_hash
+test_murmur_hash
+test_queue
+test_pointer_arithmetic
+test_string_stream
+test_sequence
+test_endian
+test_address4
+test_address6
+test_message_factory
+test_packet_factory
+test_bitpacker
+test_stream
+test_sliding_window
+test_generate_ack_bits
+test_block
+test_bsd_socket_send_and_receive_ipv4
+test_bsd_socket_send_and_receive_ipv6
+test_bsd_socket_send_and_receive_multiple_ipv4
+test_bsd_socket_send_and_receive_multiple_ipv6
+test_connection
+test_acks
+test_reliable_message_channel_messages
+test_reliable_message_channel_small_blocks
+test_reliable_message_channel_large_blocks
+test_reliable_message_channel_mixture
+test_client_initial_state
+test_client_connection_request_timeout
+test_client_connection_request_denied
+test_client_connection_challenge
+test_client_connection_challenge_response
+test_client_connection_established
+test_client_connection_messages
+test_client_connection_server_full
+test_client_connection_timeout
+test_client_connection_already_connected
+test_client_connection_reconnect
+test_client_side_disconnect
+test_data_block_send_and_receive
+test_data_block_send_and_receive_packet_loss
+test_server_data
+test_client_data
+test_client_and_server_data
+test_client_and_server_data_reconnect
+disconnect client
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+test_client_and_server_data_multiple_clients
+test_server_data_too_large
+test_memory
+test_scratch
+test_temp_allocator
+test_array
+test hash
+test_multi_hash
+test_murmur_hash
+test_queue
+test_pointer_arithmetic
+test_string_stream
+test_sequence
+test_endian
+test_address4
+test_address6
+test_message_factory
+test_packet_factory
+test_bitpacker
+test_stream
+test_sliding_window
+test_generate_ack_bits
+test_block
+test_bsd_socket_send_and_receive_ipv4
+test_bsd_socket_send_and_receive_ipv6
+test_bsd_socket_send_and_receive_multiple_ipv4
+test_bsd_socket_send_and_receive_multiple_ipv6
+test_connection
+test_acks
+test_reliable_message_channel_messages
+test_reliable_message_channel_small_blocks
+test_reliable_message_channel_large_blocks
+test_reliable_message_channel_mixture
+test_client_initial_state
+test_client_connection_request_timeout
+test_client_connection_request_denied
+test_client_connection_challenge
+test_client_connection_challenge_response
+test_client_connection_established
+test_client_connection_messages
+test_client_connection_server_full
+test_client_connection_timeout
+test_client_connection_already_connected
+test_client_connection_reconnect
+test_client_side_disconnect
+test_data_block_send_and_receive
+test_data_block_send_and_receive_packet_loss
+test_server_data
+test_client_data
+test_client_and_server_data
+test_client_and_server_data_reconnect
+disconnect client
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 0
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 2, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 1
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 2
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 3, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 4, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 3
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+client 5, client slot 4
+test_client_and_server_data_multiple_clients
+test_server_data_too_large
+test_memory
+test_scratch
+test_temp_allocator
+test_array
+test hash
+test_multi_hash
+test_murmur_hash
+test_queue
+test_pointer_arithmetic
+test_string_stream
+test_sequence
+test_endian
+test_address4
+test_address6
+test_message_factory
+test_packet_factory
+test_bitpacker
+test_stream
+test_sliding_window
+test_generate_ack_bits
+test_block
+test_bsd_socket_send_and_receive_ipv4
+test_bsd_socket_send_and_receive_ipv6
+test_bsd_socket_send_and_receive_multiple_ipv4
+test_bsd_socket_send_and_receive_multiple_ipv6
+test_connection
+test_acks
+test_reliable_message_channel_messages
+test_reliable_message_channel_small_blocks
+test_reliable_message_channel_large_blocks
+test_reliable_message_channel_mixture
+test_client_inBuilding configurations...
+Running action 'test'...
+Done.

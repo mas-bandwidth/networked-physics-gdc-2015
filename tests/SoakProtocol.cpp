@@ -55,9 +55,9 @@ protected:
 void soak_test()
 {
 #if PROFILE
-    printf( "[profile]\n" );
+    printf( "[profile protocol]\n" );
 #else
-    printf( "[soak test]\n" );
+    printf( "[soak protocol]\n" );
 #endif
 
     TestMessageFactory messageFactory( memory::default_allocator() );

@@ -3,6 +3,8 @@
 #if PROTOCOL_USE_RESOLVER
 
 #include "DNSResolver.h"
+#include <chrono>               // todo: remove this and replace with sleep_milliseconds in Common.h
+#include <thread>
 
 using namespace protocol;
 

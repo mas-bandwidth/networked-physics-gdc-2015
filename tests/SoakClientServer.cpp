@@ -9,8 +9,6 @@
 #include "Server.h"
 #include "Network.h"
 #include <time.h>
-#include <chrono>
-#include <thread>
 
 using namespace protocol;
 
@@ -51,7 +49,7 @@ void soak_test()
 
     TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
 
-    // create a bunch of servers starting at port 1000
+    // create a bunch of servers
 
     ServerInfo serverInfo[NumServers];
 
@@ -82,6 +80,8 @@ void soak_test()
 
         serverInfo[i].server = PROTOCOL_NEW( memory::default_allocator(), Server, serverConfig );
     }
+
+    // create a bunch of clients
 
     ClientInfo clientInfo[NumClients];
 
@@ -143,8 +143,6 @@ void soak_test()
                 }
             }
         }
-
-        std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 
         timeBase.time += timeBase.deltaTime;
     }

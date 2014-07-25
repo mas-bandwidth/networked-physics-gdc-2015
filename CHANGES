@@ -1,3 +1,23 @@
+Thursday Evening, July 25, 2014:
+--------------------------------
+
+    Passed over unit tests and removed sleeps. Fixed a bunch of stuff.
+
+    Next, it seems that eventually a sleep is required, but not for common case.
+
+    Solution should be, if iterations exceed 256 for common loops, sleep 1 ms.
+
+    This should be fast in the common case, but won't timeout and break tests
+    when UDP packets get dropped / queued up by the OS.
+
+    Goal is to get the test looping infinitely at high speed, eg. run overnight.
+
+    It would seem that I should have a sleep function in common, and have
+    platform specific sleep implementation. Fuck std::chrono it is overengineered!
+
+    Added a neat function to sleep 1ms after 256 iterations. Sorted!
+
+
 Wednesday Evening, July 24, 2014:
 ---------------------------------
 
