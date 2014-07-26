@@ -2,25 +2,13 @@ DONE:
 
 TODO:
 
-    -----------------------
-
-    On connect should verify that the client and server data are correct.
-
-    All disconnects should be clean.
-
     Exchange messages between client and server and if no messages
     are received for several seconds then that is an error.
 
     -----------------------
 
-    Implement safer clean disconnect, eg. send disconnect packets once per-second
-    for n seconds until ack, vs. what is done now, a single packet which can be
-    lost!
-
-    Bring back tests that were broken. Make sure they work now.
 
     -----------------------
-
 
 
 
@@ -114,6 +102,21 @@ TODO:
 
 
 WOULD BE NICE:
+
+    -----------------------------
+
+    It would be nice to have a small checksum or number that could be used
+    to filter out previous connection packets from the previous server.
+
+    This is important because different server connections may have
+    different server data, and serializing connection packets properly
+    requires the same server data.
+
+    Is this a real problem in practice? Probably not, but for a hardened
+    shipping solution, the connection packets should have some reliability
+    or tolerance for this, at least, an 8 bit number that cycles up once
+    per-client connect, that is used to filter out connection packets that
+    are stale, eg. client connect #
 
     -----------------------------
 

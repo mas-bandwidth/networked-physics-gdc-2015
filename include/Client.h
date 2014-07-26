@@ -95,6 +95,8 @@ namespace protocol
 
         uint32_t GetExtendedError() const;
 
+        void ClearError();
+
         #if PROTOCOL_USE_RESOLVER
         Resolver * GetResolver() const;
         #endif
@@ -104,6 +106,10 @@ namespace protocol
         Connection * GetConnection() const;
 
         const Block * GetServerData() const;
+
+        uint64_t GetClientGuid() const { return m_clientGuid; }
+        
+        uint64_t GetServerGuid() const { return m_serverGuid; }
 
         void Update( const TimeBase & timeBase );
 
@@ -132,8 +138,6 @@ namespace protocol
         void UpdateTimeout();
 
         void DisconnectAndSetError( ClientError error, uint32_t extendedError = 0 );
-
-        void ClearError();
 
         void ClearStateData();
     };

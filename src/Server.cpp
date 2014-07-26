@@ -372,7 +372,7 @@ namespace protocol
             return;
         }
 
-        int clientIndex = FindClientIndex( address );
+        int clientIndex = FindClientSlot( address );
         if ( clientIndex != -1 && m_clients[clientIndex].clientGuid != packet->clientGuid )
         {
             // printf( "client is already connected. denying connection request\n" );
@@ -383,7 +383,7 @@ namespace protocol
             return;
         }
 
-        if ( FindClientIndex( address, packet->clientGuid ) != -1 )
+        if ( FindClientSlot( address, packet->clientGuid ) != -1 )
         {
             // printf( "ignoring connection request. client already has a slot\n" );
             return;
@@ -431,28 +431,14 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-//            printf( "server received challenge response packet\n" );
-
-        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid, packet->serverGuid );
         if ( clientIndex == -1 )
-        {
-//                printf( "found no matching client\n" );
             return;
-        }
 
         ClientData & client = m_clients[clientIndex];
 
-        if ( client.serverGuid != packet->serverGuid )
-        {
-//                printf( "client server guid does not match\n" );
-            return;
-        }
-
         if ( client.state != SERVER_CLIENT_STATE_SENDING_CHALLENGE )
-        {
-//                printf( "ignoring because client slot is not in sending challenge state\n" );
             return;
-        }
 
         client.accumulator = 0.0;
         client.lastPacketTime = m_timeBase.time;
@@ -463,7 +449,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
         if ( clientIndex == -1 )
             return;
 
@@ -488,7 +474,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
         if ( clientIndex == -1 )
             return;
         
@@ -518,7 +504,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
         if ( clientIndex == -1 )
             return;
         
@@ -546,7 +532,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientIndex( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
         if ( clientIndex == -1 )
             return;
 
@@ -561,7 +547,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientIndex( packet->GetAddress() );
+        const int clientIndex = FindClientSlot( packet->GetAddress() );
         if ( clientIndex == -1 )
             return;
 
@@ -574,7 +560,7 @@ namespace protocol
         client.lastPacketTime = m_timeBase.time;
     }
 
-    int Server::FindClientIndex( const Address & address ) const
+    int Server::FindClientSlot( const Address & address ) const
     {
         for ( int i = 0; i < m_numClients; ++i )
         {
@@ -582,15 +568,13 @@ namespace protocol
                 continue;
             
             if ( m_clients[i].address == address )
-            {
-                PROTOCOL_ASSERT( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
                 return i;
-            }
         }
+
         return -1;
     }
 
-    int Server::FindClientIndex( const Address & address, uint64_t clientGuid ) const
+    int Server::FindClientSlot( const Address & address, uint64_t clientGuid ) const
     {
         for ( int i = 0; i < m_numClients; ++i )
         {
@@ -598,11 +582,23 @@ namespace protocol
                 continue;
             
             if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid )
-            {
-                PROTOCOL_ASSERT( m_clients[i].state != SERVER_CLIENT_STATE_DISCONNECTED );
                 return i;
-            }
         }
+
+        return -1;
+    }
+
+    int Server::FindClientSlot( const Address & address, uint64_t clientGuid, uint64_t serverGuid ) const
+    {
+        for ( int i = 0; i < m_numClients; ++i )
+        {
+            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
+                continue;
+            
+            if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid && m_clients[i].serverGuid == serverGuid )
+                return i;
+        }
+
         return -1;
     }
 

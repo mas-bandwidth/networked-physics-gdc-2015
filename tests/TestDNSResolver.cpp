@@ -3,8 +3,6 @@
 #if PROTOCOL_USE_RESOLVER
 
 #include "DNSResolver.h"
-#include <chrono>               // todo: remove this and replace with sleep_milliseconds in Common.h
-#include <thread>
 
 using namespace protocol;
 
@@ -24,7 +22,7 @@ void test_dns_resolve()
 
     double t = 0.0;
     double dt = 0.1f;
-    std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    int ms = (int) ( dt * 1000 );
 
     for ( int i = 0; i < 50; ++i )
     {
@@ -34,7 +32,7 @@ void test_dns_resolve()
         if ( google_entry && google_entry->status != RESOLVE_IN_PROGRESS )
             break;
 
-        std::this_thread::sleep_for( ms );
+        sleep_milliseconds( ms );
 
         t += dt;
     }
@@ -61,7 +59,7 @@ void test_dns_resolve_with_port()
 
     double t = 0.0;
     double dt = 0.1f;
-    std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    int ms = (int) ( dt * 1000 );
 
     for ( int i = 0; i < 50; ++i )
     {
@@ -71,7 +69,7 @@ void test_dns_resolve_with_port()
         if ( google_entry && google_entry->status != RESOLVE_IN_PROGRESS )
             break;
 
-        std::this_thread::sleep_for( ms );
+        sleep_milliseconds( ms );
 
         t += dt;
     }
@@ -102,7 +100,7 @@ void test_dns_resolve_failure()
 
     double t = 0.0;
     double dt = 0.1f;
-    std::chrono::milliseconds ms( (int) ( dt * 1000 ) );
+    int ms = (int) ( dt * 1000 );
 
     while ( true )
     {
@@ -112,7 +110,7 @@ void test_dns_resolve_failure()
         if ( entry && entry->status != RESOLVE_IN_PROGRESS )
             break;
 
-        std::this_thread::sleep_for( ms );
+        sleep_milliseconds( ms );
 
         t += dt;
     }

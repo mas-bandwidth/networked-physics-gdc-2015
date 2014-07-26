@@ -111,6 +111,8 @@ namespace protocol
 
         const Block * GetClientData( int clientIndex ) const;
 
+        int FindClientSlot( const Address & address, uint64_t clientGuid, uint64_t serverGuid ) const;
+
     protected:
 
         void UpdateClients();
@@ -143,9 +145,9 @@ namespace protocol
 
         void ProcessConnectionPacket( ConnectionPacket * packet );
 
-        int FindClientIndex( const Address & address ) const;
+        int FindClientSlot( const Address & address ) const;
 
-        int FindClientIndex( const Address & address, uint64_t clientGuid ) const;
+        int FindClientSlot( const Address & address, uint64_t clientGuid ) const;
 
         int FindFreeClientSlot() const;
 

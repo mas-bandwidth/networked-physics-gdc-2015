@@ -16,6 +16,7 @@ extern "C"
 {
     extern void * memset( void * str, int c, size_t n );
     extern void * memcpy( void * dst, const void * src, size_t n );
+    extern int memcmp ( const void * ptr1, const void * ptr2, size_t num );
     extern void * malloc( size_t size );
     extern void free( void * ptr );
     extern int rand();

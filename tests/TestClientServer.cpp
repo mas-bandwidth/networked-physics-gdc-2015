@@ -748,11 +748,6 @@ void test_client_connection_messages()
 
 void test_client_connection_disconnect()
 {
-    // todo: to fix this connection the server must continually send
-    // disconnect packets for up to timeout time, once per-second so
-    // the client statistically will always get this packet.
-
-    /*
     printf( "test_client_connection_disconnect\n" );
 
     memory::initialize();
@@ -854,7 +849,6 @@ void test_client_connection_disconnect()
         PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
         PROTOCOL_CHECK( client.GetExtendedError() == 0 );
     }
-    */
 }
 
 void test_client_connection_server_full()
@@ -1377,10 +1371,6 @@ void test_client_connection_reconnect()
 
 void test_client_side_disconnect()
 {
-    // todo: to fix this test, client must remember and send out disconnect packets
-    // for the previous connection for say... max timeout seconds, once per-second.
-
-    /*
     printf( "test_client_side_disconnect\n" );
 
     memory::initialize();
@@ -1489,7 +1479,6 @@ void test_client_side_disconnect()
     }
 
     memory::shutdown();
-    */
 }
 
 void test_server_data()

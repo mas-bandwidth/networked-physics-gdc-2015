@@ -14,6 +14,7 @@ using namespace protocol;
 
 struct ClientInfo
 {
+    Address address;
     int state;
     int serverIndex;
     Client * client;
@@ -89,6 +90,9 @@ void soak_test()
 
     for ( int i = 0; i < NumClients; ++i )
     {
+        clientInfo[i].address = Address( "::1" );
+        clientInfo[i].address.SetPort( BaseClientPort + i );
+
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = BaseClientPort + i;
         bsdSocketConfig.maxPacketSize = 1200;
@@ -128,18 +132,52 @@ void soak_test()
         {
             clientInfo[i].client->Update( timeBase );
 
+            if ( clientInfo[i].client->HasError() )
+            {
+                printf( "%09.2f - client %d error: %s\n", timeBase.time, i, GetClientErrorString( clientInfo[i].client->GetError() ) );
+                clientInfo[i].client->ClearError();
+            }
+
             const int oldState = clientInfo[i].state;
             const int newState = clientInfo[i].state = clientInfo[i].client->GetState();
             if ( newState != oldState )
             {
                 if ( newState == CLIENT_STATE_CONNECTED )
                 {
-                    printf( "%09.2f - client %d successfully connected to server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
+                    const int j = clientInfo[i].serverIndex;
+
+                    printf( "%09.2f - client %d successfully connected to server %d\n", timeBase.time, i, j );
+
+                    PROTOCOL_CHECK( j >= 0 );
+                    PROTOCOL_CHECK( j < NumServers );
+
+                    int clientSlot = serverInfo[j].server->FindClientSlot( clientInfo[i].address, clientInfo[i].client->GetClientGuid(), clientInfo[i].client->GetServerGuid() );
+
+                    PROTOCOL_CHECK( clientSlot != -1 );
+
+                    // verify client data matches
+
+                    const Block * serverClientData = serverInfo[j].server->GetClientData( clientSlot );
+                    PROTOCOL_CHECK( serverClientData );
+                    PROTOCOL_CHECK( serverClientData->GetSize() > 0 );
+                    PROTOCOL_CHECK( serverClientData->GetSize() == clientInfo[i].clientData->GetSize() );
+                    PROTOCOL_CHECK( memcmp( serverClientData->GetData(), clientInfo[i].clientData->GetData(), serverClientData->GetSize() ) == 0 );
+
+                    // verify server data matches
+
+                    const Block * clientServerData = clientInfo[i].client->GetServerData();
+                    PROTOCOL_CHECK( clientServerData );
+                    PROTOCOL_CHECK( clientServerData->GetSize() > 0 );
+                    PROTOCOL_CHECK( clientServerData->GetSize() == serverInfo[j].serverData->GetSize() );
+                    PROTOCOL_CHECK( memcmp( clientServerData->GetData(), serverInfo[j].serverData->GetData(), clientServerData->GetSize() ) == 0 );
                 }
 
                 if ( newState == CLIENT_STATE_DISCONNECTED )
                 {
-                    printf( "%09.2f - client %d failed to connect to or was disconnected from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
+                    if ( oldState != CLIENT_STATE_CONNECTED )
+                        printf( "%09.2f - client %d failed to connect to server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
+                    else
+                        printf( "%09.2f - client %d was disconnected from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
                 }
             }
 

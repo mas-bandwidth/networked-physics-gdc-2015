@@ -1,3 +1,19 @@
+Saturday Morning, July 27, 2014:
+--------------------------------
+
+    Need a way to identify a client slot on the server.
+
+    If client had an accessor for client guid, server guid,
+    and the server had a public function to find a client by
+    client guid, server guid and address.
+
+    Then I could look up a client slot on the server (or -1 if not connected)
+
+    On connect verify that the client and server data are correct.
+
+    Pass over code and clean up
+
+
 Friday Morning, July 26, 2014:
 ------------------------------
 
