@@ -115,3 +115,110 @@ void test_stream()
     for ( int i = 0; i < readObject.numItems; ++i )
         PROTOCOL_CHECK( readObject.items[i] == writeObject.items[i] );
 }
+
+struct ContextA
+{
+    int min = -10;
+    int max = +5;
+};
+
+struct ContextB
+{
+    int min = -50;
+    int max = 23;
+};
+
+struct TestContextObject : public Object
+{
+    int a,b;
+
+    TestContextObject()
+    {
+        a = 0;
+        b = 0;
+    }
+
+    template <typename Stream> void Serialize( Stream & stream )
+    {
+        auto context_a = (const ContextA*) stream.GetContext( 0 );
+        auto context_b = (const ContextB*) stream.GetContext( 1 );
+
+        PROTOCOL_CHECK( context_a );
+        PROTOCOL_CHECK( context_b );
+
+        serialize_int( stream, a, context_a->min, context_a->max );
+        serialize_int( stream, b, context_b->min, context_b->max );
+    }
+
+    void SerializeRead( ReadStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeWrite( WriteStream & stream )
+    {
+        Serialize( stream );
+    }
+
+    void SerializeMeasure( MeasureStream & stream )
+    {
+        Serialize( stream );
+    }
+};
+
+void test_stream_context()
+{
+    printf( "test_stream_context\n" );
+
+    const int BufferSize = 256;
+
+    uint8_t buffer[BufferSize];
+
+    ContextA context_a;
+    ContextB context_b;
+
+    // write the object with context
+
+    TestContextObject writeObject;
+    writeObject.a = 2;
+    writeObject.b = 7;
+    {
+        WriteStream writeStream( buffer, BufferSize );
+
+        PROTOCOL_CHECK( writeStream.GetContext(0) == nullptr );
+        PROTOCOL_CHECK( writeStream.GetContext(1) == nullptr );
+
+        writeStream.SetContext( 0, &context_a );
+        writeStream.SetContext( 1, &context_b );
+
+        PROTOCOL_CHECK( writeStream.GetContext(0) == &context_a );
+        PROTOCOL_CHECK( writeStream.GetContext(1) == &context_b );
+
+        writeObject.SerializeWrite( writeStream );
+
+        writeStream.Flush();
+    }
+
+    // read the object back with context
+
+    TestContextObject readObject;
+    {
+        ReadStream readStream( buffer, BufferSize );
+
+        PROTOCOL_CHECK( readStream.GetContext(0) == nullptr );
+        PROTOCOL_CHECK( readStream.GetContext(1) == nullptr );
+
+        readStream.SetContext( 0, &context_a );
+        readStream.SetContext( 1, &context_b );
+
+        PROTOCOL_CHECK( readStream.GetContext(0) == &context_a );
+        PROTOCOL_CHECK( readStream.GetContext(1) == &context_b );
+
+        readObject.SerializeRead( readStream );
+    }
+
+    // verify read object matches written object
+
+    PROTOCOL_CHECK( readObject.a == writeObject.a );
+    PROTOCOL_CHECK( readObject.b == writeObject.b );
+}

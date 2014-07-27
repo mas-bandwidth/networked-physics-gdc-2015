@@ -16,6 +16,7 @@ namespace protocol
     const int MaxHostName = 256;
     const int MaxChannelName = 64;
     const int MaxFragmentSize = 1024;
+    const int MaxContexts = 16;
 }
 
 #endif

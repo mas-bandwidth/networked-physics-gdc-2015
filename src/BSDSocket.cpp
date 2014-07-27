@@ -54,6 +54,8 @@ namespace protocol
 
         m_error = BSD_SOCKET_ERROR_NONE;
 
+        memset( m_context, 0, sizeof(void*) * MaxContexts );
+
         // create socket
 
         m_socket = socket( m_config.ipv6 ? AF_INET6 : AF_INET, SOCK_DGRAM, IPPROTO_UDP );
@@ -245,6 +247,13 @@ namespace protocol
         return *m_config.packetFactory;
     }
 
+    void BSDSocket::SetContext( int contextIndex, const void * context )
+    {
+        PROTOCOL_ASSERT( contextIndex >= 0 );
+        PROTOCOL_ASSERT( contextIndex < MaxContexts );
+        m_context[contextIndex] = context;
+    }
+
     uint64_t BSDSocket::GetCounter( int index ) const
     {
         PROTOCOL_ASSERT( index >= 0 );
@@ -265,6 +274,9 @@ namespace protocol
             typedef WriteStream Stream;
 
             Stream stream( buffer, m_config.maxPacketSize );
+
+            for ( int i = 0; i < MaxContexts; ++i )
+                stream.SetContext( m_context[i] );
 
             uint64_t protocolId = m_config.protocolId;
             serialize_uint64( stream, protocolId );
@@ -324,6 +336,9 @@ namespace protocol
             typedef ReadStream Stream;
 
             Stream stream( m_receiveBuffer, m_config.maxPacketSize );
+
+            for ( int i = 0; i < MaxContexts; ++i )
+                stream.SetContext( m_context[i] );
 
             uint64_t protocolId;
             serialize_uint64( stream, protocolId );

@@ -25,6 +25,7 @@ extern void test_message_factory();
 extern void test_packet_factory();
 extern void test_bitpacker();
 extern void test_stream();
+extern void test_stream_context();
 extern void test_sliding_window();
 extern void test_generate_ack_bits();
 extern void test_block();
@@ -106,6 +107,7 @@ int main()
         test_packet_factory();
         test_bitpacker();
         test_stream();
+        test_stream_context();
         test_sliding_window();
         test_generate_ack_bits();
         test_block();

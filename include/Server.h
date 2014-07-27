@@ -9,6 +9,7 @@
 #include "Packets.h"
 #include "Connection.h"
 #include "NetworkInterface.h"
+#include "ClientServerContext.h"
 #include "ClientServerDataBlock.h"
 
 namespace protocol

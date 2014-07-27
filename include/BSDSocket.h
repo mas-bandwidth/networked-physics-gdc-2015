@@ -40,20 +40,6 @@ namespace protocol
 
     class BSDSocket : public NetworkInterface
     {
-        const BSDSocketConfig m_config;
-
-        Allocator * m_allocator;        
-        
-        int m_socket;
-        BSDSocketError m_error;
-        Queue<Packet*> m_send_queue;
-        Queue<Packet*> m_receive_queue;
-        uint8_t * m_receiveBuffer;
-        uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];
-
-        BSDSocket( BSDSocket & other );
-        BSDSocket & operator = ( BSDSocket & other );
-
     public:
 
         BSDSocket( const BSDSocketConfig & config = BSDSocketConfig() );
@@ -74,6 +60,8 @@ namespace protocol
 
         PacketFactory & GetPacketFactory() const;
 
+        void SetContext( int contextIndex, const void * context );
+
         uint64_t GetCounter( int index ) const;
 
     private:
@@ -85,6 +73,23 @@ namespace protocol
         bool SendPacketInternal( const Address & address, const uint8_t * data, size_t bytes );
     
         int ReceivePacketInternal( Address & sender, void * data, int size );
+
+    private:
+
+        const BSDSocketConfig m_config;
+
+        Allocator * m_allocator;        
+        
+        int m_socket;
+        BSDSocketError m_error;
+        Queue<Packet*> m_send_queue;
+        Queue<Packet*> m_receive_queue;
+        uint8_t * m_receiveBuffer;
+        const void * m_context[MaxContexts];
+        uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];
+
+        BSDSocket( BSDSocket & other );
+        BSDSocket & operator = ( BSDSocket & other );
     };
 }
 

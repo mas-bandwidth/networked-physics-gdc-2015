@@ -28,6 +28,8 @@ namespace protocol
         virtual uint32_t GetMaxPacketSize() const = 0;
 
         virtual PacketFactory & GetPacketFactory() const = 0;
+
+        virtual void SetContext( int contextIndex, const void * context ) = 0;
     };
 }
 

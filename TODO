@@ -1,146 +1,109 @@
 DONE:
 
+    Now work out how we can apply this to client/server
+    to only allow connection packets through with the 
+    expected client and server guids.
+
+    I think there should be a client server context.
+
+    This should be a basic struct, it should contain the client and server guids
+    and a bool indicating whether or not a connection has been established.
+
+    Add client/server context: ClientServerContext.h
+
+    Add a method to network interface to set context for serialization.
+
+    Made get/set context const safe.
+
+    Inside BSDSocket take the context saved and apply to read and write
+    stream when serializing a packet.
+
+    IDEA: It might be nicer to set an array of contexts on the stream
+    vs. setting each context individually on the stream.
+
+    This means the stream itself doesn't really "own" the array
+    of contexts, it could be owned by the client/server and updated
+    behind the back of the network interface.
+
+    I think this is a much more flexible setup.
+
+    This would allow users to modify via client/server interface
+    the set of contexts on the fly, which is needed, vs. having to
+    call out to the network interface, which calls out to the stream
+    and so on...
+
 TODO:
+    
+    Adjust the context system to work this way.
 
-    How will multithreading work with the networking?
-
-    It's probably wise to start exploring this.
-
-    Any good networking solution needs to at minimum run the bulk of work off the main thread.
-
-    Perhaps the game client / game server represent the main thread interface to the parallel
-    stuff running in the back-end, that is more low-level.
-
-    eg. the game client / game server interface is just the front-end that interfaces
-    with the real networking stuff running in a parallel thread.
-
-    It should then really just be a bunch of queues...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    -----------------------
-
-    What is the next most important thing?
-
-    I feel that it is the context and perhaps a higher level
-    "GameClient" and "GameServer" interface that wraps up a
-    lot of a overly complicated stuff into a clean interface.
-
-    I feel like a lot of the low-level stuff that I have created
-    is like a build your own protocol toolkit, but I think that
-    in reality it is a much too low-level for actual integration
-    into a game.
-
-    I think the game is going to want a nice way to define messages.
-
-    A nicer way to create them, and send them.
-
-    On the server a nice way to send messages reliably or unreliably,
-    and to specify who the messages should be sent to (broadcast,
-    or to everybody...)
-
-    ------------------------
-
-    I think perhaps maybe the best thing to do at this point would 
-    be to step back and design the ideal interface at the game level.
-
-    eg. GameServer/GameClient
-
-    Determine what callbacks the game server / game client wants
-
-    The game server and client probably don't give a shit about
-    the packet channel structure. Really only care about defining
-    set of message types, and having a nice interface to send and recv.
+    Update the test_stream_context function to do this.
 
     -------------------------
 
-    Right now the interface for sending and receiving messages is terrible.
+    Put the context array void*[MaxContexts] inside the client and server.
 
-    The interface for specifying message types is terrible.
+    Set the first context (0) to point to the client server context.
 
-    The creation is *OK*
+    Move the client/server guids back into the connection packet.
 
-    The release is *OK*
+    Make the connection packet require context[0] (ClientServerContext)
 
-    -------------------------
+    If a connection is not established, discard the connection packet (how? set overflow?)
 
-    I think in order for game server / client to function properly,
-    to have a good interface, they have to assume a certain packet structure.
+    If the client or server guids don't match, discard the connection packet.
 
-    -------------------------
+    Add hooks to set the context when connection is established, and clear it
+    when connection is torn down, on client and server side.
 
-    Should I simplify the current client/server so that they have assumed
-    packet structure, or wrap another class around them?
-
-    -------------------------
-
-    I really dislike the idea of having two different client/server class types.
+    Make sure all unit tests and soaks still pass.
 
     -------------------------
 
-    I think this means that client/server should have a predefined channel structure.
+    In situations where measure streams are used, channels need a way
+    to construct a stream with the appropriate contexts set on it.
+
+    How can this be done?
+
+    Seems like channels need access to a function that returns the 
+    appropriate const void ** context pointer.
 
     -------------------------
 
-    Should implement unreliable message channel.
+    Might be a good idea to put the client/server context in the last
+    slot, so the user can set slot 0. otherwise going to be annoying
+    explaining to users why they have to start with slot 1 or higher.
 
     -------------------------
 
-    Need to get started on snapshots and so on.
+    In unit tests, add some sort of context message, eg. a message
+    that would only function if a context is properly set on the 
+    client/server.
+
+    Subclass client/server for tests, and in the subclass implement
+    something like OnConnected, OnDisconnected or whatever, such that
+    context is setup on both client/server.
 
     -------------------------
 
-    Need MTU handling to do snapshots (can be large)
+    Implement something for the client/server test where the first
+    256 bytes of the client/server data is reserved for a context
+    struct.
 
-    -------------------------
+    Subclass the client/server and set the context to the server
+    data once connection is established (on both client/server),
+    as well as clear the context when disconnected.
 
-    Need sendtables to do snapshots
+    Make sure that the test context message cannot serialize
+    without having this context available. Just simple min/max
+    for quantities in the test context message.
 
-    Need context to do snapshots...
+    Randomize the min/max context for each server, such that they
+    are wildly different for each server, and completely incompatible
+    eg. serialization will fail/assert if desynced.
+
+    Verify that the soak client/server is able to function with
+    repeated connect/disconnect and exchange of server data driving
+    the context needed for test context messages.
 
     -------------------------
 
@@ -148,58 +111,11 @@ TODO:
 
 
 
-    -----------------------
 
-    A 64 bit client and server guid is a bit overkill.
 
-    Maybe drop these guys down to say, 16 bits each? :D
 
-    Then once this is done, we could include client and server guid
-    inside the connection packet and not feel too bad.
 
-    Next to move the check against client and server guids for
-    connection packet, because we should only ever *serialize*
-    a connection packet if its client and server guids match
-    the expected set.
-
-    -----------------------
-
-    Implement concept of "context" for packets. Maybe this can
-    be done in such a way that client server packet context is 
-    expected for connection packets.
-
-    This is important because connection packets will shortly
-    only be *serializable* if the client and server guids match.
-
-    If they don't match then the packet could be from a different
-    client/server connection with different server data, and hence
-    not serializable without error.
-
-    -----------------------------
-
-    Stream should have a context, eg. a void* that could be accessed within
-    serialize functions.
-
-    Inside this context, stuff like server data could be put, so messages
-    could encode against something transmitted from server to client.
-
-    eg. send table, num classes, num properties in a class and so on.
-
-    This is actually quite important, and is the whole reason why I went
-    to such an effort to implement the client and server data so early.
-
-    ----------------------------
-
-    Implement concept of "context" for messages.
-
-    This would allow messages inside the connection packet to
-    be serialized and deserialized against non-const static data,
-    eg. numbers of various things, mins/max that could be different
-    per-server, or different versions of a server.
-
-    This would also allow super-efficient serialization for send tables.
-
-    ------------------------
+    ^------------ AT THIS POINT READY FOR SEND TABLES
 
 
 
@@ -271,6 +187,19 @@ TODO:
 
 
 
+    ------------------------
+
+    Actually implement a client/server setup and host the server in the cloud.
+
+    Provide build steps using chef/knife or whatever to easily deploy this server.
+
+    How any server instances can I have per-core?
+
+    ------------------------
+
+
+
+
 
 
     *** SEND TABLES ***
@@ -281,194 +210,4 @@ TODO:
 
     Use the server data to communicate this table down to the client.
 
-    ------------------------
-
-    Actually implement a client/server setup and host the server in the cloud.
-
-    Provide build steps using chef/knife or whatever to easily deploy this server.
-
-    ------------------------
-
-
-
-
-
-
-
-
-
-WOULD BE NICE:
-
-    -----------------------------
-
-    Would be nice to create an address by string, and then have a port override arg
-
-    -----------------------------
-
-    May be a good idea to offer a small block of data (less than one packet)
-    that is included in the challenge response.
-
-    The reason is that it could be game specific, and would inform the client
-    of what it should be doing, eg. precache this level, so it doesn't have to
-    wait for the server and data client exchange before doing that.
-
-    --------------------------
-
-    Idea: Packets could store a context pointer, and on creation it could optionally
-    be passed in, per-packet type in the factory. It would be up to the user to setup
-    and create this context, and per-packet type to cast to the expected type.
-
-    I guess one context for client/server with some basic quantities needed for
-    serialization would probably be a good idea. This is a nice idea.
-
-    Same concept could be applied to messages. Although, it's potentially expensive,
-    eg. another 64bit pointer per-message just for some basic context -- maybe for
-    messages it's better to pass it in the serialize instead (eg. factory GetContext(type) ) ?
-
-    ----------------------
-
-    Clean up the resolver so that it doesn't perform dynamic allocations.
-
-    Find a way to move the future into the implementation (cpp)
-    so we don't need #include <future> in a header file.
-
-    Remove std::string usage from Resolver interface and DNSResolver.
-
-    ----------------------
-
-    Should be able to determine if scratch allocator is being exhausted,
-    and falling back to malloc, eg. add a check, and then check this once
-    per-frame inside the soak test -- i definitely *dont* want the scratch
-    falling back to malloc inside soak test.
-
-    Alternatively, add a flag so it asserts if it has to fallback to scratch,
-    but disable this by default because otherwise it won't pass the unit test.
-
-    -------------
-
-    I would like the scratch allocator to be more resilient in  debug builds, 
-    eg. for it to have safety checks, eg. missing magic # where expected, assert.
-
-    --------------------
-
-    I don't like the bool ipv6. Use address type instead, eg. ADDRESS_IPV6
-
-    --------------------
-
-    Restructure so that precompiled headers are used.
-
-    Add timing to build steps so the efficiency can be measured.
-
-    ----------------------
-
-    Google have some cool allocators. Check them out.
-
-    ----------------------
-
-    Add some macros to make defining serialization and messages easier.
-
-    ----------------------
-
-    Basic logging. Just start with a "Log" macro that can be redirected
-    to a "Logger" interface via virtual fn. 
-
-    Of course, this is disabled in release build (NDEBUG) but it is 
-    the easiest way to make sure the library can output logs to the
-    appropriate place (console, TTY, file, whatever...)
-
-    Should logs include the "\n" at the end?
-
-    It would be nice if they didn't have to. It's easy to forget.
-
-    --------------------
-
-    Optimization for fragments, track oldest unacked fragment id, and start there
-    and go left to right to search for fragments to send.
-
-    --------------------
-
-    Add a new fragmentSendWindow config, eg. 64 and only look this far past
-    the oldest unacked fragment. Should save unnecessary scans for large block
-    sizes.
-
-    --------------------
-
-    Could save a bit of memory and maybe gain some speed by switching 
-    the received fragment data to a bitfield
-
-    We only need one bit per-fragment, "has it been received?"
-
-    ----------------
-
-    Idea for logging, have an enum of channels, and per-channel a level integer
-    Initial level is zero. Enable logging by setting the level. Per-channel logs
-    can be emitted by passing the level, which defaults to 1.
-
-    Log( "hello everybody %d\n", value );
-
-    On a per-file basis, specify the current log channel via #define
-
-    This may require the project gets split up into cpp files first.
-
-    ----------------
-
-    For the message and block allocator, I'm thinking of a thread
-    local storage allocator that detects when the thread that is
-    calling it is *not* the same as the thread that it is running
-    on, and in this case adds the deallocs to a list (atomic) which 
-    is processed inside the allocator update.
-
-    Alternatively, received messages could just have a policy
-    that they will be deleted on the next update. Don't hold
-    on to them.
-
-    Same for blocks, potentially.
-
-    ----------------
-
-    Add counters for all the different things inside the large blocks,
-    eg. # of large blocks sent, received, read/written, also # of
-    fragments read/written.
-
-    Write some basic tests to verify these counters are functional.
-
-    ------------------
-
-    Might be nice to add a validate step to the config for connection/channels
-    because it's possible to specify a config that doesn't work now. eg. 
-    interdependent parameters.
-
-    Would be nice if the reliable message channel could report the minimal functional
-    budget that would work for it, given its configuration. This would be great
-    for the connection to budget for the channel.
-
-    This should be in the base class for channel interface, so we can generically
-    work with and budget channels decently without knowing exactly what they are.
-
-    ----------------------
-
-    Move the channel budget out of the channel config (static)
-    and in to the connection. 
-
-    Channel budget should be dynamic. The user should be able to derive their own 
-    connection type and specify channel budgets dynamically based on flow control, 
-    for example.
-
-    ---------------------
-
-    Implement packet encryption via key, plus hash to detect tampering (unified). Optional feature.
-
-    ---------------------
-
-    Implement an unreliable channel (messages), 
-    eg. queue up unreliable messages to send and discard any that don't fit in the packet.
-    Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
-
-    --------------------
-
-    Implement an atomic queue on top of the client and server interface for sending
-    and receiving user packets. This interface should allow running the actual serialization
-    and packet reading entirely on a separate thread. Do it here where it is most natural,
-    to avoid overcomplicating the interface/connection code.
-
-    ----------------
+    ---------------

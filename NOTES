@@ -1,5 +1,101 @@
 NOTES
 
+-----------------------
+
+What is the next most important thing?
+
+I feel that it is the context and perhaps a higher level
+"GameClient" and "GameServer" interface that wraps up a
+lot of a overly complicated stuff into a clean interface.
+
+I feel like a lot of the low-level stuff that I have created
+is like a build your own protocol toolkit, but I think that
+in reality it is a much too low-level for actual integration
+into a game.
+
+I think the game is going to want a nice way to define messages.
+
+A nicer way to create them, and send them.
+
+On the server a nice way to send messages reliably or unreliably,
+and to specify who the messages should be sent to (broadcast,
+or to everybody...)
+
+------------------------
+
+I think perhaps maybe the best thing to do at this point would 
+be to step back and design the ideal interface at the game level.
+
+eg. GameServer/GameClient
+
+Determine what callbacks the game server / game client wants
+
+The game server and client probably don't give a shit about
+the packet channel structure. Really only care about defining
+set of message types, and having a nice interface to send and recv.
+
+-------------------------
+
+Right now the interface for sending and receiving messages is terrible.
+
+The interface for specifying message types is terrible.
+
+The creation is *OK*
+
+The release is *OK*
+
+-------------------------
+
+I think in order for game server / client to function properly,
+to have a good interface, they have to assume a certain packet structure.
+
+-------------------------
+
+Should I simplify the current client/server so that they have assumed
+packet structure, or wrap another class around them?
+
+-------------------------
+
+I really dislike the idea of having two different client/server class types.
+
+-------------------------
+
+I think this means that client/server should have a predefined channel structure.
+
+-------------------------
+
+Should implement unreliable message channel.
+
+-------------------------
+
+Need to get started on snapshots and so on.
+
+-------------------------
+
+Need MTU handling to do snapshots (can be large)
+
+-------------------------
+
+Need sendtables to do snapshots
+
+Need context to do snapshots...
+
+-----------------------------------------
+
+How will multithreading work with the networking?
+
+It's probably wise to start exploring this.
+
+Any good networking solution needs to at minimum run the bulk of work off the main thread.
+
+Perhaps the game client / game server represent the main thread interface to the parallel
+stuff running in the back-end, that is more low-level.
+
+eg. the game client / game server interface is just the front-end that interfaces
+with the real networking stuff running in a parallel thread.
+
+It should then really just be a bunch of queues...
+
 -----------------------------------------
 
 Client and server should be designed to be *Extendable*

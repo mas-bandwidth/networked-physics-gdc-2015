@@ -73,6 +73,8 @@ namespace protocol
 
         PacketFactory & GetPacketFactory() const;
 
+        void SetContext( int contextIndex, const void * context ) {}        // not needed, we don't actually serialize the packets
+
     private:
 
         struct PacketData
