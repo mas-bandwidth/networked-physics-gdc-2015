@@ -5,6 +5,7 @@
 
 #include "Client.h"
 #include "Memory.h"
+#include "NetworkSimulator.h"
 
 namespace protocol
 {
@@ -135,7 +136,7 @@ namespace protocol
         packet->clientGuid = m_clientGuid;
         packet->serverGuid = m_serverGuid;
 
-        m_config.networkInterface->SendPacket( m_address, packet );
+        SendPacket( packet );
 
         m_connection->Reset();
 
@@ -223,6 +224,8 @@ namespace protocol
 
         UpdateSendPackets();
 
+        UpdateNetworkSimulator();
+
         UpdateNetworkInterface();
         
         UpdateReceivePackets();
@@ -230,6 +233,23 @@ namespace protocol
         UpdateSendClientData();
 
         UpdateTimeout();
+    }
+
+    void Client::UpdateNetworkSimulator()
+    {
+        if ( !m_config.networkSimulator )
+            return;
+
+        m_config.networkSimulator->Update( m_timeBase );
+
+        while ( true )
+        {
+            auto packet = m_config.networkSimulator->ReceivePacket();
+            if ( !packet )
+                break;
+
+            m_config.networkInterface->SendPacket( packet->GetAddress(), packet );
+        }
     }
 
     void Client::UpdateNetworkInterface()
@@ -590,5 +610,11 @@ namespace protocol
         m_address = Address();
         m_clientGuid = 0;
         m_serverGuid = 0;
+    }
+
+    void Client::SendPacket( Packet * packet )
+    {
+        auto interface = m_config.networkSimulator ? m_config.networkSimulator : m_config.networkInterface;
+        interface->SendPacket( m_address, packet );
     }
 }

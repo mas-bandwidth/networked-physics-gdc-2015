@@ -2,13 +2,24 @@ DONE:
 
 TODO:
 
-    Exchange messages between client and server and if no messages
-    are received for several seconds then that is an error.
+    What is the next most important thing?
 
+    I feel that it is the context and perhaps a higher level
+    "GameClient" and "GameServer" interface that wraps up a
+    lot of a overly complicated stuff into a clean interface.
 
+    I feel like a lot of the low-level stuff that I have created
+    is like a build your own protocol toolkit, but I think that
+    in reality it is a much too low-level for actual integration
+    into a game.
 
+    I think the game is going to want a nice way to define messages.
 
+    A nicer way to create them, and send them.
 
+    On the server a nice way to send messages reliably or unreliably,
+    and to specify who the messages should be sent to (broadcast,
+    or to everybody...)
 
 
 

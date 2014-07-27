@@ -5,6 +5,7 @@
 
 #include "Server.h"
 #include "Memory.h"
+#include "networkSimulator.h"
 
 namespace protocol
 {
@@ -97,6 +98,8 @@ namespace protocol
 
         UpdateClients();
 
+        UpdateNetworkSimulator();
+
         UpdateNetworkInterface();
 
         UpdateReceivePackets();
@@ -119,7 +122,7 @@ namespace protocol
         packet->clientGuid = client.clientGuid;
         packet->serverGuid = client.serverGuid;
 
-        m_config.networkInterface->SendPacket( client.address, packet );
+        SendPacket( client.address, packet );
 
         ResetClientSlot( clientIndex );
     }
@@ -200,7 +203,7 @@ namespace protocol
             packet->clientGuid = client.clientGuid;
             packet->serverGuid = client.serverGuid;
 
-            m_config.networkInterface->SendPacket( client.address, packet );
+            SendPacket( client.address, packet );
 
             client.accumulator = 0.0;
         }
@@ -239,7 +242,7 @@ namespace protocol
             packet->clientGuid = client.clientGuid;
             packet->serverGuid = client.serverGuid;
 
-            m_config.networkInterface->SendPacket( client.address, packet );
+            SendPacket( client.address, packet );
 
             client.accumulator = 0.0;
         }
@@ -271,7 +274,7 @@ namespace protocol
 
 //                printf( "server sent connection packet\n" );
 
-            m_config.networkInterface->SendPacket( client.address, packet );
+            SendPacket( client.address, packet );
 
             client.accumulator = 0.0;
         }
@@ -293,6 +296,22 @@ namespace protocol
 //                printf( "client %d timed out\n", clientIndex );
 
             ResetClientSlot( clientIndex );
+        }
+    }
+
+    void Server::UpdateNetworkSimulator()
+    {
+        if ( !m_config.networkSimulator )
+            return;
+
+        m_config.networkSimulator->Update( m_timeBase );
+
+        while ( true )
+        {
+            auto packet = m_config.networkSimulator->ReceivePacket();
+            if ( !packet )
+                break;
+            m_config.networkInterface->SendPacket( packet->GetAddress(), packet );
         }
     }
 
@@ -367,7 +386,7 @@ namespace protocol
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
 
-            m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+            SendPacket( address, connectionDeniedPacket );
 
             return;
         }
@@ -379,7 +398,7 @@ namespace protocol
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
-            m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+            SendPacket( address, connectionDeniedPacket );
             return;
         }
 
@@ -396,7 +415,7 @@ namespace protocol
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
             connectionDeniedPacket->clientGuid = packet->clientGuid;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
-            m_config.networkInterface->SendPacket( address, connectionDeniedPacket );
+            SendPacket( address, connectionDeniedPacket );
             return;
         }
 
@@ -623,5 +642,11 @@ namespace protocol
         PROTOCOL_ASSERT( client.connection );
 
         client.connection->Reset();
+    }
+
+    void Server::SendPacket( const Address & address, Packet * packet )
+    {
+        auto interface = m_config.networkSimulator ? m_config.networkSimulator : m_config.networkInterface;
+        interface->SendPacket( address, packet );
     }
 }

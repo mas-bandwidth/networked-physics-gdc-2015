@@ -12,14 +12,38 @@
 
 using namespace protocol;
 
+const int NumServers = 8;
+const int NumClients = 256;
+const int NumClientsPerServer = 16;
+const int BaseServerPort = 10000;
+const int BaseClientPort = 20000;
+
 struct ClientInfo
 {
     Address address;
-    int state;
-    int serverIndex;
     Client * client;
     Block * clientData;
     NetworkInterface * networkInterface;
+    NetworkSimulator * networkSimulator;
+    int state;
+    int serverIndex;
+    double lastReceiveTime;
+    uint16_t sendSequence;
+    uint16_t receiveSequence;
+
+    ClientInfo()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        state = 0;
+        serverIndex = -1;
+        lastReceiveTime = 0.0;
+        sendSequence = 0;
+        receiveSequence = 0;
+    }
 };
 
 struct ServerInfo
@@ -28,6 +52,7 @@ struct ServerInfo
     Server * server;
     Block * serverData;
     NetworkInterface * networkInterface;
+    NetworkSimulator * networkSimulator;
 };
 
 void soak_test()
@@ -37,14 +62,6 @@ void soak_test()
 #else
     printf( "[soak client server]\n" );
 #endif
-
-    // configu
-
-    const int NumServers = 8;
-    const int NumClients = 256;
-    const int NumClientsPerServer = 16;
-    const int BaseServerPort = 10000;
-    const int BaseClientPort = 20000;
 
     TestMessageFactory messageFactory( memory::default_allocator() );
 
@@ -67,6 +84,16 @@ void soak_test()
         bsdSocketConfig.packetFactory = &packetFactory;
         serverInfo[i].networkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
+        NetworkSimulatorConfig networkSimulatorConfig;
+        networkSimulatorConfig.packetFactory = &packetFactory;
+        serverInfo[i].networkSimulator = PROTOCOL_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+        serverInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
+        /*
+        serverInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
+        serverInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
+        serverInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
+        */
+
         const int serverDataSize = 10 + 256 * i + 11 + i;
         serverInfo[i].serverData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );
         {
@@ -80,6 +107,7 @@ void soak_test()
         serverConfig.maxClients = NumClientsPerServer;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = serverInfo[i].networkInterface;
+        serverConfig.networkSimulator = serverInfo[i].networkSimulator;
 
         serverInfo[i].server = PROTOCOL_NEW( memory::default_allocator(), Server, serverConfig );
     }
@@ -99,6 +127,14 @@ void soak_test()
         bsdSocketConfig.packetFactory = &packetFactory;
         clientInfo[i].networkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
+        NetworkSimulatorConfig networkSimulatorConfig;
+        networkSimulatorConfig.packetFactory = &packetFactory;
+        clientInfo[i].networkSimulator = PROTOCOL_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+        clientInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
+        clientInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
+        clientInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
+        clientInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
+
         const int clientDataSize = 10 + 64 * i + 21 + i;
         clientInfo[i].clientData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
         {
@@ -109,16 +145,18 @@ void soak_test()
 
         ClientConfig clientConfig;
         clientConfig.clientData = clientInfo[i].clientData;
-        clientConfig.channelStructure = &channelStructure;
+        clientConfig.channelStructure = &channelStructure;        
         clientConfig.networkInterface = clientInfo[i].networkInterface;
+        clientConfig.networkSimulator = clientInfo[i].networkSimulator;
 
         clientInfo[i].client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
-        clientInfo[i].state = 0;
-        clientInfo[i].serverIndex = -1;
+        clientInfo[i].Clear();
     }
 
     TimeBase timeBase;
     timeBase.deltaTime = 1.0 / 60.0;
+
+    float lastConnectedClientTime = 0.0;
 
     while ( true )
     //for ( int i = 0; i < 10000; ++i )
@@ -126,6 +164,44 @@ void soak_test()
         for ( int i = 0; i < NumServers; ++i )
         {
             serverInfo[i].server->Update( timeBase );
+
+            while ( true )
+            {
+                auto packet = clientInfo[i].networkSimulator->ReceivePacket();
+                if ( !packet )
+                    break;
+                clientInfo[i].networkInterface->SendPacket( packet->GetAddress(), packet );
+            }
+
+            serverInfo[i].networkInterface->Update( timeBase );
+
+            for ( int j = 0; j < NumClientsPerServer; ++j )
+            {
+                if ( serverInfo[i].server->GetClientState(j) == SERVER_CLIENT_STATE_CONNECTED )
+                {
+                    auto connection = serverInfo[i].server->GetClientConnection( j );
+                    auto messageChannel = static_cast<ReliableMessageChannel*>( connection->GetChannel( 0 ) );
+                    while ( true )
+                    {
+                        if ( !messageChannel->CanSendMessage() )
+                            break;
+
+                        auto message = messageChannel->ReceiveMessage();
+                        if ( !message )
+                            break;
+
+                        PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
+
+                        TestMessage * testMessage = (TestMessage*) message;
+
+                        TestMessage * replyMessage = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
+                        replyMessage->sequence = testMessage->sequence;
+                        messageChannel->SendMessage( replyMessage );
+
+                        messageFactory.Release( message );
+                    }
+                }
+            }
         }
 
         for ( int i = 0; i < NumClients; ++i )
@@ -170,6 +246,8 @@ void soak_test()
                     PROTOCOL_CHECK( clientServerData->GetSize() > 0 );
                     PROTOCOL_CHECK( clientServerData->GetSize() == serverInfo[j].serverData->GetSize() );
                     PROTOCOL_CHECK( memcmp( clientServerData->GetData(), serverInfo[j].serverData->GetData(), clientServerData->GetSize() ) == 0 );
+
+                    clientInfo[i].lastReceiveTime = timeBase.time;
                 }
 
                 if ( newState == CLIENT_STATE_DISCONNECTED )
@@ -178,17 +256,60 @@ void soak_test()
                         printf( "%09.2f - client %d failed to connect to server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
                     else
                         printf( "%09.2f - client %d was disconnected from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
+
+                    clientInfo[i].Clear();
                 }
             }
 
             if ( clientInfo[i].client->IsConnected() )
             {
-                if ( ( rand() % 100 ) == 0 )
+                auto connection = clientInfo[i].client->GetConnection();
+                auto messageChannel = static_cast<ReliableMessageChannel*>( connection->GetChannel( 0 ) );
+                if ( messageChannel->CanSendMessage() )
+                {
+                    auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
+                    PROTOCOL_CHECK( message );
+                    message->sequence = clientInfo[i].sendSequence++;
+                    messageChannel->SendMessage( message );
+                }
+
+                while ( true )
+                {
+                    auto message = messageChannel->ReceiveMessage();
+                    if ( !message )
+                        break;
+
+                    PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
+
+                    TestMessage * testMessage = (TestMessage*) message;
+
+                    PROTOCOL_CHECK( testMessage->sequence == clientInfo[i].receiveSequence++ );
+
+                    clientInfo[i].lastReceiveTime = timeBase.time;
+
+                    messageFactory.Release( message );
+                }
+
+                PROTOCOL_CHECK( clientInfo[i].lastReceiveTime >= timeBase.time - 30.0 );
+            }
+
+            if ( clientInfo[i].client->IsConnected() )
+            {
+                while ( true )
+                {
+                    auto packet = clientInfo[i].networkSimulator->ReceivePacket();
+                    if ( !packet )
+                        break;
+                    clientInfo[i].networkInterface->SendPacket( packet->GetAddress(), packet );
+                }
+
+                clientInfo[i].networkInterface->Update( timeBase );
+
+                if ( clientInfo[i].receiveSequence > 100 && ( rand() % 100 ) == 0 )
                 {
                     printf( "%09.2f - disconnect client %d from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
                     clientInfo[i].client->Disconnect();
-                    clientInfo[i].state = 0;
-                    clientInfo[i].serverIndex = -1;
+                    clientInfo[i].Clear();
                 }
             }
 
@@ -203,6 +324,17 @@ void soak_test()
                 }
             }
         }
+
+        for ( int i = 0; i < NumClients; ++i )
+        {
+            if ( clientInfo[i].client->GetState() == CLIENT_STATE_CONNECTED )
+            {
+                lastConnectedClientTime = timeBase.time;
+                break;                
+            }
+        }
+
+        PROTOCOL_CHECK( lastConnectedClientTime >= timeBase.time - 10.0 );
 
         timeBase.time += timeBase.deltaTime;
     }

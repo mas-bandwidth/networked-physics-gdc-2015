@@ -14,7 +14,8 @@
 namespace protocol
 {
     class Allocator;
-
+    class NetworkSimulator;
+    
     struct ServerConfig
     {
         Allocator * allocator = nullptr;                        // allocator used for allocations that match the life cycle of this object. if null then default allocator is used.
@@ -34,6 +35,8 @@ namespace protocol
         int maxClientDataSize = 64 * 1024;                      // maximum size for data received from client on connect. if the server data is larger than this then the connect will fail.
         int fragmentSize = 1024;                                // send server data in 1k fragments by default. good size given that MTU is typically 1200 bytes.
         int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
+
+        NetworkSimulator * networkSimulator = nullptr;          // optional network simulator.
     };
 
     class Server
@@ -127,6 +130,8 @@ namespace protocol
 
         void UpdateTimeouts( int clientIndex );
 
+        void UpdateNetworkSimulator();
+
         void UpdateNetworkInterface();
 
         void UpdateReceivePackets();
@@ -152,6 +157,8 @@ namespace protocol
         int FindFreeClientSlot() const;
 
         void ResetClientSlot( int clientIndex );
+
+        void SendPacket( const Address & address, Packet * packet );
     };
 }
 

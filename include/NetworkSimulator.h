@@ -55,6 +55,26 @@ namespace protocol
 
     class NetworkSimulator : public NetworkInterface
     {
+    public:
+
+        NetworkSimulator( const NetworkSimulatorConfig & config = NetworkSimulatorConfig() );
+
+        ~NetworkSimulator();
+
+        void AddState( const NetworkSimulatorState & state );
+
+        void SendPacket( const Address & address, Packet * packet );
+
+        Packet * ReceivePacket();
+
+        void Update( const TimeBase & timeBase );
+
+        uint32_t GetMaxPacketSize() const;
+
+        PacketFactory & GetPacketFactory() const;
+
+    private:
+
         struct PacketData
         {
             Packet * packet = nullptr;
@@ -77,24 +97,6 @@ namespace protocol
 
         NetworkSimulator( const NetworkSimulator & other );
         const NetworkSimulator & operator = ( const NetworkSimulator & other );
-
-    public:
-
-        NetworkSimulator( const NetworkSimulatorConfig & config = NetworkSimulatorConfig() );
-
-        ~NetworkSimulator();
-
-        void AddState( const NetworkSimulatorState & state );
-
-        void SendPacket( const Address & address, Packet * packet );
-
-        Packet * ReceivePacket();
-
-        void Update( const TimeBase & timeBase );
-
-        uint32_t GetMaxPacketSize() const;
-
-        PacketFactory & GetPacketFactory() const;
     };
 }
 

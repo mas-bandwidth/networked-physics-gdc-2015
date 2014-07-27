@@ -1,3 +1,67 @@
+Saturday Evening, July 27, 2014:
+--------------------------------
+
+    Exchange messages between client and server to make sure protocol
+    is working properly between clients and server.
+
+    Send a message from client to server, and on server reply back.
+
+    On client verify that all replies come back in order, and with
+    expected sequence so we know message contents are correct.
+
+    If no message received on client for a second then error.
+
+    Add some packet loss so shit gets real (say 50%?)
+
+    It's annoying because adding simulation on top of the network
+    interface is difficult.
+
+    I feel like simulation should almost be done at the network
+    interface level, or at least, there should be some easy way
+    to hook in to it at the client server level.
+
+    Perhaps the client and server should own a simulator object?
+
+    Man this is annoying.
+
+    Perhaps you could just set a simulator on a network interface,
+    and the network interface would take care of the rest?
+
+    This seems nice, but complicates the network interface impl.
+
+    It's already pretty complicated.
+
+    Easiest solution. Put the network simulator down as the network
+    interface to use for the client and server, and pump it then
+    send the actual packets on to the real network interface.
+
+    This is possible because network simulator implements network
+    interface.
+
+    If no clients are connected for longer than... 10 seconds, then this 
+    should be an error. This helps detect if the client/server connection
+    is not being established properly (eg. right now, it is not, because
+    I redirected to network simulator)
+
+    Now hook the simulators up so they actually send packets!
+
+    Tried. But it's not working well. The way that the simulator
+    works only really applies to sending packets, but if the network
+    simulator is passed in as 
+
+    Seems that putting the simulator into the client and server
+    objects might be the best way to do it.
+
+    This seems lame, but I really want to keep total flexibility
+    with the simulator. I'd not want the simulator to always buffer
+    and then send packets over UDP. Often I want the simulator
+    to work by itself, and then just directly pass packets through
+    without going anywhere near sockets.
+
+    Yep. Added to client and server directly, and now the soak
+    client/server is stable under packet loss and latency. 
+
+
 Saturday Morning, July 27, 2014:
 --------------------------------
 
