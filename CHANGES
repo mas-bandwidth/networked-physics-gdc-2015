@@ -1,3 +1,45 @@
+Sunday Morning, July 28, 2014:
+------------------------------
+
+    Now work out how we can apply this to client/server
+    to only allow connection packets through with the 
+    expected client and server guids.
+
+    I think there should be a client server context.
+
+    This should be a basic struct, it should contain the client and server guids
+    and a bool indicating whether or not a connection has been established.
+
+    Add client/server context: ClientServerContext.h
+
+    Add a method to network interface to set context for serialization.
+
+    Made get/set context const safe.
+
+    Inside BSDSocket take the context saved and apply to read and write
+    stream when serializing a packet.
+
+    IDEA: It might be nicer to set an array of contexts on the stream
+    vs. setting each context individually on the stream.
+
+    This means the stream itself doesn't really "own" the array
+    of contexts, it could be owned by the client/server and updated
+    behind the back of the network interface.
+
+    I think this is a much more flexible setup.
+
+    This would allow users to modify via client/server interface
+    the set of contexts on the fly, which is needed, vs. having to
+    call out to the network interface, which calls out to the stream
+    and so on...
+
+    Adjust the context system to work this way.
+
+    Update the test_stream_context function to do this.
+
+    Update NetworkInterface.h and BSDSocket.h/cpp to work this way.    
+
+
 Saturday Evening, July 27, 2014:
 --------------------------------
 

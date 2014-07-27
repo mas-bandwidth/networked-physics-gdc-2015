@@ -1,59 +1,65 @@
 DONE:
 
-    Now work out how we can apply this to client/server
-    to only allow connection packets through with the 
-    expected client and server guids.
-
-    I think there should be a client server context.
-
-    This should be a basic struct, it should contain the client and server guids
-    and a bool indicating whether or not a connection has been established.
-
-    Add client/server context: ClientServerContext.h
-
-    Add a method to network interface to set context for serialization.
-
-    Made get/set context const safe.
-
-    Inside BSDSocket take the context saved and apply to read and write
-    stream when serializing a packet.
-
-    IDEA: It might be nicer to set an array of contexts on the stream
-    vs. setting each context individually on the stream.
-
-    This means the stream itself doesn't really "own" the array
-    of contexts, it could be owned by the client/server and updated
-    behind the back of the network interface.
-
-    I think this is a much more flexible setup.
-
-    This would allow users to modify via client/server interface
-    the set of contexts on the fly, which is needed, vs. having to
-    call out to the network interface, which calls out to the stream
-    and so on...
-
 TODO:
-    
-    Adjust the context system to work this way.
-
-    Update the test_stream_context function to do this.
 
     -------------------------
 
     Put the context array void*[MaxContexts] inside the client and server.
 
-    Set the first context (0) to point to the client server context.
+    Clear all contexts to nullptr initially, and set the const void** on 
+    the network interface as soon as the network interface is created.
+
+    Provide accessors to set/get context by index up to max contexts
+    on the client/server. Note that the context is *always* shared
+    across all clients connected to a server. Same context!
+    
+    -------------------------
+
+    Can't use context to discard connection packets on the server because
+    context is the same for server, not per-client.
+
+    What I really need is a callback fn that just discards a connection packet
+    once it has serialized enough, eg. a "Validate" callback. If validate returns
+    false then 
+
+    But the validate callback itself needs the ptr to the clientl/server 
+    object to perform the validation...
+
+    So now we are back to context.
+
+    So maybe the client/server context passed in to 0 is actually the context
+    that is used for validation, and we can actually do this inside the connection
+    packet serialize, eg. if the context 0 is non-null, cast, and iterate across
+    looking for matching casts
+
+    At this point we probably need a concept of maximum clients per-server
+    for the data structure.
+
+    I suggest 64 at this point.
+
+    We need to verify that the config maxclients <= MaxClientsPerServer const.
+
+    -------------------------
+
+    Seems that both client and server should have a client server context object.
+
+    That this object should be int numClients, address, per-client, client and server guid.
+
+    This struct should provide quick find client by address, guid lookup.
+
+    It is basically a hot-cold split, and something we would want anyway.
+
+    Don't do a callback, just let the connection packet inspect this client/server
+    context and do its work. I think there would need to be exclusion potentially
+    while accessing this client/server context but it should be changed very
+    infrequently on the client/server side (connecting clients) and on the serialize
+    side it would only ever be read only.
+
+    -------------------------
 
     Move the client/server guids back into the connection packet.
 
-    Make the connection packet require context[0] (ClientServerContext)
-
-    If a connection is not established, discard the connection packet (how? set overflow?)
-
-    If the client or server guids don't match, discard the connection packet.
-
-    Add hooks to set the context when connection is established, and clear it
-    when connection is torn down, on client and server side.
+    If no matching connection is established, discard the connection packet (how?)
 
     Make sure all unit tests and soaks still pass.
 
@@ -65,7 +71,7 @@ TODO:
     How can this be done?
 
     Seems like channels need access to a function that returns the 
-    appropriate const void ** context pointer.
+    appropriate const void ** context pointer to set on the measure stream.
 
     -------------------------
 

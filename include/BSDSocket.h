@@ -60,7 +60,7 @@ namespace protocol
 
         PacketFactory & GetPacketFactory() const;
 
-        void SetContext( int contextIndex, const void * context );
+        void SetContext( const void ** context );
 
         uint64_t GetCounter( int index ) const;
 
@@ -85,7 +85,7 @@ namespace protocol
         Queue<Packet*> m_send_queue;
         Queue<Packet*> m_receive_queue;
         uint8_t * m_receiveBuffer;
-        const void * m_context[MaxContexts];
+        const void ** m_context;
         uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];
 
         BSDSocket( BSDSocket & other );

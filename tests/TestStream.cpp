@@ -140,8 +140,11 @@ struct TestContextObject : public Object
 
     template <typename Stream> void Serialize( Stream & stream )
     {
-        auto context_a = (const ContextA*) stream.GetContext( 0 );
-        auto context_b = (const ContextB*) stream.GetContext( 1 );
+        const void ** context = stream.GetContext();
+
+        PROTOCOL_CHECK( context );
+        auto context_a = (const ContextA*) context[0];
+        auto context_b = (const ContextB*) context[1];
 
         PROTOCOL_CHECK( context_a );
         PROTOCOL_CHECK( context_b );
@@ -177,6 +180,8 @@ void test_stream_context()
     ContextA context_a;
     ContextB context_b;
 
+    const void * context[] = { &context_a, &context_b };
+
     // write the object with context
 
     TestContextObject writeObject;
@@ -185,14 +190,15 @@ void test_stream_context()
     {
         WriteStream writeStream( buffer, BufferSize );
 
-        PROTOCOL_CHECK( writeStream.GetContext(0) == nullptr );
-        PROTOCOL_CHECK( writeStream.GetContext(1) == nullptr );
+        PROTOCOL_CHECK( writeStream.GetContext() == nullptr );
 
-        writeStream.SetContext( 0, &context_a );
-        writeStream.SetContext( 1, &context_b );
+        writeStream.SetContext( &context[0] );
 
-        PROTOCOL_CHECK( writeStream.GetContext(0) == &context_a );
-        PROTOCOL_CHECK( writeStream.GetContext(1) == &context_b );
+        const void ** stream_context = writeStream.GetContext();
+
+        PROTOCOL_CHECK( stream_context );
+        PROTOCOL_CHECK( stream_context[0] == &context_a );
+        PROTOCOL_CHECK( stream_context[1] == &context_b );
 
         writeObject.SerializeWrite( writeStream );
 
@@ -205,14 +211,13 @@ void test_stream_context()
     {
         ReadStream readStream( buffer, BufferSize );
 
-        PROTOCOL_CHECK( readStream.GetContext(0) == nullptr );
-        PROTOCOL_CHECK( readStream.GetContext(1) == nullptr );
+        readStream.SetContext( &context[0] );
 
-        readStream.SetContext( 0, &context_a );
-        readStream.SetContext( 1, &context_b );
+        const void ** stream_context = readStream.GetContext();
 
-        PROTOCOL_CHECK( readStream.GetContext(0) == &context_a );
-        PROTOCOL_CHECK( readStream.GetContext(1) == &context_b );
+        PROTOCOL_CHECK( stream_context );
+        PROTOCOL_CHECK( stream_context[0] == &context_a );
+        PROTOCOL_CHECK( stream_context[1] == &context_b );
 
         readObject.SerializeRead( readStream );
     }

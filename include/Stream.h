@@ -20,10 +20,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        WriteStream( uint8_t * buffer, int bytes ) : m_writer( buffer, bytes )
-        {
-            memset( m_context, 0, sizeof( void* ) * MaxContexts );
-        }
+        WriteStream( uint8_t * buffer, int bytes ) : m_writer( buffer, bytes ), m_context( nullptr ) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -105,24 +102,20 @@ namespace protocol
             return m_writer.IsOverflow();
         }
 
-        void SetContext( int contextIndex, const void * context )
+        void SetContext( const void ** context )
         {
-            PROTOCOL_ASSERT( contextIndex >= 0 );
-            PROTOCOL_ASSERT( contextIndex < MaxContexts );
-            m_context[contextIndex] = context;
+            m_context = context;
         }
 
-        const void * GetContext( int contextIndex ) const
+        const void ** GetContext() const
         {
-            PROTOCOL_ASSERT( contextIndex >= 0 );
-            PROTOCOL_ASSERT( contextIndex < MaxContexts );
-            return m_context[contextIndex];
+            return m_context;
         }
 
     private:
 
         BitWriter m_writer;
-        const void * m_context[MaxContexts];
+        const void ** m_context;
     };
 
     class ReadStream
@@ -132,10 +125,7 @@ namespace protocol
         enum { IsWriting = 0 };
         enum { IsReading = 1 };
 
-        ReadStream( uint8_t * buffer, int bytes ) : m_reader( buffer, bytes )
-        {
-            memset( m_context, 0, sizeof( void* ) * MaxContexts );
-        }
+        ReadStream( uint8_t * buffer, int bytes ) : m_reader( buffer, bytes ), m_context( nullptr ) {}
 
         void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
@@ -183,24 +173,20 @@ namespace protocol
             return m_reader.IsOverflow();
         }
 
-        void SetContext( int contextIndex, const void * context )
+        void SetContext( const void ** context )
         {
-            PROTOCOL_ASSERT( contextIndex >= 0 );
-            PROTOCOL_ASSERT( contextIndex < MaxContexts );
-            m_context[contextIndex] = context;
+            m_context = context;
         }
 
-        const void * GetContext( int contextIndex ) const
+        const void ** GetContext() const
         {
-            PROTOCOL_ASSERT( contextIndex >= 0 );
-            PROTOCOL_ASSERT( contextIndex < MaxContexts );
-            return m_context[contextIndex];
+            return m_context;
         }
 
     private:
 
         BitReader m_reader;
-        const void * m_context[MaxContexts];
+        const void ** m_context;
     };
 
     class MeasureStream
@@ -210,10 +196,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0) 
-        {
-            memset( m_context, 0, sizeof( void* ) * MaxContexts );
-        }
+        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0), m_context( nullptr ) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -280,25 +263,21 @@ namespace protocol
             return m_bitsWritten > m_totalBytes * 8;
         }
 
-        void SetContext( int contextIndex, const void * context )
+        void SetContext( const void ** context )
         {
-            PROTOCOL_ASSERT( contextIndex >= 0 );
-            PROTOCOL_ASSERT( contextIndex < MaxContexts );
-            m_context[contextIndex] = context;
+            m_context = context;
         }
 
-        const void * GetContext( int contextIndex ) const
+        const void ** GetContext() const
         {
-            PROTOCOL_ASSERT( contextIndex >= 0 );
-            PROTOCOL_ASSERT( contextIndex < MaxContexts );
-            return m_context[contextIndex];
+            return m_context;
         }
 
     private:
 
         int m_totalBytes;
         int m_bitsWritten;
-        const void * m_context[MaxContexts];
+        const void ** m_context;
     };
 
     template <typename T> void serialize_object( ReadStream & stream, T & object )

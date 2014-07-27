@@ -29,7 +29,7 @@ namespace protocol
 
         virtual PacketFactory & GetPacketFactory() const = 0;
 
-        virtual void SetContext( int contextIndex, const void * context ) = 0;
+        virtual void SetContext( const void ** context ) = 0;
     };
 }
 
