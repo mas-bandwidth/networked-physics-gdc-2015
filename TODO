@@ -5,10 +5,72 @@ TODO:
     Exchange messages between client and server and if no messages
     are received for several seconds then that is an error.
 
-    -----------------------
 
 
+
+
+
+
+
+
+
     -----------------------
+
+    A 64 bit client and server guid is a bit overkill.
+
+    Maybe drop these guys down to say, 16 bits each? :D
+
+    Then once this is done, we could include client and server guid
+    inside the connection packet and not feel too bad.
+
+    Next to move the check against client and server guids for
+    connection packet, because we should only ever *serialize*
+    a connection packet if its client and server guids match
+    the expected set.
+
+    -----------------------
+
+    Implement concept of "context" for packets. Maybe this can
+    be done in such a way that client server packet context is 
+    expected for connection packets.
+
+    This is important because connection packets will shortly
+    only be *serializable* if the client and server guids match.
+
+    If they don't match then the packet could be from a different
+    client/server connection with different server data, and hence
+    not serializable without error.
+
+    -----------------------------
+
+    Stream should have a context, eg. a void* that could be accessed within
+    serialize functions.
+
+    Inside this context, stuff like server data could be put, so messages
+    could encode against something transmitted from server to client.
+
+    eg. send table, num classes, num properties in a class and so on.
+
+    This is actually quite important, and is the whole reason why I went
+    to such an effort to implement the client and server data so early.
+
+    ----------------------------
+
+    Implement concept of "context" for messages.
+
+    This would allow messages inside the connection packet to
+    be serialized and deserialized against non-const static data,
+    eg. numbers of various things, mins/max that could be different
+    per-server, or different versions of a server.
+
+    This would also allow super-efficient serialization for send tables.
+
+    ------------------------
+
+
+
+
+
 
 
 
@@ -105,37 +167,9 @@ WOULD BE NICE:
 
     -----------------------------
 
-    It would be nice to have a small checksum or number that could be used
-    to filter out previous connection packets from the previous server.
-
-    This is important because different server connections may have
-    different server data, and serializing connection packets properly
-    requires the same server data.
-
-    Is this a real problem in practice? Probably not, but for a hardened
-    shipping solution, the connection packets should have some reliability
-    or tolerance for this, at least, an 8 bit number that cycles up once
-    per-client connect, that is used to filter out connection packets that
-    are stale, eg. client connect #
-
-    -----------------------------
-
     Would be nice to create an address by string, and then have a port override arg
 
     -----------------------------
-
-    Stream should have a context, eg. a void* that could be accessed within
-    serialize functions.
-
-    Inside this context, stuff like server data could be put, so messages
-    could encode against something transmitted from server to client.
-
-    eg. send table, num classes, num properties in a class and so on.
-
-    This is actually quite important, and is the whole reason why I went
-    to such an effort to implement the client and server data so early.
-
-    ----------------------------
 
     May be a good idea to offer a small block of data (less than one packet)
     that is included in the challenge response.
@@ -143,17 +177,6 @@ WOULD BE NICE:
     The reason is that it could be game specific, and would inform the client
     of what it should be doing, eg. precache this level, so it doesn't have to
     wait for the server and data client exchange before doing that.
-
-    ----------------------------
-
-    Need to put some code in to basically disallow serialization of packet types
-    at certain points, for example, the network interface should be told to disallow
-    serialization of connection packets on the client until the server data has
-    arrived.
-
-    This is required for the client to be able to refer to data inside the server
-    data when deserializing messages, etc. eg. send tables, message min/max definitions
-    and so on.
 
     --------------------------
 
