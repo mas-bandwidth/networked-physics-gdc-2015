@@ -20,7 +20,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        WriteStream( uint8_t * buffer, int bytes ) : m_writer( buffer, bytes ), m_context( nullptr ) {}
+        WriteStream( uint8_t * buffer, int bytes ) : m_writer( buffer, bytes ), m_context( nullptr ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -112,10 +112,21 @@ namespace protocol
             return m_context;
         }
 
+        void Abort()
+        {
+            m_aborted = true;
+        }
+
+        bool Aborted() const
+        {
+            return m_aborted;
+        }
+
     private:
 
         BitWriter m_writer;
         const void ** m_context;
+        bool m_aborted;
     };
 
     class ReadStream
@@ -125,7 +136,7 @@ namespace protocol
         enum { IsWriting = 0 };
         enum { IsReading = 1 };
 
-        ReadStream( uint8_t * buffer, int bytes ) : m_reader( buffer, bytes ), m_context( nullptr ) {}
+        ReadStream( uint8_t * buffer, int bytes ) : m_reader( buffer, bytes ), m_context( nullptr ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
@@ -183,10 +194,21 @@ namespace protocol
             return m_context;
         }
 
+        void Abort()
+        {
+            m_aborted = true;
+        }
+
+        bool Aborted() const
+        {
+            return m_aborted;
+        }
+
     private:
 
         BitReader m_reader;
         const void ** m_context;
+        bool m_aborted;
     };
 
     class MeasureStream
@@ -196,7 +218,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0), m_context( nullptr ) {}
+        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0), m_context( nullptr ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -273,11 +295,22 @@ namespace protocol
             return m_context;
         }
 
+        void Abort()
+        {
+            m_aborted = true;
+        }
+
+        bool Aborted() const
+        {
+            return m_aborted;
+        }
+
     private:
 
         int m_totalBytes;
         int m_bitsWritten;
         const void ** m_context;
+        bool m_aborted;
     };
 
     template <typename T> void serialize_object( ReadStream & stream, T & object )
@@ -331,6 +364,11 @@ namespace protocol
     template <typename Stream> void serialize_bool( Stream & stream, bool & value )
     {
         serialize_bits( stream, value, 1 );
+    }
+
+    template <typename Stream> void serialize_uint16( Stream & stream, uint16_t & value )
+    {
+        serialize_bits( stream, value, 16 );
     }
 
     template <typename Stream> void serialize_uint32( Stream & stream, uint32_t & value )

@@ -227,7 +227,7 @@ void soak_test()
                     PROTOCOL_CHECK( j >= 0 );
                     PROTOCOL_CHECK( j < NumServers );
 
-                    int clientSlot = serverInfo[j].server->FindClientSlot( clientInfo[i].address, clientInfo[i].client->GetClientGuid(), clientInfo[i].client->GetServerGuid() );
+                    int clientSlot = serverInfo[j].server->FindClientSlot( clientInfo[i].address, clientInfo[i].client->GetClientId(), clientInfo[i].client->GetServerId() );
 
                     PROTOCOL_CHECK( clientSlot != -1 );
 

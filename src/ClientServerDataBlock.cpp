@@ -13,8 +13,8 @@ namespace protocol
     {
         auto packet = (DataBlockFragmentPacket*) m_info.packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT );
 
-        packet->clientGuid = m_info.clientGuid;
-        packet->serverGuid = m_info.serverGuid;
+        packet->clientId = m_info.clientId;
+        packet->serverId = m_info.serverId;
         packet->blockSize = GetBlockSize();
         packet->fragmentSize = GetFragmentSize();
         packet->numFragments = GetNumFragments();
@@ -32,8 +32,8 @@ namespace protocol
         if ( !packet )
             return;
 
-        packet->clientGuid = m_info.clientGuid;
-        packet->serverGuid = m_info.serverGuid;
+        packet->clientId = m_info.clientId;
+        packet->serverId = m_info.serverId;
         packet->fragmentId = fragmentId;
 
         m_info.networkInterface->SendPacket( m_info.address, packet );

@@ -20,8 +20,8 @@ namespace protocol
     struct ClientServerInfo
     {
         Address address;
-        uint64_t clientGuid;
-        uint64_t serverGuid;
+        uint16_t clientId;
+        uint16_t serverId;
         PacketFactory * packetFactory;
         NetworkInterface * networkInterface;
     };

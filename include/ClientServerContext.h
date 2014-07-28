@@ -7,14 +7,45 @@
 #define PROTOCOL_CLIENT_SERVER_CONTEXT_H
 
 #include "Common.h"
+#include "Address.h"
 
 namespace protocol
 {
     struct ClientServerContext
     {
-        bool connectionEstablished;                 // true if a connection is established. if false then all "ConnectionPackets" must not serialize.
-        uint64_t clientGuid;                        // the client guid. if a connection packet comes in with a different client guid it must not serialize.
-        uint64_t serverGuid;                        // the server guid. if a connection packet comes in with a different server guid it must not serialize.
+        const int ClassId = 0x12345;
+
+        uint32_t classId = 0;
+
+        struct ClientInfo
+        {
+            Address address;
+            uint16_t clientId = 0;
+            uint16_t serverId = 0;
+            bool connected = false;
+        };
+
+        int numClients = 0;
+
+        ClientInfo * clientInfo = nullptr;
+
+        void Initialize( Allocator & allocator, int numClients );
+
+        void Free( Allocator & allocator );
+
+        void AddClient( int clientIndex, const Address & address, uint16_t clientId, uint16_t serverId );
+
+        void RemoveClient( int clientIndex );
+
+        int FindClient( const Address & address ) const;
+
+        int FindClient( const Address & address, uint16_t clientId ) const;
+
+        int FindClient( const Address & address, uint16_t clientId, uint16_t serverId ) const;
+
+        bool ClientPotentiallyExists( uint16_t clientId, uint16_t serverId ) const;
+
+        int FindFreeSlot() const;
     };
 }
 

@@ -35,6 +35,14 @@ namespace protocol
         if ( m_config.clientData )
             m_dataBlockSender = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.clientData, m_config.fragmentSize, m_config.fragmentsPerSecond );
 
+        memset( m_context, 0, sizeof(void*) * MaxContexts );
+
+        m_clientServerContext.Initialize( *m_allocator, 1 );
+
+        m_context[0] = &m_clientServerContext;
+
+        m_config.networkInterface->SetContext( m_context );
+
         ClearStateData();
     }
 
@@ -63,6 +71,8 @@ namespace protocol
 
         PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
 
+        m_clientServerContext.Free( *m_allocator );
+
         m_connection = nullptr;
         m_packetFactory = nullptr;          // IMPORTANT: packet factory pointer is not owned by us
     }
@@ -77,9 +87,9 @@ namespace protocol
 
         m_state = CLIENT_STATE_SENDING_CONNECTION_REQUEST;
         m_address = address;
-        m_clientGuid = generate_guid();
+        m_clientId = generate_id();
 
-//            printf( "connect: set client guid = %llx\n", m_clientGuid );
+//            printf( "connect: set client id = %x\n", m_clientId );
 
         m_lastPacketReceiveTime = m_timeBase.time;          // IMPORTANT: otherwise times out immediately after connect once time value gets large
     }
@@ -133,8 +143,8 @@ namespace protocol
 
         auto packet = (DisconnectedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DISCONNECTED );
 
-        packet->clientGuid = m_clientGuid;
-        packet->serverGuid = m_serverGuid;
+        packet->clientId = m_clientId;
+        packet->serverId = m_serverId;
 
         SendPacket( packet );
 
@@ -324,20 +334,17 @@ namespace protocol
             {
                 case CLIENT_STATE_SENDING_CONNECTION_REQUEST:
                 {
-//                        printf( "client sent connection request packet\n" );
                     auto packet = (ConnectionRequestPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_REQUEST );
-                    packet->clientGuid = m_clientGuid;
-//                        printf( "send connection request packet: m_clientGuid = %llx\n", m_clientGuid );
+                    packet->clientId = m_clientId;
                     m_config.networkInterface->SendPacket( m_address, packet );
                 }
                 break;
 
                 case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:
                 {
-//                        printf( "client sent challenge response packet\n" );
                     auto packet = (ChallengeResponsePacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE );
-                    packet->clientGuid = m_clientGuid;
-                    packet->serverGuid = m_serverGuid;
+                    packet->clientId = m_clientId;
+                    packet->serverId = m_serverId;
                     m_config.networkInterface->SendPacket( m_address, packet );
                 }
                 break;
@@ -345,16 +352,17 @@ namespace protocol
                 case CLIENT_STATE_READY_FOR_CONNECTION:
                 {
                     auto packet = (ReadyForConnectionPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION );
-                    packet->clientGuid = m_clientGuid;
-                    packet->serverGuid = m_serverGuid;
+                    packet->clientId = m_clientId;
+                    packet->serverId = m_serverId;
                     m_config.networkInterface->SendPacket( m_address, packet );
                 }
                 break;
 
                 case CLIENT_STATE_CONNECTED:
                 {
-//                        printf( "client sent connection packet\n" );
                     auto packet = m_connection->WritePacket();
+                    packet->clientId = m_clientId;
+                    packet->serverId = m_serverId;
                     m_config.networkInterface->SendPacket( m_address, packet );
                 }
                 break;
@@ -392,18 +400,20 @@ namespace protocol
                         auto connectionChallengePacket = static_cast<ConnectionChallengePacket*>( packet );
 
                         if ( connectionChallengePacket->GetAddress() == m_address &&
-                             connectionChallengePacket->clientGuid == m_clientGuid )
+                             connectionChallengePacket->clientId == m_clientId )
                         {
 //                                printf( "received connection challenge packet from server\n" );
 
                             m_state = CLIENT_STATE_SENDING_CHALLENGE_RESPONSE;
-                            m_serverGuid = connectionChallengePacket->serverGuid;
+
                             m_lastPacketReceiveTime = m_timeBase.time;
+
+                            m_serverId = connectionChallengePacket->serverId;
 
                             ClientServerInfo info;
                             info.address = m_address;
-                            info.clientGuid = m_clientGuid;
-                            info.serverGuid = m_serverGuid;
+                            info.clientId = m_clientId;
+                            info.serverId = m_serverId;
                             info.packetFactory = m_packetFactory;
                             info.networkInterface = m_config.networkInterface;
 
@@ -412,6 +422,8 @@ namespace protocol
 
                             if ( m_dataBlockReceiver )
                                 m_dataBlockReceiver->SetInfo( info );
+
+                            m_clientServerContext.AddClient( 0, m_address, m_clientId, m_serverId );
                         }
                     }
                     else if ( type == CLIENT_SERVER_PACKET_CONNECTION_DENIED )
@@ -419,7 +431,7 @@ namespace protocol
                         auto connectionDeniedPacket = static_cast<ConnectionDeniedPacket*>( packet );
 
                         if ( connectionDeniedPacket->GetAddress() == m_address &&
-                             connectionDeniedPacket->clientGuid == m_clientGuid )
+                             connectionDeniedPacket->clientId == m_clientId )
                         {
 //                                printf( "received connection denied packet from server\n" );
 
@@ -440,8 +452,8 @@ namespace protocol
                         auto readyForConnectionPacket = static_cast<ReadyForConnectionPacket*>( packet );
 
                         if ( readyForConnectionPacket->GetAddress() == m_address &&
-                             readyForConnectionPacket->clientGuid == m_clientGuid &&
-                             readyForConnectionPacket->serverGuid == m_serverGuid )
+                             readyForConnectionPacket->clientId == m_clientId &&
+                             readyForConnectionPacket->serverId == m_serverId )
                         {
                             if ( !m_config.clientData )
                             {
@@ -480,12 +492,16 @@ namespace protocol
                     }
                     else if ( type == CLIENT_SERVER_PACKET_CONNECTION )
                     {
-                        if ( m_state == CLIENT_STATE_READY_FOR_CONNECTION )
-                            m_state = CLIENT_STATE_CONNECTED;
+                        auto connectionPacket = (ConnectionPacket*) packet;
+                        if ( connectionPacket->clientId == m_clientId && connectionPacket->serverId == m_serverId )
+                        {
+                            if ( m_state == CLIENT_STATE_READY_FOR_CONNECTION )
+                                m_state = CLIENT_STATE_CONNECTED;
 
-                        const bool result = m_connection->ReadPacket( static_cast<ConnectionPacket*>( packet ) );
-                        if ( result )
-                            m_lastPacketReceiveTime = m_timeBase.time;
+                            const bool result = m_connection->ReadPacket( connectionPacket );
+                            if ( result )
+                                m_lastPacketReceiveTime = m_timeBase.time;
+                        }
                     }
                 }
                 break;
@@ -524,10 +540,10 @@ namespace protocol
         if ( packet->GetAddress() != m_address )
             return;
 
-        if ( packet->clientGuid != m_clientGuid )
+        if ( packet->clientId != m_clientId )
             return;
 
-        if ( packet->serverGuid != m_serverGuid )
+        if ( packet->serverId != m_serverId )
             return;
 
         DisconnectAndSetError( CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
@@ -537,10 +553,10 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        if ( packet->clientGuid != m_clientGuid )
+        if ( packet->clientId != m_clientId )
             return;
 
-        if ( packet->serverGuid != m_serverGuid )
+        if ( packet->serverId != m_serverId )
             return;
 
         if ( !m_dataBlockReceiver )
@@ -562,10 +578,10 @@ namespace protocol
 
 //        printf( "process fragment ack %d\n", packet->fragmentId );
 
-        if ( packet->clientGuid != m_clientGuid )
+        if ( packet->clientId != m_clientId )
             return;
 
-        if ( packet->serverGuid != m_serverGuid )
+        if ( packet->serverId != m_serverId )
             return;
 
         if ( !m_dataBlockSender )
@@ -608,8 +624,9 @@ namespace protocol
     {
         m_hostname[0] = '\0';
         m_address = Address();
-        m_clientGuid = 0;
-        m_serverGuid = 0;
+        m_clientId = 0;
+        m_serverId = 0;
+        m_clientServerContext.RemoveClient( 0 );
     }
 
     void Client::SendPacket( Packet * packet )

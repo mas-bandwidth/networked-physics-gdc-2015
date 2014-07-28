@@ -41,9 +41,9 @@ namespace protocol
         #endif
     }
 
-    uint64_t generate_guid()
+    uint16_t generate_id()
     {
-        return ( uint64_t( rand() ) << 32 ) | time( nullptr );
+        return ( rand() % 65535 ) + 1;
     }
 
     int random_int( int min, int max )

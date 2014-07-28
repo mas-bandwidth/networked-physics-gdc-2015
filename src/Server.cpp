@@ -44,6 +44,14 @@ namespace protocol
             if ( m_config.maxClientDataSize > 0 )
                 m_clients[i].dataBlockReceiver = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxClientDataSize );
         }
+
+        m_clientServerContext.Initialize( *m_allocator, m_numClients );
+
+        memset( m_context, 0, sizeof(void*) * MaxContexts );
+
+        m_context[0] = &m_clientServerContext;
+
+        m_config.networkInterface->SetContext( m_context );
     }
 
     Server::~Server()
@@ -51,6 +59,8 @@ namespace protocol
         PROTOCOL_ASSERT( m_allocator );
         PROTOCOL_ASSERT( m_clients );
         PROTOCOL_ASSERT( m_packetFactory );
+
+        m_clientServerContext.Free( *m_allocator );
 
         for ( int i = 0; i < m_numClients; ++i )
         {
@@ -119,8 +129,8 @@ namespace protocol
 
         auto packet = (DisconnectedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_DISCONNECTED );
 
-        packet->clientGuid = client.clientGuid;
-        packet->serverGuid = client.serverGuid;
+        packet->clientId = client.clientId;
+        packet->serverId = client.serverId;
 
         SendPacket( client.address, packet );
 
@@ -200,8 +210,8 @@ namespace protocol
         {
             auto packet = (ConnectionChallengePacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE );
 
-            packet->clientGuid = client.clientGuid;
-            packet->serverGuid = client.serverGuid;
+            packet->clientId = client.clientId;
+            packet->serverId = client.serverId;
 
             SendPacket( client.address, packet );
 
@@ -239,8 +249,8 @@ namespace protocol
         {
             auto packet = (ReadyForConnectionPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION );
 
-            packet->clientGuid = client.clientGuid;
-            packet->serverGuid = client.serverGuid;
+            packet->clientId = client.clientId;
+            packet->serverId = client.serverId;
 
             SendPacket( client.address, packet );
 
@@ -273,6 +283,9 @@ namespace protocol
             auto packet = client.connection->WritePacket();
 
 //                printf( "server sent connection packet\n" );
+
+            packet->clientId = client.clientId;
+            packet->serverId = client.serverId;
 
             SendPacket( client.address, packet );
 
@@ -383,7 +396,7 @@ namespace protocol
             // printf( "server is closed. denying connection request\n" );
 
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
-            connectionDeniedPacket->clientGuid = packet->clientGuid;
+            connectionDeniedPacket->clientId = packet->clientId;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_CLOSED;
 
             SendPacket( address, connectionDeniedPacket );
@@ -392,17 +405,17 @@ namespace protocol
         }
 
         int clientIndex = FindClientSlot( address );
-        if ( clientIndex != -1 && m_clients[clientIndex].clientGuid != packet->clientGuid )
+        if ( clientIndex != -1 && m_clients[clientIndex].clientId != packet->clientId )
         {
             // printf( "client is already connected. denying connection request\n" );
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
-            connectionDeniedPacket->clientGuid = packet->clientGuid;
+            connectionDeniedPacket->clientId = packet->clientId;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED;
             SendPacket( address, connectionDeniedPacket );
             return;
         }
 
-        if ( FindClientSlot( address, packet->clientGuid ) != -1 )
+        if ( FindClientSlot( address, packet->clientId ) != -1 )
         {
             // printf( "ignoring connection request. client already has a slot\n" );
             return;
@@ -413,7 +426,7 @@ namespace protocol
         {
             // printf( "server is full. denying connection request\n" );
             auto connectionDeniedPacket = (ConnectionDeniedPacket*) m_packetFactory->Create( CLIENT_SERVER_PACKET_CONNECTION_DENIED );
-            connectionDeniedPacket->clientGuid = packet->clientGuid;
+            connectionDeniedPacket->clientId = packet->clientId;
             connectionDeniedPacket->reason = CONNECTION_REQUEST_DENIED_SERVER_FULL;
             SendPacket( address, connectionDeniedPacket );
             return;
@@ -427,15 +440,15 @@ namespace protocol
         ClientData & client = m_clients[clientIndex];
 
         client.address = address;
-        client.clientGuid = packet->clientGuid;
-        client.serverGuid = generate_guid();
+        client.clientId = packet->clientId;
+        client.serverId = generate_id();
         client.lastPacketTime = m_timeBase.time;
         client.state = SERVER_CLIENT_STATE_SENDING_CHALLENGE;
 
         ClientServerInfo info;
         info.address = address;
-        info.clientGuid = client.clientGuid;
-        info.serverGuid = client.serverGuid;
+        info.clientId = client.clientId;
+        info.serverId = client.serverId;
         info.packetFactory = m_packetFactory;
         info.networkInterface = m_config.networkInterface;
 
@@ -444,13 +457,15 @@ namespace protocol
 
         if ( client.dataBlockReceiver )
             client.dataBlockReceiver->SetInfo( info );
+
+        m_clientServerContext.AddClient( clientIndex, client.address, client.clientId, client.serverId );
     }
 
     void Server::ProcessChallengeResponsePacket( ChallengeResponsePacket * packet )
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid, packet->serverGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientId, packet->serverId );
         if ( clientIndex == -1 )
             return;
 
@@ -468,7 +483,7 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientId );
         if ( clientIndex == -1 )
             return;
 
@@ -477,7 +492,7 @@ namespace protocol
 
         ClientData & client = m_clients[clientIndex];
 
-        if ( client.serverGuid != packet->serverGuid )
+        if ( client.serverId != packet->serverId )
             return;
 
         if ( client.state != SERVER_CLIENT_STATE_SENDING_SERVER_DATA &&
@@ -493,12 +508,12 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientId );
         if ( clientIndex == -1 )
             return;
         
         ClientData & client = m_clients[clientIndex];
-        if ( client.serverGuid != packet->serverGuid )
+        if ( client.serverId != packet->serverId )
             return;
         
         if ( !client.dataBlockReceiver )
@@ -523,12 +538,12 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientId );
         if ( clientIndex == -1 )
             return;
         
         ClientData & client = m_clients[clientIndex];
-        if ( client.serverGuid != packet->serverGuid )
+        if ( client.serverId != packet->serverId )
             return;
         
         if ( !client.dataBlockSender )
@@ -551,12 +566,12 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientGuid );
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientId );
         if ( clientIndex == -1 )
             return;
 
         ClientData & client = m_clients[clientIndex];
-        if ( client.serverGuid != packet->serverGuid )
+        if ( client.serverId != packet->serverId )
             return;
 
         ResetClientSlot( clientIndex );
@@ -566,7 +581,10 @@ namespace protocol
     {
         PROTOCOL_ASSERT( packet );
 
-        const int clientIndex = FindClientSlot( packet->GetAddress() );
+        if ( packet->clientId == 0 && packet->serverId == 0 )
+            return;
+
+        const int clientIndex = FindClientSlot( packet->GetAddress(), packet->clientId, packet->serverId );
         if ( clientIndex == -1 )
             return;
 
@@ -581,44 +599,17 @@ namespace protocol
 
     int Server::FindClientSlot( const Address & address ) const
     {
-        for ( int i = 0; i < m_numClients; ++i )
-        {
-            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
-                continue;
-            
-            if ( m_clients[i].address == address )
-                return i;
-        }
-
-        return -1;
+        return m_clientServerContext.FindClient( address );
     }
 
     int Server::FindClientSlot( const Address & address, uint64_t clientGuid ) const
     {
-        for ( int i = 0; i < m_numClients; ++i )
-        {
-            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
-                continue;
-            
-            if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid )
-                return i;
-        }
-
-        return -1;
+        return m_clientServerContext.FindClient( address, clientGuid );
     }
 
     int Server::FindClientSlot( const Address & address, uint64_t clientGuid, uint64_t serverGuid ) const
     {
-        for ( int i = 0; i < m_numClients; ++i )
-        {
-            if ( m_clients[i].state == SERVER_CLIENT_STATE_DISCONNECTED )
-                continue;
-            
-            if ( m_clients[i].address == address && m_clients[i].clientGuid == clientGuid && m_clients[i].serverGuid == serverGuid )
-                return i;
-        }
-
-        return -1;
+        return m_clientServerContext.FindClient( address, clientGuid, serverGuid );
     }
 
     int Server::FindFreeClientSlot() const
@@ -642,6 +633,8 @@ namespace protocol
         PROTOCOL_ASSERT( client.connection );
 
         client.connection->Reset();
+
+        m_clientServerContext.RemoveClient( clientIndex );
     }
 
     void Server::SendPacket( const Address & address, Packet * packet )

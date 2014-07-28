@@ -9,8 +9,9 @@
 #include "Packet.h"
 #include "Stream.h"
 #include "Channel.h"
-#include "PacketFactory.h"
 #include "Memory.h"
+#include "PacketFactory.h"
+#include "ClientServerContext.h"
 
 namespace protocol
 {
@@ -40,13 +41,13 @@ namespace protocol
 
     struct ConnectionRequestPacket : public Packet
     {
-        uint64_t clientGuid = 0;
+        uint16_t clientId = 0;
 
         ConnectionRequestPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_REQUEST ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
+            serialize_uint16( stream, clientId );
         }
 
         void SerializeRead( ReadStream & stream )
@@ -67,15 +68,15 @@ namespace protocol
 
     struct ChallengeResponsePacket : public Packet
     {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
 
         ChallengeResponsePacket() : Packet( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
+            serialize_uint16( stream, clientId );
+            serialize_uint16( stream, serverId );
         }
 
         void SerializeRead( ReadStream & stream )
@@ -96,14 +97,14 @@ namespace protocol
 
     struct ConnectionDeniedPacket : public Packet
     {
-        uint64_t clientGuid = 0;
+        uint16_t clientId = 0;
         uint32_t reason = 0;
 
         ConnectionDeniedPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_DENIED ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
+            serialize_uint16( stream, clientId );
             serialize_uint32( stream, reason );
         }
 
@@ -125,15 +126,15 @@ namespace protocol
 
     struct ConnectionChallengePacket : public Packet
     {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
 
         ConnectionChallengePacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
+            serialize_uint16( stream, clientId );
+            serialize_uint16( stream, serverId );
         }
 
         void SerializeRead( ReadStream & stream )
@@ -154,15 +155,15 @@ namespace protocol
 
     struct ReadyForConnectionPacket : public Packet
     {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
 
         ReadyForConnectionPacket() : Packet( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
+            serialize_uint16( stream, clientId );
+            serialize_uint16( stream, serverId );
         }
 
         void SerializeRead( ReadStream & stream )
@@ -183,8 +184,8 @@ namespace protocol
 
     struct DataBlockFragmentPacket : public Packet
     {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
         uint32_t blockSize = 0;
         uint32_t fragmentSize : 16;
         uint32_t numFragments : 16;
@@ -212,8 +213,8 @@ namespace protocol
             if ( Stream::IsWriting )
                 PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
 
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
+            serialize_uint16( stream, clientId );
+            serialize_uint16( stream, serverId );
             serialize_uint32( stream, blockSize );
             serialize_bits( stream, numFragments, 16 );
             serialize_bits( stream, fragmentSize, 16 );
@@ -250,8 +251,8 @@ namespace protocol
 
     struct DataBlockFragmentAckPacket : public Packet
     {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
         uint32_t fragmentId : 16;
 
         DataBlockFragmentAckPacket() : Packet( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK ) 
@@ -261,8 +262,8 @@ namespace protocol
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
+            serialize_uint16( stream, clientId );
+            serialize_uint16( stream, serverId );
             serialize_bits( stream, fragmentId, 16 );
         }
 
@@ -284,15 +285,15 @@ namespace protocol
 
     struct DisconnectedPacket : public Packet
     {
-        uint64_t clientGuid = 0;
-        uint64_t serverGuid = 0;
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
 
         DisconnectedPacket() : Packet( CLIENT_SERVER_PACKET_DISCONNECTED ) {}
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            serialize_uint64( stream, clientGuid );
-            serialize_uint64( stream, serverGuid );
+            serialize_uint16( stream, clientId );
+            serialize_uint16( stream, serverId );
         }
 
         void SerializeRead( ReadStream & stream )
@@ -313,6 +314,8 @@ namespace protocol
 
     struct ConnectionPacket : public Packet
     {
+        uint16_t clientId = 0;
+        uint16_t serverId = 0;
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
@@ -351,6 +354,42 @@ namespace protocol
         template <typename Stream> void Serialize( Stream & stream )
         {
             PROTOCOL_ASSERT( channelStructure );
+
+            // IMPORTANT: Context here is used when running under client/server
+            // In this situation the connection packet cannot be correctly serialized
+            // unless it has the same context as the server, thus we must early out
+            // if we encounter a connection packet that doesn't match a connected client.
+
+            const void ** context = stream.GetContext();
+
+            const ClientServerContext * clientServerContext = nullptr;
+            if ( context )
+                clientServerContext = (const ClientServerContext*) context[0];
+
+            bool hasContext = false;
+
+            if ( Stream::IsWriting && clientId != 0 && serverId != 0 && clientServerContext )
+                hasContext = true;
+
+            serialize_bool( stream, hasContext );
+
+            // todo: potentially other flags could be inserted here
+
+            stream.Align();
+
+            if ( hasContext )
+            {
+                serialize_uint16( stream, clientId );
+                serialize_uint16( stream, serverId );
+            }
+
+            if ( Stream::IsReading && hasContext && !clientServerContext->ClientPotentiallyExists( clientId, serverId ) )
+            {
+                clientId = 0;
+                serverId = 0;
+                stream.Abort();
+                return;                        
+            }
 
             // IMPORTANT: Insert non-frequently changing values here
             // This helps LZ dictionary based compressors do a good job!

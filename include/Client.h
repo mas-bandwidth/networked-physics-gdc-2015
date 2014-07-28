@@ -58,8 +58,8 @@ namespace protocol
 
         Address m_address;
         ClientState m_state = CLIENT_STATE_DISCONNECTED;
-        uint64_t m_clientGuid = 0;
-        uint64_t m_serverGuid = 0;
+        uint16_t m_clientId = 0;
+        uint16_t m_serverId = 0;
         double m_accumulator = 0.0;
         double m_lastPacketReceiveTime = 0.0;
         ClientError m_error = CLIENT_ERROR_NONE;
@@ -67,6 +67,10 @@ namespace protocol
 
         ClientServerDataBlockSender * m_dataBlockSender = nullptr;
         ClientServerDataBlockReceiver * m_dataBlockReceiver = nullptr;
+
+        ClientServerContext m_clientServerContext;
+
+        const void * m_context[MaxContexts];
 
         char m_hostname[MaxHostName];
 
@@ -111,9 +115,9 @@ namespace protocol
 
         const Block * GetServerData() const;
 
-        uint64_t GetClientGuid() const { return m_clientGuid; }
+        uint16_t GetClientId() const { return m_clientId; }
         
-        uint64_t GetServerGuid() const { return m_serverGuid; }
+        uint16_t GetServerId() const { return m_serverId; }
 
         void Update( const TimeBase & timeBase );
 

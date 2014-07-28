@@ -362,6 +362,14 @@ namespace protocol
 
             packet->SerializeRead( stream );
 
+            // IMPORTANT: packet read was aborted. intentionally ignore this packet
+            if ( stream.Aborted() )
+            {
+                m_counters[BSD_SOCKET_COUNTER_ABORTED_PACKET_READS]++;
+                m_config.packetFactory->Destroy( packet );
+                continue;
+            }
+
             PROTOCOL_ASSERT( !stream.IsOverflow() );
             if ( stream.IsOverflow() )
             {

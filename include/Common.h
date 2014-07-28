@@ -176,7 +176,7 @@ namespace protocol
         return sequence_greater_than( s2, s1 );
     }
 
-    uint64_t generate_guid();
+    uint16_t generate_id();
 
     int random_int( int min, int max );
 

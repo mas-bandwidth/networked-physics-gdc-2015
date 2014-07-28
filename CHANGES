@@ -1,4 +1,73 @@
-Sunday Morning, July 28, 2014:
+Sunday Evening, July 27, 2014:
+------------------------------
+
+    So it seems that the context works well.
+
+    I think that serializing 64bit client and server guids is way overkill.
+
+    Reduce them back down to 16 bits each. Just do rand() % 65535 + 1 (0 is special)
+
+    Now while it's some overhead per-connection packet, it's not ridiculous.
+
+    Note that "guid" implies globally unique id.
+
+    There is no guarantee that the guid is globally unique.
+
+    Should probably be renamed to "clientId", "serverId" IMO.
+
+    Done.
+
+
+Sunday Afternoon, July 27, 2014:
+--------------------------------
+
+    Seems that both client and server should have a client server context object.
+
+    That this object should be int numClients, address, per-client, client and server guid.
+
+    This struct should provide quick find client by address, guid lookup.
+
+    It is basically a hot-cold split, and something we would want anyway.
+
+    Don't do a callback, just let the connection packet inspect this client/server
+    context and do its work. I think there would need to be exclusion potentially
+    while accessing this client/server context but it should be changed very
+    infrequently on the client/server side (connecting clients) and on the serialize
+    side it would only ever be read only.
+
+    Put a magic number at the top of the client/server context. 
+
+    This way you can verify it is really a client/server context.
+
+    Add basic functions like find client, add client, remove client.
+
+    Add context to client class.
+
+    Add context to server class.
+
+    Switch all find client index functions over to use context on server,
+    so I know it's really working. Unit tests still pass.
+
+    Put the context array void*[MaxContexts] inside the client and server.
+
+    Clear all contexts to nullptr initially, and set the const void** on 
+    the network interface as soon as the client/server is created.
+
+    Set the client/server context as entry 0 in the array, for now.
+
+    Move the client/server guids back into the connection packet.
+
+    After serializing client and server guids, if no matching client is 
+    found, discard the connection packet by setting client and server guids
+    on the packet to 0, and returning from the serialize.
+
+    To implement this will need a search function that takes only
+    the client and server guids, and does not care about the address.
+    
+    Make sure all unit tests and soaks still pass.
+
+
+Sunday Morning, July 27, 2014:
 ------------------------------
 
     Now work out how we can apply this to client/server
@@ -40,7 +109,7 @@ Sunday Morning, July 28, 2014:
     Update NetworkInterface.h and BSDSocket.h/cpp to work this way.    
 
 
-Saturday Evening, July 27, 2014:
+Saturday Evening, July 26, 2014:
 --------------------------------
 
     Exchange messages between client and server to make sure protocol
@@ -104,7 +173,7 @@ Saturday Evening, July 27, 2014:
     client/server is stable under packet loss and latency. 
 
 
-Saturday Morning, July 27, 2014:
+Saturday Morning, July 26, 2014:
 --------------------------------
 
     Need a way to identify a client slot on the server.
@@ -120,7 +189,7 @@ Saturday Morning, July 27, 2014:
     Pass over code and clean up
 
 
-Friday Morning, July 26, 2014:
+Friday Morning, July 25, 2014:
 ------------------------------
 
     Back to client/server soak test.
@@ -158,7 +227,7 @@ Friday Morning, July 26, 2014:
     Yes indeed. That was it! :D
 
 
-Thursday Evening, July 25, 2014:
+Thursday Evening, July 24, 2014:
 --------------------------------
 
     Passed over unit tests and removed sleeps. Fixed a bunch of stuff.
@@ -178,7 +247,7 @@ Thursday Evening, July 25, 2014:
     Added a neat function to sleep 1ms after 256 iterations. Sorted!
 
 
-Wednesday Evening, July 24, 2014:
+Wednesday Evening, July 23, 2014:
 ---------------------------------
 
     Sketch out new soak_protocol and soak_client_server in premake.
