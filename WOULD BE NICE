@@ -2,16 +2,6 @@ WOULD BE NICE:
 
     -----------------------
 
-    Channel structure could be another context, eg. context 0, while context 1 would be
-    the client/server context, context 2 would be the game specific context and so on.
-
-    This would unify creation of connection packets so they don't need a different
-    constructor signature, this would make macro treatment of the factory a little
-    easier so packets would not need a factory with explicit code written for the
-    connection packet separately.
-
-    -----------------------
-
     A 64 bit client and server guid is a bit overkill.
 
     Maybe drop these guys down to say, 16 bits each? :D

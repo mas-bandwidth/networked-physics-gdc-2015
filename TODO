@@ -2,9 +2,26 @@ DONE:
 
 TODO:
 
-    ...
+    -----------------------------
 
+    It seems a bit of a slam dunk than channel structure should be context[0]
+    and client server context should be context[1].
 
+    This has a lot of benefits, including simplification of packet factory.
+
+    Make it so.
+
+    -----------------------------
+
+    There should be context enums, like CONTEXT_CHANNEL_STRUCTURE
+    and CONTEXT_CLIENT_SERVER
+
+    There should also be CONTEXT_USER
+
+    So the user knows where their user contexts must start from,
+    eg. CONTEXT_USER, CONTEXT_USER + 1 and so on.
+
+    -----------------------------
 
 
 
@@ -21,12 +38,6 @@ TODO:
 
     Seems like channels need access to a function that returns the 
     appropriate const void ** context pointer to set on the measure stream.
-
-    -------------------------
-
-    Might be a good idea to put the client/server context in the last
-    slot, so the user can set slot 0. otherwise going to be annoying
-    explaining to users why they have to start with slot 1 or higher.
 
     -------------------------
 
