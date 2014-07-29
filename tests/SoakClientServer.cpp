@@ -67,7 +67,7 @@ void soak_test()
 
     TestChannelStructure channelStructure( messageFactory );
 
-    TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+    TestPacketFactory packetFactory( memory::default_allocator() );
 
     // create a bunch of servers
 

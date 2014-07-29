@@ -2,26 +2,7 @@ DONE:
 
 TODO:
 
-    -----------------------------
-
-    It seems a bit of a slam dunk than channel structure should be context[0]
-    and client server context should be context[1].
-
-    This has a lot of benefits, including simplification of packet factory.
-
-    Make it so.
-
-    -----------------------------
-
-    There should be context enums, like CONTEXT_CHANNEL_STRUCTURE
-    and CONTEXT_CLIENT_SERVER
-
-    There should also be CONTEXT_USER
-
-    So the user knows where their user contexts must start from,
-    eg. CONTEXT_USER, CONTEXT_USER + 1 and so on.
-
-    -----------------------------
+    Fix protocol soak so it uses network simulator again
 
 
 

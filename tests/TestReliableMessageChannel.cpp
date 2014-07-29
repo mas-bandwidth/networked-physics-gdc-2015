@@ -17,7 +17,11 @@ void test_reliable_message_channel_messages()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
+
+        const void * context[MaxContexts];
+        memset( context, 0, sizeof( context ) );
+        context[CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
 
         {
             const int MaxPacketSize = 256;
@@ -65,12 +69,14 @@ void test_reliable_message_channel_messages()
                 uint8_t buffer[MaxPacketSize];
 
                 WriteStream writeStream( buffer, MaxPacketSize );
+                writeStream.SetContext( context );
                 writePacket->SerializeWrite( writeStream );
                 writeStream.Flush();
                 packetFactory.Destroy( writePacket );
                 writePacket = nullptr;
 
                 ReadStream readStream( buffer, MaxPacketSize );
+                readStream.SetContext( context );
                 auto readPacket = packetFactory.Create( PACKET_CONNECTION );
                 PROTOCOL_CHECK( readPacket );
                 PROTOCOL_CHECK( readPacket->GetType() == PACKET_CONNECTION );
@@ -145,8 +151,12 @@ void test_reliable_message_channel_small_blocks()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
         
+        const void * context[MaxContexts];
+        memset( context, 0, sizeof( context ) );
+        context[CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+
         const int MaxPacketSize = 256;
 
         ConnectionConfig connectionConfig;
@@ -195,6 +205,7 @@ void test_reliable_message_channel_small_blocks()
             uint8_t buffer[MaxPacketSize];
 
             WriteStream writeStream( buffer, MaxPacketSize );
+            writeStream.SetContext( context );
             writePacket->SerializeWrite( writeStream );
             writeStream.Flush();
 
@@ -202,6 +213,7 @@ void test_reliable_message_channel_small_blocks()
             writePacket = nullptr;
 
             ReadStream readStream( buffer, MaxPacketSize );
+            readStream.SetContext( context );
             auto readPacket = packetFactory.Create( PACKET_CONNECTION );
             PROTOCOL_CHECK( readPacket );
             PROTOCOL_CHECK( readPacket->GetType() == PACKET_CONNECTION );
@@ -275,7 +287,11 @@ void test_reliable_message_channel_large_blocks()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
+        
+        const void * context[MaxContexts];
+        memset( context, 0, sizeof( context ) );
+        context[CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
 
         const int MaxPacketSize = 256;
 
@@ -323,6 +339,7 @@ void test_reliable_message_channel_large_blocks()
             uint8_t buffer[MaxPacketSize];
 
             WriteStream writeStream( buffer, MaxPacketSize );
+            writeStream.SetContext( context );
             writePacket->SerializeWrite( writeStream );
             writeStream.Flush();
 
@@ -330,6 +347,7 @@ void test_reliable_message_channel_large_blocks()
             writePacket = nullptr;
 
             ReadStream readStream( buffer, MaxPacketSize );
+            readStream.SetContext( context );
             auto readPacket = packetFactory.Create( PACKET_CONNECTION );
             PROTOCOL_CHECK( readPacket );
             PROTOCOL_CHECK( readPacket->GetType() == PACKET_CONNECTION );
@@ -407,7 +425,11 @@ void test_reliable_message_channel_mixture()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
+        
+        const void * context[MaxContexts];
+        memset( context, 0, sizeof( context ) );
+        context[CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
 
         const int MaxPacketSize = 256;
 
@@ -466,6 +488,7 @@ void test_reliable_message_channel_mixture()
             uint8_t buffer[MaxPacketSize];
 
             WriteStream writeStream( buffer, MaxPacketSize );
+            writeStream.SetContext( context );
             writePacket->SerializeWrite( writeStream );
             writeStream.Flush();
 
@@ -473,6 +496,7 @@ void test_reliable_message_channel_mixture()
             writePacket = nullptr;
 
             ReadStream readStream( buffer, MaxPacketSize );
+            readStream.SetContext( context );
             auto readPacket = packetFactory.Create( PACKET_CONNECTION );
             readPacket->SerializeRead( readStream );
 

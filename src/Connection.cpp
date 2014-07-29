@@ -134,10 +134,6 @@ namespace protocol
 
         PROTOCOL_ASSERT( packet );
         PROTOCOL_ASSERT( packet->GetType() == m_config.packetType );
-        PROTOCOL_ASSERT( packet->numChannels == m_numChannels );
-
-        if ( packet->numChannels != m_numChannels )
-            return false;
 
 //            printf( "read packet %d\n", (int) packet->sequence );
 
@@ -147,7 +143,7 @@ namespace protocol
 
         bool discardPacket = false;
 
-        for ( int i = 0; i < packet->numChannels; ++i )
+        for ( int i = 0; i < m_numChannels; ++i )
         {
             if ( !packet->channelData[i] )
                 continue;

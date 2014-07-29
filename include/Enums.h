@@ -172,10 +172,11 @@ namespace protocol
         DATA_BLOCK_RECEIVER_ERROR_BLOCK_TOO_LARGE
     };
 
-    enum ClientServerContexts
+    enum Contexts
     {
-        CLIENT_SERVER_CONTEXT_CONNECTION_INFO = 0,              // client/server connection info, eg. client guid, server guid, connection established true/false.
-        CLIENT_SERVER_CONTEXT_NUM_CONTEXTS
+        CONTEXT_CHANNEL_STRUCTURE = 0,
+        CONTEXT_CLIENT_SERVER = 1,
+        CONTEXT_USER
     };
 }
 

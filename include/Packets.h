@@ -319,25 +319,18 @@ namespace protocol
         uint16_t sequence = 0;
         uint16_t ack = 0;
         uint32_t ack_bits = 0;
-        int numChannels = 0;
         ChannelData * channelData[MaxChannels];
-        ChannelStructure * channelStructure = nullptr;
 
-        ConnectionPacket( int type, ChannelStructure * _channelStructure ) : Packet( type )
+        ConnectionPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION )
         {
-            PROTOCOL_ASSERT( _channelStructure );
-            channelStructure = _channelStructure;
-            numChannels = channelStructure->GetNumChannels();
-            memset( channelData, 0, sizeof( ChannelData* ) * numChannels );
+            memset( channelData, 0, sizeof( ChannelData* ) * MaxChannels );
         }
 
     private:
 
         ~ConnectionPacket()
         {
-            PROTOCOL_ASSERT( channelStructure );
-
-            for ( int i = 0; i < numChannels; ++i )
+            for ( int i = 0; i < MaxChannels; ++i )
             {
                 if ( channelData[i] )
                 {
@@ -345,50 +338,45 @@ namespace protocol
                     channelData[i] = nullptr;
                 }
             }
-
-            channelStructure = nullptr;
         }
 
     public:
 
         template <typename Stream> void Serialize( Stream & stream )
         {
-            PROTOCOL_ASSERT( channelStructure );
-
-            // IMPORTANT: Context here is used when running under client/server
-            // In this situation the connection packet cannot be correctly serialized
-            // unless it has the same context as the server, thus we must early out
-            // if we encounter a connection packet that doesn't match a connected client.
+            // IMPORTANT: Channel structure must be supplied as context
+            // so we know what channels are to be serialized for this packet
 
             const void ** context = stream.GetContext();
 
-            const ClientServerContext * clientServerContext = nullptr;
-            if ( context )
-                clientServerContext = (const ClientServerContext*) context[0];
+            PROTOCOL_ASSERT( context );
 
-            bool hasContext = false;
+            ChannelStructure * channelStructure = (ChannelStructure*) context[CONTEXT_CHANNEL_STRUCTURE];
+            
+            PROTOCOL_ASSERT( channelStructure );
 
-            if ( Stream::IsWriting && clientId != 0 && serverId != 0 && clientServerContext )
-                hasContext = true;
+            const int numChannels = channelStructure->GetNumChannels();
 
-            serialize_bool( stream, hasContext );
+            PROTOCOL_ASSERT( numChannels > 0 );
+            PROTOCOL_ASSERT( numChannels <= MaxChannels );
 
-            // todo: potentially other flags could be inserted here
+            // IMPORTANT: Context here is used when running under client/server
+            // so we can filter out connection packets that do not match any connected client.
 
-            stream.Align();
+            auto clientServerContext = (const ClientServerContext*) context[CONTEXT_CLIENT_SERVER];
 
-            if ( hasContext )
+            if ( clientServerContext )
             {
                 serialize_uint16( stream, clientId );
                 serialize_uint16( stream, serverId );
-            }
 
-            if ( Stream::IsReading && hasContext && !clientServerContext->ClientPotentiallyExists( clientId, serverId ) )
-            {
-                clientId = 0;
-                serverId = 0;
-                stream.Abort();
-                return;                        
+                if ( Stream::IsReading && !clientServerContext->ClientPotentiallyExists( clientId, serverId ) )
+                {
+                    clientId = 0;
+                    serverId = 0;
+                    stream.Abort();
+                    return;                        
+                }
             }
 
             // IMPORTANT: Insert non-frequently changing values here

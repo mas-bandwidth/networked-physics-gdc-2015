@@ -22,7 +22,7 @@ void test_client_initial_state()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -244,7 +244,7 @@ void test_client_connection_request_timeout()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -300,7 +300,7 @@ void test_client_connection_request_denied()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -377,7 +377,7 @@ void test_client_connection_challenge()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -454,7 +454,7 @@ void test_client_connection_challenge_response()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -530,7 +530,7 @@ void test_client_connection_established()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -608,7 +608,7 @@ void test_client_connection_messages()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -756,7 +756,7 @@ void test_client_connection_disconnect()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = 10000;
@@ -861,7 +861,7 @@ void test_client_connection_server_full()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // create a server on port 10000
 
@@ -1038,7 +1038,7 @@ void test_client_connection_timeout()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // start server and connect one client and wait the client is fully connected
 
@@ -1156,7 +1156,7 @@ void test_client_connection_already_connected()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // start a server and connect a client. wait until the client is fully connected
 
@@ -1267,7 +1267,7 @@ void test_client_connection_reconnect()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // start a server and connect a client. wait until the client is fully connected
 
@@ -1379,7 +1379,7 @@ void test_client_side_disconnect()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // start a server and connect a client. wait until the client is fully connected
 
@@ -1491,7 +1491,7 @@ void test_server_data()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // create a server and set it up with some server data
 
@@ -1604,7 +1604,7 @@ void test_client_data()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // create a server
 
@@ -1717,7 +1717,7 @@ void test_client_and_server_data()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // create a server and set it up with some server data
 
@@ -1850,7 +1850,7 @@ void test_client_and_server_data_reconnect()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // start a server and connect a client. wait until the client is fully connected
 
@@ -2052,7 +2052,7 @@ void test_client_and_server_data_multiple_clients()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // create a server on port 10000
 
@@ -2220,7 +2220,7 @@ void test_server_data_too_large()
 
         TestChannelStructure channelStructure( messageFactory );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         // create a server and set it up with some server data
 

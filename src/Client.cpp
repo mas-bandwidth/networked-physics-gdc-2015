@@ -35,11 +35,12 @@ namespace protocol
         if ( m_config.clientData )
             m_dataBlockSender = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.clientData, m_config.fragmentSize, m_config.fragmentsPerSecond );
 
-        memset( m_context, 0, sizeof(void*) * MaxContexts );
+        memset( m_context, 0, sizeof(m_context) );
 
         m_clientServerContext.Initialize( *m_allocator, 1 );
 
-        m_context[0] = &m_clientServerContext;
+        m_context[CONTEXT_CHANNEL_STRUCTURE] = m_config.channelStructure;
+        m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
 
         m_config.networkInterface->SetContext( m_context );
 

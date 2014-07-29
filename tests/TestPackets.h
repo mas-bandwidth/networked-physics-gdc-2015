@@ -165,15 +165,13 @@ struct DisconnectPacket : public Packet
 class TestPacketFactory : public PacketFactory
 {
     Allocator * m_allocator;
-    ChannelStructure * m_channelStructure = nullptr;
 
 public:
 
-    TestPacketFactory( Allocator & allocator, ChannelStructure * channelStructure = nullptr )
+    TestPacketFactory( Allocator & allocator )
         : PacketFactory( allocator, NUM_PACKET_TYPES )
     {
         m_allocator = &allocator;
-        m_channelStructure = channelStructure;
     }
 
 protected:
@@ -193,7 +191,7 @@ protected:
             case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK:  return PROTOCOL_NEW( *m_allocator, DataBlockFragmentAckPacket );
             case CLIENT_SERVER_PACKET_DISCONNECTED:             return PROTOCOL_NEW( *m_allocator, DisconnectedPacket );
 
-            case PACKET_CONNECTION:     return PROTOCOL_NEW( *m_allocator, ConnectionPacket, PACKET_CONNECTION, m_channelStructure );
+            case PACKET_CONNECTION:     return PROTOCOL_NEW( *m_allocator, ConnectionPacket );
 
             case PACKET_CONNECT:        return PROTOCOL_NEW( *m_allocator, ConnectPacket );
             case PACKET_UPDATE:         return PROTOCOL_NEW( *m_allocator, UpdatePacket );

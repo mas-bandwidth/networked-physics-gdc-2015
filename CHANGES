@@ -1,3 +1,24 @@
+Monday Evening, July 28, 2014:
+------------------------------
+
+    It seems a bit of a slam dunk than channel structure should be context[0]
+    and client server context should be context[1].
+
+    This has a lot of benefits, including simplification of packet factory.
+
+    There should be context enums, like CONTEXT_CHANNEL_STRUCTURE
+    and CONTEXT_CLIENT_SERVER
+
+    There should also be CONTEXT_USER so the user knows where they
+    can start adding user contexts.
+
+    Standardized on CLIENT_SERVER_PACKET_CONNECTION as the standard name.
+
+    Make unit tests work with channel structure as context.
+
+    Make soak test work with channel structure as context.
+
+
 Sunday Evening, July 27, 2014:
 ------------------------------
 

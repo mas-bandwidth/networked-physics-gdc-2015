@@ -47,9 +47,10 @@ namespace protocol
 
         m_clientServerContext.Initialize( *m_allocator, m_numClients );
 
-        memset( m_context, 0, sizeof(void*) * MaxContexts );
+        memset( m_context, 0, sizeof( m_context ) );
 
-        m_context[0] = &m_clientServerContext;
+        m_context[CONTEXT_CHANNEL_STRUCTURE] = m_config.channelStructure;
+        m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
 
         m_config.networkInterface->SetContext( m_context );
     }

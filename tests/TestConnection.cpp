@@ -42,7 +42,7 @@ void test_connection()
     {
         FakeChannelStructure channelStructure;
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = PACKET_CONNECTION;
@@ -143,7 +143,7 @@ void test_acks()
 
         AckChannelStructure channelStructure( ackedPackets );
 
-        TestPacketFactory packetFactory( memory::default_allocator(), &channelStructure );
+        TestPacketFactory packetFactory( memory::default_allocator() );
 
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = PACKET_CONNECTION;
