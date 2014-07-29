@@ -18,6 +18,8 @@ Monday Evening, July 28, 2014:
 
     Make soak test work with channel structure as context.
 
+    Fix protocol soak so it uses network simulator again
+
 
 Sunday Evening, July 27, 2014:
 ------------------------------

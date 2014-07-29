@@ -2,9 +2,12 @@ DONE:
 
 TODO:
 
-    Fix protocol soak so it uses network simulator again
+    Add a message that relies on user context, which is passed
+    down from server to client via the server data.
 
-
+    Then extend all systems to support this and make sure all
+    unit tests and soak tests pass.
+    
 
 
 
