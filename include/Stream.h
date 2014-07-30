@@ -107,9 +107,11 @@ namespace protocol
             m_context = context;
         }
 
-        const void ** GetContext() const
+        const void * GetContext( int index ) const
         {
-            return m_context;
+            PROTOCOL_ASSERT( index >= 0 );
+            PROTOCOL_ASSERT( index < MaxContexts );
+            return m_context ? m_context[index] : nullptr;
         }
 
         void Abort()
@@ -189,9 +191,11 @@ namespace protocol
             m_context = context;
         }
 
-        const void ** GetContext() const
+        const void * GetContext( int index ) const
         {
-            return m_context;
+            PROTOCOL_ASSERT( index >= 0 );
+            PROTOCOL_ASSERT( index < MaxContexts );
+            return m_context ? m_context[index] : nullptr;
         }
 
         void Abort()
@@ -290,9 +294,11 @@ namespace protocol
             m_context = context;
         }
 
-        const void ** GetContext() const
+        const void * GetContext( int index ) const
         {
-            return m_context;
+            PROTOCOL_ASSERT( index >= 0 );
+            PROTOCOL_ASSERT( index < MaxContexts );
+            return m_context ? m_context[index] : nullptr;
         }
 
         void Abort()

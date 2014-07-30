@@ -120,6 +120,8 @@ namespace protocol
 
         const Block * GetClientData( int clientIndex ) const;
 
+        void SetContext( int index, const void * ptr );
+
         int FindClientSlot( const Address & address, uint64_t clientId, uint64_t serverId ) const;
 
     protected:

@@ -2,62 +2,17 @@ DONE:
 
 TODO:
 
-    Add a message that relies on user context, which is passed
-    down from server to client via the server data.
+    -----------------------
 
-    Then extend all systems to support this and make sure all
-    unit tests and soak tests pass.
-    
+    Extend the soak client/server to use this same subclassed client/server
+    and to exchange test context messages with test context sent from server
+    to client via server data (with some additional padding...)
 
+    This is an excellent test because there are multiple servers with
+    different contexts, so connection packets are flying with radically
+    different serialization in the same program.
 
-
-
-
-    -------------------------
-
-    In situations where measure streams are used, channels need a way
-    to construct a stream with the appropriate contexts set on it.
-
-    How can this be done?
-
-    Seems like channels need access to a function that returns the 
-    appropriate const void ** context pointer to set on the measure stream.
-
-    -------------------------
-
-    In unit tests, add some sort of context message, eg. a message
-    that would only function if a context is properly set on the 
-    client/server.
-
-    Subclass client/server for tests, and in the subclass implement
-    something like OnConnected, OnDisconnected or whatever, such that
-    context is setup on both client/server.
-
-    -------------------------
-
-    Implement something for the client/server test where the first
-    256 bytes of the client/server data is reserved for a context
-    struct.
-
-    Subclass the client/server and set the context to the server
-    data once connection is established (on both client/server),
-    as well as clear the context when disconnected.
-
-    Make sure that the test context message cannot serialize
-    without having this context available. Just simple min/max
-    for quantities in the test context message.
-
-    Randomize the min/max context for each server, such that they
-    are wildly different for each server, and completely incompatible
-    eg. serialization will fail/assert if desynced.
-
-    Verify that the soak client/server is able to function with
-    repeated connect/disconnect and exchange of server data driving
-    the context needed for test context messages.
-
-    -------------------------
-
-
+    -----------------------
 
 
 

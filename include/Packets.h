@@ -347,11 +347,7 @@ namespace protocol
             // IMPORTANT: Channel structure must be supplied as context
             // so we know what channels are to be serialized for this packet
 
-            const void ** context = stream.GetContext();
-
-            PROTOCOL_ASSERT( context );
-
-            ChannelStructure * channelStructure = (ChannelStructure*) context[CONTEXT_CHANNEL_STRUCTURE];
+            ChannelStructure * channelStructure = (ChannelStructure*) stream.GetContext( CONTEXT_CHANNEL_STRUCTURE );
             
             PROTOCOL_ASSERT( channelStructure );
 
@@ -363,7 +359,7 @@ namespace protocol
             // IMPORTANT: Context here is used when running under client/server
             // so we can filter out connection packets that do not match any connected client.
 
-            auto clientServerContext = (const ClientServerContext*) context[CONTEXT_CLIENT_SERVER];
+            auto clientServerContext = (const ClientServerContext*) stream.GetContext( CONTEXT_CLIENT_SERVER );
 
             if ( clientServerContext )
             {

@@ -115,6 +115,8 @@ namespace protocol
 
         const Block * GetServerData() const;
 
+        void SetContext( int index, const void * ptr );
+
         uint16_t GetClientId() const { return m_clientId; }
         
         uint16_t GetServerId() const { return m_serverId; }
@@ -152,6 +154,10 @@ namespace protocol
         void ClearStateData();
 
         void SendPacket( Packet * packet );
+
+    protected:
+
+        virtual void OnServerDataReceived( const Block & block ) {};
     };
 }
 

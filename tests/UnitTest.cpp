@@ -74,6 +74,8 @@ extern void test_client_and_server_data_reconnect();
 extern void test_client_and_server_data_multiple_clients();
 extern void test_server_data_too_large();
 
+extern void test_client_server_user_context();
+
 int main()
 {
     srand( time( nullptr ) );
@@ -159,6 +161,8 @@ int main()
         test_client_and_server_data_reconnect();
         test_client_and_server_data_multiple_clients();
         test_server_data_too_large();
+
+        test_client_server_user_context();
     }
 
     ShutdownNetwork();

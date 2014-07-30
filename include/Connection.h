@@ -25,6 +25,7 @@ namespace protocol
         int slidingWindowSize = 256;
         PacketFactory * packetFactory = nullptr;
         ChannelStructure * channelStructure = nullptr;
+        const void ** context = nullptr;
     };
 
     struct SentPacketData

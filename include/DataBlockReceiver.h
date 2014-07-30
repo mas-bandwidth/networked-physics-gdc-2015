@@ -29,7 +29,7 @@ namespace protocol
 
         int GetNumFragments() const { return m_numFragments; }
         int GetNumReceivedFragments() const { return m_numReceivedFragments; }
-        bool ReceiveCompleted() const { return m_numReceivedFragments == m_numFragments; }
+        bool ReceiveCompleted() const { return m_numFragments != 0 && m_numReceivedFragments == m_numFragments; }
 
         bool IsError() const { return m_error != 0; }
         int GetError() const { return m_error; }

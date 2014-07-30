@@ -7,6 +7,7 @@
 #include "TestCommon.h"
 #include "TestPackets.h"
 #include "TestMessages.h"
+#include "TestClientServer.h"
 #include "TestChannelStructure.h"
 #include "ReliableMessageChannel.h"
 
@@ -2303,4 +2304,161 @@ void test_server_data_too_large()
     }
 
     memory::shutdown();
+}
+
+void test_client_server_user_context()
+{
+    printf( "test_client_server_user_context\n" );
+
+    memory::initialize();
+    {
+        TestMessageFactory messageFactory( memory::default_allocator() );
+
+        TestChannelStructure channelStructure( messageFactory );
+
+        TestPacketFactory packetFactory( memory::default_allocator() );
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = 10000;
+        bsdSocketConfig.maxPacketSize = 1024;
+        bsdSocketConfig.packetFactory = &packetFactory;
+
+        BSDSocket clientNetworkInterface( bsdSocketConfig );
+
+        ClientConfig clientConfig;
+        clientConfig.channelStructure = &channelStructure;
+        clientConfig.networkInterface = &clientNetworkInterface;
+
+        TestClient client( clientConfig );
+
+        client.Connect( "[::1]:10001" );
+
+        bsdSocketConfig.port = 10001;
+        BSDSocket serverNetworkInterface( bsdSocketConfig );
+
+        Block serverData( memory::default_allocator(), sizeof( TestContext ) );
+        
+        auto testContext = (TestContext*) serverData.GetData();
+        testContext->value_min = -1 - ( rand() % 100000 );
+        testContext->value_max = rand() % 100000;
+
+        ServerConfig serverConfig;
+        serverConfig.serverData = &serverData;
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = &serverNetworkInterface;
+
+        TestServer server( serverConfig );
+
+        PROTOCOL_CHECK( server.IsOpen() );
+
+        PROTOCOL_CHECK( client.IsConnecting() );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 0.01f;
+
+        const int clientIndex = 0;
+
+        int iteration = 0;
+
+        while ( true )
+        {
+            if ( client.GetState() == CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED )
+                break;
+
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            timeBase.time += timeBase.deltaTime;
+
+            sleep_after_too_many_iterations( iteration );
+        }
+
+        PROTOCOL_CHECK( server.GetClientState( clientIndex ) == SERVER_CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( !client.IsDisconnected() );
+        PROTOCOL_CHECK( !client.IsConnecting() );
+        PROTOCOL_CHECK( client.IsConnected() );
+        PROTOCOL_CHECK( !client.HasError() );
+        PROTOCOL_CHECK( client.GetState() == CLIENT_STATE_CONNECTED );
+        PROTOCOL_CHECK( client.GetError() == CLIENT_ERROR_NONE );
+        PROTOCOL_CHECK( client.GetExtendedError() == 0 );
+
+        auto clientMessageChannel = static_cast<ReliableMessageChannel*>( client.GetConnection()->GetChannel( 0 ) );
+        auto serverMessageChannel = static_cast<ReliableMessageChannel*>( server.GetClientConnection( clientIndex )->GetChannel( 0 ) );
+
+        const int NumMessagesSent = 32;
+
+        for ( int i = 0; i < NumMessagesSent; ++i )
+        {
+            auto message = (TestContextMessage*) messageFactory.Create( MESSAGE_TEST_CONTEXT );
+            message->sequence = i;
+            message->value = random_int( testContext->value_min, testContext->value_max );
+            clientMessageChannel->SendMessage( message );
+        }
+
+        for ( int i = 0; i < NumMessagesSent; ++i )
+        {
+            auto message = (TestContextMessage*) messageFactory.Create( MESSAGE_TEST_CONTEXT );
+            message->sequence = i;
+            message->value = random_int( testContext->value_min, testContext->value_max );
+            serverMessageChannel->SendMessage( message );
+        }
+
+        int numMessagesReceivedOnClient = 0;
+        int numMessagesReceivedOnServer = 0;
+
+        while ( true )
+        {
+            client.Update( timeBase );
+
+            server.Update( timeBase );
+
+            while ( true )
+            {
+                auto message = clientMessageChannel->ReceiveMessage();
+
+                if ( !message )
+                    break;
+
+                PROTOCOL_CHECK( message->GetId() == numMessagesReceivedOnClient );
+                PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
+
+                auto testContextMessage = static_cast<TestContextMessage*>( message );
+
+                PROTOCOL_CHECK( testContextMessage->sequence == numMessagesReceivedOnClient );
+
+                ++numMessagesReceivedOnClient;
+
+                messageFactory.Release( message );
+            }
+
+            while ( true )
+            {
+                auto message = serverMessageChannel->ReceiveMessage();
+
+                if ( !message )
+                    break;
+
+                PROTOCOL_CHECK( message->GetId() == numMessagesReceivedOnServer );
+                PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
+
+                auto testContextMessage = static_cast<TestContextMessage*>( message );
+
+                PROTOCOL_CHECK( testContextMessage->sequence == numMessagesReceivedOnServer );
+
+                ++numMessagesReceivedOnServer;
+
+                messageFactory.Release( message );
+            }
+
+            if ( numMessagesReceivedOnClient == NumMessagesSent && numMessagesReceivedOnServer == NumMessagesSent )
+                break;
+
+            timeBase.time += timeBase.deltaTime;
+        }
+    }
 }

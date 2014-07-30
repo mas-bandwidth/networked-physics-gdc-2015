@@ -88,9 +88,11 @@ namespace protocol
         if ( finish > m_blockSize )
             return;
 
-        // 2. send an ack and process the fragment
+        // 2. send an ack
 
         SendAck( fragmentId );
+
+        // 3. process the fragment
 
         if ( !m_receivedFragment[fragmentId] )
         {

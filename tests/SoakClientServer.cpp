@@ -88,11 +88,9 @@ void soak_test()
         networkSimulatorConfig.packetFactory = &packetFactory;
         serverInfo[i].networkSimulator = PROTOCOL_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
         serverInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
-        /*
         serverInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
-        */
 
         const int serverDataSize = 10 + 256 * i + 11 + i;
         serverInfo[i].serverData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );

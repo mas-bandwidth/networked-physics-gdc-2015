@@ -324,14 +324,19 @@ namespace protocol
         if ( !largeBlock )
         {
             typedef MeasureStream Stream;
+
             const int SmallBlockOverhead = 8;
+            
             MeasureStream measureStream( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
+            measureStream.SetContext( GetContext() );
             message->SerializeMeasure( measureStream );
             if ( measureStream.IsOverflow() )
             {
                 printf( "measure stream overflow on message type %d: %d bits written, max is %d\n", message->GetType(), measureStream.GetBitsWritten(), measureStream.GetTotalBits() );
             }
+            
             PROTOCOL_ASSERT( !measureStream.IsOverflow() );
+            
             entry->measuredBits = measureStream.GetBitsWritten() + m_messageOverheadBits;
 
 //              printf( "message %d is %d bits\n", (int) m_sendMessageId, entity->measuredBits );

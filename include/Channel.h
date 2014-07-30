@@ -12,32 +12,21 @@ namespace protocol
 {
     class Allocator;
 
-    /*
-        Channel data is passed to the serializer per-packet
-        and is how a channel specifies what data should be
-        serialized in the connection packet.
-    */
-
     class ChannelData : public Object
     {
-    public:
-        virtual ~ChannelData() {}
+        // ...
     };
-
-    /*
-        Implement this interface to integrate a custom channel
-        inside a connection, see ReliableMessageChannel for a
-        working example.
-    */
 
     class Channel
     {
     public:
 
-        virtual ~Channel()
+        Channel()
         {
-            // ...
+            m_context = nullptr;
         }
+
+        virtual ~Channel() {}
 
         virtual void Reset() = 0;
 
@@ -50,6 +39,19 @@ namespace protocol
         virtual void ProcessAck( uint16_t ack ) = 0;
 
         virtual void Update( const TimeBase & timeBase ) = 0;
+
+        void SetContext( const void ** context )
+        {
+            m_context = context;
+        }
+
+    protected:
+
+        const void ** GetContext() const { return m_context; }
+
+    private:
+
+        const void ** m_context;
     };
 
     /*  

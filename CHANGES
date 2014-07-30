@@ -1,3 +1,42 @@
+Tuesday Evening, July 29th, 2014:
+---------------------------------
+
+    Add interface to client and server to set context at index.
+
+    Add a message type that relies on context to function: TestContextMessage.
+
+    Extend stream so it's a bit nicer to get a context by index.
+
+    Create a new unit test that sets context on the server,
+    and sets this same context data as server data, and on
+    the client, as soon as server data is received, sets this
+    data as the user context.
+
+    This may require subclassing the client into TestClient
+    and implementing a notification callback, OnServerDataReceived
+
+    Now switch MESSAGE_TEST to MESSAGE_TEST_CONTEXT and randomize
+    the value sent within the min/max bounds of the test context.
+
+    Need a way to get the const void ** context pointer inside the
+    reliable message channel as a member, so we can use it when we
+    create the test message channel.
+
+    How can I do this?!
+
+    Should channels have a "SetContext" method on them that they must implement?
+
+    Is the client/server responsible for setting the context on all channels?
+
+    Probably should be.
+
+    Made it so that the context is a parameter input to the connection config.
+
+    Then when the connection creates all the channels, it calls set context on them.
+
+    Now the basic unit test passes.
+
+
 Monday Evening, July 28, 2014:
 ------------------------------
 

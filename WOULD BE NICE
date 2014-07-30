@@ -2,6 +2,17 @@ WOULD BE NICE:
 
     -------------------------------
 
+    I would like a small block of data (smaller than one packet) 
+    that could be included with the client connection request,
+    and with the server connection accepted.
+
+    This would provide a way for subclassed client and server to
+    extend the protocol and pass data up/down at initial point
+    of connect, this is necessary functionality as integrations
+    will probably want to extend connect with custom logic and data.
+
+    -------------------------------
+
     Will probably remove the "CLIENT_SERVER" prefix, they are just packets.
 
     Packets may not always be used as part of client server. Packets are generic.
@@ -15,28 +26,6 @@ WOULD BE NICE:
     -----------------------------
 
     Would be nice to create an address by string, and then have a port override arg
-
-    -----------------------------
-
-    May be a good idea to offer a small block of data (less than one packet)
-    that is included in the challenge response.
-
-    The reason is that it could be game specific, and would inform the client
-    of what it should be doing, eg. precache this level, so it doesn't have to
-    wait for the server and data client exchange before doing that.
-
-    --------------------------
-
-    Idea: Packets could store a context pointer, and on creation it could optionally
-    be passed in, per-packet type in the factory. It would be up to the user to setup
-    and create this context, and per-packet type to cast to the expected type.
-
-    I guess one context for client/server with some basic quantities needed for
-    serialization would probably be a good idea. This is a nice idea.
-
-    Same concept could be applied to messages. Although, it's potentially expensive,
-    eg. another 64bit pointer per-message just for some basic context -- maybe for
-    messages it's better to pass it in the serialize instead (eg. factory GetContext(type) ) ?
 
     ----------------------
 

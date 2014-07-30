@@ -24,13 +24,23 @@ namespace protocol
 
         m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
+        m_numClients = m_config.maxClients;
+
+        m_clientServerContext.Initialize( *m_allocator, m_numClients );
+
+        memset( m_context, 0, sizeof( m_context ) );
+
+        m_context[CONTEXT_CHANNEL_STRUCTURE] = m_config.channelStructure;
+        m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
+
+        m_config.networkInterface->SetContext( m_context );
+
         ConnectionConfig connectionConfig;
         connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
         connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
-
-        m_numClients = m_config.maxClients;
+        connectionConfig.context = m_context;
 
         m_clients = PROTOCOL_NEW_ARRAY( *m_allocator, ClientData, m_numClients );
 
@@ -44,15 +54,6 @@ namespace protocol
             if ( m_config.maxClientDataSize > 0 )
                 m_clients[i].dataBlockReceiver = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxClientDataSize );
         }
-
-        m_clientServerContext.Initialize( *m_allocator, m_numClients );
-
-        memset( m_context, 0, sizeof( m_context ) );
-
-        m_context[CONTEXT_CHANNEL_STRUCTURE] = m_config.channelStructure;
-        m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
-
-        m_config.networkInterface->SetContext( m_context );
     }
 
     Server::~Server()
@@ -160,6 +161,13 @@ namespace protocol
         ClientData & client = m_clients[clientIndex];
 
         return client.dataBlockReceiver ? client.dataBlockReceiver->GetBlock() : nullptr;
+    }
+
+    void Server::SetContext( int index, const void * ptr )
+    {
+        PROTOCOL_ASSERT( index >= CONTEXT_USER );
+        PROTOCOL_ASSERT( index < MaxContexts );
+        m_context[index] = ptr;
     }
 
     void Server::UpdateClients()

@@ -21,14 +21,6 @@ namespace protocol
 
         m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
-        ConnectionConfig connectionConfig;
-        connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
-        connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
-        connectionConfig.channelStructure = m_config.channelStructure;
-        connectionConfig.packetFactory = m_packetFactory;
-
-        m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
-
         if ( m_config.maxServerDataSize > 0 )
             m_dataBlockReceiver = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxServerDataSize );
 
@@ -43,6 +35,15 @@ namespace protocol
         m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
 
         m_config.networkInterface->SetContext( m_context );
+
+        ConnectionConfig connectionConfig;
+        connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
+        connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
+        connectionConfig.channelStructure = m_config.channelStructure;
+        connectionConfig.packetFactory = m_packetFactory;
+        connectionConfig.context = m_context;
+
+        m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
 
         ClearStateData();
     }
@@ -221,6 +222,13 @@ namespace protocol
     const Block * Client::GetServerData() const
     {
         return m_dataBlockReceiver ? m_dataBlockReceiver->GetBlock() : nullptr;
+    }
+
+    void Client::SetContext( int index, const void * ptr )
+    {
+        PROTOCOL_ASSERT( index >= CONTEXT_USER );
+        PROTOCOL_ASSERT( index < MaxContexts );
+        m_context[index] = ptr;
     }
 
     void Client::Update( const TimeBase & timeBase )
@@ -563,6 +571,8 @@ namespace protocol
         if ( !m_dataBlockReceiver )
             return;
 
+        bool receiveAlreadyCompleted = m_dataBlockReceiver->ReceiveCompleted();
+
         m_dataBlockReceiver->ProcessFragment( packet->blockSize,
                                               packet->numFragments,
                                               packet->fragmentId, 
@@ -571,6 +581,9 @@ namespace protocol
 
         if ( m_dataBlockReceiver->IsError() )
             DisconnectAndSetError( CLIENT_ERROR_DATA_BLOCK_ERROR, m_dataBlockReceiver->GetError() );
+
+        if ( m_dataBlockReceiver->ReceiveCompleted() && !receiveAlreadyCompleted )
+            OnServerDataReceived( *m_dataBlockReceiver->GetBlock() );
     }
 
     void Client::ProcessDataBlockFragmentAck( DataBlockFragmentAckPacket * packet )

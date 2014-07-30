@@ -23,6 +23,7 @@ namespace protocol
         for ( int i = 0; i < m_numChannels; ++i )
         {
             m_channels[i] = config.channelStructure->CreateChannel( i );
+            m_channels[i]->SetContext( config.context );
             PROTOCOL_ASSERT( m_channels[i] );
         }
 
