@@ -124,6 +124,8 @@ namespace protocol
 
         int FindClientSlot( const Address & address, uint64_t clientId, uint64_t serverId ) const;
 
+        const ServerConfig & GetConfig() const { return m_config; }
+
     protected:
 
         void UpdateClients();

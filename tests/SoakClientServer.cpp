@@ -1,12 +1,11 @@
 #include "Connection.h"
 #include "TestMessages.h"
 #include "TestPackets.h"
+#include "TestClientServer.h"
 #include "TestChannelStructure.h"
 #include "ReliableMessageChannel.h"
 #include "NetworkSimulator.h"
 #include "BSDSocket.h"
-#include "Client.h"
-#include "Server.h"
 #include "Network.h"
 #include <time.h>
 
@@ -21,7 +20,7 @@ const int BaseClientPort = 20000;
 struct ClientInfo
 {
     Address address;
-    Client * client;
+    TestClient * client;
     Block * clientData;
     NetworkInterface * networkInterface;
     NetworkSimulator * networkSimulator;
@@ -49,7 +48,7 @@ struct ClientInfo
 struct ServerInfo
 {
     Address address;
-    Server * server;
+    TestServer * server;
     Block * serverData;
     NetworkInterface * networkInterface;
     NetworkSimulator * networkSimulator;
@@ -92,12 +91,16 @@ void soak_test()
         serverInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
 
-        const int serverDataSize = 10 + 256 * i + 11 + i;
+        const int serverDataSize = sizeof(TestContext) + 256 * i + 11 + i;
         serverInfo[i].serverData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );
         {
             uint8_t * data = serverInfo[i].serverData->GetData();
             for ( int j = 0; j < serverDataSize; ++j )
                 data[j] = ( 10 + i + j ) % 256;
+
+            auto testContext = (TestContext*) data;
+            testContext->value_min = -1 - ( rand() % 100000000 );
+            testContext->value_max = rand() % 1000000000;
         }
 
         ServerConfig serverConfig;
@@ -107,7 +110,7 @@ void soak_test()
         serverConfig.networkInterface = serverInfo[i].networkInterface;
         serverConfig.networkSimulator = serverInfo[i].networkSimulator;
 
-        serverInfo[i].server = PROTOCOL_NEW( memory::default_allocator(), Server, serverConfig );
+        serverInfo[i].server = PROTOCOL_NEW( memory::default_allocator(), TestServer, serverConfig );
     }
 
     // create a bunch of clients
@@ -147,7 +150,7 @@ void soak_test()
         clientConfig.networkInterface = clientInfo[i].networkInterface;
         clientConfig.networkSimulator = clientInfo[i].networkSimulator;
 
-        clientInfo[i].client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
+        clientInfo[i].client = PROTOCOL_NEW( memory::default_allocator(), TestClient, clientConfig );
         clientInfo[i].Clear();
     }
 
@@ -188,12 +191,13 @@ void soak_test()
                         if ( !message )
                             break;
 
-                        PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
+                        PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
 
-                        TestMessage * testMessage = (TestMessage*) message;
+                        auto testContextMessage = (TestContextMessage*) message;
 
-                        TestMessage * replyMessage = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-                        replyMessage->sequence = testMessage->sequence;
+                        auto replyMessage = (TestContextMessage*) messageFactory.Create( MESSAGE_TEST_CONTEXT );
+                        replyMessage->sequence = testContextMessage->sequence;
+                        replyMessage->value = testContextMessage->value;
                         messageChannel->SendMessage( replyMessage );
 
                         messageFactory.Release( message );
@@ -261,13 +265,15 @@ void soak_test()
 
             if ( clientInfo[i].client->IsConnected() )
             {
+                auto testContext = clientInfo[i].client->GetTestContext();
                 auto connection = clientInfo[i].client->GetConnection();
                 auto messageChannel = static_cast<ReliableMessageChannel*>( connection->GetChannel( 0 ) );
                 if ( messageChannel->CanSendMessage() )
                 {
-                    auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
+                    auto message = (TestContextMessage*) messageFactory.Create( MESSAGE_TEST_CONTEXT );
                     PROTOCOL_CHECK( message );
                     message->sequence = clientInfo[i].sendSequence++;
+                    message->value = random_int( testContext->value_min, testContext->value_max );
                     messageChannel->SendMessage( message );
                 }
 
@@ -277,11 +283,11 @@ void soak_test()
                     if ( !message )
                         break;
 
-                    PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST );
+                    PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
 
-                    TestMessage * testMessage = (TestMessage*) message;
+                    TestContextMessage * testContextMessage = (TestContextMessage*) message;
 
-                    PROTOCOL_CHECK( testMessage->sequence == clientInfo[i].receiveSequence++ );
+                    PROTOCOL_CHECK( testContextMessage->sequence == clientInfo[i].receiveSequence++ );
 
                     clientInfo[i].lastReceiveTime = timeBase.time;
 
@@ -345,7 +351,7 @@ void soak_test()
             printf( " - client slot %d: %s\n", j, GetServerClientStateName( serverInfo[i].server->GetClientState( j ) ) );
         }
 
-        PROTOCOL_DELETE( memory::default_allocator(), Server, serverInfo[i].server );
+        PROTOCOL_DELETE( memory::default_allocator(), TestServer, serverInfo[i].server );
         PROTOCOL_DELETE( memory::default_allocator(), Block, serverInfo[i].serverData );
         PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, serverInfo[i].networkInterface );
     }
@@ -354,7 +360,7 @@ void soak_test()
     {
         printf( "client %d: %s\n", i, GetClientStateName( clientInfo[i].client->GetState() ) );
 
-        PROTOCOL_DELETE( memory::default_allocator(), Client, clientInfo[i].client );
+        PROTOCOL_DELETE( memory::default_allocator(), TestClient, clientInfo[i].client );
         PROTOCOL_DELETE( memory::default_allocator(), Block, clientInfo[i].clientData );
         PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInfo[i].networkInterface );
     }

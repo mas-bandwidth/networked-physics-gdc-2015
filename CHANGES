@@ -1,3 +1,17 @@
+Wednesday Morning, July 30th, 2014:
+-----------------------------------
+
+    Extend the soak client/server to use this same subclassed client/server
+    and to exchange test context messages with test context sent from server
+    to client via server data (with some additional padding...)
+
+    This is an excellent test because there are multiple servers with
+    different contexts, so connection packets are flying with radically
+    different serialization in the same program.
+
+    Works perfectly!
+
+
 Tuesday Evening, July 29th, 2014:
 ---------------------------------
 
@@ -35,7 +49,7 @@ Tuesday Evening, July 29th, 2014:
     Then when the connection creates all the channels, it calls set context on them.
 
     Now the basic unit test passes.
-
+ 
 
 Monday Evening, July 28, 2014:
 ------------------------------

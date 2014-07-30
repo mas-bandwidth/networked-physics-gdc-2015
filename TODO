@@ -2,47 +2,6 @@ DONE:
 
 TODO:
 
-    -----------------------
-
-    Extend the soak client/server to use this same subclassed client/server
-    and to exchange test context messages with test context sent from server
-    to client via server data (with some additional padding...)
-
-    This is an excellent test because there are multiple servers with
-    different contexts, so connection packets are flying with radically
-    different serialization in the same program.
-
-    -----------------------
-
-
-
-
-
-
-
-    ------------------------
-
-    Integrate LZ compressor for compressing large blocks, and for compressing
-    initial block sent down to client.
-
-    Ideally, LZ4 could be something enabled via config that is used, if it exists
-    this way it is up to the user of the library to ensure they have LZ4 installed.
-
-    I don't want to manage the LZ4 library includes/libs inside my library,
-    if I can avoid it.
-
-    It might be a good idea to see if LZ4 can compress typical packets sent as well,
-    for example, put a bit in the header indicating that the packet is compressed,
-    if LZ4 is enabled, and then decode the packet via LZ4.
-
-    This would have to live at the network interface level, presumably.
-
-    Potentially set a minimum packet size or block size for LZ compression,
-    and even then, check if the compressed packet/block is larger than uncompressed
-    and send uncompressed instead.
-
-    Per-packet or block (large block), we would need a bit indicating if compressed.
-
     ------------------------
 
     Implement fragmentation and reassembly for large packets, do this
@@ -73,6 +32,29 @@ TODO:
     Is this possible?
 
     Maybe it should just be at the interface level.
+
+    ------------------------
+
+    Integrate LZ compressor for compressing large blocks, and for compressing
+    initial block sent down to client.
+
+    Ideally, LZ4 could be something enabled via config that is used, if it exists
+    this way it is up to the user of the library to ensure they have LZ4 installed.
+
+    I don't want to manage the LZ4 library includes/libs inside my library,
+    if I can avoid it.
+
+    It might be a good idea to see if LZ4 can compress typical packets sent as well,
+    for example, put a bit in the header indicating that the packet is compressed,
+    if LZ4 is enabled, and then decode the packet via LZ4.
+
+    This would have to live at the network interface level, presumably.
+
+    Potentially set a minimum packet size or block size for LZ compression,
+    and even then, check if the compressed packet/block is larger than uncompressed
+    and send uncompressed instead.
+
+    Per-packet or block (large block), we would need a bit indicating if compressed.
 
     ------------------------
 

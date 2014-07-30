@@ -13,6 +13,15 @@ public:
 
     TestClient( const ClientConfig & config ) : Client( config ) {}
 
+    const TestContext * GetTestContext() const
+    {
+        const Block * block = GetServerData();
+        if ( block )
+            return (const TestContext*) block->GetData();
+        else
+            return nullptr;
+    }
+
 protected:
 
     void OnServerDataReceived( const Block & block ) override
@@ -33,6 +42,15 @@ public:
     {
         PROTOCOL_ASSERT( config.serverData );
         SetContext( CONTEXT_USER, config.serverData->GetData() );
+    }
+
+    const TestContext * GetTestContext() const
+    {
+        const Block * block = GetConfig().serverData;
+        if ( block )
+            return (const TestContext*) block->GetData();
+        else
+            return nullptr;
     }
 };
 

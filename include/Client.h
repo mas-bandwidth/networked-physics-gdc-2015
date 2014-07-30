@@ -123,6 +123,8 @@ namespace protocol
 
         void Update( const TimeBase & timeBase );
 
+        const ClientConfig & GetConfig() const { return m_config; }
+
     protected:
 
         void UpdateNetworkSimulator();
