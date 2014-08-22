@@ -1,6 +1,6 @@
 solution "Protocol"
     language "C++"
-    buildoptions "-std=c++11 -stdlib=libc++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
 --    pchheader "include/Common.h"
 --    pchsource "src/Common.cpp"
     includedirs { "include", "." }
@@ -50,6 +50,22 @@ project "ProfileClientServer"
     links { "protocol" }
     targetdir "bin"
     location "build"
+
+project "Client"
+    kind "ConsoleApp"
+    files { "game/*.cpp" }
+    links { "protocol", "glew", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    location "build"
+    targetdir "bin"
+    defines { "CLIENT" }
+
+project "Server"
+    kind "ConsoleApp"
+    files { "game/*.cpp" }
+    links { "protocol" }
+    location "build"
+    targetdir "bin"
+    defines { "SERVER" }
 
 if _ACTION == "clean" then
     os.rmdir "bin"
@@ -120,6 +136,36 @@ if not os.is "windows" then
         execute = function ()
             if os.execute "make -j32 UnitTest" == 0 then
                 os.execute "cd bin; ./UnitTest"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "client",
+        description = "Build and run game client",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j32 Client" == 0 then
+                os.execute "cd bin; ./Client"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "server",
+        description = "Build and run game server",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j32 Server" == 0 then
+                os.execute "cd bin; ./Server"
             end
         end
     }
