@@ -65,8 +65,7 @@ project "Server"
     links { "protocol" }
     location "build"
     targetdir "bin"
-    defines { "SERVER" }
-
+   
 if _ACTION == "clean" then
     os.rmdir "bin"
     os.rmdir "lib"

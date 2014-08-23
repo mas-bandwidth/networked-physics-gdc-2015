@@ -2,6 +2,9 @@
 #include "Network.h"
 #include <time.h>
 #include <stdlib.h>
+#include "GameClient.h"
+#include "BSDSocket.h"
+#include "NetworkSimulator.h"
 
 #ifdef CLIENT
 #include <GL/glew.h>
@@ -12,15 +15,13 @@ using namespace protocol;
 
 #ifdef CLIENT
 
-void init() // Called before main loop to set up the program
+void init()
 {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
 }
 
-// Called at the start of the program, after a glutPostRedisplay() and during idle
-// to display a frame
 void display()
 {
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -35,8 +36,7 @@ void display()
     glutSwapBuffers();
 }
 
-// Called every time a window is resized to resize the projection matrix
-void reshape(int w, int h)
+void reshape( int w, int h )
 {
     glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
@@ -68,7 +68,6 @@ int main( int argc, char ** argv )
         return 1;
     }
 */
-    printf( "successfully created game window\n" );
 
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA );
 
@@ -95,9 +94,104 @@ int main( int argc, char ** argv )
 
 #else
 
+#include "GameServer.h"
+#include "GamePackets.h"
+#include "GameMessages.h"
+#include "GameChannelStructure.h"
+
+struct ServerInfo
+{
+    Address address;
+    GameServer * server;
+    Block * serverData;
+    NetworkInterface * networkInterface;
+    NetworkSimulator * networkSimulator;
+};
+
 int main( int argc, char ** argv )
 {
-    printf( "hello world server\n" );
+    srand( time( nullptr ) );
+
+    memory::initialize();
+    {
+        if ( !InitializeNetwork() )
+        {
+            printf( "Failed to initialize network!\n" );
+            return 1;
+        }
+
+        // todo: move all these guys into the game server derived class -- make it easy to create
+
+        GameMessageFactory messageFactory( memory::default_allocator() );
+
+        GameChannelStructure channelStructure( messageFactory );
+
+        GamePacketFactory packetFactory( memory::default_allocator() );
+
+        const int ServerPort = 10000;
+        const int MaxClients = 16;
+        const float TickRate = 60;
+
+        ServerInfo serverInfo;   
+
+        serverInfo.address = Address( "::1" );
+        serverInfo.address.SetPort( ServerPort );
+
+        BSDSocketConfig bsdSocketConfig;
+        bsdSocketConfig.port = ServerPort;
+        bsdSocketConfig.maxPacketSize = 1200;
+        bsdSocketConfig.packetFactory = &packetFactory;
+        serverInfo.networkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+
+        NetworkSimulatorConfig networkSimulatorConfig;
+        networkSimulatorConfig.packetFactory = &packetFactory;
+        serverInfo.networkSimulator = PROTOCOL_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+
+        const int serverDataSize = sizeof(GameContext) + 10 * 1024 + 11;
+        serverInfo.serverData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );
+        {
+            uint8_t * data = serverInfo.serverData->GetData();
+            for ( int i = 0; i < serverDataSize; ++i )
+                data[i] = ( 10 + i ) % 256;
+
+            auto gameContext = (GameContext*) data;
+            gameContext->value_min = -1 - ( rand() % 100000000 );
+            gameContext->value_max = rand() % 1000000000;
+        }
+
+        ServerConfig serverConfig;
+        serverConfig.serverData = serverInfo.serverData;
+        serverConfig.maxClients = MaxClients;
+        serverConfig.channelStructure = &channelStructure;
+        serverConfig.networkInterface = serverInfo.networkInterface;
+        serverConfig.networkSimulator = serverInfo.networkSimulator;
+
+        // todo: end stuff to move inside game server class
+
+        serverInfo.server = PROTOCOL_NEW( memory::default_allocator(), GameServer, serverConfig );
+
+        printf( "Started game server on port %d\n", ServerPort );
+
+        TimeBase timeBase;
+        timeBase.deltaTime = 1.0 / TickRate;
+
+        while ( true )
+        {
+            // ...
+
+            // todo: rather than sleeping for MS we want a signal that comes in every n millis instead
+            // so we maintain a steady tick rate. how best to do this on linux and mac? (need both...)
+
+            sleep_milliseconds( timeBase.deltaTime * 1000 );
+
+            timeBase.time += timeBase.deltaTime;
+        }
+
+        ShutdownNetwork();
+    }
+
+    memory::shutdown();
+
     return 0;
 }
 
