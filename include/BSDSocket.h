@@ -64,6 +64,8 @@ namespace protocol
 
         uint64_t GetCounter( int index ) const;
 
+        uint16_t GetPort() const;
+
     private:
 
         void SendPackets();
@@ -81,6 +83,7 @@ namespace protocol
         Allocator * m_allocator;        
         
         int m_socket;
+        uint16_t m_port;
         BSDSocketError m_error;
         Queue<Packet*> m_send_queue;
         Queue<Packet*> m_receive_queue;

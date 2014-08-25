@@ -126,6 +126,8 @@ namespace protocol
 
         const ServerConfig & GetConfig() const { return m_config; }
 
+        const TimeBase & GetTimeBase() const { return m_timeBase; }
+
     protected:
 
         void UpdateClients();
@@ -169,6 +171,16 @@ namespace protocol
         void ResetClientSlot( int clientIndex );
 
         void SendPacket( const Address & address, Packet * packet );
+
+        void SetClientState( int clientIndex, ServerClientState state );
+
+    protected:
+
+        virtual void OnClientStateChange( int clientIndex, ServerClientState previous, ServerClientState current ) {}
+
+        virtual void OnClientDataReceived( int clientIndex, const Block & block ) {}
+
+        virtual void OnClientTimedOut( int clientIndex ) {}
     };
 }
 

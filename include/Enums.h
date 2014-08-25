@@ -57,13 +57,13 @@ namespace protocol
     {
         switch ( clientState )
         {
-            case CLIENT_STATE_DISCONNECTED:                     return "disconnected";
-            case CLIENT_STATE_RESOLVING_HOSTNAME:               return "resolving hostname";
-            case CLIENT_STATE_SENDING_CONNECTION_REQUEST:       return "sending connection request";
-            case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:       return "sending challenge response";
-            case CLIENT_STATE_SENDING_CLIENT_DATA:              return "sending client data";
-            case CLIENT_STATE_READY_FOR_CONNECTION:             return "ready for connection";
-            case CLIENT_STATE_CONNECTED:                        return "connected";
+            case CLIENT_STATE_DISCONNECTED:                     return "DISCONNECTED";
+            case CLIENT_STATE_RESOLVING_HOSTNAME:               return "RESOLVING_HOSTNAME";
+            case CLIENT_STATE_SENDING_CONNECTION_REQUEST:       return "SENDING_CONNECTION_REQUEST";
+            case CLIENT_STATE_SENDING_CHALLENGE_RESPONSE:       return "SENDING_CHALLENGE_RESPONSE";
+            case CLIENT_STATE_SENDING_CLIENT_DATA:              return "SENDING_CLIENT_DATA";
+            case CLIENT_STATE_READY_FOR_CONNECTION:             return "READY_FOR_CONNECTION";
+            case CLIENT_STATE_CONNECTED:                        return "CONNECTED";
             default: 
                 PROTOCOL_ASSERT( 0 );
                 return "???";
@@ -123,11 +123,11 @@ namespace protocol
     {
         switch ( clientState )
         {
-            case SERVER_CLIENT_STATE_DISCONNECTED:              return "disconnected";
-            case SERVER_CLIENT_STATE_SENDING_CHALLENGE:         return "sending challenge";
-            case SERVER_CLIENT_STATE_SENDING_SERVER_DATA:       return "sending server data";
-            case SERVER_CLIENT_STATE_READY_FOR_CONNECTION:      return "ready for connection";
-            case SERVER_CLIENT_STATE_CONNECTED:                 return "connected";
+            case SERVER_CLIENT_STATE_DISCONNECTED:              return "DISCONNECTED";
+            case SERVER_CLIENT_STATE_SENDING_CHALLENGE:         return "SENDING_CHALLENGE";
+            case SERVER_CLIENT_STATE_SENDING_SERVER_DATA:       return "SENDING_SERVER_DATA";
+            case SERVER_CLIENT_STATE_READY_FOR_CONNECTION:      return "READY_FOR_CONNECTION";
+            case SERVER_CLIENT_STATE_CONNECTED:                 return "CONNECTION";
             default: 
                 PROTOCOL_ASSERT( 0 );
                 return "???";

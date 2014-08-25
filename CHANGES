@@ -1,3 +1,47 @@
+Sunday Evening, August 24, 2014:
+--------------------------------
+
+    Add enough callbacks to the client so I can track stuff going on,
+    eg. state changes, connect, disconnect etc.
+
+    Make the logs nice and chatty.
+
+    Add a timestamp to all client logs
+
+    Hook up logs for "OnError"
+
+    Add some callbacks on the server side.
+
+    eg. on state change.
+
+    Add callback for receiving client data, print out # of bytes
+
+    Add callback for client timed out.
+
+
+Sunday Morning, August 24, 2014:
+--------------------------------
+
+    Set up separate client and server programs in game.
+
+    -DCLIENT on client to separate client and server.
+
+    This is the easiest way to create a client/server split.
+
+    Cleaned up the game server create. Still not great.
+
+    Would prefer if it was easy to subclass and setup a derived class
+    that just does all the work in the constructor.
+
+    Right now I had to create a function to create the game server instead. Sucks.
+
+    Setup client creation too.
+
+    Actually connect a client to the server. Verify everything is working properly.
+
+    Add code to detect a client error and exit with error message.
+
+
 Wednesday Morning, July 30th, 2014:
 -----------------------------------
 

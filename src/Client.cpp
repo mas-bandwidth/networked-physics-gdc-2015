@@ -85,9 +85,11 @@ namespace protocol
 
         ClearError();
 
+        OnConnect( address );
+
 //            printf( "client connect by address: %s\n", address.ToString().c_str() );
 
-        m_state = CLIENT_STATE_SENDING_CONNECTION_REQUEST;
+        SetClientState( CLIENT_STATE_SENDING_CONNECTION_REQUEST );
         m_address = address;
         m_clientId = generate_id();
 
@@ -122,10 +124,12 @@ namespace protocol
 
         m_config.resolver->Resolve( hostname );
         
-        m_state = CLIENT_STATE_RESOLVING_HOSTNAME;
+        SetClientState( CLIENT_STATE_RESOLVING_HOSTNAME );
         m_lastPacketReceiveTime = m_timeBase.time;
         strncpy( m_hostname, hostname, MaxHostName - 1 );
         m_hostname[MaxHostName-1] = '\0';
+
+        OnConnect( hostname );
 
 #else
 
@@ -154,7 +158,7 @@ namespace protocol
 
         ClearStateData();
         
-        m_state = CLIENT_STATE_DISCONNECTED;
+        SetClientState( CLIENT_STATE_DISCONNECTED );
         m_address = Address();
         m_hostname[0] = '\0';
 
@@ -163,6 +167,8 @@ namespace protocol
 
         if ( m_dataBlockReceiver )
             m_dataBlockReceiver->Clear();
+
+        OnDisconnect();
     }
 
     bool Client::IsDisconnected() const
@@ -413,7 +419,7 @@ namespace protocol
                         {
 //                                printf( "received connection challenge packet from server\n" );
 
-                            m_state = CLIENT_STATE_SENDING_CHALLENGE_RESPONSE;
+                            SetClientState( CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
 
                             m_lastPacketReceiveTime = m_timeBase.time;
 
@@ -466,12 +472,12 @@ namespace protocol
                         {
                             if ( !m_config.clientData )
                             {
-                                m_state = CLIENT_STATE_READY_FOR_CONNECTION;
+                                SetClientState( CLIENT_STATE_READY_FOR_CONNECTION );
                                 m_lastPacketReceiveTime = m_timeBase.time;
                             }
                             else
                             {
-                                m_state = CLIENT_STATE_SENDING_CLIENT_DATA;
+                                SetClientState( CLIENT_STATE_SENDING_CLIENT_DATA );
                                 m_lastPacketReceiveTime = m_timeBase.time;
                             }
                         }
@@ -505,7 +511,7 @@ namespace protocol
                         if ( connectionPacket->clientId == m_clientId && connectionPacket->serverId == m_serverId )
                         {
                             if ( m_state == CLIENT_STATE_READY_FOR_CONNECTION )
-                                m_state = CLIENT_STATE_CONNECTED;
+                                SetClientState( CLIENT_STATE_CONNECTED );
 
                             const bool result = m_connection->ReadPacket( connectionPacket );
                             if ( result )
@@ -535,7 +541,7 @@ namespace protocol
         if ( m_dataBlockSender->SendCompleted() )
         {
 //            printf( "ready for connection\n" );
-            m_state = CLIENT_STATE_READY_FOR_CONNECTION;
+            SetClientState( CLIENT_STATE_READY_FOR_CONNECTION );
             return;
         }
         
@@ -620,7 +626,9 @@ namespace protocol
 
     void Client::DisconnectAndSetError( ClientError error, uint32_t extendedError )
     {
-//            printf( "client error: %s\n", GetClientErrorString( error ) );
+        PROTOCOL_ASSERT( error != CLIENT_ERROR_NONE );
+
+        OnError( error, extendedError );
 
         Disconnect();
         
@@ -647,5 +655,16 @@ namespace protocol
     {
         auto interface = m_config.networkSimulator ? m_config.networkSimulator : m_config.networkInterface;
         interface->SendPacket( m_address, packet );
+    }
+
+    void Client::SetClientState( ClientState state )
+    {
+        ClientState previous = m_state;
+
+        if ( state != previous )
+        {
+            m_state = state;
+            OnStateChange( previous, state );
+        }
     }
 }

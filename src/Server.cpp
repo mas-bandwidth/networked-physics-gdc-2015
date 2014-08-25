@@ -200,7 +200,7 @@ namespace protocol
 
             if ( m_clients[i].state == SERVER_CLIENT_STATE_READY_FOR_CONNECTION && m_clients[i].readyForConnection )
             {
-                m_clients[i].state = SERVER_CLIENT_STATE_CONNECTED;
+                SetClientState( i, SERVER_CLIENT_STATE_CONNECTED );
                 m_clients[i].accumulator = 0.0f;
             }
         }
@@ -315,7 +315,7 @@ namespace protocol
 
         if ( client.lastPacketTime + timeout < m_timeBase.time )
         {
-//                printf( "client %d timed out\n", clientIndex );
+            OnClientTimedOut( clientIndex );
 
             ResetClientSlot( clientIndex );
         }
@@ -452,7 +452,8 @@ namespace protocol
         client.clientId = packet->clientId;
         client.serverId = generate_id();
         client.lastPacketTime = m_timeBase.time;
-        client.state = SERVER_CLIENT_STATE_SENDING_CHALLENGE;
+
+        SetClientState( clientIndex, SERVER_CLIENT_STATE_SENDING_CHALLENGE );
 
         ClientServerInfo info;
         info.address = address;
@@ -485,7 +486,7 @@ namespace protocol
 
         client.accumulator = 0.0;
         client.lastPacketTime = m_timeBase.time;
-        client.state = m_config.serverData ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
+        SetClientState( clientIndex, m_config.serverData ? SERVER_CLIENT_STATE_SENDING_SERVER_DATA : SERVER_CLIENT_STATE_READY_FOR_CONNECTION );
     }
 
     void Server::ProcessReadyForConnectionPacket( ReadyForConnectionPacket * packet )
@@ -530,6 +531,8 @@ namespace protocol
 
 //        printf( "process data block fragment %d\n", packet->fragmentId );
 
+        bool receiveAlreadyCompleted = client.dataBlockReceiver->ReceiveCompleted();
+
         client.dataBlockReceiver->ProcessFragment( packet->blockSize,
                                                    packet->numFragments,
                                                    packet->fragmentId, 
@@ -541,6 +544,9 @@ namespace protocol
             ResetClientSlot( clientIndex );
             return;
         }
+
+        if ( client.dataBlockReceiver->ReceiveCompleted() && !receiveAlreadyCompleted )
+            OnClientDataReceived( clientIndex, *client.dataBlockReceiver->GetBlock() );
     }
 
     void Server::ProcessDataBlockFragmentAckPacket( DataBlockFragmentAckPacket * packet )
@@ -567,7 +573,7 @@ namespace protocol
         {
             client.accumulator = 0.0;
             client.lastPacketTime = m_timeBase.time;
-            client.state = SERVER_CLIENT_STATE_READY_FOR_CONNECTION;
+            SetClientState( clientIndex, SERVER_CLIENT_STATE_READY_FOR_CONNECTION );
         }
     }
 
@@ -637,6 +643,8 @@ namespace protocol
 
         ClientData & client = m_clients[clientIndex];
 
+        SetClientState( clientIndex, SERVER_CLIENT_STATE_DISCONNECTED );
+
         client.Clear();
 
         PROTOCOL_ASSERT( client.connection );
@@ -650,5 +658,17 @@ namespace protocol
     {
         auto interface = m_config.networkSimulator ? m_config.networkSimulator : m_config.networkInterface;
         interface->SendPacket( address, packet );
+    }
+
+    void Server::SetClientState( int clientIndex, ServerClientState state )
+    {
+        PROTOCOL_ASSERT( clientIndex >= 0 );
+        PROTOCOL_ASSERT( clientIndex < m_numClients );
+
+        if ( state != m_clients[clientIndex].state )
+        {
+            OnClientStateChange( clientIndex, m_clients[clientIndex].state, state );
+            m_clients[clientIndex].state = state;
+        }
     }
 }

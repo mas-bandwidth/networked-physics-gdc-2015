@@ -157,7 +157,21 @@ namespace protocol
 
         void SendPacket( Packet * packet );
 
+        void SetClientState( ClientState state );
+
+        const TimeBase & GetTimeBase() const { return m_timeBase; }
+
     protected:
+
+        virtual void OnConnect( const Address & address ) {}
+
+        virtual void OnConnect( const char * hostname ) {}
+
+        virtual void OnStateChange( ClientState previous, ClientState current ) {}
+
+        virtual void OnDisconnect() {}
+
+        virtual void OnError( ClientError error, uint32_t extendedError ) {}
 
         virtual void OnServerDataReceived( const Block & block ) {};
     };

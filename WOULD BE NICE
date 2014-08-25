@@ -1,5 +1,11 @@
 WOULD BE NICE:
 
+    -----------------------------------
+
+    Might be possible to hash packet with client/server guid + packet data,
+    and then the overhead for the packet would become the hash, not the 
+    client/server guid combination -- which is cool!
+
     -------------------------------
 
     I would like a small block of data (smaller than one packet) 

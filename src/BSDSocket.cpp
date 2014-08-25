@@ -112,6 +112,10 @@ namespace protocol
             }
         }
 
+        // todo: get the actual port we bound to in the case of passing in port 0 we must ask the OS
+
+        m_port = m_config.port;
+
         // set non-blocking io
 
         #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
@@ -257,6 +261,11 @@ namespace protocol
         PROTOCOL_ASSERT( index >= 0 );
         PROTOCOL_ASSERT( index < BSD_SOCKET_COUNTER_NUM_COUNTERS );
         return m_counters[index];
+    }
+
+    uint16_t BSDSocket::GetPort() const
+    {
+        return m_port;
     }
 
     void BSDSocket::SendPackets()
