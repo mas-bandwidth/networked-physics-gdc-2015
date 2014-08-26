@@ -1,3 +1,18 @@
+Tuesday Morning, Augest 24, 2014:
+---------------------------------
+
+    I very much like the idea of creating a tool that spits out textures
+    from a truetype font, so I don't have to link to freetype. This is the way (tm)
+
+    http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
+
+    Downloaded "fonts for code" from here: http://input.fontbureau.com
+
+    Created a new "data/fonts" directory for all the game fonts.
+
+    Created a new "tools/font" for source code that converts the TTF to game font data.
+
+
 Sunday Evening, August 24, 2014:
 --------------------------------
 
@@ -17,6 +32,12 @@ Sunday Evening, August 24, 2014:
     Add callback for receiving client data, print out # of bytes
 
     Add callback for client timed out.
+
+    Setup an instance on Amazon. Picked a compute instance so I can run the
+    physics simulation on the dedi there. I'll just have to be careful not
+    to leave it running as it could be moderately expensive.
+
+    Choice of linux: Ubuntu.
 
 
 Sunday Morning, August 24, 2014:

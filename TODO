@@ -1,27 +1,83 @@
 DONE:
 
-    Setup an instance on Amazon. Picked a compute instance so I can run the
-    physics simulation on the dedi there. I'll just have to be careful not
-    to leave it running as it could be moderately expensive.
-
-    Choice of linux: Ubuntu.
-
 TODO:
 
+    Implementfont tool that processes the fonts in the data/font directory and 
+    outputs to bin/data/fonts/... processed sets of textures for each font character.
+
+    Implement a loader for this font, loader should pass in name
+
+    There should be a font manager than allows you to name fonts, eg. "italic"
+    while loading it from a specific directory eg "fonts/InputMonoLight/Italic",
+    this way the game can customize how fonts are seen by the game.
+
+    Render some basic text in OpenGL
+
     ------------------------------
-
-    Get some font rendering stuff working in OpenGL.
-
-    Use "fonts for code" from here: http://input.fontbureau.com
 
     Implement a quake style console.
 
     Redirect stdout and stderr output to the console.
 
-    I very much like the idea of creating a tool that spits out textures
-    from a truetype font, so I don't have to link to freetype. This is the way (tm)
+    Implement keyboard input to type text into this console.
 
-    http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
+    ------------------
+
+    Implement some sort of key binding system, eg. bind a key to an action
+
+    Use this key binding system to bind keys to pageup, pagedown, ctrl-up, ctrl-down
+    and so on to control the console. Don't hardcode it!
+
+    This probably requires implementing the concept of "FOCUS"
+
+    eg. the game has focus, vs. the console having focus.
+
+    We need a window manager or a focus manager or something. The game needs to have
+    it's own interface on the client that implements input focus so it is passed
+    inputs when the console doesn't have focus.
+
+    ------------------
+
+    Have console off by default (previous was on)
+
+    Implement key binding "~" to toggle the console on off
+
+    Implement escape to quit the game (maybe with yes/no prompt, with enter/escape as cancel?)
+
+    Implement command history buffer, eg. up-down
+
+    Implement scrolling in this console buffer, eg. page-up page-down, ctrl-up, ctrl-down,
+    command-up, command-down.
+
+    ------------------
+
+    Implement console commands on client
+
+    Implement quit console command, connect console command and disconnect.
+
+    Should be able to connect to a server, disconnect from it, reconnect, then quit.
+
+    ------------------
+
+    Color the commands nicely so errors are colored, commands are colored,
+    output from the game log is colored and so on.
+
+    Put these color configurations inside config json files, eg. data/config/console.cfg
+
+    Find a cheap JSON parser I can include for config files.
+
+    I typically want new JSON configs read to override values for old, is this possible
+    with JSON parsers easily? eg. overrides. This is important for users to be able to
+    override settings specified by the game.
+
+    Not sure if JSON is the correct solution anymore. May be too complex (don't need tree)
+
+    ------------------
+
+    Add a log as well, output to client.log on server.log with append.
+
+    Make sure that when a new instance of the program runs it puts a new
+    header in there, or =========================== or something similar.
 
     ------------------
 
