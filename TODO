@@ -1,16 +1,12 @@
 DONE:
 
+    Setup an instance on Amazon. Picked a compute instance so I can run the
+    physics simulation on the dedi there. I'll just have to be careful not
+    to leave it running as it could be moderately expensive.
+
+    Choice of linux: Ubuntu.
+
 TODO:
-
-    ------------------
-
-    Get the server loop setup properly. Server needs to update game and then sleep
-    until time has elapsed for next frame. I think I have this code available
-    from previous projects. Resurrect it.
-
-    Setup an instance on Amazon. Initially, while I don't have much to run make
-    it a micro instance, but eventually I'm probably going to want a high CPU
-    instance to run the physics simulation.
 
     ------------------------------
 
@@ -21,6 +17,26 @@ TODO:
     Implement a quake style console.
 
     Redirect stdout and stderr output to the console.
+
+    I very much like the idea of creating a tool that spits out textures
+    from a truetype font, so I don't have to link to freetype. This is the way (tm)
+
+    http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
+
+    ------------------
+
+    Learn how to use chef/knife to setup the linux server properly with all
+    the stuff I want automatically, vs. manually configuring it. eg. git,
+    GCC and all that.
+
+    Get the server loop setup properly. Server needs to update game and then sleep
+    until time has elapsed for next frame. I think I have this code available
+    from previous projects. Resurrect it.
+
+    Find a nifty way with scripts to update the server on request, or automatically
+    when git is checked in.
+
+    Get the client/server workflow really tight!
 
     ------------------------------
 
