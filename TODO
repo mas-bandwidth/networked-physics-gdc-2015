@@ -2,7 +2,7 @@ DONE:
 
 TODO:
 
-    Implementfont tool that processes the fonts in the data/font directory and 
+    Implement font tool that processes the fonts in the data/font directory and 
     outputs to bin/data/fonts/... processed sets of textures for each font character.
 
     Implement a loader for this font, loader should pass in name
