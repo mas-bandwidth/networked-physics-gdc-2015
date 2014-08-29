@@ -1,4 +1,49 @@
-Tuesday Morning, Augest 24, 2014:
+Thursday Evening, August 28, 2014:
+----------------------------------
+
+    Remove fstream and replace with fopen, fwrite.
+
+    Sketched out FontBuilder program structure and required functionality
+
+    Not a lot of time tonight to work on this.
+
+
+Wednesday Morning, August 27, 2014:
+-----------------------------------
+
+    Implement font tool that processes the fonts in the data/font directory and 
+    outputs to bin/data/fonts/... processed sets of textures for each font character.
+
+    Implement a loader for this font, loader should pass in name
+
+    Hack up and get the makefont basically functional, eg. outputting font.bin
+
+    Adjust font so that it defaults to 64pixels height. Nice big font. Woo. We can afford it
+
+    Rename to "FontBuilder"
+
+    Create a new rule called "fonts" that invokes "FontBuilder"
+    on the JSON file, running under the root directory, eg.
+    bin/FontBuilder data/fonts/FontBuilder.json
+
+    Font builder should not work one font at a time, but instead
+    should work on a set of files.
+
+    It should get this set of files from a JSON file that describes
+    the font operations to perform, eg. source, dest and size of the
+    font to generate.
+
+    Find a JSON parser to use, janson is a C library, seems good:
+
+    http://www.digip.org/jansson/
+
+    Installed Jansson, and including it just fine.
+
+    Did some more work to clean up C++ BS in font tool, so it is 
+    fast to compile and run.
+
+
+Tuesday Morning, August 26, 2014:
 ---------------------------------
 
     I very much like the idea of creating a tool that spits out textures

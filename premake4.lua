@@ -1,8 +1,6 @@
 solution "Protocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
---    pchheader "include/Common.h"
---    pchsource "src/Common.cpp"
     includedirs { "include", "." }
     platforms { "x64", "x32" }
     configurations { "Debug", "Release" }
@@ -66,6 +64,13 @@ project "Server"
     location "build"
     targetdir "bin"
    
+project "FontBuilder"
+    kind "ConsoleApp"
+    files { "tools/FontBuilder/*.cpp" }
+    links { "freetype", "jansson" }
+    location "build"
+    targetdir "bin"
+
 if _ACTION == "clean" then
     os.rmdir "bin"
     os.rmdir "lib"
@@ -135,6 +140,21 @@ if not os.is "windows" then
         execute = function ()
             if os.execute "make -j32 UnitTest" == 0 then
                 os.execute "cd bin; ./UnitTest"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "fonts",
+        description = "Build fonts",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j32 FontBuilder" == 0 then
+                os.execute "bin/FontBuilder data/fonts/FontBuilder.json"
             end
         end
     }
