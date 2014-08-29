@@ -1,0 +1,9 @@
+{
+    "fonts": 
+    [
+        [ "bin/data/fonts/Console-Regular.font", "data/fonts/InputMonoNarrow/InputMonoNarrow-Regular.ttf", 32 ],
+        [ "bin/data/fonts/Console-Italic.font",  "data/fonts/InputMonoNarrow/InputMonoNarrow-Italic.ttf",  32 ],
+        [ "bin/data/fonts/Console-Light.font",   "data/fonts/InputMonoNarrow/InputMonoNarrow-Light.ttf",   32 ],
+        [ "bin/data/fonts/Console-Bold.font",    "data/fonts/InputMonoNarrow/InputMonoNarrow-Bold.ttf",    32 ]
+    ]
+}

@@ -1,11 +1,9 @@
 DONE:
 
-TODO:
-
-    -----------------------------
-
-    Define a simple data/fonts/FontBuilder.json that describes
+    Define a simple data/fonts/Font.json that describes
     the input -> output file names as well as the size
+
+TODO:
 
     Parse this JSON in C++ inside FontBuilder and print out
     work to do, eg. set of input -> output and size.
@@ -28,6 +26,11 @@ TODO:
     Implement code to import all .font files found in bin/data/fonts/*.font
 
     Render some basic text in OpenGL
+
+    ------------------------------
+
+    Probably want to run some compression over the font image rather than writing
+    it out uncompressed. What format should this be? PNG? Some other format?
 
     ------------------------------
 
