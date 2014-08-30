@@ -1,25 +1,9 @@
 DONE:
 
-    Define a simple data/fonts/Font.json that describes
-    the input -> output file names as well as the size
-
 TODO:
 
-    Parse this JSON in C++ inside FontBuilder and print out
-    work to do, eg. set of input -> output and size.
-
-    -----------------------------
-
-    The output should be a set of .font files in bin/data/fonts
-
-    It should compare file times between the .ttf and the .font file
-    and avoid doing work if the file is unchanged.
-
-    It should print out each file as it processes it
-
-    It should print the total time spent processing fonts at the end
-
-    If all fonts are up to date it should print that instead of a time.
+    Implement function to make directory, eg. make_dir( "bin/data/fonts/Something.blah"
+    would make "bin", "bin/data", "bin/data/fonts" if necessary.
 
     ------------------------------
 

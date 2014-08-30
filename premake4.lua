@@ -154,7 +154,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 FontBuilder" == 0 then
-                os.execute "bin/FontBuilder data/fonts/FontBuilder.json"
+                os.execute "bin/FontBuilder data/fonts/Fonts.json"
             end
         end
     }

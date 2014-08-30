@@ -1,3 +1,28 @@
+Saturday Morning, August 30, 2014:
+----------------------------------
+
+    Define a simple data/fonts/Font.json that describes
+    the input -> output file names as well as the size
+
+    Parse this JSON in C++ inside FontBuilder
+
+    Add error handling if the input file does not exist, or
+    if there is a JSON parse in the file.
+
+    Iterate across the set of fonts in the JSON and print work to do.
+
+    Actually convert the fonts over.
+
+    Implement function to get file time as uint64_t
+
+    Compare file times between the .ttf and the .font file and .json
+    file and if the .font file is < access time of either then add
+    to queue of work to do.
+
+    Also compare with executable time so if a new version of font builder
+    has been created, the fonts are rebuild automatically.
+
+
 Thursday Evening, August 28, 2014:
 ----------------------------------
 
