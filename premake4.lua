@@ -49,6 +49,13 @@ project "ProfileClientServer"
     targetdir "bin"
     location "build"
 
+project "FontBuilder"
+    kind "ConsoleApp"
+    files { "tools/FontBuilder/*.cpp" }
+    links { "freetype", "jansson" }
+    location "build"
+    targetdir "bin"
+
 project "Client"
     kind "ConsoleApp"
     files { "game/*.cpp" }
@@ -61,13 +68,6 @@ project "Server"
     kind "ConsoleApp"
     files { "game/*.cpp" }
     links { "protocol" }
-    location "build"
-    targetdir "bin"
-   
-project "FontBuilder"
-    kind "ConsoleApp"
-    files { "tools/FontBuilder/*.cpp" }
-    links { "freetype", "jansson" }
     location "build"
     targetdir "bin"
 
@@ -154,8 +154,23 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 FontBuilder" == 0 then
-                os.execute "bin/FontBuilder data/fonts/Fonts.json"
+                if os.execute "bin/FontBuilder data/fonts/Fonts.json" ~= 0 then
+                    os.exit(1)
+                end
             end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "data",
+        description = "Build game data",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            premake.action.call( "fonts" )
         end
     }
 
@@ -168,9 +183,11 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 Client" == 0 then
-                os.execute "cd bin; ./Client"
+            if os.execute "make -j32 Client" ~= 0 then
+                os.exit(1)
             end
+            premake.action.call( "data" )
+            os.execute "cd bin; ./Client"
         end
     }
 

@@ -33,6 +33,36 @@ time_t file_time( const char * filename )
         return sb.st_mtime;
 }
 
+void make_path( const char * dir )
+{
+    char tmp[1024];
+    char * p = NULL;
+    size_t len;
+    snprintf( tmp, sizeof(tmp), "%s", dir );
+    len = strlen( tmp );
+    if ( tmp[len-1] == '/' )
+        tmp[len-1] = 0;
+    for ( p = tmp + 1; *p; p++ )
+    {
+        if ( *p == '/' ) 
+        {
+            *p = 0;
+            mkdir( tmp, S_IRWXU );
+            *p = '/';
+        }
+    }
+    mkdir( tmp, S_IRWXU );
+}
+
+void split_path_file( char ** p, char ** f, const char * pf ) 
+{
+    const char * slash = pf, *next;
+    while ( ( next = strpbrk( slash + 1, "\\/" ) ) ) slash = next;
+    if ( pf != slash ) slash++;
+    *p = strndup( pf, slash - pf );
+    *f = strdup( slash );
+}
+
 char charset[] = { "abcdefghijklmnopqrstuvwxyz"
                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                    "1234567890~!@#$%^&*()-=+;:"
@@ -297,7 +327,15 @@ int main( int argc, char * argv[] )
              output_file_time < input_file_time || 
              output_file_time < json_file_time )
         {
-            // todo: make_dir( ... )
+            char * path;
+            char * file;
+            split_path_file( &path, &file, output_filename );
+
+            if ( path[0] != '\0' )
+                make_path( path );
+
+            free( path );
+            free( file );
 
             CreateFont( input_filename, output_filename, font_size );
 
