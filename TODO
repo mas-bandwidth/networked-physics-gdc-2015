@@ -1,16 +1,5 @@
 DONE:
 
-    Grabbed functions from stack overflow to make path, split path etc.
-
-    Now the make fonts works even after a clean.
-
-    Add new rule "data" that builds all data.
-
-    Work out how to use premake to ensure that data is built before running game.
-
-    Make sure premake actions os.exit(1) when they fail, so they don't continue
-    to run the game client when the data doesn't build for example.
-
 TODO:
 
     ------------------------------
