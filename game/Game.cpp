@@ -14,6 +14,7 @@ const int ServerPort = 10000;
 
 #include <GL/glew.h>
 #include <GLUT/glut.h>
+#include "Fonts.h"
 #include "GameClient.h"
 #include "BSDSocket.h"
 #include "NetworkSimulator.h"
@@ -22,45 +23,75 @@ using namespace protocol;
 
 GameClient * client = nullptr;
 
+Font * font = nullptr;
+
 TimeBase timeBase;
+
+void check_opengl_error( const char * message )
+{
+    int error = glGetError();
+    if ( error != GL_NO_ERROR )
+    {
+        printf( "%.2f: opengl error - %s (%s)\n", timeBase.time, gluErrorString( error ), message );
+        exit( 1 );
+    }    
+}
 
 void init()
 {
     glClearColor( 0.5, 0.5, 0.5, 0.0 );
+    
     glEnable( GL_DEPTH_TEST );
     glShadeModel( GL_SMOOTH );
+
+    glFrontFace( GL_CW );
+    glCullFace( GL_BACK );
+    glEnable( GL_CULL_FACE );
+
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glEnable( GL_TEXTURE_2D );
+
+    glEnable( GL_MULTISAMPLE );
+
+    glHint( GL_GENERATE_MIPMAP_HINT, GL_NICEST );
 }
 
 void display()
 {
+    check_opengl_error( "before render" );
+
     client->Update( timeBase );
 
+    /*
     if ( client->HasError() )
         exit( 1 );
+        */
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
     glLoadIdentity();
 
-    /*
-    glBegin( GL_TRIANGLES );
-        glVertex3f( 0.0, 0.0, -10.0 );
-        glVertex3f( 1.0, 0.0, -10.0 );
-        glVertex3f( 0.0, 1.0, -10.0 );
-    glEnd();
-    */
+    glColor3f(0,0,0);
+
+    font->DrawString( 10, 200, "Hello my baby. Hello my darling. Hello my ragtime doll" );
 
     glutSwapBuffers();
 
     timeBase.time += timeBase.deltaTime;
+
+    check_opengl_error( "after render" );
 }
 
 void reshape( int w, int h )
 {
     glViewport( 0, 0, w, h );
+    
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    glFrustum( -0.1, 0.1, -float(h)/(10.0*float(w)), float(h)/(10.0*float(w)), 0.5, 1000.0 );
+    gluOrtho2D( 0, w, 0, h );
+    
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
 }
@@ -81,7 +112,7 @@ int main( int argc, char ** argv )
 
     glutInit( &argc, argv );
 
-    glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA );
+    glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA | GLUT_MULTISAMPLE );
 
     glutInitWindowSize( 1000, 600 );
 
@@ -89,11 +120,24 @@ int main( int argc, char ** argv )
 
     glutCreateWindow( "Client" );
 
+    glutInitDisplayString( "rgba stencil double samples=8 hidpi" );
+    
+//    glutFullScreen();
+
     glutReshapeFunc( reshape );
     glutDisplayFunc( display );
     glutIdleFunc( display );
 
     init();
+
+    {
+        // todo: create the font with allocator
+        const char font_filename[] = "data/fonts/Console-Regular.font";
+        font = new Font( font_filename );
+        printf( "%.2f: Loaded font \"%s\"\n", timeBase.time, font_filename );
+    }
+
+    check_opengl_error( "after font load" );
 
     client = CreateGameClient( memory::default_allocator() );
 
@@ -110,10 +154,11 @@ int main( int argc, char ** argv )
 
     client->Connect( address );
 
-
     timeBase.deltaTime = 1.0 / TickRate;
 
     glutMainLoop();
+
+    delete font;
 
     DestroyGameClient( memory::default_allocator(), client );
 

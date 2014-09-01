@@ -1,6 +1,7 @@
 /*
     Font Builder Tool
     Copyright (c) 2014, The Network Protocol Company, Inc.
+    Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
 #include <sys/types.h>
@@ -37,7 +38,7 @@ void make_path( const char * dir )
 {
     char tmp[1024];
     char * p = NULL;
-    size_t len;
+    int len;
     snprintf( tmp, sizeof(tmp), "%s", dir );
     len = strlen( tmp );
     if ( tmp[len-1] == '/' )
@@ -70,8 +71,11 @@ char charset[] = { "abcdefghijklmnopqrstuvwxyz"
 
 struct GlyphEntry
 {
-    unsigned char ascii, width;
-    unsigned short x, y;
+    unsigned char magic;
+    unsigned char ascii;
+    unsigned short width;
+    unsigned short x;
+    unsigned short y;
 };
  
 FT_Library library;
@@ -90,20 +94,20 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
     printf( "%s -> %s (%d)\n", fontfile, outfile, font_size );
 
     // Margins around characters to prevent them from 'bleeding' into each other.
-    const size_t margin = 3;
-    size_t image_height = 0, image_width = 256;
+    const int margin = 8;
+    int image_height = 0, image_width = 1024;
 
     // Load the font
     FT_Face face;
-    if ( FT_New_Face(library, fontfile, 0, &face) != 0 )
+    if ( FT_New_Face( library, fontfile, 0, &face ) != 0 )
     {
         printf( "error: could not load font file: \"%s\"\n", fontfile );
         exit( 1 );
     }
 
     // Abort if this is not a 'true type', scalable font.
-    if (!(face->face_flags & FT_FACE_FLAG_SCALABLE) or
-        !(face->face_flags & FT_FACE_FLAG_HORIZONTAL))
+    if ( !( face->face_flags & FT_FACE_FLAG_SCALABLE ) ||
+         !( face->face_flags & FT_FACE_FLAG_HORIZONTAL) )
     {
         printf( "error: \"%s\" is not a truetype scalable font\n", fontfile );
         exit( 1 );
@@ -117,12 +121,12 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
     // line of text) and needed image size. There are simpler methods
     // to obtain these with FreeType but they are unreliable.
     int max_descent = 0, max_ascent = 0;
-    size_t space_on_line = image_width - margin, lines = 1;
+    int space_on_line = image_width - margin, lines = 1;
 
-    for (size_t i = 0; i < sizeof( charset ); ++i)
+    for ( int i = 0; i < sizeof( charset ); ++i )
     {
         // Look up the character in the font file.
-        size_t char_index = FT_Get_Char_Index( face, static_cast<unsigned int>( charset[i] ) );
+        int char_index = FT_Get_Char_Index( face, static_cast<unsigned int>( charset[i] ) );
         if ( charset[i] == '\xFF' )
             char_index = 0;
 
@@ -130,7 +134,7 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
         FT_Load_Glyph( face, char_index, FT_LOAD_DEFAULT );
         FT_Render_Glyph( face->glyph, FT_RENDER_MODE_NORMAL );
 
-        size_t advance = ( face->glyph->metrics.horiAdvance >> 6 ) + margin;
+        int advance = ( face->glyph->metrics.horiAdvance >> 6 ) + margin;
 
         // If the line is full go to the next line
         if ( advance > space_on_line )
@@ -145,7 +149,7 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
     }
 
     // Compute how high the texture has to be.
-    size_t needed_image_height = ( max_ascent + max_descent + margin ) * lines + margin;
+    int needed_image_height = ( max_ascent + max_descent + margin ) * lines + margin;
 
     // Get the first power of two in which it fits.
     image_height = 16;
@@ -154,19 +158,19 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
 
     // Allocate memory for the texture, and set it to 0
     unsigned char* image = new unsigned char[image_height * image_width];
-    for ( size_t i = 0; i < image_height * image_width; ++i )
+    for ( int i = 0; i < image_height * image_width; ++i )
         image[i] = 0;
 
     // Allocate space for the GlyphEntries
     GlyphEntry entries[ sizeof( charset ) ];
 
     // These are the position at which to draw the next glyph
-    size_t x = margin, y = margin + max_ascent;
+    int x = margin, y = margin + max_ascent;
 
     // Drawing loop
-    for (size_t i = 0; i < sizeof( charset ); ++i)
+    for ( int i = 0; i < sizeof( charset ); ++i )
     {
-        size_t char_index = FT_Get_Char_Index( face, static_cast<unsigned int>( charset[i] ) );
+        int char_index = FT_Get_Char_Index( face, static_cast<unsigned int>( charset[i] ) );
         if ( charset[i] == '\xFF' )
             char_index = 0;
 
@@ -175,14 +179,15 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
         FT_Render_Glyph( face->glyph, FT_RENDER_MODE_NORMAL );
 
         // See whether the character fits on the current line
-        size_t advance = (face->glyph->metrics.horiAdvance >> 6) + margin;
-        if (advance > image_width - x)
+        int advance = ( face->glyph->metrics.horiAdvance >> 6 ) + margin;
+        if ( advance > image_width - x )
         {
             x = margin;
             y += (max_ascent + max_descent + margin);
         }
 
         // Fill in the GlyphEntry
+        entries[i].magic = 23;
         entries[i].ascii = charset[i];
         entries[i].width = advance - 3;
         entries[i].x = x;
@@ -190,12 +195,12 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
 
         // Copy the image gotten from FreeType onto the texture
         // at the correct position
-        for (size_t row = 0; row < face->glyph->bitmap.rows; ++row)
+        for ( int row = 0; row < face->glyph->bitmap.rows; ++row )
         {
-            for (size_t pixel = 0; pixel < face->glyph->bitmap.width; ++pixel)
+            for ( int pixel = 0; pixel < face->glyph->bitmap.width; ++pixel)
             {
-                image[(x + face->glyph->bitmap_left + pixel) +
-                      (y - face->glyph->bitmap_top + row) * image_width] =
+                image[ ( x + face->glyph->bitmap_left + pixel ) +
+                       ( y - face->glyph->bitmap_top + row) * image_width ] =
                 face->glyph->bitmap.buffer[pixel + row * face->glyph->bitmap.pitch];
             }
         }
@@ -203,8 +208,7 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
         x += advance;    
     }
 
-    // Write everything to the output file (see top of this
-    // file for the format specification)
+    // Write everything to the output file
     FILE * file = fopen( outfile, "wb" );
     if ( !file )
     {
@@ -212,18 +216,20 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
         exit( 1 );
     }
     fputc( 'F', file );
-    fputc( '0', file );
+    fputc( 'O', file );
+    fputc( 'N', file );
+    fputc( 'T', file );
     WriteObject( file, image_width );
     WriteObject( file, image_height );
     WriteObject( file, max_ascent + max_descent );
-    WriteObject( file, sizeof( charset ) );
+    WriteObject( file, (int) sizeof( charset ) );
 
     // GlyphEntries
-    for ( size_t i = 0; i < sizeof( charset ); ++i )
+    for ( int i = 0; i < sizeof( charset ); ++i )
         WriteObject( file, entries[i] );
 
     // Texture data
-    for ( size_t i = 0; i < image_width * image_height; ++i )
+    for ( int i = 0; i < image_width * image_height; ++i )
         WriteObject( file, image[i] );
 
     delete [] image;

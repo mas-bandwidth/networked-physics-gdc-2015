@@ -1,3 +1,49 @@
+Monday Lunch, September 1st, 2014:
+----------------------------------
+
+    Track down why font texture is rendering as white quads.
+
+    .font file seems to have valid texture data that looks like
+    glyhps, so the error must be on the runtime side.
+
+    Was missing glEnable( GL_TEXTURE ). Derp.
+
+    Font looks really aliased around the edges. Why?
+
+    Created higher resolution texture and then scaled down.
+
+    Doesn't really seem to help much. Still looks bad.
+
+    Tried a bunch of different fonts. So far only fonts that are
+    bitmap fonts, eg. no AA are looking good.
+
+    Found the issue. 
+
+    GLUT does not support retina display, so I'm effectively rendering at half resolution.
+
+    This is why the pixels look large and the fonts look terrible.
+
+    It seems that if I switch to glfw it is better overall, and supports retina display.
+
+    Fucking piece of shit GLUT
+
+
+Monday Morning, September 1st, 2014:
+------------------------------------
+
+    Integrate runtime side of font code.
+
+    Seems to be rendering a white square.
+
+    Also seems like my ortho projection is not quite right.
+
+    Fixed. Parameter order to glOrtho2D was incorrect.
+
+    Now it is rendering at the expected place, but it is all white.
+
+    Is the texture blending incorrect, or is the font texture not being generated correctly?
+
+
 Sunday Morning, August 31, 2014:
 --------------------------------
 

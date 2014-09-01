@@ -4,14 +4,30 @@ TODO:
 
     ------------------------------
 
-    Implement code to import all .font files found in bin/data/fonts/*.font
+    Remove all C++ BS from Fonts.cpp, exceptions, iostream etc.
 
-    Render some basic text in OpenGL
+    Font should have a "Load" function that can return true/false
+    if it fails to load. Do not throw exceptions.
+
+    Font should accept an allocator and do all allocations that way.
+
+    It should use the temp allocator to create a temporary buffer
+    for the image load and conversion step.
 
     ------------------------------
 
-    Probably want to run some compression over the font image rather than writing
-    it out uncompressed. What format should this be? PNG? Some other format?
+    Add "FontManager" class.
+
+    Implement code to import all .font files found in bin/data/fonts/*.font
+
+    There should be a runtime hash of all fonts, eg. lookup font by name.
+
+    It should be possible to reload fonts at runtime, eg. console command "reload_fonts"
+
+    This probably means that we shouldn't cache font pointers, eg. we should query
+    a font by name once per-frame when it is needed.
+
+    Or we should have a callback or notification, font reloaded that invalidates stuff.
 
     ------------------------------
 
@@ -20,6 +36,14 @@ TODO:
     Redirect stdout and stderr output to the console.
 
     Implement keyboard input to type text into this console.
+
+    ------------------------------
+
+    The console should have its own JSON file, eg. Console.json
+
+    Inside this it should specify the fonts to be used by the console.
+
+    The console should be capable of reloading its settings on the fly.
 
     ------------------
 
