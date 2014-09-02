@@ -2,6 +2,10 @@ DONE:
 
 TODO:
 
+    Research modern OpenGL style.
+
+    Finish converting over to modern OpenGL.
+
     ------------------------------
 
     Remove all C++ BS from Fonts.cpp, exceptions, iostream etc.

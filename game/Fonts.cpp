@@ -34,7 +34,14 @@ Font::Font( const char * filename )
 {
     // Open the file and check whether it is any good (a font file starts with "FONT")
     std::ifstream input(filename, std::ios::binary);
-    if ( input.fail() || input.get() != 'F' || input.get() != 'O' || input.get() != 'N' || input.get() != 'T' )
+
+    if ( input.fail() )
+    {
+        printf( "error: failed to load font file \"%s\"\n", filename );
+        exit( 1 );
+    }
+
+    if ( input.get() != 'F' || input.get() != 'O' || input.get() != 'N' || input.get() != 'T' )
     {
         printf( "error: not a valid font file\n" );
         exit( 1 );
@@ -110,11 +117,11 @@ Font::Font( const char * filename )
     glBindTexture( GL_TEXTURE_2D, m_texture );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexImage2D( GL_TEXTURE_2D, 0, GL_ALPHA8, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, tex_data );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, tex_data );
     glGenerateMipmap( GL_TEXTURE_2D );
 
     // And delete the texture memory block
-    delete[] tex_data;
+    delete [] tex_data;
 }
 
 Font::~Font()

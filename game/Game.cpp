@@ -13,7 +13,7 @@ const int ServerPort = 10000;
 // ===================================================================================================================
 
 #include <GL/glew.h>
-#include <GLUT/glut.h>
+#include <GLFW/glfw3.h>
 #include "Fonts.h"
 #include "GameClient.h"
 #include "BSDSocket.h"
@@ -27,7 +27,12 @@ Font * font = nullptr;
 
 TimeBase timeBase;
 
-void check_opengl_error( const char * message )
+static void clear_opengl_error()
+{
+    while ( glGetError() != GL_NO_ERROR );
+}
+
+static void check_opengl_error( const char * message )
 {
     int error = glGetError();
     if ( error != GL_NO_ERROR )
@@ -37,8 +42,15 @@ void check_opengl_error( const char * message )
     }    
 }
 
-void init()
+static void init()
 {
+    /*
+    GLuint vertexBuffer;
+    glGenBuffers( 1, &vertexBuffer );
+    printf( "%u\n", vertexBuffer );
+    */
+
+    /*
     glClearColor( 0.5, 0.5, 0.5, 0.0 );
     
     glEnable( GL_DEPTH_TEST );
@@ -53,50 +65,72 @@ void init()
 
     glEnable( GL_TEXTURE_2D );
 
-    glEnable( GL_MULTISAMPLE );
-
     glHint( GL_GENERATE_MIPMAP_HINT, GL_NICEST );
+    */
+
+    check_opengl_error( "before font load" );
+
+    {
+        // todo: create the font with allocator
+        const char font_filename[] = "data/fonts/Console.font";
+        font = new Font( font_filename );
+        printf( "%.2f: Loaded font \"%s\"\n", timeBase.time, font_filename );
+    }
+
+    check_opengl_error( "after font load" );
+
+    client = CreateGameClient( memory::default_allocator() );
+
+    if ( !client )
+    {
+        printf( "%.2f: Failed to create game client!\n", timeBase.time );
+        exit( 1 );
+    }
+
+    printf( "%.2f: Started game client on port %d\n", timeBase.time, client->GetPort() );
+
+    Address address( "::1" );
+    address.SetPort( ServerPort );
+
+    client->Connect( address );
+
+    timeBase.deltaTime = 1.0 / TickRate;
 }
 
-void display()
+static void update()
+{
+    client->Update( timeBase );
+
+    timeBase.time += timeBase.deltaTime;
+}
+
+static void render()
 {
     check_opengl_error( "before render" );
 
     client->Update( timeBase );
 
-    /*
-    if ( client->HasError() )
-        exit( 1 );
-        */
-
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
+    /*
     glLoadIdentity();
 
-    glColor3f(0,0,0);
+//    glColor3f( 0, 0, 0 );
 
     font->DrawString( 10, 200, "Hello my baby. Hello my darling. Hello my ragtime doll" );
-
-    glutSwapBuffers();
-
-    timeBase.time += timeBase.deltaTime;
+    */
 
     check_opengl_error( "after render" );
 }
 
-void reshape( int w, int h )
+static void shutdown()
 {
-    glViewport( 0, 0, w, h );
-    
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    gluOrtho2D( 0, w, 0, h );
-    
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
+    DestroyGameClient( memory::default_allocator(), client );
+
+    delete font;
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * argv[] )
 {
     srand( time( nullptr ) );
 
@@ -110,62 +144,51 @@ int main( int argc, char ** argv )
 
     PROTOCOL_ASSERT( IsNetworkInitialized() );
 
-    glutInit( &argc, argv );
+    glfwInit();
 
-    glutInitDisplayMode( GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA | GLUT_MULTISAMPLE );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 2 );
+    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
+    glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
+    glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
 
-    glutInitWindowSize( 1000, 600 );
-
-    glutInitWindowPosition( 220, 150 );
-
-    glutCreateWindow( "Client" );
-
-    glutInitDisplayString( "rgba stencil double samples=8 hidpi" );
+    GLFWwindow * window = glfwCreateWindow( 1200, 800, "OpenGL", nullptr, nullptr );
     
-//    glutFullScreen();
+    //GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL", glfwGetPrimaryMonitor(), nullptr); // Fullscreen    
 
-    glutReshapeFunc( reshape );
-    glutDisplayFunc( display );
-    glutIdleFunc( display );
+    glfwMakeContextCurrent( window );
+
+    glewExperimental = GL_TRUE;
+    glewInit();
+
+    clear_opengl_error();
 
     init();
 
+    while ( !glfwWindowShouldClose( window ) )
     {
-        // todo: create the font with allocator
-        const char font_filename[] = "data/fonts/Console-Regular.font";
-        font = new Font( font_filename );
-        printf( "%.2f: Loaded font \"%s\"\n", timeBase.time, font_filename );
+        glfwPollEvents();
+
+        if ( glfwGetKey( window, GLFW_KEY_ESCAPE ) == GLFW_PRESS )
+            glfwSetWindowShouldClose( window, GL_TRUE );
+
+        update();
+
+        render();
+
+        glfwSwapBuffers( window );
     }
 
-    check_opengl_error( "after font load" );
-
-    client = CreateGameClient( memory::default_allocator() );
-
-    if ( !client )
-    {
-        printf( "%.2f: Failed to create game client!\n", timeBase.time );
-        return 1;
-    }
-
-    printf( "%.2f: Started game client on port %d\n", timeBase.time, client->GetPort() );
-
-    Address address( "::1" );
-    address.SetPort( ServerPort );
-
-    client->Connect( address );
-
-    timeBase.deltaTime = 1.0 / TickRate;
-
-    glutMainLoop();
-
-    delete font;
-
-    DestroyGameClient( memory::default_allocator(), client );
+    shutdown();
 
     ShutdownNetwork();
 
-    memory::shutdown();
+    // IMPORTANT: Disabled until we fix leak issue with game client/server objects in config¡
+    //memory::shutdown();
 
+    glfwTerminate();
+    
     return 0;
 }
 

@@ -59,7 +59,7 @@ project "FontBuilder"
 project "Client"
     kind "ConsoleApp"
     files { "game/*.cpp" }
-    links { "protocol", "glew", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    links { "protocol", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }

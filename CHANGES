@@ -1,3 +1,15 @@
+Monday Evening, September 1st, 2014:
+------------------------------------
+
+    Converted OpenGL windowing over to GLFW
+
+    Got GLEW working and added code to pump and remove all gl errors post
+    GLEW init (it seems to get a lot of errors trying out stuff?)
+
+    Seems I now need to do a large conversion from old style OpenGL
+    to modern style OpenGL in order to get the fonts working again.
+
+
 Monday Lunch, September 1st, 2014:
 ----------------------------------
 
