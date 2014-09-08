@@ -51,7 +51,6 @@ static void init()
     */
 
     /*
-    glClearColor( 0.5, 0.5, 0.5, 0.0 );
     
     glEnable( GL_DEPTH_TEST );
     glShadeModel( GL_SMOOTH );
@@ -62,11 +61,37 @@ static void init()
 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-    glEnable( GL_TEXTURE_2D );
-
-    glHint( GL_GENERATE_MIPMAP_HINT, GL_NICEST );
     */
+
+    printf( "shader language version: %s\n", glGetString( GL_SHADING_LANGUAGE_VERSION ) );
+
+    GLint compile_ok = GL_FALSE, link_ok = GL_FALSE;
+ 
+    GLuint vs = glCreateShader( GL_VERTEX_SHADER );
+
+    const char *vs_source = 
+        "#version 410\n"  // OpenGL 4.1
+        "attribute vec2 coord2d;                  "
+        "void main(void) {                        "
+        "  gl_Position = vec4(coord2d, 0.0, 1.0); "
+        "}";
+
+    glShaderSource( vs, 1, &vs_source, NULL);
+    glCompileShader( vs );
+    glGetShaderiv( vs, GL_COMPILE_STATUS, &compile_ok );
+    if ( !compile_ok )
+    {
+        printf( "error: could not compile vertex shader\n" );
+        char buffer[10*1024];
+        GLsizei length = 0;
+        glGetShaderInfoLog( vs, sizeof(buffer), &length, buffer );
+        printf( "%s\n", buffer );
+        exit(1);
+    }
+
+    glEnable( GL_FRAMEBUFFER_SRGB );
+
+    glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
     check_opengl_error( "before font load" );
 
@@ -111,7 +136,15 @@ static void render()
     client->Update( timeBase );
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    
+
+    GLfloat triangle_vertices[] = 
+    {
+         0.0,  0.8,
+        -0.8, -0.8,
+         0.8, -0.8
+    };
+        
+
     /*
     glLoadIdentity();
 
@@ -146,8 +179,8 @@ int main( int argc, char * argv[] )
 
     glfwInit();
 
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 2 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
@@ -163,6 +196,12 @@ int main( int argc, char * argv[] )
     glewInit();
 
     clear_opengl_error();
+
+    if ( !GLEW_VERSION_4_1 )
+    {
+        printf( "error: OpenGL 4.1 is not supported\n" );
+        exit(1);
+    }
 
     init();
 

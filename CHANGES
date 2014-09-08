@@ -1,3 +1,13 @@
+Tuesday Morning, September 2nd, 2014:
+-------------------------------------
+
+    Enabled SRGB framebuffer with glEnable( GL_FRAMEBUFFER_SRGB );
+
+    Verified this is functional by clearing to (0.5) grey, with SRGB
+    framebuffer this is quite light, easily 50% grey -- without, it is
+    quite dark, more like 30% dark grey!
+
+
 Monday Evening, September 1st, 2014:
 ------------------------------------
 
