@@ -27,6 +27,10 @@ Font * font = nullptr;
 
 TimeBase timeBase;
 
+GLuint shader_program;
+
+GLuint vertex_array = 0;
+
 static void clear_opengl_error()
 {
     while ( glGetError() != GL_NO_ERROR );
@@ -40,6 +44,88 @@ static void check_opengl_error( const char * message )
         printf( "%.2f: opengl error - %s (%s)\n", timeBase.time, gluErrorString( error ), message );
         exit( 1 );
     }    
+}
+
+// todo: remove C++ bullshit
+#include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
+
+GLuint load_shader( const char * vertex_file_path, const char * fragment_file_path )
+{ 
+    // Create the shaders
+    GLuint VertexShaderID = glCreateShader( GL_VERTEX_SHADER );
+    GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER );
+ 
+    // Read the Vertex Shader code from the file
+    std::string VertexShaderCode;
+    std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
+    if(VertexShaderStream.is_open())
+    {
+        std::string Line = "";
+        while(getline(VertexShaderStream, Line))
+            VertexShaderCode += "\n" + Line;
+        VertexShaderStream.close();
+    }
+ 
+    // Read the Fragment Shader code from the file
+    std::string FragmentShaderCode;
+    std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
+    if(FragmentShaderStream.is_open()){
+        std::string Line = "";
+        while(getline(FragmentShaderStream, Line))
+            FragmentShaderCode += "\n" + Line;
+        FragmentShaderStream.close();
+    }
+ 
+    GLint Result = GL_FALSE;
+    int InfoLogLength;
+ 
+    // Compile Vertex Shader
+    printf("Compiling shader : %s\n", vertex_file_path);
+    char const * VertexSourcePointer = VertexShaderCode.c_str();
+    glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
+    glCompileShader(VertexShaderID);
+ 
+    // Check Vertex Shader
+    glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    std::vector<char> VertexShaderErrorMessage(InfoLogLength);
+    glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+    fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
+ 
+    // Compile Fragment Shader
+    printf("Compiling shader : %s\n", fragment_file_path);
+    char const * FragmentSourcePointer = FragmentShaderCode.c_str();
+    glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
+    glCompileShader(FragmentShaderID);
+ 
+    // Check Fragment Shader
+    glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+    glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    std::vector<char> FragmentShaderErrorMessage(InfoLogLength);
+    glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+    fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
+ 
+    // Link the program
+    fprintf(stdout, "Linking program\n");
+    GLuint ProgramID = glCreateProgram();
+    glAttachShader(ProgramID, VertexShaderID);
+    glAttachShader(ProgramID, FragmentShaderID);
+    glLinkProgram(ProgramID);
+ 
+    // Check the program
+    glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+    glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+    std::vector<char> ProgramErrorMessage( max(InfoLogLength, int(1)) );
+    glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+    fprintf(stdout, "%s\n", &ProgramErrorMessage[0]);
+ 
+    glDeleteShader(VertexShaderID);
+    glDeleteShader(FragmentShaderID);
+ 
+    return ProgramID;
 }
 
 static void init()
@@ -69,14 +155,14 @@ static void init()
  
     GLuint vs = glCreateShader( GL_VERTEX_SHADER );
 
-    const char *vs_source = 
-        "#version 410\n"  // OpenGL 4.1
-        "attribute vec2 coord2d;                  "
-        "void main(void) {                        "
-        "  gl_Position = vec4(coord2d, 0.0, 1.0); "
+    const char * vertex_shader = 
+        "#version 410\n"
+        "in vec3 vp;"
+        "void main () {"
+        "  gl_Position = vec4 (vp, 1.0);"
         "}";
 
-    glShaderSource( vs, 1, &vs_source, NULL);
+    glShaderSource( vs, 1, &vertex_shader, NULL);
     glCompileShader( vs );
     glGetShaderiv( vs, GL_COMPILE_STATUS, &compile_ok );
     if ( !compile_ok )
@@ -88,6 +174,55 @@ static void init()
         printf( "%s\n", buffer );
         exit(1);
     }
+
+    GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
+
+    const char* fragment_shader =
+        "#version 410\n"
+        "out vec4 frag_colour;"
+        "void main () {"
+        "  frag_colour = vec4 (0.5, 0.0, 0.5, 1.0);"
+        "}";
+
+    glShaderSource( fs, 1, &fragment_shader, NULL);
+    glCompileShader( fs );
+    glGetShaderiv( fs, GL_COMPILE_STATUS, &compile_ok );
+    if ( !compile_ok )
+    {
+        printf( "error: could not compile fragment shader\n" );
+        char buffer[10*1024];
+        GLsizei length = 0;
+        glGetShaderInfoLog( vs, sizeof(buffer), &length, buffer );
+        printf( "%s\n", buffer );
+        exit(1);
+    }
+
+    shader_program = glCreateProgram();
+    glAttachShader( shader_program, fs );
+    glAttachShader( shader_program, vs );
+    glLinkProgram( shader_program );
+
+    // -----------------------------------
+
+    float vertices[] = 
+    {
+        0.0f,  0.5f,  0.0f,
+        0.5f, -0.5f,  0.0f,
+       -0.5f, -0.5f,  0.0f
+    };
+
+    GLuint vbo = 0;
+    glGenBuffers( 1, &vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo );
+    glBufferData( GL_ARRAY_BUFFER, 9 * sizeof (float), vertices, GL_STATIC_DRAW );
+
+    glGenVertexArrays( 1, &vertex_array );
+    glBindVertexArray( vertex_array );
+    glEnableVertexAttribArray( 0 );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo );
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+
+    // -----------------------------------
 
     glEnable( GL_FRAMEBUFFER_SRGB );
 
@@ -144,6 +279,9 @@ static void render()
          0.8, -0.8
     };
         
+    glUseProgram( shader_program );
+    glBindVertexArray( vertex_array );
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
 
     /*
     glLoadIdentity();

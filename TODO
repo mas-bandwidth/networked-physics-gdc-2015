@@ -1,10 +1,55 @@
 DONE:
 
-TODO:
-
     Research modern OpenGL style.
 
-    Finish converting over to modern OpenGL.
+    Seems I have an OpenGL 4.1 on my macbook.
+
+    Shader model is 410.
+
+    Research how to get shaders built and working for 410.,
+    the example source I am working from doesn't seem to work
+    (it appears to be older style?)
+
+    Get a basic triangle up and being rendered.
+
+TODO:
+
+    Implement helper functions to create shaders and so on.
+
+    Move the shaders out of the C++ and in to shaders/*
+
+    Implement ln -s bin/data/shaders -> data/shaders so I don't
+    have to copy the shaders across all the time in the build step.
+
+    Implement shader manager than loads in all shaders in directory
+    and gives them names, you can search for shaders 
+
+    Implement a default shader so if a particular shader fails
+    to load, you have a basic pink shader to fall back to. 
+
+    This shader should never change and should always compile.
+
+    Make sure my code is clean and properly cleans up all shader
+    data as required on shutdown.
+
+    Implement function to reload shaders, this will eventually
+    be called from a console command while the game is running.
+
+    ------------------------------
+
+    Order the ebook with company account for OpenGL 4.0 shading 
+    language. Too many tutorials on the net are pre-4.0 shader lang
+    so it is extremely frustrating going through old material!
+
+    Get a book and tutorial set that are specific to 4.0 and skip the previous stuff!
+
+    ------------------------------
+
+    Get text rendering with modern OpenGL
+
+    Make sure to offset the text by a small amount for the "diamond"
+    rasterization rule so I can be guaranteed 1:1 ration of texels
+    to pixels.
 
     ------------------------------
 
