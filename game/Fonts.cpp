@@ -1,11 +1,13 @@
 /*
-    Font Runtime
+    Font Loader
     Copyright (c) 2014, The Network Protocol Company, Inc.
     Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
 #include "Fonts.h"
+#include "Globals.h"
 
+// todo: remove this BS
 #include <iostream>
 #include <fstream>
 
@@ -32,6 +34,8 @@ struct Glyph_Buffer
 Font::Font( const char * filename )
     : m_texture(0), m_line_height(0), m_tex_line_height(0)
 {
+    printf( "%.2f: Loading font \"%s\"\n", globals.timeBase.time, filename );
+
     // Open the file and check whether it is any good (a font file starts with "FONT")
     std::ifstream input(filename, std::ios::binary);
 
@@ -43,6 +47,7 @@ Font::Font( const char * filename )
 
     if ( input.get() != 'F' || input.get() != 'O' || input.get() != 'N' || input.get() != 'T' )
     {
+        // todo: proper error log and don't exit on error, return an error code
         printf( "error: not a valid font file\n" );
         exit( 1 );
     }
@@ -64,7 +69,7 @@ Font::Font( const char * filename )
     */
 
     // Make the glyph table.
-    m_glyphs = new Glyph[n_chars];
+    m_glyphs = new Glyph[n_chars];          // todo: use the allocator
     for ( int i = 0; i != 256; ++i )
         m_table[i] = NULL;
 
@@ -77,11 +82,10 @@ Font::Font( const char * filename )
 
         if ( buffer.magic != 23 )
         {
+            // todo: add a proper log header with time and don't exit on error.
             printf( "error: glyph %d magic mismatch: expected %d, got %d\n", i, 23, (int) buffer.magic );
             exit(1);
         }
-
-//        printf( "found glyph: %c\n", buffer.ascii );
 
         m_glyphs[i].tex_x1 = static_cast<float>(buffer.x) / width;
         m_glyphs[i].tex_x2 = static_cast<float>(buffer.x + buffer.width) / width;
@@ -98,6 +102,7 @@ Font::Font( const char * filename )
     // We must have the default character (stored under '\xFF')
     if ( default_glyph == NULL )
     {
+        // todo: add a proper log header with time
         printf( "error: font file contains no default glyph\n" );
         exit( 1 );
     }
@@ -121,7 +126,7 @@ Font::Font( const char * filename )
     glGenerateMipmap( GL_TEXTURE_2D );
 
     // And delete the texture memory block
-    delete [] tex_data;
+    delete [] tex_data;     // todo: use the allocator
 }
 
 Font::~Font()

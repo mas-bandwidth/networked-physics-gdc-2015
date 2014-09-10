@@ -72,13 +72,13 @@ project "Server"
     targetdir "bin"
 
 if _ACTION == "clean" then
-    os.rmdir "bin"
+    os.execute "rm -rf bin"     -- IMPORTANT: os.rmdif follows symlinks and we don't want that
     os.rmdir "lib"
     os.rmdir "obj"
     os.rmdir "build"
     if not os.is "windows" then
         os.execute "rm -f Protocol.zip"
-        os.execute "rm *.txt"
+        os.execute "rm -f p*.txt"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"
@@ -163,6 +163,21 @@ if not os.is "windows" then
 
     newaction
     {
+        trigger     = "shaders",
+        description = "Build shaders",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "mkdir -p bin/data; rm -f bin/data/shaders; ln -s ~/git/protocol/data/shaders bin/data/shaders" ~= 0 then
+                os.exit(1)
+            end
+        end
+    }
+
+    newaction
+    {
         trigger     = "data",
         description = "Build game data",
         valid_kinds = premake.action.get("gmake").valid_kinds,
@@ -171,6 +186,7 @@ if not os.is "windows" then
      
         execute = function ()
             premake.action.call( "fonts" )
+            premake.action.call( "shaders" )
         end
     }
 

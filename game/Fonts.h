@@ -1,5 +1,5 @@
 /*
-    Font Runtime
+    Font Loader
     Copyright (c) 2014, The Network Protocol Company, Inc.
     Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  

@@ -1,25 +1,26 @@
 DONE:
 
-    Research modern OpenGL style.
-
-    Seems I have an OpenGL 4.1 on my macbook.
-
-    Shader model is 410.
-
-    Research how to get shaders built and working for 410.,
-    the example source I am working from doesn't seem to work
-    (it appears to be older style?)
-
-    Get a basic triangle up and being rendered.
-
 TODO:
 
-    Implement helper functions to create shaders and so on.
+    Implement a shader to render the text
 
-    Move the shaders out of the C++ and in to shaders/*
+    Implement vertex buffer generation (dynamic?) to render text quads.
 
-    Implement ln -s bin/data/shaders -> data/shaders so I don't
-    have to copy the shaders across all the time in the build step.
+    Make sure to offset the text by a small amount for the "diamond"
+    rasterization rule so I can be guaranteed 1:1 ration of texels
+    to pixels.
+
+    Text should now render and look GREAT (hires, and with correct gamma)
+
+    Now pick a good console font.
+
+    -------------------------------
+
+    Clean up awful font loader code
+
+    Clean up awful shader loader code
+
+    ------------------------------
 
     Implement shader manager than loads in all shaders in directory
     and gives them names, you can search for shaders 
@@ -42,14 +43,6 @@ TODO:
     so it is extremely frustrating going through old material!
 
     Get a book and tutorial set that are specific to 4.0 and skip the previous stuff!
-
-    ------------------------------
-
-    Get text rendering with modern OpenGL
-
-    Make sure to offset the text by a small amount for the "diamond"
-    rasterization rule so I can be guaranteed 1:1 ration of texels
-    to pixels.
 
     ------------------------------
 

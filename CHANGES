@@ -1,3 +1,32 @@
+Tuesday Evening, September 9th, 2014:
+-------------------------------------
+
+    Research modern OpenGL style.
+
+    Seems I have an OpenGL 4.1 on my macbook.
+
+    Shader model is 410.
+
+    Research how to get shaders built and working for 410.,
+    the example source I am working from doesn't seem to work
+    (it appears to be older style?)
+
+    Get a basic triangle up and being rendered.
+
+    Implement helper functions to create shaders and so on.
+
+    Move the shaders out of the C++ and in to shaders/*
+
+    Copy across shaders in build step. It's error prone though
+    because you can accidentally edit the wrong shader file, 
+    and have that clobbered.
+
+    Implement ln -s bin/data/shaders -> data/shaders so I don't
+    have to copy the shaders across all the time in the build step.
+
+    Don't use os.rmdir for clean on "bin" directory. It follows softlinks!
+
+
 Tuesday Morning, September 2nd, 2014:
 -------------------------------------
 
