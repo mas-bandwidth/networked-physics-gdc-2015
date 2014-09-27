@@ -1,3 +1,23 @@
+Saturday Morning, September 27th, 2014:
+---------------------------------------
+
+    Implement shader manager than loads in all shaders in directory
+    and gives them names, you can search for shaders 
+
+    Add code to fallback to 
+
+    Make sure my code is clean and properly cleans up all shader
+    data as required on shutdown.
+
+    Switch over existing hard coded shader load to use the shader manager instead.
+
+    Implement function to reload shaders, this will eventually
+    be called from a console command while the game is running
+    whenever I edit shaders and want to see the result.
+
+    Verify that shader reload works by randomly reloading shaders while program is running.
+
+
 Tuesday Evening, September 9th, 2014:
 -------------------------------------
 

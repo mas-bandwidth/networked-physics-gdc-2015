@@ -30,15 +30,11 @@ Font * font = nullptr;
 FontManager * fontManager = nullptr;
 ShaderManager * shaderManager = nullptr;
 
-GLuint shader_program;
-
 GLuint vertex_array = 0;
 
 static void game_init()
 {
-    shader_program = load_shader( "data/shaders/Triangle.vert", "data/shaders/Triangle.frag" );
-
-    shaderManager = new ShaderManager();
+    shaderManager = new ShaderManager( memory::default_allocator() );
 
     float vertices[] = 
     {
@@ -106,6 +102,13 @@ static void game_render()
     client->Update( globals.timeBase );
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+/*
+    if ( ( rand() % 100 ) == 0 )
+        shaderManager->Reload();
+*/
+
+    GLuint shader_program = shaderManager->GetShader( "Triangle" );
 
     glUseProgram( shader_program );
     glBindVertexArray( vertex_array );

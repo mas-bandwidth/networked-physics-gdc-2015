@@ -4,21 +4,47 @@
 #ifdef CLIENT
 
 #include "Common.h"
+#include "Globals.h"
+#include "Hash.h"
+
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
+#include <stdio.h>
 
-ShaderManager::ShaderManager()
+ShaderManager::ShaderManager( protocol::Allocator & allocator )
+    : m_shaders( allocator )
 {
+    protocol::hash::reserve( m_shaders, 256 );
     Reload();
 }
 
 ShaderManager::~ShaderManager()
 {
-    // ...
+    Unload();
 }
 
 void ShaderManager::Reload()
+{
+    Unload();
+    Load();
+}
+
+unsigned int ShaderManager::GetShader( const char * name )
+{
+    const uint64_t key = protocol::hash_string( name );
+    
+    uint32_t shader = protocol::hash::get( m_shaders, key, uint32_t(0) );
+    
+    if ( shader )
+        return shader;
+
+    const uint64_t default_key = protocol::hash_string( "default" );
+    
+    return protocol::hash::get( m_shaders, default_key, uint32_t(0) );
+}
+
+void ShaderManager::Load()
 {
     const char * shaderDirectory = "data/shaders";
     
@@ -38,18 +64,42 @@ void ShaderManager::Reload()
              filename[len-1] == 't'
            )
         {
-            printf( "%s/%s\n", shaderDirectory, entry->d_name );
+            const int MaxPath = 2048;
 
-            // todo: load the frag and vert files together
+            char filename_without_extension[MaxPath];
+            strcpy( filename_without_extension, entry->d_name );
+            filename_without_extension[len-5] = '\0';
+
+            char vertex_shader_path[MaxPath];
+            char fragment_shader_path[MaxPath];
+
+            sprintf( vertex_shader_path, "%s/%s.vert", shaderDirectory, filename_without_extension );
+            sprintf( fragment_shader_path, "%s/%s.frag", shaderDirectory, filename_without_extension );
+
+            unsigned int shader = load_shader( vertex_shader_path, fragment_shader_path );
+
+            if ( shader == 0 )
+                continue;
+
+            uint32_t key = protocol::hash_string( filename_without_extension );
+
+            protocol::hash::set( m_shaders, key, shader );
         }
     }
     
-    closedir( dir );
+    closedir( dir );    
 }
 
-unsigned int ShaderManager::GetShader( const char * name )
+void ShaderManager::Unload()
 {
-    return 0;
+    for ( auto itor = protocol::hash::begin( m_shaders ); itor != protocol::hash::end( m_shaders ); ++itor )
+    {
+        const uint32_t shader = itor->value;
+        printf( "%.2f: Delete shader %u\n", globals.timeBase.time, shader );
+        glDeleteShader( shader );
+    }
+ 
+    protocol::hash::clear( m_shaders );
 }
 
 #endif

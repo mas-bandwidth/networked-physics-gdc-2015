@@ -4,21 +4,19 @@ TODO:
 
     ------------------------------
 
-    Implement shader manager than loads in all shaders in directory
-    and gives them names, you can search for shaders 
+    Add "FontManager" class.
 
-    Implement a default shader so if a particular shader fails
-    to load, you have a basic pink shader to fall back to. 
+    Implement code to import all .font files found in bin/data/fonts/*.font
 
-    This shader should never change and should always compile.
+    There should be a runtime hash of all fonts, eg. lookup font by name.
 
-    Make sure my code is clean and properly cleans up all shader
-    data as required on shutdown.
+    It should be possible to reload fonts at runtime.
 
-    Implement function to reload shaders, this will eventually
-    be called from a console command while the game is running.
+    Convert code that manually loads font to just lookup font by name "Console"
 
-    -------------------------------
+    Should there be some concept of a default font?! Maybe not.
+
+    --------------------------------
 
     Implement a shader to render the text
 
@@ -57,21 +55,6 @@ TODO:
 
     It should use the temp allocator to create a temporary buffer
     for the image load and conversion step.
-
-    ------------------------------
-
-    Add "FontManager" class.
-
-    Implement code to import all .font files found in bin/data/fonts/*.font
-
-    There should be a runtime hash of all fonts, eg. lookup font by name.
-
-    It should be possible to reload fonts at runtime, eg. console command "reload_fonts"
-
-    This probably means that we shouldn't cache font pointers, eg. we should query
-    a font by name once per-frame when it is needed.
-
-    Or we should have a callback or notification, font reloaded that invalidates stuff.
 
     ------------------------------
 
@@ -130,15 +113,7 @@ TODO:
     Color the commands nicely so errors are colored, commands are colored,
     output from the game log is colored and so on.
 
-    Put these color configurations inside config json files, eg. data/config/console.cfg
-
-    Find a cheap JSON parser I can include for config files.
-
-    I typically want new JSON configs read to override values for old, is this possible
-    with JSON parsers easily? eg. overrides. This is important for users to be able to
-    override settings specified by the game.
-
-    Not sure if JSON is the correct solution anymore. May be too complex (don't need tree)
+    Put these color configurations inside config json files, eg. data/config/Console.json
 
     ------------------
 
@@ -210,3 +185,4 @@ NOTES:
     Client connect takes over 1 second. Optimize!
 
     ---------------------------
+    

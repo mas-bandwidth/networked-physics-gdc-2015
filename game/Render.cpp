@@ -31,8 +31,8 @@ void check_opengl_error( const char * message )
 }
 
 GLuint load_shader( const char * vertex_file_path, const char * fragment_file_path )
-{ 
-    printf( "%.2f: Loading shader: %s - %s\n", globals.timeBase.time, vertex_file_path, fragment_file_path );
+{
+    printf( "%.2f: Loading shader: \"%s\" \"%s\"\n", globals.timeBase.time, vertex_file_path, fragment_file_path );
 
     // Create the shaders
     GLuint VertexShaderID = glCreateShader( GL_VERTEX_SHADER );

@@ -1,5 +1,14 @@
 WOULD BE NICE:
 
+    Its really annoying when doing client work to not be able to build and 
+    iterate on the C++ file without dropping to command line because of #ifdef CLIENT
+
+    ----------------------
+
+    It's really annoying to refer to protocol::memory, protocol::hash::something
+    and so on. The basic functionality that protocol refers on should be called
+    "core", eg. "core::memory", "core::hash" and so on.
+
     -----------------------------------
 
     Might be possible to hash packet with client/server guid + packet data,

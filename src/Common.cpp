@@ -62,6 +62,33 @@ namespace protocol
         return (float) ( min + (double) ( max - min ) * scale );
     }
 
+    uint32_t hash_data( const uint8_t * data, uint32_t length, uint32_t hash )
+    {
+        PROTOCOL_ASSERT( data );
+        for ( uint32_t i = 0; i < length; ++i )
+        {
+            hash += data[i];
+            hash += (hash << 10);
+            hash ^= (hash >> 6);
+        }
+        return hash;
+    } 
+
+    uint32_t hash_string( const char string[], uint32_t hash )
+    {
+        PROTOCOL_ASSERT( string );
+        while ( *string != '\0' )
+        {
+            char c = *string++;
+            if ( ( c >= 'a' ) && ( c <= 'z' ) ) 
+                c = ( c - 'a' ) + 'A';
+            hash += c;
+            hash += (hash << 10);
+            hash ^= (hash >> 6);
+        }
+        return hash;
+    }
+
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed )
     {
         const uint64_t m = 0xc6a4a7935bd1e995ULL;

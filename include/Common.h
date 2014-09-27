@@ -211,6 +211,8 @@ namespace protocol
         return (const void*) ( (const char*)p - bytes );
     }
 
+    uint32_t hash_data( const uint8_t * data, uint32_t length, uint32_t hash = 0 );
+    uint32_t hash_string( const char string[], uint32_t hash = 0 );
     uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed );
 
     struct TimeBase
