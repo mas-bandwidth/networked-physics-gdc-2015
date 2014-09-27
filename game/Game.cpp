@@ -60,13 +60,7 @@ static void game_init()
 
     check_opengl_error( "before font load" );
 
-    {
-        // todo: create the font with allocator
-        const char font_filename[] = "data/fonts/Console.font";
-        font = new Font( font_filename );
-    }
-
-    fontManager = new FontManager();
+    fontManager = new FontManager( memory::default_allocator() );
 
     check_opengl_error( "after font load" );
 

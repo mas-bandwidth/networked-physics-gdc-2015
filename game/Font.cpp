@@ -31,8 +31,20 @@ struct Glyph_Buffer
     unsigned short y;
 };
 
-Font::Font( const char * filename )
+Font::Font() 
     : m_texture(0), m_line_height(0), m_tex_line_height(0)
+{
+    // ...
+}
+
+Font::~Font()
+{
+    // Release texture object and glyph array.
+    glDeleteTextures( 1, &m_texture );
+    delete [] m_glyphs;
+}
+
+bool Font::Load( const char * filename )
 {
     printf( "%.2f: Loading font \"%s\"\n", globals.timeBase.time, filename );
 
@@ -42,14 +54,14 @@ Font::Font( const char * filename )
     if ( input.fail() )
     {
         printf( "error: failed to load font file \"%s\"\n", filename );
-        exit( 1 );
+        return false;
     }
 
     if ( input.get() != 'F' || input.get() != 'O' || input.get() != 'N' || input.get() != 'T' )
     {
         // todo: proper error log and don't exit on error, return an error code
         printf( "error: not a valid font file\n" );
-        exit( 1 );
+        return false;
     }
 
     // Get the texture size, the number of glyphs and the line height.
@@ -84,7 +96,7 @@ Font::Font( const char * filename )
         {
             // todo: add a proper log header with time and don't exit on error.
             printf( "error: glyph %d magic mismatch: expected %d, got %d\n", i, 23, (int) buffer.magic );
-            exit(1);
+            return false;
         }
 
         m_glyphs[i].tex_x1 = static_cast<float>(buffer.x) / width;
@@ -104,7 +116,7 @@ Font::Font( const char * filename )
     {
         // todo: add a proper log header with time
         printf( "error: font file contains no default glyph\n" );
-        exit( 1 );
+        return false;
     }
     
     for ( int i = 0; i != 256; ++i )
@@ -127,13 +139,8 @@ Font::Font( const char * filename )
 
     // And delete the texture memory block
     delete [] tex_data;     // todo: use the allocator
-}
 
-Font::~Font()
-{
-    // Release texture object and glyph array.
-    glDeleteTextures( 1, &m_texture );
-    delete [] m_glyphs;
+    return true;
 }
 
 int Font::GetLineHeight() const

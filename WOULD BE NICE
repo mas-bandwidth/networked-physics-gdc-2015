@@ -1,5 +1,17 @@
 WOULD BE NICE:
 
+    JSON file that describes all the heaps (and subheaps to create), by name, how large etc.
+
+    This would be super great to split up memory into different heaps with different sizes, eg.
+    "fonts", "network", "textures", "level" and so on.
+
+    Some of the heaps could be static, eg. stuff that should exist even if level isn't loaded.
+
+    Other heaps could be subheaps specified inside the level heap, by the code that runs
+    for that particular level.
+
+    ----------------------
+
     Its really annoying when doing client work to not be able to build and 
     iterate on the C++ file without dropping to command line because of #ifdef CLIENT
 

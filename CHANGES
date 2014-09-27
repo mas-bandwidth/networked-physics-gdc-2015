@@ -1,3 +1,15 @@
+Saturday Afternoon, September 27th, 2014:
+-----------------------------------------
+
+    Add "FontManager" class.
+
+    Implement code to import all .font files found in bin/data/fonts/*.font
+
+    There should be a runtime hash of all fonts, eg. lookup font by name.
+
+    It should be possible to reload fonts at runtime.
+
+
 Saturday Morning, September 27th, 2014:
 ---------------------------------------
 

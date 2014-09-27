@@ -2,20 +2,6 @@ DONE:
 
 TODO:
 
-    ------------------------------
-
-    Add "FontManager" class.
-
-    Implement code to import all .font files found in bin/data/fonts/*.font
-
-    There should be a runtime hash of all fonts, eg. lookup font by name.
-
-    It should be possible to reload fonts at runtime.
-
-    Convert code that manually loads font to just lookup font by name "Console"
-
-    Should there be some concept of a default font?! Maybe not.
-
     --------------------------------
 
     Implement a shader to render the text

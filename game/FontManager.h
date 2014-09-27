@@ -3,13 +3,15 @@
 
 #ifdef CLIENT
 
+#include "Types.h"
+
 class Font;
 
 class FontManager
 {
 public:
 
-    FontManager();
+    FontManager( protocol::Allocator & allocator );
     
     ~FontManager();
 
@@ -19,7 +21,10 @@ public:
 
 private:
 
-    // ...
+    void Load();
+    void Unload();
+
+    protocol::Hash<Font*> m_fonts;
 };
 
 #endif

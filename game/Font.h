@@ -11,9 +11,10 @@ class Font
 {
 public:
 
-    Font( const char * filename );
-
+    Font();
     ~Font();
+
+    bool Load( const char * filename );
 
     int GetLineHeight() const;
 
