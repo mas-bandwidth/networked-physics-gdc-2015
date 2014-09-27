@@ -4,7 +4,7 @@
     Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
-#include "Fonts.h"
+#include "Font.h"
 #include "Globals.h"
 
 // todo: remove this BS

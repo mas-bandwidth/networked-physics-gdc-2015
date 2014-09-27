@@ -2,24 +2,6 @@ DONE:
 
 TODO:
 
-    Implement a shader to render the text
-
-    Implement vertex buffer generation (dynamic?) to render text quads.
-
-    Make sure to offset the text by a small amount for the "diamond"
-    rasterization rule so I can be guaranteed 1:1 ration of texels
-    to pixels.
-
-    Text should now render and look GREAT (hires, and with correct gamma)
-
-    Now pick a good console font.
-
-    -------------------------------
-
-    Clean up awful font loader code
-
-    Clean up awful shader loader code
-
     ------------------------------
 
     Implement shader manager than loads in all shaders in directory
@@ -35,6 +17,26 @@ TODO:
 
     Implement function to reload shaders, this will eventually
     be called from a console command while the game is running.
+
+    -------------------------------
+
+    Implement a shader to render the text
+
+    Implement vertex buffer generation (dynamic?) to render text quads.
+
+    Make sure to offset the text by a small amount for the "diamond"
+    rasterization rule so I can be guaranteed 1:1 mapping of texels
+    to pixels.
+
+    Text should now render and look GREAT (hires, and with correct gamma)
+
+    Now pick a good console font.
+
+    -------------------------------
+
+    Clean up awful font loader code
+
+    Clean up awful shader loader code
 
     ------------------------------
 

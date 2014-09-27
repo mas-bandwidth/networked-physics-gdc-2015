@@ -1,0 +1,23 @@
+#ifndef SHADER_MANAGER_H
+#define SHADER_MANAGER_H
+
+class ShaderManager
+{
+public:
+
+    ShaderManager();
+    
+    ~ShaderManager();
+
+    void Load( const);
+
+    void Reload();
+
+    GLuint GetShader( const char * name );
+
+private:
+
+    // ...
+};
+
+#endif

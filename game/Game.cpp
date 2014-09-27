@@ -13,17 +13,22 @@ const int ServerPort = 10000;
 //                                                       CLIENT
 // ===================================================================================================================
 
-#include "Fonts.h"
+#include "Font.h"
 #include "Render.h"
 #include "GameClient.h"
 #include "BSDSocket.h"
 #include "NetworkSimulator.h"
+#include "ShaderManager.h"
+#include "FontManager.h"
 
 using namespace protocol;
 
 GameClient * client = nullptr;
 
 Font * font = nullptr;
+
+FontManager * fontManager = nullptr;
+ShaderManager * shaderManager = nullptr;
 
 GLuint shader_program;
 
@@ -32,6 +37,8 @@ GLuint vertex_array = 0;
 static void game_init()
 {
     shader_program = load_shader( "data/shaders/Triangle.vert", "data/shaders/Triangle.frag" );
+
+    shaderManager = new ShaderManager();
 
     float vertices[] = 
     {
@@ -62,6 +69,8 @@ static void game_init()
         const char font_filename[] = "data/fonts/Console.font";
         font = new Font( font_filename );
     }
+
+    fontManager = new FontManager();
 
     check_opengl_error( "after font load" );
 
@@ -114,6 +123,9 @@ static void game_shutdown()
     DestroyGameClient( memory::default_allocator(), client );
 
     delete font;
+
+    delete fontManager;
+    delete shaderManager;
 }
 
 int main( int argc, char * argv[] )

@@ -4,18 +4,21 @@
     Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
-#ifndef FONTS_H
-#define FONTS_H
+#ifndef FONT_H
+#define FONT_H
  
 class Font
 {
 public:
 
     Font( const char * filename );
+
     ~Font();
 
     int GetLineHeight() const;
+
     int GetCharWidth( unsigned char c ) const;
+
     int GetStringWidth( const char * str ) const;
     
     void DrawString( float x, float y, const char * str );
