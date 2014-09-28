@@ -1,5 +1,10 @@
 WOULD BE NICE:
 
+    Put tool binaries into bin/tools instead of bin directly. This way tools can be easily excluded from the shipping product.
+
+    Font builder should delete any *.font files that don't match entries in the JSON as a post-step
+    (eg. stale font files stick around otherwise when you restructure the JSON)
+
     JSON file that describes all the heaps (and subheaps to create), by name, how large etc.
 
     This would be super great to split up memory into different heaps with different sizes, eg.

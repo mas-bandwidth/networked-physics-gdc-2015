@@ -1,7 +1,7 @@
 DONE:
 
 TODO:
-
+    
     --------------------------------
 
     Implement a shader to render the text
@@ -24,11 +24,6 @@ TODO:
 
     ------------------------------
 
-    Order the ebook with company account for OpenGL 4.0 shading 
-    language. Too many tutorials on the net are pre-4.0 shader lang
-    so it is extremely frustrating going through old material!
-
-    Get a book and tutorial set that are specific to 4.0 and skip the previous stuff!
 
     ------------------------------
 
@@ -46,17 +41,15 @@ TODO:
 
     Implement a quake style console.
 
-    Redirect stdout and stderr output to the console.
-
-    Implement keyboard input to type text into this console.
-
-    ------------------------------
-
     The console should have its own JSON file, eg. Console.json
 
     Inside this it should specify the fonts to be used by the console.
 
     The console should be capable of reloading its settings on the fly.
+
+    Redirect stdout and stderr output to the console.
+
+    Implement keyboard input to type text into this console.
 
     ------------------
 

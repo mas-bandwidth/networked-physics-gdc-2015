@@ -1,3 +1,5 @@
 [
-    [ "bin/data/fonts/Console.font",   "data/fonts/Proggy/ProggyTiny.ttf", 16 ]
+    [ "bin/data/fonts/ProggyTiny.font",   "data/fonts/Proggy/ProggyTiny.ttf", 16 ],
+    [ "bin/data/fonts/AnonymousPro.font",   "data/fonts/AnonymousPro/AnonymousPro.ttf", 14 ],
+    [ "bin/data/fonts/InputMonoNarrow.font", "data/fonts/InputMonoNarrow/InputMonoNarrow-Regular.ttf", 16 ]
 ]

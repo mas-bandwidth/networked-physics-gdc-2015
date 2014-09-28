@@ -1,3 +1,21 @@
+Saturday Evening, September 27th, 2014:
+---------------------------------------
+
+    Order the ebook with company account for OpenGL 4.0 shading 
+    language. Too many tutorials on the net are pre-4.0 shader lang
+    so it is extremely frustrating going through old material!
+
+    Convert triangle shader to interpolated RGB
+
+    Get triangle shader to render rotating triangle
+
+    glEnable( GL_DEBUG_OUTPUT ) ​to track down what is going wrong.
+
+    Need to select the shader program before doing stuff with it. Fixed!
+
+    Continue reading through the OpenGL 4.0 
+
+
 Saturday Afternoon, September 27th, 2014:
 -----------------------------------------
 

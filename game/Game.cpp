@@ -21,21 +21,32 @@ const int ServerPort = 10000;
 #include "ShaderManager.h"
 #include "FontManager.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+using glm::mat4;
+using glm::vec3;
+
 using namespace protocol;
 
 GameClient * client = nullptr;
-
-Font * font = nullptr;
-
 FontManager * fontManager = nullptr;
 ShaderManager * shaderManager = nullptr;
 
-GLuint vertex_array = 0;
+//GLuint vertex_array = 0;
+
+GLuint vboHandles[2];
+GLuint vaoHandle;
 
 static void game_init()
 {
+    glEnable( GL_FRAMEBUFFER_SRGB );
+
+    glClearColor( 0.25, 0.25, 0.25, 0.0 );
+
     shaderManager = new ShaderManager( memory::default_allocator() );
 
+    /*
     float vertices[] = 
     {
         0.0f,  0.5f,  0.0f,
@@ -53,12 +64,54 @@ static void game_init()
     glEnableVertexAttribArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
     glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+    */
 
-    glEnable( GL_FRAMEBUFFER_SRGB );
+    float positionData[] = 
+    {
+       -0.8f, -0.8f, 0.0f,
+        0.8f, -0.8f, 0.0f,
+        0.0f,  0.8f, 0.0f 
+    };
 
-    glClearColor( 0.25, 0.25, 0.25, 0.0 );
+    float colorData[] = 
+    {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f 
+    };
 
-    check_opengl_error( "before font load" );
+    glGenBuffers( 2, vboHandles );
+
+    GLuint positionBufferHandle = vboHandles[0];
+    GLuint colorBufferHandle = vboHandles[1];
+
+    // Populate the position buffer
+    glBindBuffer( GL_ARRAY_BUFFER, positionBufferHandle );
+    glBufferData( GL_ARRAY_BUFFER, 9 * sizeof(float), positionData, GL_STATIC_DRAW );
+
+    // Populate the color buffer
+    glBindBuffer( GL_ARRAY_BUFFER, colorBufferHandle );
+    glBufferData( GL_ARRAY_BUFFER, 9 * sizeof(float), colorData, GL_STATIC_DRAW );
+
+    // Create and set-up the vertex array object
+    glGenVertexArrays( 1, &vaoHandle );
+    glBindVertexArray( vaoHandle );
+
+    // Enable the vertex attribute arrays
+    glEnableVertexAttribArray( 0 );  // Vertex position
+    glEnableVertexAttribArray( 1 );  // Vertex color
+
+    // Map index 0 to the position buffer
+    glBindBuffer( GL_ARRAY_BUFFER, positionBufferHandle );
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
+
+    // Map index 1 to the color buffer
+    glBindBuffer( GL_ARRAY_BUFFER, colorBufferHandle );
+    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
+
+    check_opengl_error( "after vertex buffer setup" );
+
+    // ---------------------
 
     fontManager = new FontManager( memory::default_allocator() );
 
@@ -105,8 +158,24 @@ static void game_render()
     GLuint shader_program = shaderManager->GetShader( "Triangle" );
 
     glUseProgram( shader_program );
+
+    glBindAttribLocation( shader_program, 0, "VertexPosition" );
+    glBindAttribLocation( shader_program, 1, "VertexColor" );
+
+    mat4 rotationMatrix = glm::rotate( mat4(1.0f), (float)globals.timeBase.time * 4, vec3(0.0f,0.0f,1.0f) );
+
+    int location = glGetUniformLocation( shader_program, "RotationMatrix" );
+    if ( location >= 0 )
+        glUniformMatrix4fv( location, 1, GL_FALSE, &rotationMatrix[0][0] );
+
+    glBindVertexArray( vaoHandle );
+
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
+
+    /*
     glBindVertexArray( vertex_array );
     glDrawArrays( GL_TRIANGLES, 0, 3 );
+    */
 
     /*
     font->DrawString( 10, 200, "Hello my baby. Hello my darling. Hello my ragtime doll" );
@@ -119,9 +188,8 @@ static void game_shutdown()
 {
     DestroyGameClient( memory::default_allocator(), client );
 
-    delete font;
-
     delete fontManager;
+
     delete shaderManager;
 }
 
@@ -147,6 +215,7 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
     glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
+    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
 
     GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
     
