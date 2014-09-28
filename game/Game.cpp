@@ -33,8 +33,6 @@ GameClient * client = nullptr;
 FontManager * fontManager = nullptr;
 ShaderManager * shaderManager = nullptr;
 
-//GLuint vertex_array = 0;
-
 GLuint vboHandles[2];
 GLuint vaoHandle;
 
@@ -45,26 +43,6 @@ static void game_init()
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
     shaderManager = new ShaderManager( memory::default_allocator() );
-
-    /*
-    float vertices[] = 
-    {
-        0.0f,  0.5f,  0.0f,
-        0.5f, -0.5f,  0.0f,
-       -0.5f, -0.5f,  0.0f
-    };
-
-    GLuint vbo = 0;
-    glGenBuffers( 1, &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glBufferData( GL_ARRAY_BUFFER, 9 * sizeof (float), vertices, GL_STATIC_DRAW );
-
-    glGenVertexArrays( 1, &vertex_array );
-    glBindVertexArray( vertex_array );
-    glEnableVertexAttribArray( 0 );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
-    */
 
     float positionData[] = 
     {
@@ -150,10 +128,11 @@ static void game_render()
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-/*
     if ( ( rand() % 100 ) == 0 )
+    {
+        fontManager->Reload();
         shaderManager->Reload();
-*/
+    }
 
     GLuint shader_program = shaderManager->GetShader( "Triangle" );
 
@@ -173,11 +152,6 @@ static void game_render()
     glDrawArrays( GL_TRIANGLES, 0, 3 );
 
     /*
-    glBindVertexArray( vertex_array );
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-    */
-
-    /*
     font->DrawString( 10, 200, "Hello my baby. Hello my darling. Hello my ragtime doll" );
     */
 
@@ -191,6 +165,11 @@ static void game_shutdown()
     delete fontManager;
 
     delete shaderManager;
+}
+
+void framebuffer_size_callback( GLFWwindow* window, int width, int height )
+{
+    glViewport( 0, 0, width, height );
 }
 
 int main( int argc, char * argv[] )
@@ -220,6 +199,8 @@ int main( int argc, char * argv[] )
     GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
     
     //GLFWwindow* window = glfwCreateWindow(800, 600, "Client", glfwGetPrimaryMonitor(), nullptr); // Fullscreen    
+
+    glfwSetFramebufferSizeCallback( window, framebuffer_size_callback );
 
     glfwMakeContextCurrent( window );
 

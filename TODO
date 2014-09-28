@@ -22,20 +22,49 @@ TODO:
 
     Clean up awful shader loader code
 
-    ------------------------------
-
-
-    ------------------------------
-
-    Remove all C++ BS from Fonts.cpp, exceptions, iostream etc.
-
-    Font should have a "Load" function that can return true/false
-    if it fails to load. Do not throw exceptions.
-
     Font should accept an allocator and do all allocations that way.
 
     It should use the temp allocator to create a temporary buffer
     for the image load and conversion step.
+
+    ------------------------------
+
+    Split out common stuff from protocol to "core"
+
+    This should include types, allocators, common, log functions, file functions (from tools)
+    and so on. Core should be accessible to all libraries, tools and executables, client and server.
+
+    I'm thinking src/core, src/protocol and so on.
+
+    This would avoid annoying stuff like protocol::hash::get and so on. Hash is not part of protocol!
+
+    ------------------------------
+
+    Write a tool to generate go stone meshes.
+
+    Tool should take JSON input to describe the stones, eg. width/height bevel, tesselation and such.
+
+    Generate a bunch of different sizes, eg. all the standard sizes that can exist and make sure the stones are generated to a high resolution.
+
+    Make sure the generation is fast. If it's not fast, optimize it (eg. optimize the code that calculates the )
+
+    Make sure the go stone generation code doesn't do work if the meshes already exist.
+
+    Consider generating a go stone binary format that can be loaded in, vs. generating the .obj file format.
+
+    Make sure the loading of go stones is super fast. Should not require a great deal of work.
+
+    eg. Generate a ".stone" file
+
+    Load in a bunch of go stones.
+
+    ------------------------------
+
+    Explore physically based shading with go stones. I want a level that is an array 
+    of go stones with varying physically based properties changing in a grid, like
+    the typical physically based shading tests with spheres.
+
+    Talk to Steve Marton at work to determine where to get started.
 
     ------------------------------
 

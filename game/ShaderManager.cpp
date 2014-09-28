@@ -79,7 +79,10 @@ void ShaderManager::Load()
             unsigned int shader = load_shader( vertex_shader_path, fragment_shader_path );
 
             if ( shader == 0 )
+            {
+                printf( "error: failed to load shader\n" );
                 continue;
+            }
 
             uint32_t key = protocol::hash_string( filename_without_extension );
 
