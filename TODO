@@ -1,20 +1,38 @@
 DONE:
 
+    Sketch out a shader to render the text. 
+
+    Don't worry about lighting or coloring yet, just get the texture coord out there.
+
+    Need to get the text working with proper projection matrix. Might be good to just
+    keep it uniform, vs. having a specific text shader that only works in 2D space.
+
+    Work out how to get the .r coordinate in for an alpha texture. Done.
+
 TODO:
-    
-    --------------------------------
 
-    Implement a shader to render the text
+    Work out how to get a projection matrix for screenspace for the text.
 
-    Implement vertex buffer generation (dynamic?) to render text quads.
+    I think it's best to leave the text rendering general, eg. allow a matrix
+    to be passed in, much like all other vertex shaders, for generality.
+
+    Set this up and render some text with 1:1 texels 
 
     Make sure to offset the text by a small amount for the "diamond"
     rasterization rule so I can be guaranteed 1:1 mapping of texels
     to pixels.
 
+    Implement vertex buffer generation (dynamic?) to render text quads.
+
     Text should now render and look GREAT (hires, and with correct gamma)
 
-    Now pick a good console font.
+    Now try out a few different console fonts and pick out a good one.
+
+    -------------------------------
+
+    Work out how to manage debug rendering of text, eg. is there some
+    debug manager that will handle rendering in order for debug triangles,
+    lines etc, eg. batching drawcalls, or should i do it immediate?
 
     -------------------------------
 
@@ -40,6 +58,43 @@ TODO:
 
     ------------------------------
 
+    I would like a mesh manager
+
+    ------------------------------
+
+    I would like a texture manager (seems that OpenGL does most of this, but could make it a bit easier...)
+
+    Meshes and textures should be able to be loaded on-demand and inserted into the managers
+
+    Should not load *all* meshes and textures, only what is asked to be loaded.
+
+    By tracking all the textures loaded, we can reload them as required, eg. reload textures.
+
+    ------------------------------
+
+    Texture manager should handle both loading textures from disk, mipmap or not.
+
+    It should also handle dynamically generated textures, eg. the alpha font textures being created.
+
+    Should font textures be piped through the texture manager? Probably for the best.
+
+    But if a texture is dynamically loaded, then it cannot be reloaded via texture manager.
+
+    Dynamically loaded/generated textures don't add a load of value being placed in the texture manager.
+
+    Texture manager would be best for textures that are loaded and precached by name from disk.
+
+    ------------------------------
+
+    The stone data below should *refer* to the meshes and textures inside stone JSON definitions
+
+    But should not define the stone mesh or texture itself!
+
+    It is much more general to have meshes and textures being able to be loaded separately,
+    referenced in by the stone, rather than having a custom solution for stone meshes and textures.
+
+    ------------------------------
+
     Write a tool to generate go stone meshes.
 
     Tool should take JSON input to describe the stones, eg. width/height bevel, tesselation and such.
@@ -57,6 +112,18 @@ TODO:
     eg. Generate a ".stone" file
 
     Load in a bunch of go stones.
+
+    ------------------------------
+
+    Write a tool to calculate the inertia tensor for a go stone.
+
+    Just include this inside the stone definition, vs. calculating it on the fly, as this calculation can be slow.
+
+    Hopefully it is not too slow to generate a bunch of stone meshes, but if it is, then it should be
+    possible to generate the stone meshes offline, and just insert them into a "content" directory
+    that is then crunched (from say, .obj format) to the in-game format (binary), .mesh
+
+    This could be done at the time of copying the meshes from data directory, to bin/data, eg. "pm data"
 
     ------------------------------
 
