@@ -164,9 +164,8 @@ int Font::GetStringWidth( const char * str ) const
 void Font::DrawString( float x, float y, const char * str )
 {
     glBindTexture( GL_TEXTURE_2D, m_texture );
- 
-//    glScalef( 0.5f, 0.5f, 0.5f );
 
+    /* 
     glBegin( GL_QUADS );
     
     const char * p = str;
@@ -193,6 +192,5 @@ void Font::DrawString( float x, float y, const char * str )
     }
 
     glEnd();
-
-//    glScalef( 1, 1, 1 );
+    */
 }

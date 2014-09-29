@@ -151,9 +151,9 @@ static void game_render()
 
     glDrawArrays( GL_TRIANGLES, 0, 3 );
 
-    /*
-    font->DrawString( 10, 200, "Hello my baby. Hello my darling. Hello my ragtime doll" );
-    */
+    Font * font = fontManager->GetFont( "AnonymousPro" );
+    if ( font )
+        font->DrawString( 10, 200, "Hello" );
 
     check_opengl_error( "after render" );
 }
