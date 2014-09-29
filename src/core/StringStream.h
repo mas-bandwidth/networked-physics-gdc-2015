@@ -1,3 +1,5 @@
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
 #ifndef CORE_STRING_STREAM_H
 #define CORE_STRING_STREAM_H
 

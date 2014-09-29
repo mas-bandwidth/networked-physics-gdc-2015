@@ -1,14 +1,11 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_MESSAGE_CHANNEL_H
 #define PROTOCOL_MESSAGE_CHANNEL_H
 
-#include "Common.h"
-#include "Channel.h"
-#include "Message.h"
+#include "protocol/Channel.h"
+#include "protocol/Message.h"
+#include "core/Core.h"
 
 namespace protocol
 {

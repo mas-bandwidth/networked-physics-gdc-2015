@@ -1,3 +1,51 @@
+Sunday Night, September 29th, 2014:
+-----------------------------------
+
+    I'm thinking src/core, src/protocol and so on.
+
+    Set up directory structure src/core, src/protocol, src/game and so on.
+
+    Move all existing source to "src/protocol" and make sure core is built and links w. everything.
+
+    Make sure game still compiles and links.
+
+    Start moving stuff over to core.
+
+    Start with "core/Common.h". Switch so it is necessary to include files across projects via prefex, eg. "core/" "protocol/" etc.
+
+    This should include types, allocators, common, log functions, asserts, file functions (from tools)
+    and so on. Core should be accessible to all libraries, tools and executables, client and server.
+
+    Continue moving stuff until core compiles. Then conver core to "CORE_" and "namespace core".
+
+    Split out the network related stuff from protocol into network.
+
+    Sublime needs to be updated to include "../" as an include dir, as well as "../src"!
+
+    Setup a way to switch between build systems easily inside Sublime, eg. "C++11 (Client)", "C++11 (Server)"
+
+    One thing that I really dislike, the network interfaces are taking raw packets
+    and instead of serializing them to packets and sending those packets, they are
+    doing that internally.
+
+    This seems wrong to me. I think the concept of an abstract packet is "protocol"
+    and should be separate frome networking.
+
+    Right now it will be too costly to fix this before returning to real work,
+    for now allow network to depend on protocol and vice versa. Return to this
+    and evaluate how network can be separated cleanly. I'd like network to not
+    depend on protocol. Ideally, protocol would also not depend on network, but
+    this may be pushing it a bit (eg. client and server clearly need network...)
+
+    It may be possible to split out client and server, above protocol, but that seems excessive.
+
+    Work on network until it compiles.
+
+    core/Common.h should probably become core/Core.h? Yep.
+
+    Work on protocol until it compiles.
+
+
 Sunday Evening, September 29th, 2014:
 -------------------------------------
 

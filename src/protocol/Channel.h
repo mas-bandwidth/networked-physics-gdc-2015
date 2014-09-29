@@ -1,17 +1,15 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_CHANNEL_H
 #define PROTOCOL_CHANNEL_H
 
-#include "Common.h"
+#include "core/Core.h"
+#include "protocol/Object.h"
+
+namespace core { class Allocator; }
 
 namespace protocol
 {
-    class Allocator;
-
     class ChannelData : public Object
     {
         // ...
@@ -38,7 +36,7 @@ namespace protocol
 
         virtual void ProcessAck( uint16_t ack ) = 0;
 
-        virtual void Update( const TimeBase & timeBase ) = 0;
+        virtual void Update( const core::TimeBase & timeBase ) = 0;
 
         void SetContext( const void ** context )
         {
@@ -74,7 +72,7 @@ namespace protocol
 
         void ProcessAck( uint16_t ack ) {}
 
-        void Update( const TimeBase & timeBase ) {}
+        void Update( const core::TimeBase & timeBase ) {}
     };
 
     /*
@@ -90,13 +88,13 @@ namespace protocol
 
     class ChannelStructure
     {
-        Allocator * m_channelAllocator;
-        Allocator * m_channelDataAllocator;
+        core::Allocator * m_channelAllocator;
+        core::Allocator * m_channelDataAllocator;
         int m_numChannels;
  
     public:
 
-        ChannelStructure( Allocator & channelAllocator, Allocator & channelDataAllocator, int numChannels );
+        ChannelStructure( core::Allocator & channelAllocator, core::Allocator & channelDataAllocator, int numChannels );
 
         ~ChannelStructure();
 
@@ -115,9 +113,9 @@ namespace protocol
 
         void DestroyChannelData( ChannelData * channelData );
 
-        Allocator & GetChannelAllocator();
+        core::Allocator & GetChannelAllocator();
 
-        Allocator & GetChannelDataAllocator();
+        core::Allocator & GetChannelDataAllocator();
 
     protected:
 

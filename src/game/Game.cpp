@@ -186,7 +186,7 @@ int main( int argc, char * argv[] )
         return 1;
     }
 
-    PROTOCOL_ASSERT( IsNetworkInitialized() );
+    CORE_ASSERT( IsNetworkInitialized() );
 
     glfwInit();
 

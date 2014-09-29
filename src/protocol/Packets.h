@@ -1,7 +1,4 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_PACKETS_H
 #define PROTOCOL_PACKETS_H
@@ -203,7 +200,7 @@ namespace protocol
         {
             if ( fragmentData )
             {
-                memory::scratch_allocator().Free( fragmentData );
+                core::memory::scratch_allocator().Free( fragmentData );
                 fragmentData = nullptr;
             }
         }
@@ -211,7 +208,7 @@ namespace protocol
         template <typename Stream> void Serialize( Stream & stream )
         {
             if ( Stream::IsWriting )
-                PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
+                CORE_ASSERT( fragmentSize <= MaxFragmentSize );
 
             serialize_uint16( stream, clientId );
             serialize_uint16( stream, serverId );
@@ -223,12 +220,12 @@ namespace protocol
 
             if ( Stream::IsReading )
             {
-                PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
+                CORE_ASSERT( fragmentSize <= MaxFragmentSize );
                 if ( fragmentSize <= MaxFragmentSize )
-                    fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( fragmentBytes );
+                    fragmentData = (uint8_t*) core::memory::scratch_allocator().Allocate( fragmentBytes );
             }
 
-            PROTOCOL_ASSERT( fragmentData );
+            CORE_ASSERT( fragmentData );
 
             serialize_bytes( stream, fragmentData, fragmentBytes );
         }
@@ -334,7 +331,7 @@ namespace protocol
             {
                 if ( channelData[i] )
                 {
-                    PROTOCOL_DELETE( memory::scratch_allocator(), ChannelData, channelData[i] );
+                    CORE_DELETE( core::memory::scratch_allocator(), ChannelData, channelData[i] );
                     channelData[i] = nullptr;
                 }
             }
@@ -349,12 +346,12 @@ namespace protocol
 
             ChannelStructure * channelStructure = (ChannelStructure*) stream.GetContext( CONTEXT_CHANNEL_STRUCTURE );
             
-            PROTOCOL_ASSERT( channelStructure );
+            CORE_ASSERT( channelStructure );
 
             const int numChannels = channelStructure->GetNumChannels();
 
-            PROTOCOL_ASSERT( numChannels > 0 );
-            PROTOCOL_ASSERT( numChannels <= MaxChannels );
+            CORE_ASSERT( numChannels > 0 );
+            CORE_ASSERT( numChannels <= MaxChannels );
 
             // IMPORTANT: Context here is used when running under client/server
             // so we can filter out connection packets that do not match any connected client.
@@ -408,7 +405,7 @@ namespace protocol
                     if ( has_data )
                     {
                         channelData[i] = channelStructure->CreateChannelData( i );
-                        PROTOCOL_ASSERT( channelData[i] );
+                        CORE_ASSERT( channelData[i] );
                     }
                 }
             }
@@ -427,7 +424,7 @@ namespace protocol
                 else
                     ack_delta = (int)sequence + 65536 - ack;
 
-                PROTOCOL_ASSERT( ack_delta > 0 );
+                CORE_ASSERT( ack_delta > 0 );
                 
                 ack_in_range = ack_delta <= 128;
             }

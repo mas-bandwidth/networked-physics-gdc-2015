@@ -1,7 +1,4 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_CONSTANTS_H
 #define PROTOCOL_CONSTANTS_H

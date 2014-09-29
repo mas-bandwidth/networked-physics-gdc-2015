@@ -43,12 +43,12 @@ protected:
 
     Channel * CreateChannelInternal( int channelIndex )
     {
-        return PROTOCOL_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
+        return CORE_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
     }
 
     ChannelData * CreateChannelDataInternal( int channelIndex )
     {   
-        return PROTOCOL_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
+        return CORE_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
     }
 };
 

@@ -92,7 +92,7 @@ struct TestContextMessage : public Message
             serialize_bits( stream, dummy, numRemainderBits );
 
         auto testContext = (const TestContext*) stream.GetContext( CONTEXT_USER );
-        PROTOCOL_ASSERT( testContext );
+        CORE_ASSERT( testContext );
         serialize_int( stream, value, testContext->value_min, testContext->value_max );
 
         PROTOCOL_CHECK( serialize_check( stream, 0xDEADBEEF ) );
@@ -135,9 +135,9 @@ protected:
     {
         switch ( type )
         {
-            case MESSAGE_BLOCK:         return PROTOCOL_NEW( *m_allocator, BlockMessage );
-            case MESSAGE_TEST:          return PROTOCOL_NEW( *m_allocator, TestMessage );
-            case MESSAGE_TEST_CONTEXT:  return PROTOCOL_NEW( *m_allocator, TestContextMessage );
+            case MESSAGE_BLOCK:         return CORE_NEW( *m_allocator, BlockMessage );
+            case MESSAGE_TEST:          return CORE_NEW( *m_allocator, TestMessage );
+            case MESSAGE_TEST_CONTEXT:  return CORE_NEW( *m_allocator, TestContextMessage );
             default:
                 return nullptr;
         }

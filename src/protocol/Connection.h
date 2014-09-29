@@ -1,16 +1,13 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_CONNECTION_H
 #define PROTOCOL_CONNECTION_H
 
-#include "Common.h"
-#include "Stream.h"
-#include "Packets.h"
-#include "Channel.h"
-#include "SlidingWindow.h"
+#include "core/Core.h"
+#include "protocol/Stream.h"
+#include "protocol/Packets.h"
+#include "protocol/Channel.h"
+#include "protocol/SlidingWindow.h"
 
 namespace protocol
 {
@@ -19,7 +16,7 @@ namespace protocol
 
     struct ConnectionConfig
     {
-        Allocator * allocator = nullptr;
+        core::Allocator * allocator = nullptr;
         int packetType = 0;
         int maxPacketSize = 1024;
         int slidingWindowSize = 256;
@@ -62,9 +59,9 @@ namespace protocol
 
         const ConnectionConfig m_config;                            // const configuration data
 
-        Allocator * m_allocator;                                    // allocator for allocations matching life cycle of object.
+        core::Allocator * m_allocator;                              // allocator for allocations matching life cycle of object.
 
-        TimeBase m_timeBase;                                        // network time base
+        core::TimeBase m_timeBase;                                  // network time base
         SentPackets * m_sentPackets = nullptr;                      // sliding window of recently sent packets
         ReceivedPackets * m_receivedPackets = nullptr;              // sliding window of recently received packets
         int m_numChannels = 0;                                      // cached number of channels
@@ -81,13 +78,13 @@ namespace protocol
 
         void Reset();
 
-        void Update( const TimeBase & timeBase );
+        void Update( const core::TimeBase & timeBase );
 
         ConnectionError GetError() const;
 
         int GetChannelError( int channelIndex ) const;
 
-        const TimeBase & GetTimeBase() const;
+        const core::TimeBase & GetTimeBase() const;
 
         ConnectionPacket * WritePacket();
 

@@ -1,13 +1,11 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_MESSAGE_H
 #define PROTOCOL_MESSAGE_H
 
-#include "Common.h"
-#include "Stream.h"
+#include "core/Core.h"
+#include "protocol/Object.h"
+#include "protocol/Stream.h"
 
 namespace protocol
 {
@@ -19,27 +17,27 @@ namespace protocol
 
         Message( int type ) : m_refCount(1), m_id(0), m_type(type)
         {
-            PROTOCOL_ASSERT( m_magic == 0x12345 );
+            CORE_ASSERT( m_magic == 0x12345 );
         }
 
-        int GetId() const { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_id; }
-        int GetType() const { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_type; }
+        int GetId() const { CORE_ASSERT( m_magic == 0x12345 ); return m_id; }
+        int GetType() const { CORE_ASSERT( m_magic == 0x12345 ); return m_type; }
 
-        void SetId( uint16_t id ) { PROTOCOL_ASSERT( m_magic == 0x12345 ); m_id = id; }
+        void SetId( uint16_t id ) { CORE_ASSERT( m_magic == 0x12345 ); m_id = id; }
 
-        bool IsBlock() const { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_type == BlockMessageType; }
+        bool IsBlock() const { CORE_ASSERT( m_magic == 0x12345 ); return m_type == BlockMessageType; }
 
-        int GetRefCount() { PROTOCOL_ASSERT( m_magic == 0x12345 ); return m_refCount; }
+        int GetRefCount() { CORE_ASSERT( m_magic == 0x12345 ); return m_refCount; }
 
     protected:
 
         void AddRef() { m_refCount++; }
-        void Release() { PROTOCOL_ASSERT( m_magic == 0x12345 ); PROTOCOL_ASSERT( m_refCount > 0 ); m_refCount--; }
+        void Release() { CORE_ASSERT( m_magic == 0x12345 ); CORE_ASSERT( m_refCount > 0 ); m_refCount--; }
 
         ~Message() 
         { 
-            PROTOCOL_ASSERT( m_magic == 0x12345 );
-            PROTOCOL_ASSERT( m_refCount == 0 );
+            CORE_ASSERT( m_magic == 0x12345 );
+            CORE_ASSERT( m_refCount == 0 );
             #ifndef NDEBUG
             m_magic = 0;
             #endif

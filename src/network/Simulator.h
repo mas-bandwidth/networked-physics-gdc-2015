@@ -3,21 +3,26 @@
 #ifndef NETWORK_SIMULATOR_H
 #define NETWORK_SIMULATOR_H
 
-// todo: probably rename this to Simulator.h
-
-#include "core/Common.h"
-#include "network/NetworkInterface.h"
+#include "core/Core.h"
+#include "network/Constants.h"
+#include "network/Interface.h"
 
 namespace core { class Allocator; }
 
+// todo: network library should not depend on protocol
+namespace protocol
+{
+    class Packet; 
+    class PacketFactory; 
+}
+
 namespace network
 {
-    class PacketFactory;
 
     struct SimulatorConfig
     {
-        Allocator * allocator;
-        PacketFactory * packetFactory;
+        core::Allocator * allocator;
+        protocol::PacketFactory * packetFactory;
         int stateChance;                    // 1 in n chance to change state per-update
         int numPackets;                     // number of packets to buffer
 
@@ -63,31 +68,31 @@ namespace network
 
         void AddState( const SimulatorState & state );
 
-        void SendPacket( const Address & address, Packet * packet );
+        void SendPacket( const Address & address, protocol::Packet * packet );
 
-        Packet * ReceivePacket();
+        protocol::Packet * ReceivePacket();
 
-        void Update( const TimeBase & timeBase );
+        void Update( const core::TimeBase & timeBase );
 
         // todo: this stuff simply doesn't belong here
         uint32_t GetMaxPacketSize() const;
-        PacketFactory & GetPacketFactory() const;
+        protocol::PacketFactory & GetPacketFactory() const;
         void SetContext( const void ** context ) {}        // not needed, we don't actually serialize the packets
 
     private:
 
         struct PacketData
         {
-            Packet * packet = nullptr;
+            protocol::Packet * packet = nullptr;
             double dequeueTime = 0.0;
             uint32_t packetNumber = 0;
         };
 
         const SimulatorConfig m_config;
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
 
-        TimeBase m_timeBase;
+        core::TimeBase m_timeBase;
         uint32_t m_packetNumber;
 
         PacketData * m_packets;

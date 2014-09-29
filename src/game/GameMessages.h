@@ -45,7 +45,7 @@ struct TestMessage : public Message
             serialize_bits( stream, dummy, numRemainderBits );
 
         auto gameContext = (const GameContext*) stream.GetContext( CONTEXT_USER );
-        PROTOCOL_ASSERT( gameContext );
+        CORE_ASSERT( gameContext );
         serialize_int( stream, value, gameContext->value_min, gameContext->value_max );
 
         PROTOCOL_CHECK( serialize_check( stream, 0xDEADBEEF ) );
@@ -88,8 +88,8 @@ protected:
     {
         switch ( type )
         {
-            case MESSAGE_BLOCK:     return PROTOCOL_NEW( *m_allocator, BlockMessage );
-            case MESSAGE_TEST:      return PROTOCOL_NEW( *m_allocator, TestMessage );
+            case MESSAGE_BLOCK:     return CORE_NEW( *m_allocator, BlockMessage );
+            case MESSAGE_TEST:      return CORE_NEW( *m_allocator, TestMessage );
             default:
                 return nullptr;
         }

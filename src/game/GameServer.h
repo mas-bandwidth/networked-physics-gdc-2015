@@ -18,7 +18,7 @@ public:
 
     GameServer( const ServerConfig & config ) : Server( config )
     {
-        PROTOCOL_ASSERT( config.serverData );
+        CORE_ASSERT( config.serverData );
 
         SetContext( CONTEXT_USER, config.serverData->GetData() );
     }
@@ -48,24 +48,24 @@ protected:
 
 GameServer * CreateGameServer( Allocator & allocator, int serverPort, int maxClients )
 {
-    auto packetFactory = PROTOCOL_NEW( allocator, GamePacketFactory, allocator );
+    auto packetFactory = CORE_NEW( allocator, GamePacketFactory, allocator );
 
-    auto messageFactory = PROTOCOL_NEW( allocator, GameMessageFactory, allocator );
+    auto messageFactory = CORE_NEW( allocator, GameMessageFactory, allocator );
 
-    auto channelStructure = PROTOCOL_NEW( allocator, GameChannelStructure, *messageFactory );
+    auto channelStructure = CORE_NEW( allocator, GameChannelStructure, *messageFactory );
 
     BSDSocketConfig bsdSocketConfig;
     bsdSocketConfig.port = serverPort;
     bsdSocketConfig.maxPacketSize = 1200;
     bsdSocketConfig.packetFactory = packetFactory;
-    auto networkInterface = PROTOCOL_NEW( allocator, BSDSocket, bsdSocketConfig );
+    auto networkInterface = CORE_NEW( allocator, BSDSocket, bsdSocketConfig );
 
     NetworkSimulatorConfig networkSimulatorConfig;
     networkSimulatorConfig.packetFactory = packetFactory;
-    auto networkSimulator = PROTOCOL_NEW( allocator, NetworkSimulator, networkSimulatorConfig );
+    auto networkSimulator = CORE_NEW( allocator, NetworkSimulator, networkSimulatorConfig );
 
     const int serverDataSize = sizeof(GameContext) + 10 * 1024 + 11;
-    auto serverData = PROTOCOL_NEW( allocator, Block, allocator, serverDataSize );
+    auto serverData = CORE_NEW( allocator, Block, allocator, serverDataSize );
     {
         uint8_t * data = serverData->GetData();
         for ( int i = 0; i < serverDataSize; ++i )
@@ -83,19 +83,19 @@ GameServer * CreateGameServer( Allocator & allocator, int serverPort, int maxCli
     serverConfig.networkInterface = networkInterface;
     serverConfig.networkSimulator = networkSimulator;
 
-    return PROTOCOL_NEW( allocator, GameServer, serverConfig );
+    return CORE_NEW( allocator, GameServer, serverConfig );
 }
 
 void DestroyGameServer( Allocator & allocator, GameServer * server )
 {
-    PROTOCOL_ASSERT( server );
+    CORE_ASSERT( server );
 
     ServerConfig config = server->GetConfig();
 
-    PROTOCOL_DELETE( allocator, GameServer, server );
-    PROTOCOL_DELETE( allocator, ChannelStructure, config.channelStructure );
-    PROTOCOL_DELETE( allocator, NetworkInterface, config.networkInterface );
-    PROTOCOL_DELETE( allocator, NetworkSimulator, config.networkSimulator );
+    CORE_DELETE( allocator, GameServer, server );
+    CORE_DELETE( allocator, ChannelStructure, config.channelStructure );
+    CORE_DELETE( allocator, NetworkInterface, config.networkInterface );
+    CORE_DELETE( allocator, NetworkSimulator, config.networkSimulator );
 
     // todo: delete packet factory
 

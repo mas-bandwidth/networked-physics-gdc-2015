@@ -1,26 +1,25 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_CLIENT_H
 #define PROTOCOL_CLIENT_H
 
-#include "Packets.h"
-#include "Resolver.h"
-#include "Connection.h"
-#include "NetworkInterface.h"
-#include "ClientServerContext.h"
-#include "ClientServerDataBlock.h"
+#include "protocol/Packets.h"
+#include "protocol/Connection.h"
+#include "protocol/ClientServerContext.h"
+#include "protocol/ClientServerDataBlock.h"
+
+namespace network
+{
+    class Resolver;
+    class Interface;
+    class Simulator;
+}
 
 namespace protocol
 {
-    class Allocator;
-    class NetworkSimulator;
-
     struct ClientConfig
     {
-        Allocator * allocator = nullptr;                        // allocator used for objects with the same life cycle as this object. if null is passed in, default allocator is used.
+        core::Allocator * allocator = nullptr;                  // allocator used for objects with the same life cycle as this object. if null is passed in, default allocator is used.
 
         uint16_t defaultServerPort = 10000;                     // the default server port. used when resolving by hostname and address port is zero.
 
@@ -34,7 +33,8 @@ namespace protocol
         Resolver * resolver = nullptr;                          // optional resolver used to to lookup server address by hostname.
         #endif
         
-        NetworkInterface * networkInterface = nullptr;          // network interface used to send and receive packets. required.
+        network::Interface * networkInterface = nullptr;        // network interface used to send and receive packets. required.
+
         ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
 
         Block * clientData = nullptr;                           // data sent from client to server on connect. must be constant. this block is not owned by us (we don't destroy it)
@@ -42,21 +42,21 @@ namespace protocol
         int fragmentSize = 1024;                                // send client data in 1k fragments by default. a good size given that MTU is typically 1200 bytes.
         int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
 
-        NetworkSimulator * networkSimulator = nullptr;          // optional network simulator.
+        network::Simulator * networkSimulator = nullptr;        // optional network simulator.
     };
 
     class Client
     {
         const ClientConfig m_config;
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
 
-        TimeBase m_timeBase;
+        core::TimeBase m_timeBase;
 
         Connection * m_connection;
         PacketFactory * m_packetFactory;                        // IMPORTANT: We don't own this pointer. It's owned by the network interface!
 
-        Address m_address;
+        network::Address m_address;
         ClientState m_state = CLIENT_STATE_DISCONNECTED;
         uint16_t m_clientId = 0;
         uint16_t m_serverId = 0;
@@ -83,7 +83,7 @@ namespace protocol
 
         ~Client();
 
-        void Connect( const Address & address );
+        void Connect( const network::Address & address );
 
         void Connect( const char * hostname );
 
@@ -109,7 +109,7 @@ namespace protocol
         Resolver * GetResolver() const;
         #endif
 
-        NetworkInterface * GetNetworkInterface() const;
+        network::Interface * GetNetworkInterface() const;
 
         Connection * GetConnection() const;
 
@@ -121,7 +121,7 @@ namespace protocol
         
         uint16_t GetServerId() const { return m_serverId; }
 
-        void Update( const TimeBase & timeBase );
+        void Update( const core::TimeBase & timeBase );
 
         const ClientConfig & GetConfig() const { return m_config; }
 
@@ -159,11 +159,11 @@ namespace protocol
 
         void SetClientState( ClientState state );
 
-        const TimeBase & GetTimeBase() const { return m_timeBase; }
+        const core::TimeBase & GetTimeBase() const { return m_timeBase; }
 
     protected:
 
-        virtual void OnConnect( const Address & address ) {}
+        virtual void OnConnect( const network::Address & address ) {}
 
         virtual void OnConnect( const char * hostname ) {}
 

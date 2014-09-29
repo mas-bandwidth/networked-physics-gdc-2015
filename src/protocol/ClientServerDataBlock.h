@@ -1,29 +1,27 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_CLIENT_SERVER_DATA_BLOCK_H
 #define PROTOCOL_CLIENT_SERVER_DATA_BLOCK_H
 
-#include "Address.h"
-#include "DataBlockSender.h"
-#include "DataBlockReceiver.h"
+#include "network/Address.h"
+#include "protocol/DataBlockSender.h"
+#include "protocol/DataBlockReceiver.h"
+
+namespace core { class Allocator; }
+namespace network { class Interface; }
 
 namespace protocol
 {
     class Block;
-    class Allocator;
     class PacketFactory;
-    class NetworkInterface;
 
     struct ClientServerInfo
     {
-        Address address;
+        network::Address address;
         uint16_t clientId;
         uint16_t serverId;
         PacketFactory * packetFactory;
-        NetworkInterface * networkInterface;
+        network::Interface * networkInterface;
     };
 
     class ClientServerDataBlockSender : public DataBlockSender
@@ -32,7 +30,7 @@ namespace protocol
 
     public:
 
-        ClientServerDataBlockSender( Allocator & allocator, Block & dataBlock, int fragmentSize, int fragmentsPerSecond )
+        ClientServerDataBlockSender( core::Allocator & allocator, Block & dataBlock, int fragmentSize, int fragmentsPerSecond )
             : DataBlockSender( allocator, dataBlock, fragmentSize, fragmentsPerSecond ) {}
 
         void SetInfo( const ClientServerInfo & info )
@@ -51,7 +49,7 @@ namespace protocol
 
     public:
 
-        ClientServerDataBlockReceiver( Allocator & allocator, int fragmentSize, int maxBlockSize )
+        ClientServerDataBlockReceiver( core::Allocator & allocator, int fragmentSize, int maxBlockSize )
             : DataBlockReceiver( allocator, fragmentSize, maxBlockSize ) {}
 
         void SetInfo( const ClientServerInfo & info )

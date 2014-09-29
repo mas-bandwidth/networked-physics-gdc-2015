@@ -1,7 +1,4 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
 #define PROTOCOL_RELIABLE_MESSAGE_CHANNEL_H
@@ -34,7 +31,7 @@ namespace protocol
             align = true;
         }
 
-        Allocator * allocator;          // allocator used for allocations matching life cycle of this object. if null falls back to default allocator.
+        core::Allocator * allocator;    // allocator used for allocations matching life cycle of this object. if null falls back to default allocator.
 
         float resendRate;               // message max resend rate in seconds, until acked.
         int sendQueueSize;              // send queue size in # of entries
@@ -51,9 +48,9 @@ namespace protocol
 
         MessageFactory * messageFactory = nullptr;
 
-        Allocator * messageAllocator = nullptr;
-        Allocator * smallBlockAllocator = nullptr;
-        Allocator * largeBlockAllocator = nullptr;
+        core::Allocator * messageAllocator = nullptr;
+        core::Allocator * smallBlockAllocator = nullptr;
+        core::Allocator * largeBlockAllocator = nullptr;
     };
 
     class ReliableMessageChannelData : public ChannelData
@@ -101,7 +98,7 @@ namespace protocol
             SendQueueEntry()
                 : valid(0) {}
             SendQueueEntry( Message * _message, uint16_t _sequence, bool _largeBlock )
-                : message( _message ), timeLastSent(-1), sequence( _sequence ), valid(1), largeBlock(_largeBlock), measuredBits(0) { PROTOCOL_ASSERT( _message ); }
+                : message( _message ), timeLastSent(-1), sequence( _sequence ), valid(1), largeBlock(_largeBlock), measuredBits(0) { CORE_ASSERT( _message ); }
         };
 
         struct SentPacketEntry
@@ -126,7 +123,7 @@ namespace protocol
             ReceiveQueueEntry()
                 : valid(0) {}
             ReceiveQueueEntry( Message * _message, uint16_t _sequence )
-                : message( _message ), sequence( _sequence ), valid(1) { PROTOCOL_ASSERT( _message ); }
+                : message( _message ), sequence( _sequence ), valid(1) { CORE_ASSERT( _message ); }
         };
 
         struct SendFragmentData
@@ -220,14 +217,14 @@ namespace protocol
 
         const ReliableMessageChannelConfig m_config;                        // constant configuration data
 
-        Allocator * m_allocator = nullptr;                                  // allocator for allocations matching life cycle of object.
+        core::Allocator * m_allocator = nullptr;                            // allocator for allocations matching life cycle of object.
 
         int m_error = 0;                                                    // current error state. set to non-zero if an error occurs.
 
         int m_maxBlockFragments;                                            // maximum number of fragments per-block
         int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
 
-        TimeBase m_timeBase;                                                // current time base from last update
+        core::TimeBase m_timeBase;                                          // current time base from last update
         uint16_t m_sendMessageId;                                           // id for next message added to send queue
         uint16_t m_receiveMessageId;                                        // id for next message to be received
         uint16_t m_oldestUnackedMessageId;                                  // id for oldest unacked message in send queue
@@ -274,7 +271,7 @@ namespace protocol
 
         void ProcessAck( uint16_t ack );
 
-        void Update( const TimeBase & timeBase );
+        void Update( const core::TimeBase & timeBase );
 
         uint64_t GetCounter( int index ) const;
 

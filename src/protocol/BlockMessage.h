@@ -1,15 +1,12 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_BLOCK_MESSAGE_H
 #define PROTOCOL_BLOCK_MESSAGE_H
 
-#include "Common.h"
-#include "Stream.h"
-#include "Block.h"
-#include "Message.h"
+#include "core/Core.h"
+#include "protocol/Stream.h"
+#include "protocol/Block.h"
+#include "protocol/Message.h"
 
 namespace protocol
 {
@@ -21,9 +18,9 @@ namespace protocol
 
         void Connect( Block & block )
         {
-            PROTOCOL_ASSERT( block.IsValid() );
-            Allocator * allocator = block.GetAllocator();
-            PROTOCOL_ASSERT( allocator );
+            CORE_ASSERT( block.IsValid() );
+            core::Allocator * allocator = block.GetAllocator();
+            CORE_ASSERT( allocator );
             uint8_t * data = block.GetData();
             int size = block.GetSize();
             m_block.Connect( *allocator, data, size );       // we now own the block data
@@ -52,7 +49,7 @@ namespace protocol
 
         Block & GetBlock() { return m_block; }
 
-        void SetAllocator( Allocator & allocator )
+        void SetAllocator( core::Allocator & allocator )
         {
             m_block.SetAllocator( allocator );
         }

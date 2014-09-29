@@ -1,13 +1,10 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_CLIENT_SERVER_CONTEXT_H
 #define PROTOCOL_CLIENT_SERVER_CONTEXT_H
 
-#include "Common.h"
-#include "Address.h"
+#include "core/Core.h"
+#include "network/Address.h"
 
 namespace protocol
 {
@@ -19,7 +16,7 @@ namespace protocol
 
         struct ClientInfo
         {
-            Address address;
+            network::Address address;
             uint16_t clientId = 0;
             uint16_t serverId = 0;
             bool connected = false;
@@ -29,19 +26,19 @@ namespace protocol
 
         ClientInfo * clientInfo = nullptr;
 
-        void Initialize( Allocator & allocator, int numClients );
+        void Initialize( core::Allocator & allocator, int numClients );
 
-        void Free( Allocator & allocator );
+        void Free( core::Allocator & allocator );
 
-        void AddClient( int clientIndex, const Address & address, uint16_t clientId, uint16_t serverId );
+        void AddClient( int clientIndex, const network::Address & address, uint16_t clientId, uint16_t serverId );
 
         void RemoveClient( int clientIndex );
 
-        int FindClient( const Address & address ) const;
+        int FindClient( const network::Address & address ) const;
 
-        int FindClient( const Address & address, uint16_t clientId ) const;
+        int FindClient( const network::Address & address, uint16_t clientId ) const;
 
-        int FindClient( const Address & address, uint16_t clientId, uint16_t serverId ) const;
+        int FindClient( const network::Address & address, uint16_t clientId, uint16_t serverId ) const;
 
         bool ClientPotentiallyExists( uint16_t clientId, uint16_t serverId ) const;
 

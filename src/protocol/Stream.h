@@ -1,15 +1,14 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_STREAM_H
 #define PROTOCOL_STREAM_H
 
-#include "Common.h"
-#include "Block.h"
-#include "Allocator.h"
-#include "BitPacker.h"
+#include "core/Core.h"
+#include "core/Allocator.h"
+#include "protocol/Constants.h"
+#include "protocol/Enums.h"
+#include "protocol/Block.h"
+#include "protocol/BitPacker.h"
 
 namespace protocol
 {
@@ -24,18 +23,18 @@ namespace protocol
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
-            PROTOCOL_ASSERT( min < max );
-            PROTOCOL_ASSERT( value >= min );
-            PROTOCOL_ASSERT( value <= max );
-            const int bits = bits_required( min, max );
+            CORE_ASSERT( min < max );
+            CORE_ASSERT( value >= min );
+            CORE_ASSERT( value <= max );
+            const int bits = core::bits_required( min, max );
             uint32_t unsigned_value = value - min;
             m_writer.WriteBits( unsigned_value, bits );
         }
 
         void SerializeBits( uint32_t value, int bits )
         {
-            PROTOCOL_ASSERT( bits > 0 );
-            PROTOCOL_ASSERT( bits <= 32 );
+            CORE_ASSERT( bits > 0 );
+            CORE_ASSERT( bits <= 32 );
             m_writer.WriteBits( value, bits );
         }
 
@@ -109,8 +108,8 @@ namespace protocol
 
         const void * GetContext( int index ) const
         {
-            PROTOCOL_ASSERT( index >= 0 );
-            PROTOCOL_ASSERT( index < MaxContexts );
+            CORE_ASSERT( index >= 0 );
+            CORE_ASSERT( index < protocol::MaxContexts );
             return m_context ? m_context[index] : nullptr;
         }
 
@@ -142,16 +141,16 @@ namespace protocol
 
         void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
-            PROTOCOL_ASSERT( min < max );
-            const int bits = bits_required( min, max );
+            CORE_ASSERT( min < max );
+            const int bits = core::bits_required( min, max );
             uint32_t unsigned_value = m_reader.ReadBits( bits );
             value = (int32_t) unsigned_value + min;
         }
 
         void SerializeBits( uint32_t & value, int bits )
         {
-            PROTOCOL_ASSERT( bits > 0 );
-            PROTOCOL_ASSERT( bits <= 32 );
+            CORE_ASSERT( bits > 0 );
+            CORE_ASSERT( bits <= 32 );
             uint32_t read_value = m_reader.ReadBits( bits );
             value = read_value;
         }
@@ -177,7 +176,7 @@ namespace protocol
             Align();
             uint32_t value = 0;
             SerializeBits( value, 32 );
-            PROTOCOL_ASSERT( value == magic );
+            CORE_ASSERT( value == magic );
             return value == magic;
         }
 
@@ -193,8 +192,8 @@ namespace protocol
 
         const void * GetContext( int index ) const
         {
-            PROTOCOL_ASSERT( index >= 0 );
-            PROTOCOL_ASSERT( index < MaxContexts );
+            CORE_ASSERT( index >= 0 );
+            CORE_ASSERT( index < MaxContexts );
             return m_context ? m_context[index] : nullptr;
         }
 
@@ -226,17 +225,17 @@ namespace protocol
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
-            PROTOCOL_ASSERT( min < max );
-            PROTOCOL_ASSERT( value >= min );
-            PROTOCOL_ASSERT( value <= max );
-            const int bits = bits_required( min, max );
+            CORE_ASSERT( min < max );
+            CORE_ASSERT( value >= min );
+            CORE_ASSERT( value <= max );
+            const int bits = core::bits_required( min, max );
             m_bitsWritten += bits;
         }
 
         void SerializeBits( uint32_t value, int bits )
         {
-            PROTOCOL_ASSERT( bits > 0 );
-            PROTOCOL_ASSERT( bits <= 32 );
+            CORE_ASSERT( bits > 0 );
+            CORE_ASSERT( bits <= 32 );
             m_bitsWritten += bits;
         }
 
@@ -296,8 +295,8 @@ namespace protocol
 
         const void * GetContext( int index ) const
         {
-            PROTOCOL_ASSERT( index >= 0 );
-            PROTOCOL_ASSERT( index < MaxContexts );
+            CORE_ASSERT( index >= 0 );
+            CORE_ASSERT( index < MaxContexts );
             return m_context ? m_context[index] : nullptr;
         }
 
@@ -337,28 +336,28 @@ namespace protocol
     #define serialize_int( stream, value, min, max )            \
         do                                                      \
         {                                                       \
-            PROTOCOL_ASSERT( min < max );                       \
+            CORE_ASSERT( min < max );                           \
             int32_t int32_value;                                \
             if ( Stream::IsWriting )                            \
             {                                                   \
-                PROTOCOL_ASSERT( value >= min );                \
-                PROTOCOL_ASSERT( value <= max );                \
+                CORE_ASSERT( value >= min );                    \
+                CORE_ASSERT( value <= max );                    \
                 int32_value = (int32_t) value;                  \
             }                                                   \
             stream.SerializeInteger( int32_value, min, max );   \
             if ( Stream::IsReading )                            \
             {                                                   \
                 value = (decltype(value)) int32_value;          \
-                PROTOCOL_ASSERT( value >= min );                \
-                PROTOCOL_ASSERT( value <= max );                \
+                CORE_ASSERT( value >= min );                    \
+                CORE_ASSERT( value <= max );                    \
             }                                                   \
         } while (0)
 
     #define serialize_bits( stream, value, bits )               \
         do                                                      \
         {                                                       \
-            PROTOCOL_ASSERT( bits > 0 );                        \
-            PROTOCOL_ASSERT( bits <= 32 );                      \
+            CORE_ASSERT( bits > 0 );                            \
+            CORE_ASSERT( bits <= 32 );                          \
             uint32_t uint32_value;                              \
             if ( Stream::IsWriting )                            \
                 uint32_value = (uint32_t) value;                \
@@ -408,7 +407,7 @@ namespace protocol
         int numBytes;
         if ( Stream::IsWriting )
         {
-            PROTOCOL_ASSERT( block.IsValid() );
+            CORE_ASSERT( block.IsValid() );
             numBytes = (int) block.GetSize();
         }
 
@@ -418,10 +417,10 @@ namespace protocol
         
         if ( Stream::IsReading )
         {
-            PROTOCOL_ASSERT( numBytes > 0 );
-            PROTOCOL_ASSERT( numBytes <= maxBytes );
-            Allocator * allocator = block.GetAllocator();
-            PROTOCOL_ASSERT( allocator );
+            CORE_ASSERT( numBytes > 0 );
+            CORE_ASSERT( numBytes <= maxBytes );
+            core::Allocator * allocator = block.GetAllocator();
+            CORE_ASSERT( allocator );
             uint8_t * data = (uint8_t*) allocator->Allocate( numBytes );
             block.Connect( *allocator, data, numBytes );
         }
@@ -434,9 +433,9 @@ namespace protocol
         uint32_t difference;
         if ( Stream::IsWriting )
         {
-            PROTOCOL_ASSERT( previous < current );
+            CORE_ASSERT( previous < current );
             difference = current - previous;
-            PROTOCOL_ASSERT( difference >= 0 );
+            CORE_ASSERT( difference >= 0 );
         }
 
         bool oneBit;

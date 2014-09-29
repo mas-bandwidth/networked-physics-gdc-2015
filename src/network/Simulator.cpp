@@ -1,8 +1,8 @@
 // Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #include "network/Simulator.h"
-#include "network/PacketFactory.h"      // todo: we need to not depend on protocol from network
 #include "core/Memory.h"
+#include "protocol/PacketFactory.h"      // todo: we need to not depend on protocol from network
 
 namespace network
 {
@@ -10,7 +10,7 @@ namespace network
     {
         CORE_ASSERT( m_config.packetFactory );
 
-        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
+        m_allocator = m_config.allocator ? m_config.allocator : &core::memory::default_allocator();
 
         m_packets = CORE_NEW_ARRAY( *m_allocator, PacketData, config.numPackets );
 
@@ -34,7 +34,7 @@ namespace network
         CORE_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
     }
 
-    void Simulator::AddState( const NetworkSimulatorState & state )
+    void Simulator::AddState( const SimulatorState & state )
     {
         CORE_ASSERT( m_numStates < MaxSimulatorStates - 1 );
         m_states[m_numStates++] = state;
@@ -42,11 +42,11 @@ namespace network
             m_state = m_states[0];
     }
 
-    void Simulator::SendPacket( const Address & address, Packet * packet )
+    void Simulator::SendPacket( const Address & address, protocol::Packet * packet )
     {
         CORE_ASSERT( packet );
 
-        if ( random_int( 0, 99 ) < m_state.packetLoss )
+        if ( core::random_int( 0, 99 ) < m_state.packetLoss )
         {
             m_config.packetFactory->Destroy( packet );
             return;
@@ -60,7 +60,7 @@ namespace network
             m_packets[index].packet = nullptr;
         }
 
-        const float delay = m_state.latency + random_float( -m_state.jitter, +m_state.jitter );
+        const float delay = m_state.latency + core::random_float( -m_state.jitter, +m_state.jitter );
 
         m_packets[index].packet = packet;
         m_packets[index].packetNumber = m_packetNumber;
@@ -71,7 +71,7 @@ namespace network
         m_packetNumber++;
     }
 
-    Packet * Simulator::ReceivePacket()
+    protocol::Packet * Simulator::ReceivePacket()
     {
         PacketData * oldestPacket = nullptr;
 
@@ -86,7 +86,7 @@ namespace network
 
         if ( oldestPacket )
         {
-            Packet * packet = oldestPacket->packet;
+            protocol::Packet * packet = oldestPacket->packet;
             oldestPacket->packet = nullptr;
             return packet;
         }
@@ -94,7 +94,7 @@ namespace network
         return nullptr;
     }
 
-    void Simulator::Update( const TimeBase & timeBase )
+    void Simulator::Update( const core::TimeBase & timeBase )
     {
         m_timeBase = timeBase;
 
@@ -110,7 +110,7 @@ namespace network
         return 0xFFFFFFFF;
     }
 
-    PacketFactory & Simulator::GetPacketFactory() const
+    protocol::PacketFactory & Simulator::GetPacketFactory() const
     {
         CORE_ASSERT( m_config.packetFactory );
         return *m_config.packetFactory;

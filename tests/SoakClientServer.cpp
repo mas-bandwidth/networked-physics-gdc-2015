@@ -81,18 +81,18 @@ void soak_test()
         bsdSocketConfig.port = BaseServerPort + i;
         bsdSocketConfig.maxPacketSize = 1200;
         bsdSocketConfig.packetFactory = &packetFactory;
-        serverInfo[i].networkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+        serverInfo[i].networkInterface = CORE_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
         NetworkSimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packetFactory;
-        serverInfo[i].networkSimulator = PROTOCOL_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+        serverInfo[i].networkSimulator = CORE_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
         serverInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
 
         const int serverDataSize = sizeof(TestContext) + 256 * i + 11 + i;
-        serverInfo[i].serverData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );
+        serverInfo[i].serverData = CORE_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );
         {
             uint8_t * data = serverInfo[i].serverData->GetData();
             for ( int j = 0; j < serverDataSize; ++j )
@@ -110,7 +110,7 @@ void soak_test()
         serverConfig.networkInterface = serverInfo[i].networkInterface;
         serverConfig.networkSimulator = serverInfo[i].networkSimulator;
 
-        serverInfo[i].server = PROTOCOL_NEW( memory::default_allocator(), TestServer, serverConfig );
+        serverInfo[i].server = CORE_NEW( memory::default_allocator(), TestServer, serverConfig );
     }
 
     // create a bunch of clients
@@ -126,18 +126,18 @@ void soak_test()
         bsdSocketConfig.port = BaseClientPort + i;
         bsdSocketConfig.maxPacketSize = 1200;
         bsdSocketConfig.packetFactory = &packetFactory;
-        clientInfo[i].networkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+        clientInfo[i].networkInterface = CORE_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
         NetworkSimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packetFactory;
-        clientInfo[i].networkSimulator = PROTOCOL_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+        clientInfo[i].networkSimulator = CORE_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
         clientInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
         clientInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
         clientInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
         clientInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
 
         const int clientDataSize = 10 + 64 * i + 21 + i;
-        clientInfo[i].clientData = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
+        clientInfo[i].clientData = CORE_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
         {
             uint8_t * data = clientInfo[i].clientData->GetData();
             for ( int j = 0; j < clientDataSize; ++j )
@@ -150,7 +150,7 @@ void soak_test()
         clientConfig.networkInterface = clientInfo[i].networkInterface;
         clientConfig.networkSimulator = clientInfo[i].networkSimulator;
 
-        clientInfo[i].client = PROTOCOL_NEW( memory::default_allocator(), TestClient, clientConfig );
+        clientInfo[i].client = CORE_NEW( memory::default_allocator(), TestClient, clientConfig );
         clientInfo[i].Clear();
     }
 
@@ -351,18 +351,18 @@ void soak_test()
             printf( " - client slot %d: %s\n", j, GetServerClientStateName( serverInfo[i].server->GetClientState( j ) ) );
         }
 
-        PROTOCOL_DELETE( memory::default_allocator(), TestServer, serverInfo[i].server );
-        PROTOCOL_DELETE( memory::default_allocator(), Block, serverInfo[i].serverData );
-        PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, serverInfo[i].networkInterface );
+        CORE_DELETE( memory::default_allocator(), TestServer, serverInfo[i].server );
+        CORE_DELETE( memory::default_allocator(), Block, serverInfo[i].serverData );
+        CORE_DELETE( memory::default_allocator(), NetworkInterface, serverInfo[i].networkInterface );
     }
 
     for ( int i = 0; i < NumClients; ++i )
     {
         printf( "client %d: %s\n", i, GetClientStateName( clientInfo[i].client->GetState() ) );
 
-        PROTOCOL_DELETE( memory::default_allocator(), TestClient, clientInfo[i].client );
-        PROTOCOL_DELETE( memory::default_allocator(), Block, clientInfo[i].clientData );
-        PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInfo[i].networkInterface );
+        CORE_DELETE( memory::default_allocator(), TestClient, clientInfo[i].client );
+        CORE_DELETE( memory::default_allocator(), Block, clientInfo[i].clientData );
+        CORE_DELETE( memory::default_allocator(), NetworkInterface, clientInfo[i].networkInterface );
     }
 }
 
@@ -380,7 +380,7 @@ int main()
         return 1;
     }
 
-    PROTOCOL_ASSERT( IsNetworkInitialized() );
+    CORE_ASSERT( IsNetworkInitialized() );
 
     soak_test();
 

@@ -1,6 +1,6 @@
 // Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "core/Common.h"
+#include "core/Core.h"
 #include <time.h>
 #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
 #include <unistd.h>

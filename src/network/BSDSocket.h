@@ -4,8 +4,8 @@
 #define NETWORK_BSD_SOCKET_H
 
 #include "core/Types.h"
-#include "PacketFactory.h"  // todo: we need to decouple from protocol here!
-#include "network/NetworkInterface.h"
+#include "network/Interface.h"
+#include "protocol/PacketFactory.h"  // todo: we need to decouple from protocol here!
 
 namespace core { class Allocator; }
 
@@ -25,17 +25,17 @@ namespace network
             receiveQueueSize = 256;
         }
 
-        Allocator * allocator;                      // allocator for long term allocations matching object life cycle. if nullptr then the default allocator is used.
+        core::Allocator * allocator;                // allocator for long term allocations matching object life cycle. if nullptr then the default allocator is used.
         uint64_t protocolId;                        // the protocol id. packets sent are prefixed with this id and discarded on receive if the protocol id does not match
         uint16_t port;                              // port to bind UDP socket to
         bool ipv6;                                  // use ipv6 sockets if true
         int maxPacketSize;                          // maximum packet size
         int sendQueueSize;                          // send queue size between "SendPacket" and sendto. additional sent packets will be dropped.
         int receiveQueueSize;                       // send queue size between "recvfrom" and "ReceivePacket" function. additional received packets will be dropped.
-        PacketFactory * packetFactory;              // packet factory (required)
+        protocol::PacketFactory * packetFactory;    // packet factory (required)
     };
 
-    class BSDSocket : public NetworkInterface
+    class BSDSocket : public Interface
     {
     public:
 
@@ -47,15 +47,15 @@ namespace network
 
         bool GetError() const;
 
-        void SendPacket( const Address & address, Packet * packet );
+        void SendPacket( const Address & address, protocol::Packet * packet );
 
-        Packet * ReceivePacket();
+        protocol::Packet * ReceivePacket();
 
-        void Update( const TimeBase & timeBase );
+        void Update( const core::TimeBase & timeBase );
 
         uint32_t GetMaxPacketSize() const;
 
-        PacketFactory & GetPacketFactory() const;
+        protocol::PacketFactory & GetPacketFactory() const;
 
         void SetContext( const void ** context );
 
@@ -77,13 +77,13 @@ namespace network
 
         const BSDSocketConfig m_config;
 
-        Allocator * m_allocator;        
+        core::Allocator * m_allocator;        
         
         int m_socket;
         uint16_t m_port;
         BSDSocketError m_error;
-        Queue<Packet*> m_send_queue;
-        Queue<Packet*> m_receive_queue;
+        core::Queue<protocol::Packet*> m_send_queue;
+        core::Queue<protocol::Packet*> m_receive_queue;
         uint8_t * m_receiveBuffer;
         const void ** m_context;
         uint64_t m_counters[BSD_SOCKET_COUNTER_NUM_COUNTERS];

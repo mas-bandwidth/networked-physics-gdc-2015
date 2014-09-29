@@ -1,18 +1,17 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "DataBlockReceiver.h"
-#include "Allocator.h"
+#include "protocol/DataBlockReceiver.h"
+#include "protocol/Constants.h"
+#include "protocol/Enums.h"
+#include "core/Allocator.h"
 
 namespace protocol
 {
-    DataBlockReceiver::DataBlockReceiver( Allocator & allocator, int fragmentSize, int maxBlockSize )
+    DataBlockReceiver::DataBlockReceiver( core::Allocator & allocator, int fragmentSize, int maxBlockSize )
     {
-        PROTOCOL_ASSERT( fragmentSize > 0 );
-        PROTOCOL_ASSERT( fragmentSize <= MaxFragmentSize );
-        PROTOCOL_ASSERT( maxBlockSize > 0 );
+        CORE_ASSERT( fragmentSize > 0 );
+        CORE_ASSERT( fragmentSize <= MaxFragmentSize );
+        CORE_ASSERT( maxBlockSize > 0 );
 
         m_allocator = &allocator;
         m_data = (uint8_t*) allocator.Allocate( maxBlockSize );
@@ -26,9 +25,9 @@ namespace protocol
 
     DataBlockReceiver::~DataBlockReceiver()
     {
-        PROTOCOL_ASSERT( m_allocator );
-        PROTOCOL_ASSERT( m_data );
-        PROTOCOL_ASSERT( m_receivedFragment );
+        CORE_ASSERT( m_allocator );
+        CORE_ASSERT( m_data );
+        CORE_ASSERT( m_receivedFragment );
 
         m_block.Disconnect();
 
@@ -84,7 +83,7 @@ namespace protocol
         const int start = fragmentId * m_fragmentSize;
         const int finish = start + fragmentBytes;
 
-        PROTOCOL_ASSERT( finish <= m_blockSize );
+        CORE_ASSERT( finish <= m_blockSize );
         if ( finish > m_blockSize )
             return;
 
@@ -99,8 +98,8 @@ namespace protocol
             m_receivedFragment[fragmentId] = 1;
             m_numReceivedFragments++;
 
-            PROTOCOL_ASSERT( m_numReceivedFragments >= 0 );
-            PROTOCOL_ASSERT( m_numReceivedFragments <= m_numFragments );
+            CORE_ASSERT( m_numReceivedFragments >= 0 );
+            CORE_ASSERT( m_numReceivedFragments <= m_numFragments );
 
             memcpy( m_data + start, fragmentData, fragmentBytes );
         }

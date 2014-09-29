@@ -40,7 +40,7 @@ public:
 
     TestServer( const ServerConfig & config ) : Server( config )
     {
-        PROTOCOL_ASSERT( config.serverData );
+        CORE_ASSERT( config.serverData );
         SetContext( CONTEXT_USER, config.serverData->GetData() );
     }
 

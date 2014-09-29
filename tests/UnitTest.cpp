@@ -1,5 +1,7 @@
-#include "Common.h"
-#include "Network.h"
+// todo: need to update build rules so that ../src and ../../src is an include dir as well.
+
+#include "core/Core.h"
+#include "network/Network.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,7 +88,7 @@ int main()
         return 1;
     }
 
-    PROTOCOL_ASSERT( IsNetworkInitialized() );
+    CORE_ASSERT( IsNetworkInitialized() );
 
     while ( true )
     {
@@ -134,7 +136,7 @@ int main()
         test_reliable_message_channel_mixture();
 
         test_client_initial_state();
-#if PROTOCOL_USE_RESOLVER
+#if NETWORK_USE_RESOLVER
         test_client_resolve_hostname_failure();
         test_client_resolve_hostname_timeout();
         test_client_resolve_hostname_success();

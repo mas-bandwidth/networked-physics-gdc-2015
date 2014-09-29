@@ -1,7 +1,7 @@
 // Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef CORE_COMMON_H
-#define CORE_COMMON_H
+#ifndef CORE_H
+#define CORE_H
 
 #include "core/Config.h"
 #include "core/Types.h"
@@ -13,6 +13,7 @@ extern "C"
     extern void * memset( void * str, int c, size_t n );
     extern void * memcpy( void * dst, const void * src, size_t n );
     extern int memcmp ( const void * ptr1, const void * ptr2, size_t num );
+    extern void * memmove( void * dest, const void * src, size_t count );
     extern void * malloc( size_t size );
     extern void free( void * ptr );
     extern int rand();
@@ -185,50 +186,6 @@ namespace core
     {
         double time = 0.0;                // frame time. 0.0 is start of process
         double deltaTime = 0.0;           // delta time this frame in seconds.
-    };
-
-    // todo: These aren't really common. The actually are used only by memory. Move to there?
-    inline void * align_forward( void * p, uint32_t align )
-    {
-        uintptr_t pi = uintptr_t( p );
-        const uint32_t mod = pi % align;
-        if ( mod )
-            pi += align - mod;
-        return (void*) pi;
-    }
-
-    inline void * pointer_add( void * p, uint32_t bytes )
-    {
-        return (void*) ( (uint8_t*)p + bytes );
-    }
-
-    inline const void * pointer_add( const void * p, uint32_t bytes )
-    {
-        return (const void*) ( (const uint8_t*)p + bytes );
-    }
-
-    inline void * pointer_sub( void * p, uint32_t bytes )
-    {
-        return (void*)( (char*)p - bytes );
-    }
-
-    inline const void * pointer_sub( const void * p, uint32_t bytes )
-    {
-        return (const void*) ( (const char*)p - bytes );
-    }
-
-    // todo: This doesn't really belong here. Move to protocol/Object.h
-    class Object
-    {  
-    public:
-
-        virtual ~Object() {}
-
-        virtual void SerializeRead( class ReadStream & stream ) = 0;
-
-        virtual void SerializeWrite( class WriteStream & stream ) = 0;
-
-        virtual void SerializeMeasure( class MeasureStream & stream ) = 0;
     };
 }
 

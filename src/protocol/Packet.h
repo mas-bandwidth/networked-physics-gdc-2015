@@ -1,13 +1,11 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_PACKET_H
 #define PROTOCOL_PACKET_H
 
-#include "Common.h"
-#include "Address.h"
+#include "core/Core.h"
+#include "network/Address.h"
+#include "protocol/Object.h"
 
 namespace protocol
 {
@@ -15,7 +13,7 @@ namespace protocol
 
     class Packet : public Object
     {
-        Address address;
+        network::Address address;
         int type;
 
     public:
@@ -24,9 +22,9 @@ namespace protocol
 
         int GetType() const { return type; }
 
-        void SetAddress( const Address & _address ) { address = _address; }
+        void SetAddress( const network::Address & _address ) { address = _address; }
 
-        const Address & GetAddress() const { return address; }
+        const network::Address & GetAddress() const { return address; }
 
     protected:
 

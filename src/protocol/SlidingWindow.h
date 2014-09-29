@@ -1,13 +1,10 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef SLIDING_WINDOW_H
 #define SLIDING_WINDOW_H
 
-#include "Common.h"
-#include "Allocator.h"
+#include "core/Core.h"
+#include "core/Allocator.h"
 
 namespace protocol
 {
@@ -15,9 +12,9 @@ namespace protocol
     {
     public:
 
-        SlidingWindow( Allocator & allocator, int size )
+        SlidingWindow( core::Allocator & allocator, int size )
         {
-            PROTOCOL_ASSERT( size > 0 );
+            CORE_ASSERT( size > 0 );
             m_size = size;
             m_first_entry = true;
             m_sequence = 0;
@@ -28,8 +25,8 @@ namespace protocol
 
         ~SlidingWindow()
         {
-            PROTOCOL_ASSERT( m_entries );
-            PROTOCOL_ASSERT( m_allocator );
+            CORE_ASSERT( m_entries );
+            CORE_ASSERT( m_allocator );
             m_allocator->Free( m_entries );
             m_allocator = nullptr;
             m_entries = nullptr;
@@ -45,18 +42,18 @@ namespace protocol
 
         bool Insert( const T & entry )
         {
-            PROTOCOL_ASSERT( entry.valid );
+            CORE_ASSERT( entry.valid );
 
             if ( m_first_entry )
             {
                 m_sequence = entry.sequence + 1;
                 m_first_entry = false;
             }
-            else if ( sequence_greater_than( entry.sequence + 1, m_sequence ) )
+            else if ( core::sequence_greater_than( entry.sequence + 1, m_sequence ) )
             {
                 m_sequence = entry.sequence + 1;
             }
-            else if ( sequence_less_than( entry.sequence, m_sequence - m_size ) )
+            else if ( core::sequence_less_than( entry.sequence, m_sequence - m_size ) )
             {
                 return false;
             }
@@ -75,11 +72,11 @@ namespace protocol
                 m_sequence = sequence + 1;
                 m_first_entry = false;
             }
-            else if ( sequence_greater_than( sequence + 1, m_sequence ) )
+            else if ( core::sequence_greater_than( sequence + 1, m_sequence ) )
             {
                 m_sequence = sequence + 1;
             }
-            else if ( sequence_less_than( sequence, m_sequence - m_size ) )
+            else if ( core::sequence_less_than( sequence, m_sequence - m_size ) )
             {
                 return nullptr;
             }
@@ -123,8 +120,8 @@ namespace protocol
 
         T * GetAtIndex( int index )
         {
-            PROTOCOL_ASSERT( index >= 0 );
-            PROTOCOL_ASSERT( index < m_size );
+            CORE_ASSERT( index >= 0 );
+            CORE_ASSERT( index < m_size );
             return m_entries[index].valid ? &m_entries[index] : nullptr;
         }
 
@@ -140,7 +137,7 @@ namespace protocol
 
     private:
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
 
         bool m_first_entry;
         uint16_t m_sequence;

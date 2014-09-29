@@ -1,11 +1,8 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "ClientServerDataBlock.h"
-#include "NetworkInterface.h"
-#include "Packets.h"
+#include "protocol/ClientServerDataBlock.h"
+#include "protocol/Packets.h"
+#include "network/Interface.h"
 
 namespace protocol
 {
@@ -20,7 +17,7 @@ namespace protocol
         packet->numFragments = GetNumFragments();
         packet->fragmentId = fragmentId;
         packet->fragmentBytes = fragmentBytes;
-        packet->fragmentData = (uint8_t*) memory::scratch_allocator().Allocate( packet->fragmentSize );
+        packet->fragmentData = (uint8_t*) core::memory::scratch_allocator().Allocate( packet->fragmentSize );
         memcpy( packet->fragmentData, fragmentData, fragmentBytes );
 
         m_info.networkInterface->SendPacket( m_info.address, packet );

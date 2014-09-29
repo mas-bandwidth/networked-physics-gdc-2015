@@ -21,9 +21,9 @@ public:
         m_config.smallBlockAllocator = &memory::default_allocator();
         m_config.largeBlockAllocator = &memory::default_allocator();
 
-        PROTOCOL_ASSERT( m_config.messageAllocator );
-        PROTOCOL_ASSERT( m_config.smallBlockAllocator );
-        PROTOCOL_ASSERT( m_config.largeBlockAllocator );
+        CORE_ASSERT( m_config.messageAllocator );
+        CORE_ASSERT( m_config.smallBlockAllocator );
+        CORE_ASSERT( m_config.largeBlockAllocator );
     }
 
     const ReliableMessageChannelConfig & GetConfig() const
@@ -40,12 +40,12 @@ protected:
     
     Channel * CreateChannelInternal( int channelIndex )
     {
-        return PROTOCOL_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
+        return CORE_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
     }
 
     ChannelData * CreateChannelDataInternal( int channelIndex )
     {
-        return PROTOCOL_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
+        return CORE_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
     }
 };
 

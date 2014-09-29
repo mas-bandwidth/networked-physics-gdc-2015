@@ -1,9 +1,11 @@
-#ifndef PROTOCOL_TYPES_H
-#define PROTOCOL_TYPES_H
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
+#ifndef CORE_TYPES_H
+#define CORE_TYPES_H
 
 #include <stdint.h>
 
-namespace protocol
+namespace core
 {
     class Allocator;
 

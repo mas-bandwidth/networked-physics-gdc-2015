@@ -3,14 +3,14 @@
 #ifndef NETWORK_RESOLVER_H
 #define NETWORK_RESOLVER_H
 
-#include "Config.h"
+#include "network/Config.h"
 
 #if NETWORK_USE_RESOLVER
 
-#include "core/Common.h"
+#include "core/Core.h"
 #include "network/Address.h"
 #include <future>   // todo: ewwwww!
-#include <string>
+#include <string>   // todo: ewwwww!
 
 namespace network
 {

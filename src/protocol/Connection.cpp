@@ -1,30 +1,27 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "Connection.h"
-#include "Memory.h"
+#include "protocol/Connection.h"
+#include "core/Memory.h"
 
 namespace protocol
 {
     Connection::Connection( const ConnectionConfig & config ) : m_config( config )
     {
-        PROTOCOL_ASSERT( config.packetFactory );
-        PROTOCOL_ASSERT( config.channelStructure );
+        CORE_ASSERT( config.packetFactory );
+        CORE_ASSERT( config.channelStructure );
 
-        m_allocator = config.allocator ? config.allocator : &memory::default_allocator();
+        m_allocator = config.allocator ? config.allocator : &core::memory::default_allocator();
 
-        m_sentPackets = PROTOCOL_NEW( *m_allocator, SentPackets, *m_allocator, m_config.slidingWindowSize );
+        m_sentPackets = CORE_NEW( *m_allocator, SentPackets, *m_allocator, m_config.slidingWindowSize );
         
-        m_receivedPackets = PROTOCOL_NEW( *m_allocator, ReceivedPackets, *m_allocator, m_config.slidingWindowSize );
+        m_receivedPackets = CORE_NEW( *m_allocator, ReceivedPackets, *m_allocator, m_config.slidingWindowSize );
 
         m_numChannels = config.channelStructure->GetNumChannels();
         for ( int i = 0; i < m_numChannels; ++i )
         {
             m_channels[i] = config.channelStructure->CreateChannel( i );
             m_channels[i]->SetContext( config.context );
-            PROTOCOL_ASSERT( m_channels[i] );
+            CORE_ASSERT( m_channels[i] );
         }
 
         Reset();
@@ -32,18 +29,18 @@ namespace protocol
 
     Connection::~Connection()
     {
-        PROTOCOL_ASSERT( m_sentPackets );
-        PROTOCOL_ASSERT( m_receivedPackets );
-        PROTOCOL_ASSERT( m_channels );
+        CORE_ASSERT( m_sentPackets );
+        CORE_ASSERT( m_receivedPackets );
+        CORE_ASSERT( m_channels );
 
         for ( int i = 0; i < m_numChannels; ++i )
         {
-            PROTOCOL_ASSERT( m_channels[i] );
+            CORE_ASSERT( m_channels[i] );
             m_config.channelStructure->DestroyChannel( m_channels[i] );
         }
 
-        PROTOCOL_DELETE( *m_allocator, SentPackets, m_sentPackets );
-        PROTOCOL_DELETE( *m_allocator, ReceivedPackets, m_receivedPackets );
+        CORE_DELETE( *m_allocator, SentPackets, m_sentPackets );
+        CORE_DELETE( *m_allocator, ReceivedPackets, m_receivedPackets );
 
         m_sentPackets = nullptr;
         m_receivedPackets = nullptr;
@@ -51,8 +48,8 @@ namespace protocol
 
     Channel * Connection::GetChannel( int index )
     {
-        PROTOCOL_ASSERT( index >= 0 );
-        PROTOCOL_ASSERT( index < m_numChannels );
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < m_numChannels );
         return m_channels[index];
     }
 
@@ -60,7 +57,7 @@ namespace protocol
     {
         m_error = CONNECTION_ERROR_NONE;
 
-        m_timeBase = TimeBase();
+        m_timeBase = core::TimeBase();
 
         m_sentPackets->Reset();
         m_receivedPackets->Reset();
@@ -71,7 +68,7 @@ namespace protocol
         memset( m_counters, 0, sizeof( m_counters ) );
     }
 
-    void Connection::Update( const TimeBase & timeBase )
+    void Connection::Update( const core::TimeBase & timeBase )
     {
         if ( m_error != CONNECTION_ERROR_NONE )
             return;
@@ -97,12 +94,12 @@ namespace protocol
 
     int Connection::GetChannelError( int channelIndex ) const
     {
-        PROTOCOL_ASSERT( channelIndex >= 0 );
-        PROTOCOL_ASSERT( channelIndex < m_numChannels );
+        CORE_ASSERT( channelIndex >= 0 );
+        CORE_ASSERT( channelIndex < m_numChannels );
         return m_channels[channelIndex]->GetError();
     }
 
-    const TimeBase & Connection::GetTimeBase() const
+    const core::TimeBase & Connection::GetTimeBase() const
     {
         return m_timeBase;
     }
@@ -133,8 +130,8 @@ namespace protocol
         if ( m_error != CONNECTION_ERROR_NONE )
             return false;
 
-        PROTOCOL_ASSERT( packet );
-        PROTOCOL_ASSERT( packet->GetType() == m_config.packetType );
+        CORE_ASSERT( packet );
+        CORE_ASSERT( packet->GetType() == m_config.packetType );
 
 //            printf( "read packet %d\n", (int) packet->sequence );
 
@@ -166,8 +163,8 @@ namespace protocol
 
     uint64_t Connection::GetCounter( int index ) const
     {
-        PROTOCOL_ASSERT( index >= 0 );
-        PROTOCOL_ASSERT( index < CONNECTION_COUNTER_NUM_COUNTERS );
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < CONNECTION_COUNTER_NUM_COUNTERS );
         return m_counters[index];
     }
 

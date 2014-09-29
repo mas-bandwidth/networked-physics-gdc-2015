@@ -14,43 +14,50 @@ project "core"
     files { "src/core/*.h", "src/core/*.cpp" }
     targetdir "lib"
 
+project "network"
+    kind "StaticLib"
+    files { "src/network/*.h", "src/network/*.cpp" }
+    links { "core" }
+    targetdir "lib"
+
 project "protocol"
     kind "StaticLib"
     files { "src/protocol/*.h", "src/protocol/*.cpp" }
+    links { "core", "network" }
     targetdir "lib"
 
 project "UnitTest"
     kind "ConsoleApp"
     files { "tests/UnitTest.cpp", "tests/Test*.cpp" }
-    links { "core", "protocol" }
+    links { "core", "network", "protocol" }
     location "build"
     targetdir "bin"
 
 project "SoakProtocol"
     kind "ConsoleApp"
     files { "tests/SoakProtocol.cpp" }
-    links { "core", "protocol" }
+    links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
 project "SoakClientServer"
     kind "ConsoleApp"
     files { "tests/SoakClientServer.cpp" }
-    links { "core", "protocol" }
+    links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileProtocol"
     kind "ConsoleApp"
     files { "tests/ProfileProtocol.cpp" }
-    links { "core", "protocol" }
+    links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileClientServer"
     kind "ConsoleApp"
     files { "tests/ProfileClientServer.cpp" }
-    links { "core", "protocol" }
+    links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
@@ -64,7 +71,7 @@ project "FontBuilder"
 project "Client"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "protocol", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    links { "core", "network", "protocol", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
@@ -72,7 +79,7 @@ project "Client"
 project "Server"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "protocol" }
+    links { "core", "network", "protocol" }
     location "build"
     targetdir "bin"
 

@@ -1,26 +1,28 @@
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
 #ifndef PROTOCOL_PACKET_FACTORY_H
 #define PROTOCOL_PACKET_FACTORY_H
 
-#include "Packet.h"
-#include "Memory.h"
+#include "core/Memory.h"
+#include "protocol/Packet.h"
 
 namespace protocol
 {
     class PacketFactory
     {        
-        #if PROTOCOL_DEBUG_MEMORY_LEAKS
+        #if CORE_DEBUG_MEMORY_LEAKS
         std::map<void*,int> allocated_packets;
         #endif
 
         int num_allocated_packets = 0;
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
 
         int m_numTypes;
 
     public:
 
-        PacketFactory( Allocator & allocator, int numTypes )
+        PacketFactory( core::Allocator & allocator, int numTypes )
         {
             m_allocator = &allocator;
             m_numTypes = numTypes;
@@ -28,7 +30,7 @@ namespace protocol
 
         ~PacketFactory()
         {
-            #if PROTOCOL_DEBUG_MEMORY_LEAKS
+            #if CORE_DEBUG_MEMORY_LEAKS
             if ( allocated_packets.size() )
             {
                 printf( "you leaked packets!\n" );
@@ -45,23 +47,23 @@ namespace protocol
             {
                 printf( "you leaked packets!\n" );
                 printf( "%d packets leaked\n", num_allocated_packets );
-                PROTOCOL_ASSERT( !"leaked packets" );
+                CORE_ASSERT( !"leaked packets" );
             }
-            PROTOCOL_ASSERT( num_allocated_packets == 0 );
+            CORE_ASSERT( num_allocated_packets == 0 );
         }
 
         Packet * Create( int type )
         {
-            PROTOCOL_ASSERT( type >= 0 );
-            PROTOCOL_ASSERT( type < m_numTypes );
+            CORE_ASSERT( type >= 0 );
+            CORE_ASSERT( type < m_numTypes );
 
             Packet * packet = CreateInternal( type );
             
-            #if PROTOCOL_DEBUG_MEMORY_LEAKS
+            #if CORE_DEBUG_MEMORY_LEAKS
             printf( "create packet %p\n", packet );
             allocated_packets[packet] = 1;
             auto itor = allocated_packets.find( packet );
-            PROTOCOL_ASSERT( itor != allocated_packets.end() );
+            CORE_ASSERT( itor != allocated_packets.end() );
             #endif
             
             num_allocated_packets++;
@@ -71,21 +73,21 @@ namespace protocol
 
         void Destroy( Packet * packet )
         {
-            PROTOCOL_ASSERT( packet );
+            CORE_ASSERT( packet );
 
-            #if PROTOCOL_DEBUG_MEMORY_LEAKS
+            #if CORE_DEBUG_MEMORY_LEAKS
             printf( "destroy packet %p\n", packet );
             auto itor = allocated_packets.find( packet );
-            PROTOCOL_ASSERT( itor != allocated_packets.end() );
+            CORE_ASSERT( itor != allocated_packets.end() );
             allocated_packets.erase( packet );
             #endif
 
-            PROTOCOL_ASSERT( num_allocated_packets > 0 );
+            CORE_ASSERT( num_allocated_packets > 0 );
             num_allocated_packets--;
 
-            PROTOCOL_ASSERT( m_allocator );
+            CORE_ASSERT( m_allocator );
 
-            PROTOCOL_DELETE( *m_allocator, Packet, packet );
+            CORE_DELETE( *m_allocator, Packet, packet );
         }
 
         int GetNumTypes() const

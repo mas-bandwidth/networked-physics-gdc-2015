@@ -1,10 +1,7 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "ReliableMessageChannel.h"
-#include "Memory.h"
+#include "protocol/ReliableMessageChannel.h"
+#include "core/Memory.h"
 
 namespace protocol
 {
@@ -16,7 +13,7 @@ namespace protocol
 
     ReliableMessageChannelData::~ReliableMessageChannelData()
     {
-        Allocator & a = memory::scratch_allocator();
+        core::Allocator & a = core::memory::scratch_allocator();
 
         if ( fragment )
         {
@@ -28,7 +25,7 @@ namespace protocol
         {
             for ( int i = 0; i < numMessages; ++i )
             {
-                PROTOCOL_ASSERT( messages[i] );
+                CORE_ASSERT( messages[i] );
                 config.messageFactory->Release( messages[i] );
                 messages[i] = nullptr;
             }
@@ -49,13 +46,13 @@ namespace protocol
         {
             if ( Stream::IsWriting )
             {
-                PROTOCOL_ASSERT( fragment );
+                CORE_ASSERT( fragment );
             }
             else
             {
-                Allocator & a = memory::scratch_allocator();
+                core::Allocator & a = core::memory::scratch_allocator();
                 fragment = (uint8_t*) a.Allocate( config.blockFragmentSize );
-                PROTOCOL_ASSERT( fragment );
+                CORE_ASSERT( fragment );
             }
 
             serialize_bits( stream, blockId, 16 );
@@ -65,22 +62,22 @@ namespace protocol
         }
         else
         {
-            PROTOCOL_ASSERT( config.messageFactory );
+            CORE_ASSERT( config.messageFactory );
 
             if ( Stream::IsWriting )
-                PROTOCOL_ASSERT( numMessages > 0 );
+                CORE_ASSERT( numMessages > 0 );
 
             serialize_int( stream, numMessages, 1, config.maxMessagesPerPacket );
 
-            PROTOCOL_ASSERT( numMessages > 0 );
+            CORE_ASSERT( numMessages > 0 );
 
             if ( Stream::IsReading )
             {
-                Allocator & a = memory::scratch_allocator();
+                core::Allocator & a = core::memory::scratch_allocator();
                 messages = (Message**) a.Allocate( numMessages * sizeof( Message* ) );
             }
 
-            PROTOCOL_ASSERT( messages );
+            CORE_ASSERT( messages );
 
             int messageTypes[numMessages];
             uint16_t messageIds[numMessages];
@@ -89,7 +86,7 @@ namespace protocol
             {
                 for ( int i = 0; i < numMessages; ++i )
                 {
-                    PROTOCOL_ASSERT( messages[i] );
+                    CORE_ASSERT( messages[i] );
                     messageTypes[i] = messages[i]->GetType();
                     messageIds[i] = messages[i]->GetId();
                 }
@@ -135,20 +132,20 @@ namespace protocol
                 {
                     messages[i] = config.messageFactory->Create( messageTypes[i] );
 
-                    PROTOCOL_ASSERT( messages[i] );
-                    PROTOCOL_ASSERT( messages[i]->GetType() == messageTypes[i] );
+                    CORE_ASSERT( messages[i] );
+                    CORE_ASSERT( messages[i]->GetType() == messageTypes[i] );
 
                     messages[i]->SetId( messageIds[i] );
 
                     if ( Stream::IsReading && messageTypes[i] == BlockMessageType )
                     {
-                        PROTOCOL_ASSERT( config.smallBlockAllocator );
+                        CORE_ASSERT( config.smallBlockAllocator );
                         BlockMessage * blockMessage = static_cast<BlockMessage*>( messages[i] );
                         blockMessage->SetAllocator( *config.smallBlockAllocator );
                     }
                 }
 
-                PROTOCOL_ASSERT( messages[i] );
+                CORE_ASSERT( messages[i] );
 
                 serialize_object( stream, *messages[i] );
             }
@@ -174,31 +171,31 @@ namespace protocol
 
     ReliableMessageChannel::ReliableMessageChannel( const ReliableMessageChannelConfig & config ) : m_config( config )
     {
-        PROTOCOL_ASSERT( config.messageFactory );
-        PROTOCOL_ASSERT( config.messageAllocator );
-        PROTOCOL_ASSERT( config.smallBlockAllocator );
-        PROTOCOL_ASSERT( config.largeBlockAllocator );
-        PROTOCOL_ASSERT( config.maxSmallBlockSize <= MaxSmallBlockSize );
+        CORE_ASSERT( config.messageFactory );
+        CORE_ASSERT( config.messageAllocator );
+        CORE_ASSERT( config.smallBlockAllocator );
+        CORE_ASSERT( config.largeBlockAllocator );
+        CORE_ASSERT( config.maxSmallBlockSize <= MaxSmallBlockSize );
 
-        m_allocator = config.allocator ? config.allocator : &memory::default_allocator();
+        m_allocator = config.allocator ? config.allocator : &core::memory::default_allocator();
 
-        m_sendQueue = PROTOCOL_NEW( *m_allocator, SlidingWindow<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
-        m_sentPackets = PROTOCOL_NEW( *m_allocator, SlidingWindow<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
-        m_receiveQueue = PROTOCOL_NEW( *m_allocator, SlidingWindow<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
+        m_sendQueue = CORE_NEW( *m_allocator, SlidingWindow<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
+        m_sentPackets = CORE_NEW( *m_allocator, SlidingWindow<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
+        m_receiveQueue = CORE_NEW( *m_allocator, SlidingWindow<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
 
         const int maxMessageType = m_config.messageFactory->GetNumTypes() - 1;
 
         const int MessageIdBits = 16;
-        const int MessageTypeBits = bits_required( 0, maxMessageType );
+        const int MessageTypeBits = core::bits_required( 0, maxMessageType );
         const int MessageAlignOverhead = m_config.align ? 14 : 0;
 
         m_messageOverheadBits = MessageIdBits + MessageTypeBits + MessageAlignOverhead;
 
         m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
 
-        m_sendLargeBlock.fragments = PROTOCOL_NEW_ARRAY( *m_allocator, SendFragmentData, m_maxBlockFragments );
-        m_receiveLargeBlock.fragments = PROTOCOL_NEW_ARRAY( *m_allocator, ReceiveFragmentData, m_maxBlockFragments );
-        m_sentPacketMessageIds = PROTOCOL_NEW_ARRAY( *m_allocator, uint16_t, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
+        m_sendLargeBlock.fragments = CORE_NEW_ARRAY( *m_allocator, SendFragmentData, m_maxBlockFragments );
+        m_receiveLargeBlock.fragments = CORE_NEW_ARRAY( *m_allocator, ReceiveFragmentData, m_maxBlockFragments );
+        m_sentPacketMessageIds = CORE_NEW_ARRAY( *m_allocator, uint16_t, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
 
         Reset();
     }
@@ -207,21 +204,21 @@ namespace protocol
     {
         Reset();
 
-        PROTOCOL_ASSERT( m_sendQueue );
-        PROTOCOL_ASSERT( m_sentPackets );
-        PROTOCOL_ASSERT( m_receiveQueue );
+        CORE_ASSERT( m_sendQueue );
+        CORE_ASSERT( m_sentPackets );
+        CORE_ASSERT( m_receiveQueue );
 
-        PROTOCOL_DELETE( *m_allocator, SlidingWindow<SendQueueEntry>, m_sendQueue );
-        PROTOCOL_DELETE( *m_allocator, SlidingWindow<SentPacketEntry>, m_sentPackets );
-        PROTOCOL_DELETE( *m_allocator, SlidingWindow<ReceiveQueueEntry>, m_receiveQueue );
+        CORE_DELETE( *m_allocator, SlidingWindow<SendQueueEntry>, m_sendQueue );
+        CORE_DELETE( *m_allocator, SlidingWindow<SentPacketEntry>, m_sentPackets );
+        CORE_DELETE( *m_allocator, SlidingWindow<ReceiveQueueEntry>, m_receiveQueue );
 
-        PROTOCOL_ASSERT( m_sentPacketMessageIds );
-        PROTOCOL_ASSERT( m_sendLargeBlock.fragments );
-        PROTOCOL_ASSERT( m_receiveLargeBlock.fragments );
+        CORE_ASSERT( m_sentPacketMessageIds );
+        CORE_ASSERT( m_sendLargeBlock.fragments );
+        CORE_ASSERT( m_receiveLargeBlock.fragments );
 
-        PROTOCOL_DELETE_ARRAY( *m_allocator, m_sentPacketMessageIds, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
-        PROTOCOL_DELETE_ARRAY( *m_allocator, m_sendLargeBlock.fragments, m_maxBlockFragments );
-        PROTOCOL_DELETE_ARRAY( *m_allocator, m_receiveLargeBlock.fragments, m_maxBlockFragments );
+        CORE_DELETE_ARRAY( *m_allocator, m_sentPacketMessageIds, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
+        CORE_DELETE_ARRAY( *m_allocator, m_sendLargeBlock.fragments, m_maxBlockFragments );
+        CORE_DELETE_ARRAY( *m_allocator, m_receiveLargeBlock.fragments, m_maxBlockFragments );
 
         m_sendQueue = nullptr;
         m_sentPackets = nullptr;
@@ -233,10 +230,10 @@ namespace protocol
 
     void ReliableMessageChannel::Reset()
     {
-        PROTOCOL_ASSERT( m_sendQueue );
-        PROTOCOL_ASSERT( m_sentPackets );
-        PROTOCOL_ASSERT( m_receiveQueue );
-        PROTOCOL_ASSERT( m_sentPacketMessageIds );
+        CORE_ASSERT( m_sendQueue );
+        CORE_ASSERT( m_sentPackets );
+        CORE_ASSERT( m_receiveQueue );
+        CORE_ASSERT( m_sentPacketMessageIds );
 
         m_error = 0;
 
@@ -264,7 +261,7 @@ namespace protocol
 
         memset( m_counters, 0, sizeof( m_counters ) );
 
-        m_timeBase = TimeBase();
+        m_timeBase = core::TimeBase();
 
         m_sendLargeBlock.Reset();
         m_receiveLargeBlock.Reset();
@@ -277,11 +274,11 @@ namespace protocol
 
     void ReliableMessageChannel::SendMessage( Message * message )
     {
-        PROTOCOL_ASSERT( message );
+        CORE_ASSERT( message );
 
 //      printf( "queue message for send: %d\n", m_sendMessageId );
 
-        PROTOCOL_ASSERT( CanSendMessage() );
+        CORE_ASSERT( CanSendMessage() );
 
         if ( !CanSendMessage() )
         {
@@ -311,15 +308,15 @@ namespace protocol
         bool result = 
         #endif
             m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
-        PROTOCOL_ASSERT( result );
+        CORE_ASSERT( result );
 
         auto entry = m_sendQueue->Find( m_sendMessageId );
 
-        PROTOCOL_ASSERT( entry );
-        PROTOCOL_ASSERT( entry->valid );
-        PROTOCOL_ASSERT( entry->sequence == m_sendMessageId );
-        PROTOCOL_ASSERT( entry->message );
-        PROTOCOL_ASSERT( entry->message->GetId() == m_sendMessageId );
+        CORE_ASSERT( entry );
+        CORE_ASSERT( entry->valid );
+        CORE_ASSERT( entry->sequence == m_sendMessageId );
+        CORE_ASSERT( entry->message );
+        CORE_ASSERT( entry->message->GetId() == m_sendMessageId );
 
         if ( !largeBlock )
         {
@@ -327,7 +324,7 @@ namespace protocol
 
             const int SmallBlockOverhead = 8;
             
-            MeasureStream measureStream( max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
+            MeasureStream measureStream( core::max( m_config.maxMessageSize, m_config.maxSmallBlockSize + SmallBlockOverhead ) );
             measureStream.SetContext( GetContext() );
             message->SerializeMeasure( measureStream );
             if ( measureStream.IsOverflow() )
@@ -335,7 +332,7 @@ namespace protocol
                 printf( "measure stream overflow on message type %d: %d bits written, max is %d\n", message->GetType(), measureStream.GetBitsWritten(), measureStream.GetTotalBits() );
             }
             
-            PROTOCOL_ASSERT( !measureStream.IsOverflow() );
+            CORE_ASSERT( !measureStream.IsOverflow() );
             
             entry->measuredBits = measureStream.GetBitsWritten() + m_messageOverheadBits;
 
@@ -352,7 +349,7 @@ namespace protocol
 //            printf( "send block: %d bytes\n", block->size() );
 
         auto blockMessage = (BlockMessage*) m_config.messageFactory->Create( BlockMessageType );
-        PROTOCOL_ASSERT( blockMessage );
+        CORE_ASSERT( blockMessage );
         blockMessage->Connect( block );
 
         SendMessage( blockMessage );
@@ -367,8 +364,8 @@ namespace protocol
         auto message = entry->message;
 
         #ifndef NDEBUG
-        PROTOCOL_ASSERT( message );
-        PROTOCOL_ASSERT( message->GetId() == m_receiveMessageId );
+        CORE_ASSERT( message );
+        CORE_ASSERT( message->GetId() == m_receiveMessageId );
         #endif
 
 //            printf( "dequeue for receive: %d\n", message->GetId() );
@@ -390,7 +387,7 @@ namespace protocol
 
     ChannelData * ReliableMessageChannel::CreateData()
     {
-        return PROTOCOL_NEW( memory::scratch_allocator(), ReliableMessageChannelData, m_config );
+        return CORE_NEW( core::memory::scratch_allocator(), ReliableMessageChannelData, m_config );
     }
 
     ChannelData * ReliableMessageChannel::GetData( uint16_t sequence )
@@ -406,13 +403,13 @@ namespace protocol
                 and send these fragments until they are all acked.
             */
 
-            PROTOCOL_ASSERT( firstEntry->message->GetType() == BlockMessageType );
+            CORE_ASSERT( firstEntry->message->GetType() == BlockMessageType );
 
             BlockMessage & blockMessage = static_cast<BlockMessage&>( *firstEntry->message );
 
             Block & block = blockMessage.GetBlock();
 
-            PROTOCOL_ASSERT( block.GetSize() > m_config.maxSmallBlockSize );
+            CORE_ASSERT( block.GetSize() > m_config.maxSmallBlockSize );
 
             if ( !m_sendLargeBlock.active )
             {
@@ -424,13 +421,13 @@ namespace protocol
 
 //                    printf( "sending block %d in %d fragments\n", (int) firstMessageId, m_sendLargeBlock.numFragments );
 
-                PROTOCOL_ASSERT( m_sendLargeBlock.numFragments >= 0 );
-                PROTOCOL_ASSERT( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
+                CORE_ASSERT( m_sendLargeBlock.numFragments >= 0 );
+                CORE_ASSERT( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
 
                 memset( &m_sendLargeBlock.fragments[0], 0, sizeof( SendFragmentData ) * m_sendLargeBlock.numFragments );
             }
 
-            PROTOCOL_ASSERT( m_sendLargeBlock.active );
+            CORE_ASSERT( m_sendLargeBlock.active );
 
             int fragmentId = -1;
             for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
@@ -449,14 +446,14 @@ namespace protocol
 
 //                printf( "sending fragment %d\n", (int) fragmentId );
 
-            auto data = PROTOCOL_NEW( memory::scratch_allocator(), ReliableMessageChannelData, m_config );
+            auto data = CORE_NEW( core::memory::scratch_allocator(), ReliableMessageChannelData, m_config );
             data->largeBlock = 1;
             data->blockSize = block.GetSize();
             data->blockId = m_oldestUnackedMessageId;
             data->fragmentId = fragmentId;
-            Allocator & a = memory::scratch_allocator();
+            core::Allocator & a = core::memory::scratch_allocator();
             data->fragment = (uint8_t*) a.Allocate( m_config.blockFragmentSize );
-            PROTOCOL_ASSERT( data->fragment );
+            CORE_ASSERT( data->fragment );
 //                printf( "allocate fragment %p (send fragment)\n", data->fragment );
 
             //printf( "create fragment %p\n", data->fragment );
@@ -466,14 +463,14 @@ namespace protocol
             if ( fragmentRemainder && fragmentId == m_sendLargeBlock.numFragments - 1 )
                 fragmentBytes = fragmentRemainder;
 
-            PROTOCOL_ASSERT( fragmentBytes >= 0 );
-            PROTOCOL_ASSERT( fragmentBytes <= m_config.blockFragmentSize );
+            CORE_ASSERT( fragmentBytes >= 0 );
+            CORE_ASSERT( fragmentBytes <= m_config.blockFragmentSize );
             uint8_t * src = &( block.GetData()[fragmentId*m_config.blockFragmentSize] );
             uint8_t * dst = data->fragment;
             memcpy( dst, src, fragmentBytes );
 
             auto sentPacketData = m_sentPackets->InsertFast( sequence );
-            PROTOCOL_ASSERT( sentPacketData );
+            CORE_ASSERT( sentPacketData );
             sentPacketData->acked = 0;
             sentPacketData->largeBlock = 1;
             sentPacketData->blockId = m_oldestUnackedMessageId;
@@ -491,7 +488,7 @@ namespace protocol
                 per-packet, but stop before the next large block.
             */
 
-            PROTOCOL_ASSERT( !m_sendLargeBlock.active );
+            CORE_ASSERT( !m_sendLargeBlock.active );
 
             // gather messages to include in the packet
 
@@ -527,8 +524,8 @@ namespace protocol
                     break;
             }
 
-            PROTOCOL_ASSERT( numMessageIds >= 0 );
-            PROTOCOL_ASSERT( numMessageIds <= m_config.maxMessagesPerPacket );
+            CORE_ASSERT( numMessageIds >= 0 );
+            CORE_ASSERT( numMessageIds <= m_config.maxMessagesPerPacket );
 
             // if there are no messages then we don't have any data to send
 
@@ -538,7 +535,7 @@ namespace protocol
             // add sent packet data containing message ids included in this packet
 
             auto sentPacketData = m_sentPackets->InsertFast( sequence );
-            PROTOCOL_ASSERT( sentPacketData );
+            CORE_ASSERT( sentPacketData );
             sentPacketData->largeBlock = 0;
             sentPacketData->acked = 0;
             sentPacketData->timeSent = m_timeBase.time;
@@ -554,19 +551,19 @@ namespace protocol
 
             // construct channel data for packet
 
-            Allocator & allocator = memory::scratch_allocator();
+            core::Allocator & allocator = core::memory::scratch_allocator();
 
-            auto data = PROTOCOL_NEW( allocator, ReliableMessageChannelData, m_config );
+            auto data = CORE_NEW( allocator, ReliableMessageChannelData, m_config );
 
             data->messages = (Message**) allocator.Allocate( numMessageIds * sizeof( Message* ) );
-            PROTOCOL_ASSERT( data->messages );
+            CORE_ASSERT( data->messages );
 //                printf( "allocate messages %p (get data)\n", data->messages );
             data->numMessages = numMessageIds;
             for ( int i = 0; i < numMessageIds; ++i )
             {
                 auto entry = m_sendQueue->Find( messageIds[i] );
-                PROTOCOL_ASSERT( entry );
-                PROTOCOL_ASSERT( entry->message );
+                CORE_ASSERT( entry );
+                CORE_ASSERT( entry->message );
                 data->messages[i] = entry->message;
                 m_config.messageFactory->AddRef( entry->message );
             }
@@ -579,7 +576,7 @@ namespace protocol
 
     bool ReliableMessageChannel::ProcessData( uint16_t sequence, ChannelData * channelData )
     {
-        PROTOCOL_ASSERT( channelData );
+        CORE_ASSERT( channelData );
 
 //          printf( "process data %d\n", sequence );
 
@@ -600,7 +597,7 @@ namespace protocol
             or message.
         */
 
-        if ( data->largeBlock && sequence_less_than( data->blockId, m_receiveQueue->GetSequence() ) )
+        if ( data->largeBlock && core::sequence_less_than( data->blockId, m_receiveQueue->GetSequence() ) )
             return true;
 
         /*
@@ -639,8 +636,8 @@ namespace protocol
 
                 const int numFragments = (int) ceil( data->blockSize / (float)m_config.blockFragmentSize );
 
-                PROTOCOL_ASSERT( numFragments >= 0 );
-                PROTOCOL_ASSERT( numFragments <= m_maxBlockFragments );
+                CORE_ASSERT( numFragments >= 0 );
+                CORE_ASSERT( numFragments <= m_maxBlockFragments );
 
                 if ( numFragments < 0 || numFragments > m_maxBlockFragments )
                 {
@@ -656,14 +653,14 @@ namespace protocol
                 m_receiveLargeBlock.blockId = data->blockId;
                 m_receiveLargeBlock.blockSize = data->blockSize;
 
-                PROTOCOL_ASSERT( m_config.largeBlockAllocator );
+                CORE_ASSERT( m_config.largeBlockAllocator );
                 uint8_t * blockData = (uint8_t*) m_config.largeBlockAllocator->Allocate( data->blockSize );
                 m_receiveLargeBlock.block.Connect( *m_config.largeBlockAllocator, blockData, data->blockSize );
                 
                 memset( &m_receiveLargeBlock.fragments[0], 0, sizeof( ReceiveFragmentData ) * numFragments );
             }
 
-            PROTOCOL_ASSERT( m_receiveLargeBlock.active );
+            CORE_ASSERT( m_receiveLargeBlock.active );
 
             if ( data->blockId != m_receiveLargeBlock.blockId )
             {
@@ -671,9 +668,9 @@ namespace protocol
                 return false;
             }
 
-            PROTOCOL_ASSERT( data->blockId == m_receiveLargeBlock.blockId );
-            PROTOCOL_ASSERT( data->blockSize == m_receiveLargeBlock.blockSize );
-            PROTOCOL_ASSERT( data->fragmentId < m_receiveLargeBlock.numFragments );
+            CORE_ASSERT( data->blockId == m_receiveLargeBlock.blockId );
+            CORE_ASSERT( data->blockSize == m_receiveLargeBlock.blockSize );
+            CORE_ASSERT( data->fragmentId < m_receiveLargeBlock.numFragments );
 
             if ( data->blockId != m_receiveLargeBlock.blockId )
             {
@@ -713,8 +710,8 @@ namespace protocol
 
 //                    printf( "fragment bytes = %d\n", fragmentBytes );
 
-                PROTOCOL_ASSERT( fragmentBytes >= 0 );
-                PROTOCOL_ASSERT( fragmentBytes <= m_config.blockFragmentSize );
+                CORE_ASSERT( fragmentBytes >= 0 );
+                CORE_ASSERT( fragmentBytes <= m_config.blockFragmentSize );
                 uint8_t * src = data->fragment;
                 uint8_t * dst = &( block.GetData()[data->fragmentId*m_config.blockFragmentSize] );
                 memcpy( dst, src, fragmentBytes );
@@ -726,7 +723,7 @@ namespace protocol
 //                        printf( "received large block %d (%d bytes)\n", m_receiveLargeBlock.blockId, m_receiveLargeBlock.block->size() );
 
                     auto blockMessage = (BlockMessage*) m_config.messageFactory->Create( BlockMessageType );
-                    PROTOCOL_ASSERT( blockMessage );
+                    CORE_ASSERT( blockMessage );
                     blockMessage->Connect( m_receiveLargeBlock.block );
                     blockMessage->SetId( m_receiveLargeBlock.blockId );
 
@@ -734,7 +731,7 @@ namespace protocol
 
                     m_receiveLargeBlock.active = false;
 
-                    PROTOCOL_ASSERT( !m_receiveLargeBlock.block.IsValid() );
+                    CORE_ASSERT( !m_receiveLargeBlock.block.IsValid() );
                 }
             }
         }
@@ -755,21 +752,21 @@ namespace protocol
 
             // process messages included in this packet data
 
-            PROTOCOL_ASSERT( data->messages );
+            CORE_ASSERT( data->messages );
 
             for ( int i = 0; i < data->numMessages; ++i )
             {
                 auto message = data->messages[i];
 
-                PROTOCOL_ASSERT( message );
+                CORE_ASSERT( message );
 
                 const uint16_t messageId = message->GetId();
 
-                if ( sequence_less_than( messageId, minMessageId ) )
+                if ( core::sequence_less_than( messageId, minMessageId ) )
                 {
                     m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_LATE]++;
                 }
-                else if ( sequence_greater_than( messageId, maxMessageId ) )
+                else if ( core::sequence_greater_than( messageId, maxMessageId ) )
                 {
                     m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY]++;
                     earlyMessage = true;
@@ -780,7 +777,7 @@ namespace protocol
                     bool result = 
                     #endif
                         m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
-                    PROTOCOL_ASSERT( result );
+                    CORE_ASSERT( result );
                     m_config.messageFactory->AddRef( message );
                 }
                 
@@ -810,7 +807,7 @@ namespace protocol
             ++m_oldestUnackedMessageId;
         }
 
-        PROTOCOL_ASSERT( !sequence_greater_than( m_oldestUnackedMessageId, stopMessageId ) );
+        CORE_ASSERT( !core::sequence_greater_than( m_oldestUnackedMessageId, stopMessageId ) );
     }
 
     void ReliableMessageChannel::ProcessAck( uint16_t ack )
@@ -831,8 +828,8 @@ namespace protocol
                 
                 if ( sendQueueEntry )
                 {
-                    PROTOCOL_ASSERT( sendQueueEntry->message );
-                    PROTOCOL_ASSERT( sendQueueEntry->message->GetId() == messageId );
+                    CORE_ASSERT( sendQueueEntry->message );
+                    CORE_ASSERT( sendQueueEntry->message->GetId() == messageId );
 
 //                        printf( "acked message %d\n", messageId );
 
@@ -846,7 +843,7 @@ namespace protocol
         }
         else if ( m_sendLargeBlock.active && m_sendLargeBlock.blockId == sentPacket->blockId )
         {
-            PROTOCOL_ASSERT( sentPacket->fragmentId < m_sendLargeBlock.numFragments );
+            CORE_ASSERT( sentPacket->fragmentId < m_sendLargeBlock.numFragments );
 
             auto & fragment = m_sendLargeBlock.fragments[sentPacket->fragmentId];
 
@@ -868,7 +865,7 @@ namespace protocol
                     m_sendLargeBlock.active = false;
 
                     auto sendQueueEntry = m_sendQueue->Find( sentPacket->blockId );
-                    PROTOCOL_ASSERT( sendQueueEntry );
+                    CORE_ASSERT( sendQueueEntry );
 
                     m_config.messageFactory->Release( sendQueueEntry->message );                    
                     sendQueueEntry->message = nullptr;
@@ -882,15 +879,15 @@ namespace protocol
         sentPacket->acked = 1;
     }
 
-    void ReliableMessageChannel::Update( const TimeBase & timeBase )
+    void ReliableMessageChannel::Update( const core::TimeBase & timeBase )
     {
         m_timeBase = timeBase;
     }
 
     uint64_t ReliableMessageChannel::GetCounter( int index ) const
     {
-        PROTOCOL_ASSERT( index >= 0 );
-        PROTOCOL_ASSERT( index < RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS );
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < RELIABLE_MESSAGE_CHANNEL_COUNTER_NUM_COUNTERS );
         return m_counters[index];
     }
 

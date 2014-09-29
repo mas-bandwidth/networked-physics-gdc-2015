@@ -3,7 +3,8 @@
 #ifndef NETWORK_ADDRESS_H
 #define NETWORK_ADDRESS_H
 
-#include "core/Common.h"
+#include "core/Core.h"
+#include "network/Enums.h"
 
 struct addrinfo;
 struct sockaddr_in6;

@@ -1,46 +1,12 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_ENUMS_H
 #define PROTOCOL_ENUMS_H
 
-#include "core/Common.h"
+#include "core/Core.h"
 
 namespace protocol
 {
-    enum AddressType
-    {
-        ADDRESS_UNDEFINED,
-        ADDRESS_IPV4,
-        ADDRESS_IPV6
-    };
-
-    enum BSDSocketError
-    {
-        BSD_SOCKET_ERROR_NONE = 0,
-        BSD_SOCKET_ERROR_CREATE_FAILED,
-        BSD_SOCKET_ERROR_SOCKOPT_IPV6_ONLY_FAILED,
-        BSD_SOCKET_ERROR_BIND_IPV6_FAILED,
-        BSD_SOCKET_ERROR_BIND_IPV4_FAILED,
-        BSD_SOCKET_ERROR_SET_NON_BLOCKING_FAILED
-    };
-
-    enum BSDSocketCounter
-    {
-        BSD_SOCKET_COUNTER_PACKETS_SENT,
-        BSD_SOCKET_COUNTER_PACKETS_RECEIVED,
-        BSD_SOCKET_COUNTER_SEND_FAILURES,
-        BSD_SOCKET_COUNTER_SERIALIZE_WRITE_OVERFLOW,
-        BSD_SOCKET_COUNTER_SERIALIZE_READ_OVERFLOW,
-        BSD_SOCKET_COUNTER_PACKET_TOO_LARGE_TO_SEND,
-        BSD_SOCKET_COUNTER_CREATE_PACKET_FAILURES,
-        BSD_SOCKET_COUNTER_PROTOCOL_ID_MISMATCH,
-        BSD_SOCKET_COUNTER_ABORTED_PACKET_READS,
-        BSD_SOCKET_COUNTER_NUM_COUNTERS
-    };
-
     enum ClientState
     {
         CLIENT_STATE_DISCONNECTED,                            // client is not connected. this is the initial client state.
@@ -65,7 +31,7 @@ namespace protocol
             case CLIENT_STATE_READY_FOR_CONNECTION:             return "READY_FOR_CONNECTION";
             case CLIENT_STATE_CONNECTED:                        return "CONNECTED";
             default: 
-                PROTOCOL_ASSERT( 0 );
+                CORE_ASSERT( 0 );
                 return "???";
         }
     }
@@ -98,7 +64,7 @@ namespace protocol
             case CLIENT_ERROR_MISSING_RESOLVER:                 return "missing resolver";
             case CLIENT_ERROR_DATA_BLOCK_ERROR:                 return "data block error";
             default:
-                PROTOCOL_ASSERT( false );
+                CORE_ASSERT( false );
                 return "???";
         }
     }
@@ -129,7 +95,7 @@ namespace protocol
             case SERVER_CLIENT_STATE_READY_FOR_CONNECTION:      return "READY_FOR_CONNECTION";
             case SERVER_CLIENT_STATE_CONNECTED:                 return "CONNECTION";
             default: 
-                PROTOCOL_ASSERT( 0 );
+                CORE_ASSERT( 0 );
                 return "???";
         }
     }

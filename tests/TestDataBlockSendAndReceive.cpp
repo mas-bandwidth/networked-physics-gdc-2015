@@ -30,7 +30,7 @@ protected:
 
     void SendFragment( int fragmentId, uint8_t * fragmentData, int fragmentBytes )
     {
-        PROTOCOL_ASSERT( m_receiver );
+        CORE_ASSERT( m_receiver );
         if ( (rand()%100) < packetLossPercent )
             return;
         m_receiver->ProcessFragment( GetBlockSize(), GetNumFragments(), fragmentId, fragmentBytes, fragmentData );
@@ -55,7 +55,7 @@ protected:
 
     void SendAck( int fragmentId )
     {
-        PROTOCOL_ASSERT( m_sender );
+        CORE_ASSERT( m_sender );
         if ( (rand()%100) < packetLossPercent )
             return;
         m_sender->ProcessAck( fragmentId );

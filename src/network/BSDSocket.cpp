@@ -4,6 +4,7 @@
 #include "network/BSDSocket.h"
 #include "core/Memory.h"
 #include "core/Queue.h"
+#include <string.h>
 
 #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
 
@@ -28,24 +29,24 @@
 
 #endif
 
-namespace core
+namespace network
 {     
     BSDSocket::BSDSocket( const BSDSocketConfig & config )
         : m_config( config ), 
-          m_send_queue( config.allocator ? *config.allocator : memory::default_allocator() ),
-          m_receive_queue( config.allocator ? *config.allocator : memory::default_allocator() )
+          m_send_queue( config.allocator ? *config.allocator : core::memory::default_allocator() ),
+          m_receive_queue( config.allocator ? *config.allocator : core::memory::default_allocator() )
     {
         CORE_ASSERT( IsNetworkInitialized() );
 
         CORE_ASSERT( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
         CORE_ASSERT( m_config.maxPacketSize > 0 );
 
-        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
+        m_allocator = m_config.allocator ? m_config.allocator : &core::memory::default_allocator();
 
         CORE_ASSERT( m_allocator );
 
-        queue::reserve( m_send_queue, m_config.sendQueueSize );
-        queue::reserve( m_receive_queue, m_config.receiveQueueSize );
+        core::queue::reserve( m_send_queue, m_config.sendQueueSize );
+        core::queue::reserve( m_receive_queue, m_config.receiveQueueSize );
 
         m_receiveBuffer = (uint8_t*) m_allocator->Allocate( m_config.maxPacketSize );
 
@@ -162,22 +163,22 @@ namespace core
             m_socket = 0;
         }
 
-        for ( int i = 0; i < queue::size( m_send_queue ); ++i )
+        for ( int i = 0; i < core::queue::size( m_send_queue ); ++i )
         {
             auto packet = m_send_queue[i];
             CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
-        for ( int i = 0; i < queue::size( m_receive_queue ); ++i )
+        for ( int i = 0; i < core::queue::size( m_receive_queue ); ++i )
         {
             auto packet = m_receive_queue[i];
             CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
-        queue::clear( m_send_queue );
-        queue::clear( m_receive_queue );
+        core::queue::clear( m_send_queue );
+        core::queue::clear( m_receive_queue );
     }
 
     bool BSDSocket::IsError() const
@@ -190,7 +191,7 @@ namespace core
         return m_error;
     }
 
-    void BSDSocket::SendPacket( const Address & address, Packet * packet )
+    void BSDSocket::SendPacket( const Address & address, protocol::Packet * packet )
     {
         if ( m_error )
         {
@@ -203,31 +204,31 @@ namespace core
         
         packet->SetAddress( address );
 
-        if ( queue::size( m_send_queue ) == m_config.sendQueueSize )
+        if ( core::queue::size( m_send_queue ) == m_config.sendQueueSize )
         {
             m_config.packetFactory->Destroy( packet );
             return;
         }
 
-        queue::push_back( m_send_queue, packet );
+        core::queue::push_back( m_send_queue, packet );
     }
 
-    Packet * BSDSocket::ReceivePacket()
+    protocol::Packet * BSDSocket::ReceivePacket()
     {
         if ( m_error )
             return nullptr;
 
-        if ( queue::size( m_receive_queue ) == 0 )
+        if ( core::queue::size( m_receive_queue ) == 0 )
             return nullptr;
 
         auto packet = m_receive_queue[0];
 
-        queue::consume( m_receive_queue, 1 );
+        core::queue::consume( m_receive_queue, 1 );
 
         return packet;
     }
 
-    void BSDSocket::Update( const TimeBase & timeBase )
+    void BSDSocket::Update( const core::TimeBase & timeBase )
     {
         if ( m_error )
             return;
@@ -242,7 +243,7 @@ namespace core
         return m_config.maxPacketSize;
     }
 
-    PacketFactory & BSDSocket::GetPacketFactory() const
+    protocol::PacketFactory & BSDSocket::GetPacketFactory() const
     {
         CORE_ASSERT( m_config.packetFactory );
         return *m_config.packetFactory;
@@ -267,15 +268,15 @@ namespace core
 
     void BSDSocket::SendPackets()
     {
-        while ( queue::size( m_send_queue ) )
+        while ( core::queue::size( m_send_queue ) )
         {
             auto packet = m_send_queue[0];
 
-            queue::consume( m_send_queue, 1 );
+            core::queue::consume( m_send_queue, 1 );
 
             uint8_t buffer[m_config.maxPacketSize];
 
-            typedef WriteStream Stream;
+            typedef protocol::WriteStream Stream;
 
             Stream stream( buffer, m_config.maxPacketSize );
 
@@ -328,7 +329,7 @@ namespace core
     {
         while ( true )
         {
-            if ( queue::size( m_receive_queue ) == m_config.receiveQueueSize )
+            if ( core::queue::size( m_receive_queue ) == m_config.receiveQueueSize )
                 break;
 
             Address address;
@@ -336,7 +337,7 @@ namespace core
             if ( !received_bytes )
                 break;
 
-            typedef ReadStream Stream;
+            typedef protocol::ReadStream Stream;
 
             Stream stream( m_receiveBuffer, m_config.maxPacketSize );
 
@@ -392,7 +393,7 @@ namespace core
 
             packet->SetAddress( address );
 
-            queue::push_back( m_receive_queue, packet );
+            core::queue::push_back( m_receive_queue, packet );
         }
     }
 

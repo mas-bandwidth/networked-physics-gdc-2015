@@ -894,7 +894,7 @@ void test_client_connection_server_full()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            auto clientNetworkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+            auto clientNetworkInterface = CORE_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
             PROTOCOL_CHECK( clientNetworkInterface );
 
@@ -902,7 +902,7 @@ void test_client_connection_server_full()
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
-            auto client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
+            auto client = CORE_NEW( memory::default_allocator(), Client, clientConfig );
 
             PROTOCOL_CHECK( client );
 
@@ -1020,10 +1020,10 @@ void test_client_connection_server_full()
         PROTOCOL_CHECK( extraClient.GetExtendedError() == CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
         for ( int i = 0; i < NumClients; ++i )
-            PROTOCOL_DELETE( memory::default_allocator(), Client, clients[i] );
+            CORE_DELETE( memory::default_allocator(), Client, clients[i] );
 
         for ( int i = 0; i < NumClients; ++i )
-            PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInterface[i] );
+            CORE_DELETE( memory::default_allocator(), NetworkInterface, clientInterface[i] );
     }
 
     memory::shutdown(); 
@@ -2097,13 +2097,13 @@ void test_client_and_server_data_multiple_clients()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            auto clientNetworkInterface = PROTOCOL_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+            auto clientNetworkInterface = CORE_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
 
             PROTOCOL_CHECK( clientNetworkInterface );
 
             const int clientDataSize = 2000 + i * 1024 + i;
 
-            clientData[i] = PROTOCOL_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
+            clientData[i] = CORE_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
             {
                 uint8_t * data = clientData[i]->GetData();
                 for ( int j = 0; j < clientDataSize; ++j )
@@ -2115,7 +2115,7 @@ void test_client_and_server_data_multiple_clients()
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
-            auto client = PROTOCOL_NEW( memory::default_allocator(), Client, clientConfig );
+            auto client = CORE_NEW( memory::default_allocator(), Client, clientConfig );
 
             PROTOCOL_CHECK( client );
 
@@ -2200,12 +2200,12 @@ void test_client_and_server_data_multiple_clients()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            PROTOCOL_DELETE( memory::default_allocator(), Client, clients[i] );
-            PROTOCOL_DELETE( memory::default_allocator(), Block, clientData[i] );
+            CORE_DELETE( memory::default_allocator(), Client, clients[i] );
+            CORE_DELETE( memory::default_allocator(), Block, clientData[i] );
         }
 
         for ( int i = 0; i < NumClients; ++i )
-            PROTOCOL_DELETE( memory::default_allocator(), NetworkInterface, clientInterface[i] );
+            CORE_DELETE( memory::default_allocator(), NetworkInterface, clientInterface[i] );
     }
 
     memory::shutdown(); 

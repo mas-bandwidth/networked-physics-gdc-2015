@@ -336,7 +336,7 @@
 	"buffers":
 	[
 	],
-	"build_system": "Packages/User/C++11.sublime-build",
+	"build_system": "Packages/User/C++11 (Client).sublime-build",
 	"command_palette":
 	{
 		"height": 27.0,
@@ -433,44 +433,103 @@
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/src/core/Memory.h",
-		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/src/protocol/BitPacker.h",
+		"/Users/gaffer/git/protocol/src/protocol/Block.h",
+		"/Users/gaffer/git/protocol/src/protocol/BlockMessage.h",
+		"/Users/gaffer/git/protocol/src/protocol/Channel.h",
+		"/Users/gaffer/git/protocol/src/protocol/Client.h",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerContext.h",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.h",
+		"/Users/gaffer/git/protocol/src/protocol/Connection.h",
+		"/Users/gaffer/git/protocol/src/protocol/Constants.h",
+		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.h",
+		"/Users/gaffer/git/protocol/src/protocol/DataBlockSender.h",
+		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
+		"/Users/gaffer/git/protocol/src/protocol/Message.h",
+		"/Users/gaffer/git/protocol/src/protocol/MessageChannel.h",
+		"/Users/gaffer/git/protocol/src/protocol/MessageFactory.h",
+		"/Users/gaffer/git/protocol/src/protocol/Object.h",
+		"/Users/gaffer/git/protocol/src/protocol/Packet.h",
+		"/Users/gaffer/git/protocol/src/protocol/PacketFactory.h",
+		"/Users/gaffer/git/protocol/src/protocol/Packets.h",
+		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/src/protocol/Server.h",
+		"/Users/gaffer/git/protocol/src/protocol/SlidingWindow.h",
+		"/Users/gaffer/git/protocol/src/protocol/Stream.h",
+		"/Users/gaffer/git/protocol/src/protocol/BitPacker.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Block.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Channel.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Client.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerContext.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Connection.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/DataBlockSender.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Server.cpp",
 		"/Users/gaffer/git/protocol/src/network/Address.h",
 		"/Users/gaffer/git/protocol/src/network/BSDSocket.h",
+		"/Users/gaffer/git/protocol/src/network/Config.h",
+		"/Users/gaffer/git/protocol/src/network/Constants.h",
 		"/Users/gaffer/git/protocol/src/network/DNSResolver.h",
+		"/Users/gaffer/git/protocol/src/network/Enums.h",
+		"/Users/gaffer/git/protocol/src/network/Interface.h",
 		"/Users/gaffer/git/protocol/src/network/Network.h",
-		"/Users/gaffer/git/protocol/src/network/NetworkInterface.h",
-		"/Users/gaffer/git/protocol/src/network/NetworkSimulator.h",
 		"/Users/gaffer/git/protocol/src/network/Resolver.h",
+		"/Users/gaffer/git/protocol/src/network/Simulator.h",
 		"/Users/gaffer/git/protocol/src/network/Address.cpp",
 		"/Users/gaffer/git/protocol/src/network/BSDSocket.cpp",
 		"/Users/gaffer/git/protocol/src/network/DNSResolver.cpp",
 		"/Users/gaffer/git/protocol/src/network/Network.cpp",
-		"/Users/gaffer/git/protocol/src/network/NetworkSimulator.cpp",
+		"/Users/gaffer/git/protocol/src/network/Simulator.cpp",
+		"/Users/gaffer/git/protocol/src/core/Core.h",
+		"/Users/gaffer/git/protocol/build/Client.make",
+		"/Users/gaffer/git/protocol/src/game/Render.cpp",
+		"/Users/gaffer/git/protocol/tests/TestPackets.h",
+		"/Users/gaffer/git/protocol/tests/TestMessages.h",
+		"/Users/gaffer/git/protocol/tests/TestConnection.cpp",
+		"/Users/gaffer/git/protocol/src/game/GameChannelStructure.h",
+		"/Users/gaffer/git/protocol/src/game/GameClient.h",
+		"/Users/gaffer/git/protocol/src/game/GameMessages.h",
+		"/Users/gaffer/git/protocol/src/game/GamePackets.h",
+		"/Users/gaffer/git/protocol/src/game/GameServer.h",
+		"/Users/gaffer/git/protocol/tests/SoakClientServer.cpp",
+		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
+		"/Users/gaffer/git/protocol/tests/TestBlock.cpp",
+		"/Users/gaffer/git/protocol/tests/TestChannelStructure.h",
+		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
+		"/Users/gaffer/git/protocol/tests/TestDataBlockSendAndReceive.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Diffuse.frag",
+		"/Users/gaffer/git/protocol/src/core/Config.h",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/src/game/Game.cpp",
+		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/tests/TestClientServer.h",
+		"/Users/gaffer/git/protocol/tests/UnitTest.cpp",
+		"/Users/gaffer/git/protocol/tests/TestCommon.cpp",
+		"/Users/gaffer/git/protocol/src/core/Memory.h",
 		"/Users/gaffer/git/protocol/src/core/Memory.cpp",
+		"/Users/gaffer/git/protocol/src/core/Core.cpp",
+		"/Users/gaffer/git/protocol/core.make",
+		"/Users/gaffer/git/protocol/src/core/Common.h",
+		"/Users/gaffer/git/protocol/src/core/Types.h",
+		"/Users/gaffer/git/protocol/src/core/Queue.h",
+		"/Users/gaffer/git/protocol/src/core/Array.h",
+		"/Users/gaffer/git/protocol/tests/TestPacketFactory.cpp",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/src/core/Common.cpp",
+		"/Users/gaffer/git/protocol/src/network/NetworkInterface.h",
+		"/Users/gaffer/git/protocol/src/network/NetworkSimulator.h",
+		"/Users/gaffer/git/protocol/src/network/NetworkSimulator.cpp",
 		"/Users/gaffer/git/protocol/Makefile",
 		"/Users/gaffer/git/protocol/src/core/StringStream.h",
-		"/Users/gaffer/git/protocol/src/core/Queue.h",
 		"/Users/gaffer/git/protocol/src/core/untitled",
 		"/Users/gaffer/git/protocol/src/core/Log.h",
 		"/Users/gaffer/git/protocol/src/core/Hash.h",
-		"/Users/gaffer/git/protocol/src/core/Array.h",
 		"/Users/gaffer/git/protocol/src/core/Allocator.h",
-		"/Users/gaffer/git/protocol/src/core/Config.h",
-		"/Users/gaffer/git/protocol/src/core/Common.h",
-		"/Users/gaffer/git/protocol/src/core/Common.cpp",
-		"/Users/gaffer/git/protocol/premake4.lua",
-		"/Users/gaffer/git/protocol/src/game/Game.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/Client.cpp",
 		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
 		"/Users/gaffer/git/protocol/src/protocol/Address.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
-		"/Users/gaffer/git/protocol/core.make",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/src/game/GameMessages.h",
 		"/Users/gaffer/git/protocol/data/shaders/Gouraud.frag",
-		"/Users/gaffer/git/protocol/build/Client.make",
-		"/Users/gaffer/git/protocol/src/core/Core.cpp",
 		"/Users/gaffer/git/protocol/game/Font.cpp",
 		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
 		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
@@ -479,7 +538,6 @@
 		"/Users/gaffer/git/protocol/game/Font.h",
 		"/Users/gaffer/git/protocol/data/shaders/Font.vert",
 		"/Users/gaffer/git/protocol/game/ShaderManager.h",
-		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
 		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
 		"/Users/gaffer/git/protocol/game/FontManager.cpp",
 		"/Users/gaffer/git/protocol/game/FontManager.h",
@@ -491,7 +549,6 @@
 		"/Users/gaffer/git/protocol/data/fonts/Fonts.json",
 		"/Users/gaffer/git/protocol/data/shaders/Triangle.frag",
 		"/Users/gaffer/git/protocol/tests/TestFoundation.cpp",
-		"/Users/gaffer/git/protocol/tests/TestPackets.h",
 		"/Users/gaffer/git/protocol/game/GameContext.h",
 		"/Users/gaffer/git/protocol/data/shaders/Specular.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Discard.frag",
@@ -503,64 +560,7 @@
 		"/Users/gaffer/git/protocol/data/shaders/Default.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Flat.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Diffuse.vert",
-		"/Users/gaffer/git/protocol/data/shaders/Flat.frag",
-		"/Users/gaffer/git/protocol/include/DataBlockReceiver.h",
-		"/Users/gaffer/git/protocol/data/fonts/Inconsolata/Inconsolata.otf",
-		"/Users/gaffer/git/protocol/include/PacketFactory.h",
-		"/Users/gaffer/git/protocol/data/shaders/Default.frag",
-		"/Users/gaffer/git/protocol/tests/TestDataBlockSendAndReceive.cpp",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
-		"/Users/gaffer/git/protocol/data/fonts/Fonts.json-old",
-		"/Users/gaffer/git/protocol/src/Common.cpp",
-		"/Users/gaffer/git/protocol/include/Common.h",
-		"/Users/gaffer/git/protocol/include/Types.h",
-		"/Users/gaffer/git/protocol/include/Hash.h",
-		"/Users/gaffer/git/protocol/tests/ProfileClientServer.cpp",
-		"/Users/gaffer/git/protocol/game/GameChannelStructure.h",
-		"/Users/gaffer/git/protocol/game/Render.h",
-		"/Users/gaffer/Dropbox/Personal Data/backup/protocol2/include/ProtocolUtil.h",
-		"/Users/gaffer/Dropbox/Personal Data/backup/transport2/include/TransportUtil.h",
-		"/Users/gaffer/git/protocol/tests/TestChannelStructure.h",
-		"/Users/gaffer/git/protocol/tests/TestCommon.h",
-		"/Users/gaffer/Dropbox/Personal Data/backup/transport2/src/TransportUtil.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/backup/protocol2/include/ProtocolCommon.h",
-		"/Users/gaffer/git/protocol/include/Allocator.h",
-		"/Users/gaffer/git/protocol/include/Address.h",
-		"/Users/gaffer/git/protocol/data/shaders/Triangle.vert",
-		"/Users/gaffer/git/protocol/include/Client.h",
-		"/Users/gaffer/git/protocol/bin/data/fonts/Console.font",
-		"/Users/gaffer/git/protocol/game/Fonts.h",
-		"/Users/gaffer/git/protocol/game/GameClient.h",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/FONTLOG.txt",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousProMinus/README.txt",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousProMinus/FONTLOG.txt",
-		"/Users/gaffer/git/protocol/build/FontBuilder.make",
-		"/Users/gaffer/git/protocol/src/Channel.cpp",
-		"/Users/gaffer/git/protocol/include/ClientServerContext.h",
-		"/Users/gaffer/git/protocol/game/Fonts.cpp",
-		"/Users/gaffer/git/protocol/LICENCE",
-		"/Users/gaffer/git/protocol/bin/data/shaders/Triangle.frag",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/README.txt",
-		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/include/MessageFactory.h",
-		"/Users/gaffer/git/protocol/data/shaders/Triangle.vertex",
-		"/Users/gaffer/git/protocol/game/Shaders.h",
-		"/Users/gaffer/git/protocol/game/Shaders.cpp",
-		"/Users/gaffer/git/protocol/include/ReliableMessageChannel.h",
-		"/Users/gaffer/git/protocol/glewinfo.txt",
-		"/Users/gaffer/Documents/hit and run.txt",
-		"/Users/gaffer/Downloads/ogldev-source/tutorial03.cpp",
-		"/Users/gaffer/git/virtualgo/Render.h",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/ViewController.h",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/AppDelegate.m",
-		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Bold.font",
-		"/Users/gaffer/Downloads/ogldev-source/tutorial16/tutorial16.cpp",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/ViewController.m",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/main.m",
-		"/Users/gaffer/git/virtualgo/Dynamics.cpp",
-		"/Users/gaffer/git/virtualgo/Platform.h",
-		"/Users/gaffer/git/virtualgo/Common.h",
-		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Regular.font"
+		"/Users/gaffer/git/protocol/data/shaders/Flat.frag"
 	],
 	"find":
 	{
@@ -571,6 +571,8 @@
 		"height": 93.0,
 		"where_history":
 		[
+			"-CHANGES,-TODO",
+			"",
 			"-CHANGES,-TODO",
 			"-CHANGES,TODO",
 			"-CHANGES",
@@ -602,6 +604,23 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"PROTOCOL_ARRAY_NEW",
+			"PROTOCOL_NEW_ARRAY",
+			"PROTOCOL_DELETE_ARRAY",
+			"PROTOCOL_DELETE",
+			"PROTOCOL_NEW",
+			"m_allocator",
+			"PROTOCOL_ASSERT",
+			"\"core/Common.h\"",
+			"#include \"core/Common.h\"",
+			"allocator",
+			"PROTOCOL_",
+			"Allocator",
+			"PROTOCOL_",
+			"PROTOCOL",
+			"NetworkInterface.h",
+			"NetworkSimulator::",
+			"Netow",
 			"PROTOCOL",
 			"protocol",
 			"core/Assert.h",
@@ -712,24 +731,7 @@
 			"m_serverGuid = ",
 			"m_clientGuid = ",
 			"// todo",
-			"m_context",
-			"SetContext",
-			"WriteStream",
-			"GetContext",
-			"SetContext",
-			"void * m_conte",
-			": public NetworkInterface",
-			"void * GetCont",
-			"test_stream",
-			"// todo",
-			"UpdateNetworkInterface",
-			"UpdateNetwork",
-			"->SendPacket",
-			"SendPacket(",
-			"SendMessage",
-			".Clear()",
-			"simulator",
-			".networkSim"
+			"m_context"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -737,6 +739,13 @@
 		"regex": false,
 		"replace_history":
 		[
+			"CORE_ARRAY_NEW",
+			"CORE_NEW_ARRAY",
+			"CORE_DELETE_ARRAY",
+			"CORE_DELETE",
+			"CORE_NEW",
+			"CORE_ASSERT",
+			"Simulator::",
 			"memory_globals.",
 			"global.",
 			"PROTOCOL_CHECK(",
@@ -814,32 +823,164 @@
 		"selected_items":
 		[
 			[
-				"memory.h",
-				"src/core/Memory.h"
+				"core.h",
+				"src/core/Core.h"
+			],
+			[
+				"cilentserverdatablock.cpp",
+				"src/protocol/ClientServerDataBlock.cpp"
+			],
+			[
+				"clientserevr",
+				"src/protocol/ClientServerContext.h"
+			],
+			[
+				"clientservercontext.cpp",
+				"src/protocol/ClientServerContext.cpp"
+			],
+			[
+				"reliable",
+				"src/protocol/ReliableMessageChannel.cpp"
+			],
+			[
+				"client.cpp",
+				"src/protocol/Client.cpp"
+			],
+			[
+				"datablockreceiver.cpp",
+				"src/protocol/DataBlockReceiver.cpp"
+			],
+			[
+				"datablock",
+				"src/protocol/DataBlockReceiver.h"
+			],
+			[
+				"clientserverdatablock.h",
+				"src/protocol/ClientServerDataBlock.h"
+			],
+			[
+				"client.h",
+				"src/protocol/Client.h"
+			],
+			[
+				"connection.h",
+				"src/protocol/Connection.h"
+			],
+			[
+				"channel.h",
+				"src/protocol/Channel.h"
+			],
+			[
+				"changes",
+				"CHANGES"
 			],
 			[
 				"todo",
 				"TODO"
 			],
 			[
-				"array.h",
-				"src/core/Array.h"
+				"memory.cpp",
+				"src/core/Memory.cpp"
 			],
 			[
-				"hash.h",
-				"src/core/Hash.h"
+				"core.cpp",
+				"src/core/Core.cpp"
 			],
 			[
-				"config.h",
-				"src/core/Config.h"
+				"memory.h",
+				"src/core/Memory.h"
+			],
+			[
+				"common.cpp",
+				"src/core/Common.cpp"
 			],
 			[
 				"common.h",
 				"src/core/Common.h"
 			],
 			[
-				"common.cpp",
-				"src/core/Common.cpp"
+				"config.h",
+				"src/core/Config.h"
+			],
+			[
+				"array.h",
+				"src/core/Array.h"
+			],
+			[
+				"types.h",
+				"src/core/Types.h"
+			],
+			[
+				"bsdsocket.cpp",
+				"src/network/BSDSocket.cpp"
+			],
+			[
+				"packet.cpp",
+				"tests/TestPacketFactory.cpp"
+			],
+			[
+				"block.cpp",
+				"src/protocol/Block.cpp"
+			],
+			[
+				"block.h",
+				"src/protocol/Block.h"
+			],
+			[
+				"steram.h",
+				"src/protocol/Stream.h"
+			],
+			[
+				"bsdsocket.h",
+				"src/network/BSDSocket.h"
+			],
+			[
+				"packetfactory.h",
+				"src/protocol/PacketFactory.h"
+			],
+			[
+				"simulator.h",
+				"src/network/Simulator.h"
+			],
+			[
+				"packet.h",
+				"src/protocol/Packet.h"
+			],
+			[
+				"stream.h",
+				"src/protocol/Stream.h"
+			],
+			[
+				"bitpacker.h",
+				"src/protocol/BitPacker.h"
+			],
+			[
+				"interfaec.h",
+				"src/network/Interface.h"
+			],
+			[
+				"address.h",
+				"src/network/Address.h"
+			],
+			[
+				"address.cpp",
+				"src/network/Address.cpp"
+			],
+			[
+				"simulator.cpp",
+				"src/network/Simulator.cpp"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
+			],
+			[
+				"interface.h",
+				"src/network/Interface.h"
+			],
+			[
+				"hash.h",
+				"src/core/Hash.h"
 			],
 			[
 				"enums.h",
@@ -850,28 +991,12 @@
 				"premake4.lua"
 			],
 			[
-				"premake4.lua",
-				"premake4.lua"
-			],
-			[
-				"core.h",
-				"src/core/Common.h"
-			],
-			[
 				"game.cpp",
 				"src/game/Game.cpp"
 			],
 			[
-				"client.cpp",
-				"src/protocol/Client.cpp"
-			],
-			[
 				"premake",
 				"premake4.lua"
-			],
-			[
-				"changes",
-				"CHANGES"
 			],
 			[
 				"font.cpp",
@@ -958,10 +1083,6 @@
 				"include/Types.h"
 			],
 			[
-				"types.h",
-				"include/Types.h"
-			],
-			[
 				"testfoundation.cpp",
 				"tests/TestFoundation.cpp"
 			],
@@ -984,10 +1105,6 @@
 			[
 				"shader",
 				"game/ShaderManager.h"
-			],
-			[
-				"client.h",
-				"include/Client.h"
 			],
 			[
 				"frag",
@@ -1060,18 +1177,6 @@
 			[
 				"gameserver.h",
 				"game/GameServer.h"
-			],
-			[
-				"block.h",
-				"include/Block.h"
-			],
-			[
-				"bsdsocket.h",
-				"include/BSDSocket.h"
-			],
-			[
-				"bsdsocket.cpp",
-				"src/BSDSocket.cpp"
 			],
 			[
 				"soakclient",
@@ -1166,16 +1271,8 @@
 				"src/Connection.cpp"
 			],
 			[
-				"connection.h",
-				"include/Connection.h"
-			],
-			[
 				"reliablemessag",
 				"src/ReliableMessageChannel.cpp"
-			],
-			[
-				"channel.h",
-				"include/Channel.h"
 			],
 			[
 				"channel.cpp",
@@ -1210,10 +1307,6 @@
 				"tests/TestMessages.h"
 			],
 			[
-				"stream.h",
-				"include/Stream.h"
-			],
-			[
 				"networksimulator.cpp",
 				"src/NetworkSimulator.cpp"
 			],
@@ -1234,96 +1327,12 @@
 				"tests/TestChannelStructure.h"
 			],
 			[
-				"clientservercontext.cpp",
-				"src/ClientServerContext.cpp"
-			],
-			[
 				"clientservercontext.h",
 				"include/ClientServerContext.h"
 			],
 			[
 				"noho",
 				"include/NetworkSimulator.h"
-			],
-			[
-				"networksimulator.h",
-				"include/NetworkSimulator.h"
-			],
-			[
-				"networkinterfaceh.",
-				"include/NetworkInterface.h"
-			],
-			[
-				"teststream.cpp",
-				"tests/TestStream.cpp"
-			],
-			[
-				"wouldbe",
-				"WOULD BE NICE"
-			],
-			[
-				"clientservercontext.",
-				"include/ClientServerContext.h"
-			],
-			[
-				"bsd",
-				"src/BSDSocket.cpp"
-			],
-			[
-				"networkinterface.h",
-				"include/NetworkInterface.h"
-			],
-			[
-				"woudl",
-				"WOULD BE NICE"
-			],
-			[
-				"constants.h",
-				"include/Constants.h"
-			],
-			[
-				"cilent.h",
-				"include/Client.h"
-			],
-			[
-				"simulator.h",
-				"include/NetworkSimulator.h"
-			],
-			[
-				"protocol",
-				"tests/SoakProtocol.cpp"
-			],
-			[
-				"soak",
-				"tests/SoakProtocol.cpp"
-			],
-			[
-				"reliable",
-				"include/ReliableMessageChannel.h"
-			],
-			[
-				"testreliable",
-				"tests/TestReliableMessageChannel.cpp"
-			],
-			[
-				"testres",
-				"tests/TestDNSResolver.cpp"
-			],
-			[
-				"testcommon.h",
-				"tests/TestCommon.h"
-			],
-			[
-				"output.txt",
-				"output.txt"
-			],
-			[
-				"test.h",
-				"tests/TestPackets.h"
-			],
-			[
-				"testbsdsocket.cpp",
-				"tests/TestBSDSocket.cpp"
 			]
 		],
 		"width": 0.0

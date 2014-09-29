@@ -1,23 +1,20 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_DATA_BLOCK_RECEIVER_H
 #define PROTOCOL_DATA_BLOCK_RECEIVER_H
 
-#include "Common.h"
-#include "Block.h"
+#include "core/Core.h"
+#include "protocol/Block.h"
+
+namespace core { class Allocator; }
 
 namespace protocol
 {
-    class Allocator;
-
     class DataBlockReceiver
     {
     public:
 
-        DataBlockReceiver( Allocator & allocator, int fragmentSize, int maxBlockSize );
+        DataBlockReceiver( core::Allocator & allocator, int fragmentSize, int maxBlockSize );
 
         virtual ~DataBlockReceiver();
 
@@ -40,7 +37,7 @@ namespace protocol
 
     private:
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
         uint8_t * m_data;
         int m_fragmentSize;
         int m_maxBlockSize;

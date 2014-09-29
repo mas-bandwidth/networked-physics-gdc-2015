@@ -1,5 +1,5 @@
-#include "Address.h"
-#include "Memory.h"
+#include "network/Address.h"
+#include "core/Memory.h"
 #include <string.h>
 #include <arpa/inet.h>
 

@@ -10,7 +10,6 @@
 #include <algorithm>
 #endif
 
-#define CORE_USE_RESOLVER 0
 #define CORE_USE_SCRATCH_ALLOCATOR 1
 
 #define CORE_PLATFORM_WINDOWS  1

@@ -3,8 +3,8 @@
 #ifndef CORE_MEMORY_H
 #define CORE_MEMORY_H
 
-#include "Common.h"
-#include "Allocator.h"
+#include "core/Core.h"
+#include "core/Allocator.h"
 #include <new>
 
 namespace core
@@ -23,6 +23,37 @@ namespace core
 		
 		void shutdown();
 	}
+
+	// helper functions used by allocator
+
+    inline void * align_forward( void * p, uint32_t align )
+    {
+        uintptr_t pi = uintptr_t( p );
+        const uint32_t mod = pi % align;
+        if ( mod )
+            pi += align - mod;
+        return (void*) pi;
+    }
+
+    inline void * pointer_add( void * p, uint32_t bytes )
+    {
+        return (void*) ( (uint8_t*)p + bytes );
+    }
+
+    inline const void * pointer_add( const void * p, uint32_t bytes )
+    {
+        return (const void*) ( (const uint8_t*)p + bytes );
+    }
+
+    inline void * pointer_sub( void * p, uint32_t bytes )
+    {
+        return (void*)( (char*)p - bytes );
+    }
+
+    inline const void * pointer_sub( const void * p, uint32_t bytes )
+    {
+        return (const void*) ( (const char*)p - bytes );
+    }
 
 	// temporary allocator
 

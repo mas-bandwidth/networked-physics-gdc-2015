@@ -1,8 +1,10 @@
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
 #ifndef PROTOCOL_MESSAGE_FACTORY_H
 #define PROTOCOL_MESSAGE_FACTORY_H
 
-#include "Message.h"
-#include "Memory.h"
+#include "protocol/Message.h"
+#include "core/Memory.h"
 
 namespace protocol
 {
@@ -12,7 +14,7 @@ namespace protocol
         std::map<void*,int> allocated_messages;
         #endif
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
 
         int num_allocated_messages = 0;
 
@@ -20,7 +22,7 @@ namespace protocol
 
     public:
 
-        MessageFactory( Allocator & allocator, int numTypes )
+        MessageFactory( core::Allocator & allocator, int numTypes )
         {
             m_allocator = &allocator;
             m_numTypes = numTypes;
@@ -28,7 +30,7 @@ namespace protocol
 
         ~MessageFactory()
         {
-            PROTOCOL_ASSERT( m_allocator );
+            CORE_ASSERT( m_allocator );
             m_allocator = nullptr;
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
@@ -50,23 +52,23 @@ namespace protocol
                 printf( "%d messages leaked\n", num_allocated_messages );
                 exit(1);
             }
-            PROTOCOL_ASSERT( num_allocated_messages == 0 );
+            CORE_ASSERT( num_allocated_messages == 0 );
         }
 
         Message * Create( int type )
         {
-            PROTOCOL_ASSERT( type >= 0 );
-            PROTOCOL_ASSERT( type < m_numTypes );
+            CORE_ASSERT( type >= 0 );
+            CORE_ASSERT( type < m_numTypes );
 
             Message * message = CreateInternal( type );
 
-            PROTOCOL_ASSERT( message );
+            CORE_ASSERT( message );
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "create message %p\n", message );
             allocated_messages[message] = 1;
             auto itor = allocated_messages.find( message );
-            PROTOCOL_ASSERT( itor != allocated_messages.end() );
+            CORE_ASSERT( itor != allocated_messages.end() );
             #endif
 
             num_allocated_messages++;
@@ -80,20 +82,20 @@ namespace protocol
             printf( "addref message %p (%d->%d)\n", message, message->GetRefCount(), message->GetRefCount()+1 );
             #endif
             
-            PROTOCOL_ASSERT( message );
+            CORE_ASSERT( message );
             
             message->AddRef();
         }
 
         void Release( Message * message )
         {
-            PROTOCOL_ASSERT( message );
+            CORE_ASSERT( message );
 
             #if PROTOCOL_DEBUG_MEMORY_LEAKS
             printf( "release message %p (%d->%d)\n", message, message->GetRefCount(), message->GetRefCount()-1 );
             #endif
 
-            PROTOCOL_ASSERT( message );
+            CORE_ASSERT( message );
             
             message->Release();
             
@@ -102,15 +104,15 @@ namespace protocol
                 #if PROTOCOL_DEBUG_MEMORY_LEAKS
                 printf( "destroy message %p\n", message );
                 auto itor = allocated_messages.find( message );
-                PROTOCOL_ASSERT( itor != allocated_messages.end() );
+                CORE_ASSERT( itor != allocated_messages.end() );
                 allocated_messages.erase( message );
                 #endif
             
                 num_allocated_messages--;
 
-                PROTOCOL_ASSERT( m_allocator );
+                CORE_ASSERT( m_allocator );
 
-                PROTOCOL_DELETE( *m_allocator, Message, message );
+                CORE_DELETE( *m_allocator, Message, message );
             }
         }
 

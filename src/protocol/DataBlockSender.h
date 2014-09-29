@@ -1,29 +1,27 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_DATA_BLOCK_SENDER_H
 #define PROTOCOL_DATA_BLOCK_SENDER_H
 
-#include "Common.h"
+#include "core/Core.h"
+
+namespace core { class Allocator; }
 
 namespace protocol
 {
     class Block;
-    class Allocator;
 
     class DataBlockSender
     {
     public:
 
-        DataBlockSender( Allocator & allocator, Block & dataBlock, int fragmentSize, int fragmentsPerSecond );
+        DataBlockSender( core::Allocator & allocator, Block & dataBlock, int fragmentSize, int fragmentsPerSecond );
 
         virtual ~DataBlockSender();
 
         void Clear();
 
-        void Update( const TimeBase & timeBase );
+        void Update( const core::TimeBase & timeBase );
 
         void ProcessAck( int fragmentId );
 
@@ -39,7 +37,7 @@ namespace protocol
 
     private:
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
         Block * m_dataBlock;
         int m_fragmentSize;
         float m_timeBetweenFragments;

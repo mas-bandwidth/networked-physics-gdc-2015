@@ -25,7 +25,7 @@ protected:
 
     Channel * CreateChannelInternal( int channeIndex )
     {
-        return PROTOCOL_NEW( GetChannelAllocator(), FakeChannel );
+        return CORE_NEW( GetChannelAllocator(), FakeChannel );
     }
 
     ChannelData * CreateChannelDataInternal( int channeIndex )
@@ -118,7 +118,7 @@ protected:
 
     Channel * CreateChannelInternal( int channelIndex )
     {
-        return PROTOCOL_NEW( GetChannelAllocator(), AckChannel, ackedPackets );
+        return CORE_NEW( GetChannelAllocator(), AckChannel, ackedPackets );
     }
 
     ChannelData * CreateChannelDataInternal( int channelIndex )

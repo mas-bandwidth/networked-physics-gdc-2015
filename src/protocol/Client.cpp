@@ -1,31 +1,29 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "Client.h"
-#include "Memory.h"
-#include "NetworkSimulator.h"
+#include "protocol/Client.h"
+#include "network/Simulator.h"
+#include "network/Interface.h"
+#include "core/Memory.h"
 
 namespace protocol
 {
     Client::Client( const ClientConfig & config )
         : m_config( config )
     {
-        PROTOCOL_ASSERT( m_config.networkInterface );
-        PROTOCOL_ASSERT( m_config.channelStructure );
+        CORE_ASSERT( m_config.networkInterface );
+        CORE_ASSERT( m_config.channelStructure );
 
         m_hostname[0] = '\0';
 
-        m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
+        m_allocator = m_config.allocator ? m_config.allocator : &core::memory::default_allocator();
 
         m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
         if ( m_config.maxServerDataSize > 0 )
-            m_dataBlockReceiver = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxServerDataSize );
+            m_dataBlockReceiver = CORE_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxServerDataSize );
 
         if ( m_config.clientData )
-            m_dataBlockSender = PROTOCOL_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.clientData, m_config.fragmentSize, m_config.fragmentsPerSecond );
+            m_dataBlockSender = CORE_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.clientData, m_config.fragmentSize, m_config.fragmentsPerSecond );
 
         memset( m_context, 0, sizeof(m_context) );
 
@@ -43,35 +41,35 @@ namespace protocol
         connectionConfig.packetFactory = m_packetFactory;
         connectionConfig.context = m_context;
 
-        m_connection = PROTOCOL_NEW( *m_allocator, Connection, connectionConfig );
+        m_connection = CORE_NEW( *m_allocator, Connection, connectionConfig );
 
         ClearStateData();
     }
 
     Client::~Client()
     {
-        PROTOCOL_ASSERT( m_allocator );
+        CORE_ASSERT( m_allocator );
 
         Disconnect();
 
         if ( m_dataBlockSender )
         {
-            PROTOCOL_DELETE( *m_allocator, ClientServerDataBlockSender, m_dataBlockSender );
+            CORE_DELETE( *m_allocator, ClientServerDataBlockSender, m_dataBlockSender );
             m_dataBlockSender = nullptr;
         }
 
         if ( m_dataBlockReceiver )
         {
-            PROTOCOL_DELETE( *m_allocator, ClientServerDataBlockReceiver, m_dataBlockReceiver );
+            CORE_DELETE( *m_allocator, ClientServerDataBlockReceiver, m_dataBlockReceiver );
             m_dataBlockReceiver = nullptr;
         }
 
-        PROTOCOL_ASSERT( m_connection );
-        PROTOCOL_ASSERT( m_packetFactory );
-        PROTOCOL_ASSERT( m_config.fragmentSize >= 0 );
-        PROTOCOL_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
+        CORE_ASSERT( m_connection );
+        CORE_ASSERT( m_packetFactory );
+        CORE_ASSERT( m_config.fragmentSize >= 0 );
+        CORE_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
 
-        PROTOCOL_DELETE( *m_allocator, Connection, m_connection );
+        CORE_DELETE( *m_allocator, Connection, m_connection );
 
         m_clientServerContext.Free( *m_allocator );
 
@@ -79,7 +77,7 @@ namespace protocol
         m_packetFactory = nullptr;          // IMPORTANT: packet factory pointer is not owned by us
     }
 
-    void Client::Connect( const Address & address )
+    void Client::Connect( const network::Address & address )
     {
         Disconnect();
 
@@ -91,7 +89,7 @@ namespace protocol
 
         SetClientState( CLIENT_STATE_SENDING_CONNECTION_REQUEST );
         m_address = address;
-        m_clientId = generate_id();
+        m_clientId = core::generate_id();
 
 //            printf( "connect: set client id = %x\n", m_clientId );
 
@@ -106,7 +104,7 @@ namespace protocol
 
         // is this hostname actually an address? If so connect by address instead.
 
-        Address address( hostname );
+        network::Address address( hostname );
         if ( address.IsValid() )
         {
             Connect( address );
@@ -159,7 +157,7 @@ namespace protocol
         ClearStateData();
         
         SetClientState( CLIENT_STATE_DISCONNECTED );
-        m_address = Address();
+        m_address = network::Address();
         m_hostname[0] = '\0';
 
         if ( m_dataBlockSender )
@@ -206,7 +204,7 @@ namespace protocol
         return m_extendedError;
     }
 
-#if PROTOCOL_USE_RESOLVER
+#if NETWORK_USE_RESOLVER
 
     Resolver * Client::GetResolver() const
     {
@@ -215,7 +213,7 @@ namespace protocol
 
 #endif
 
-    NetworkInterface * Client::GetNetworkInterface() const
+    network::Interface * Client::GetNetworkInterface() const
     {
         return m_config.networkInterface;
     }
@@ -232,12 +230,12 @@ namespace protocol
 
     void Client::SetContext( int index, const void * ptr )
     {
-        PROTOCOL_ASSERT( index >= CONTEXT_USER );
-        PROTOCOL_ASSERT( index < MaxContexts );
+        CORE_ASSERT( index >= CONTEXT_USER );
+        CORE_ASSERT( index < MaxContexts );
         m_context[index] = ptr;
     }
 
-    void Client::Update( const TimeBase & timeBase )
+    void Client::Update( const core::TimeBase & timeBase )
     {
         m_timeBase = timeBase;
 
@@ -534,7 +532,7 @@ namespace protocol
         if ( m_state != CLIENT_STATE_SENDING_CLIENT_DATA )
             return;
 
-        PROTOCOL_ASSERT( m_dataBlockSender );
+        CORE_ASSERT( m_dataBlockSender );
 
 //        printf( "update send client data\n" );
 
@@ -550,7 +548,7 @@ namespace protocol
 
     void Client::ProcessDisconnected( DisconnectedPacket * packet )
     {
-        PROTOCOL_ASSERT( packet );
+        CORE_ASSERT( packet );
 
         if ( packet->GetAddress() != m_address )
             return;
@@ -566,7 +564,7 @@ namespace protocol
 
     void Client::ProcessDataBlockFragment( DataBlockFragmentPacket * packet )
     {
-        PROTOCOL_ASSERT( packet );
+        CORE_ASSERT( packet );
 
         if ( packet->clientId != m_clientId )
             return;
@@ -594,7 +592,7 @@ namespace protocol
 
     void Client::ProcessDataBlockFragmentAck( DataBlockFragmentAckPacket * packet )
     {
-        PROTOCOL_ASSERT( packet );
+        CORE_ASSERT( packet );
 
 //        printf( "process fragment ack %d\n", packet->fragmentId );
 
@@ -626,7 +624,7 @@ namespace protocol
 
     void Client::DisconnectAndSetError( ClientError error, uint32_t extendedError )
     {
-        PROTOCOL_ASSERT( error != CLIENT_ERROR_NONE );
+        CORE_ASSERT( error != CLIENT_ERROR_NONE );
 
         OnError( error, extendedError );
 
@@ -645,7 +643,7 @@ namespace protocol
     void Client::ClearStateData()
     {
         m_hostname[0] = '\0';
-        m_address = Address();
+        m_address = network::Address();
         m_clientId = 0;
         m_serverId = 0;
         m_clientServerContext.RemoveClient( 0 );

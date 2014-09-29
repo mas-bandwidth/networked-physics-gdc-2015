@@ -1,12 +1,10 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_BLOCK_H
 #define PROTOCOL_BLOCK_H
 
-#include "Common.h"
+#include "core/Core.h"
+#include "core/Allocator.h"
 
 namespace protocol
 {
@@ -16,22 +14,22 @@ namespace protocol
 
         Block();
 
-        Block( Allocator & allocator, int bytes );
+        Block( core::Allocator & allocator, int bytes );
 
         ~Block();
 
-        void Connect( Allocator & allocator, uint8_t * data, int size );
+        void Connect( core::Allocator & allocator, uint8_t * data, int size );
 
         void Disconnect();
 
         void Destroy();
 
-        void SetAllocator( Allocator & allocator )
+        void SetAllocator( core::Allocator & allocator )
         {
             m_allocator = &allocator;
         }
 
-        Allocator * GetAllocator() const
+        core::Allocator * GetAllocator() const
         {
             return m_allocator;
         }
@@ -58,7 +56,7 @@ namespace protocol
 
     private:
 
-        Allocator * m_allocator;
+        core::Allocator * m_allocator;
         uint8_t * m_data;
         int m_size;
 

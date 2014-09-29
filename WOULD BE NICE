@@ -1,6 +1,12 @@
 WOULD BE NICE:
 
+    Network library should not depend on protocol. Work out how to split them apart.
+
+    ----------------------------------
+
     Put tool binaries into bin/tools instead of bin directly. This way tools can be easily excluded from the shipping product.
+
+    Setup a path so bin/tools are available from anywhere. I want my tools!
 
     Font builder should delete any *.font files that don't match entries in the JSON as a post-step
     (eg. stale font files stick around otherwise when you restructure the JSON)
@@ -14,17 +20,6 @@ WOULD BE NICE:
 
     Other heaps could be subheaps specified inside the level heap, by the code that runs
     for that particular level.
-
-    ----------------------
-
-    Its really annoying when doing client work to not be able to build and 
-    iterate on the C++ file without dropping to command line because of #ifdef CLIENT
-
-    ----------------------
-
-    It's really annoying to refer to protocol::memory, protocol::hash::something
-    and so on. The basic functionality that protocol refers on should be called
-    "core", eg. "core::memory", "core::hash" and so on.
 
     -----------------------------------
 
@@ -82,16 +77,6 @@ WOULD BE NICE:
 
     I would like the scratch allocator to be more resilient in  debug builds, 
     eg. for it to have safety checks, eg. missing magic # where expected, assert.
-
-    --------------------
-
-    I don't like the bool ipv6. Use address type instead, eg. ADDRESS_IPV6
-
-    --------------------
-
-    Restructure so that precompiled headers are used.
-
-    Add timing to build steps so the efficiency can be measured.
 
     ----------------------
 

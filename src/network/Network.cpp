@@ -1,6 +1,7 @@
 // Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #include "network/Network.h"
+#include "core/Core.h"
 
 namespace network 
 {     
