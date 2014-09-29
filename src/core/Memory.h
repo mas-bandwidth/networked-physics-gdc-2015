@@ -1,11 +1,13 @@
-#ifndef PROTOCOL_MEMORY_H
-#define PROTOCOL_MEMORY_H
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
+#ifndef CORE_MEMORY_H
+#define CORE_MEMORY_H
 
 #include "Common.h"
 #include "Allocator.h"
 #include <new>
 
-namespace protocol
+namespace core
 {
 	// memory interface
 
@@ -39,7 +41,6 @@ namespace protocol
 
 		~TempAllocator()
 		{
-			// note: temp allocator appears to be broken! it's not always freeing all blocks
 			void * p = *(void**) m_buffer;
 			while ( p ) 
 			{
@@ -128,7 +129,7 @@ namespace protocol
 	{
 		uint32_t m_total_allocated;
 
-#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if CORE_DEBUG_MEMORY_LEAKS
 		std::map<void*,int> m_alloc_map;
 #endif
 
@@ -143,7 +144,7 @@ namespace protocol
 
 		~MallocAllocator()
 		{
-#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if CORE_DEBUG_MEMORY_LEAKS
 			if ( m_alloc_map.size() )
 			{
 				printf( "you leaked memory!\n" );
@@ -160,9 +161,9 @@ namespace protocol
 			if ( m_total_allocated != 0 )
 			{
 				printf( "you leaked memory! %d bytes still allocated\n", m_total_allocated );
-				PROTOCOL_ASSERT( !"leaked memory" );
+				CORE_ASSERT( !"leaked memory" );
 			}
-			PROTOCOL_ASSERT( m_total_allocated == 0 );
+			CORE_ASSERT( m_total_allocated == 0 );
 		}
 
 		void * Allocate( uint32_t size, uint32_t align )
@@ -172,7 +173,7 @@ namespace protocol
 			void * p = data_pointer( h, align );
 			fill( h, p, ts );
 			m_total_allocated += ts;
-#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if CORE_DEBUG_MEMORY_LEAKS
 			m_alloc_map[p] = 1;
 #endif
 			return p;
@@ -182,14 +183,14 @@ namespace protocol
 		{
 			if ( !p )
 				return;
-#if PROTOCOL_DEBUG_MEMORY_LEAKS
+#if CORE_DEBUG_MEMORY_LEAKS
 			auto itor = m_alloc_map.find( p );
-			PROTOCOL_ASSERT( itor != m_alloc_map.end() );
+			CORE_ASSERT( itor != m_alloc_map.end() );
 			m_alloc_map.erase( p );
 #endif
 			Header * h = header( p );
 			m_total_allocated -= h->size;
-			PROTOCOL_ASSERT( m_total_allocated >= 0 );
+			CORE_ASSERT( m_total_allocated >= 0 );
 			free( h );
 		}
 
@@ -226,7 +227,7 @@ namespace protocol
 
 		~ScratchAllocator() 
 		{
-			PROTOCOL_ASSERT( m_free == m_allocate );			// You leaked memory!
+			CORE_ASSERT( m_free == m_allocate );			// You leaked memory!
 
 			m_backing.Free( m_begin );
 		}
@@ -243,7 +244,7 @@ namespace protocol
 
 		void * Allocate( uint32_t size, uint32_t align ) 
 		{
-			PROTOCOL_ASSERT( align % 4 == 0 );
+			CORE_ASSERT( align % 4 == 0 );
 
 			size = ( ( size + 3 ) / 4 ) * 4;
 
@@ -265,13 +266,7 @@ namespace protocol
 			
 			// If the buffer is exhausted use the backing allocator instead.
 			if ( IsAllocated( p ) )
-			{
-				/*
-				const bool tempMemoryIsExhausted = true;
-				PROTOCOL_ASSERT( !tempMemoryIsExhausted );
-				*/
 				return m_backing.Allocate( size, align );
-			}
 
 			fill( h, data, p - (uint8_t*) h );
 			m_allocate = p;
@@ -291,7 +286,7 @@ namespace protocol
 
 			// Mark this slot as free
 			Header * h = header( p );
-			PROTOCOL_ASSERT( (h->size & 0x80000000u ) == 0 );
+			CORE_ASSERT( (h->size & 0x80000000u ) == 0 );
 			h->size = h->size | 0x80000000u;
 
 			// Advance the free pointer past all free slots.
@@ -332,8 +327,8 @@ namespace protocol
 	#define alignof(x) __alignof(x)
 #endif
 
-	#define PROTOCOL_NEW( a, T, ... ) ( new ((a).Allocate(sizeof(T), alignof(T))) T(__VA_ARGS__) )
-	#define PROTOCOL_DELETE( a, T, p ) do { if (p) { (p)->~T(); (a).Free(p); } } while (0)	
+	#define CORE_NEW( a, T, ... ) ( new ((a).Allocate(sizeof(T), alignof(T))) T(__VA_ARGS__) )
+	#define CORE_DELETE( a, T, p ) do { if (p) { (p)->~T(); (a).Free(p); } } while (0)	
 
 	template <typename T> T * AllocateArray( Allocator & allocator, int arraySize, T * dummy )
 	{
@@ -350,8 +345,8 @@ namespace protocol
 		allocator.Free( array );
 	}
 
-	#define PROTOCOL_NEW_ARRAY( a, T, count ) AllocateArray( a, count, (T*)nullptr )
-	#define PROTOCOL_DELETE_ARRAY( a, array, count ) DeleteArray( a, array, count )
+	#define CORE_NEW_ARRAY( a, T, count ) AllocateArray( a, count, (T*)nullptr )
+	#define CORE_DELETE_ARRAY( a, array, count ) DeleteArray( a, array, count )
 
 }
 

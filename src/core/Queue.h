@@ -1,11 +1,12 @@
-#ifndef PROTOCOL_QUEUE_H
-#define PROTOCOL_QUEUE_H
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
+#ifndef CORE_QUEUE_H
+#define CORE_QUEUE_H
 
 #include "Array.h"
 #include "Types.h"
-#include <string.h>
 
-namespace protocol
+namespace core
 {
     namespace queue_internal
     {

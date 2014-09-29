@@ -1,5 +1,5 @@
-#ifndef PROTOCOL_STRING_STREAM_H
-#define PROTOCOL_STRING_STREAM_H
+#ifndef CORE_STRING_STREAM_H
+#define CORE_STRING_STREAM_H
 
 #include "Array.h"
 #include <string.h>
@@ -33,7 +33,7 @@
 	
 #endif
 
-namespace protocol
+namespace core
 {
 	/// Functions for operating on an Array<char> as a stream of characters,
 	/// useful for string formatting, etc.

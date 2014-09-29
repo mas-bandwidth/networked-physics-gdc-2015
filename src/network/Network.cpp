@@ -1,21 +1,18 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "Network.h"
+#include "network/Network.h"
 
-namespace protocol 
+namespace network 
 {     
     static bool s_networkInitialized = false;
 
     bool InitializeNetwork()     
     {         
-        PROTOCOL_ASSERT( !s_networkInitialized );
+        CORE_ASSERT( !s_networkInitialized );
 
         bool result = true;
 
-        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+        #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
         WSADATA WsaData;         
         result = WSAStartup( MAKEWORD(2,2), &WsaData ) == NO_ERROR;
         #endif
@@ -28,9 +25,9 @@ namespace protocol
 
     void ShutdownNetwork()
     {
-        PROTOCOL_ASSERT( s_networkInitialized );
+        CORE_ASSERT( s_networkInitialized );
 
-        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+        #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
         WSACleanup();
         #endif
 

@@ -6,7 +6,7 @@
 #ifndef PROTOCOL_ENUMS_H
 #define PROTOCOL_ENUMS_H
 
-#include "Common.h"
+#include "core/Common.h"
 
 namespace protocol
 {

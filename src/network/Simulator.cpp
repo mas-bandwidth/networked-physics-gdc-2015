@@ -1,29 +1,26 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "NetworkSimulator.h"
-#include "PacketFactory.h"
-#include "Memory.h"
+#include "network/Simulator.h"
+#include "network/PacketFactory.h"      // todo: we need to not depend on protocol from network
+#include "core/Memory.h"
 
-namespace protocol
+namespace network
 {
-    NetworkSimulator::NetworkSimulator( const NetworkSimulatorConfig & config ) : m_config( config )
+    Simulator::Simulator( const SimulatorConfig & config ) : m_config( config )
     {
-        PROTOCOL_ASSERT( m_config.packetFactory );
+        CORE_ASSERT( m_config.packetFactory );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
-        m_packets = PROTOCOL_NEW_ARRAY( *m_allocator, PacketData, config.numPackets );
+        m_packets = CORE_NEW_ARRAY( *m_allocator, PacketData, config.numPackets );
 
         m_packetNumber = 0;
         m_numStates = 0;
     }
 
-    NetworkSimulator::~NetworkSimulator()
+    Simulator::~Simulator()
     {
-        PROTOCOL_ASSERT( m_packets );
+        CORE_ASSERT( m_packets );
 
         for ( int i = 0; i < m_config.numPackets; ++i )
         {
@@ -34,20 +31,20 @@ namespace protocol
             }
         }
 
-        PROTOCOL_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
+        CORE_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
     }
 
-    void NetworkSimulator::AddState( const NetworkSimulatorState & state )
+    void Simulator::AddState( const NetworkSimulatorState & state )
     {
-        PROTOCOL_ASSERT( m_numStates < MaxSimulatorStates - 1 );
+        CORE_ASSERT( m_numStates < MaxSimulatorStates - 1 );
         m_states[m_numStates++] = state;
         if ( m_numStates == 1 )
             m_state = m_states[0];
     }
 
-    void NetworkSimulator::SendPacket( const Address & address, Packet * packet )
+    void Simulator::SendPacket( const Address & address, Packet * packet )
     {
-        PROTOCOL_ASSERT( packet );
+        CORE_ASSERT( packet );
 
         if ( random_int( 0, 99 ) < m_state.packetLoss )
         {
@@ -74,7 +71,7 @@ namespace protocol
         m_packetNumber++;
     }
 
-    Packet * NetworkSimulator::ReceivePacket()
+    Packet * Simulator::ReceivePacket()
     {
         PacketData * oldestPacket = nullptr;
 
@@ -97,7 +94,7 @@ namespace protocol
         return nullptr;
     }
 
-    void NetworkSimulator::Update( const TimeBase & timeBase )
+    void Simulator::Update( const TimeBase & timeBase )
     {
         m_timeBase = timeBase;
 
@@ -108,14 +105,14 @@ namespace protocol
         }
     }
 
-    uint32_t NetworkSimulator::GetMaxPacketSize() const
+    uint32_t Simulator::GetMaxPacketSize() const
     {
         return 0xFFFFFFFF;
     }
 
-    PacketFactory & NetworkSimulator::GetPacketFactory() const
+    PacketFactory & Simulator::GetPacketFactory() const
     {
-        PROTOCOL_ASSERT( m_config.packetFactory );
+        CORE_ASSERT( m_config.packetFactory );
         return *m_config.packetFactory;
     }
 }

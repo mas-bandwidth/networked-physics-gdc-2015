@@ -1,12 +1,8 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "Common.h"
+#include "core/Common.h"
 #include <time.h>
-
-#if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+#if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
 #include <unistd.h>
 #endif
 
@@ -32,9 +28,9 @@ namespace protocol
 
     void sleep_milliseconds( uint32_t milliseconds )
     {
-        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+        #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
             usleep( milliseconds * 1000);
-        #elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+        #elif CORE_PLATFORM == CORE_PLATFORM_WINDOWS
             Sleep( milliseconds );
         #else
             #error need sleep_milliseconds implementation for this platform!
@@ -48,10 +44,10 @@ namespace protocol
 
     int random_int( int min, int max )
     {
-        PROTOCOL_ASSERT( max > min );
+        CORE_ASSERT( max > min );
         int result = min + rand() % ( max - min + 1 );
-        PROTOCOL_ASSERT( result >= min );
-        PROTOCOL_ASSERT( result <= max );
+        CORE_ASSERT( result >= min );
+        CORE_ASSERT( result <= max );
         return result;
     }
 
@@ -64,7 +60,7 @@ namespace protocol
 
     uint32_t hash_data( const uint8_t * data, uint32_t length, uint32_t hash )
     {
-        PROTOCOL_ASSERT( data );
+        CORE_ASSERT( data );
         for ( uint32_t i = 0; i < length; ++i )
         {
             hash += data[i];
@@ -76,7 +72,7 @@ namespace protocol
 
     uint32_t hash_string( const char string[], uint32_t hash )
     {
-        PROTOCOL_ASSERT( string );
+        CORE_ASSERT( string );
         while ( *string != '\0' )
         {
             char c = *string++;
@@ -101,8 +97,8 @@ namespace protocol
 
         while ( data != end )
         {
-            #if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN
-                uint64 k = *data++;
+            #if CORE_ENDIAN == CORE_BIG_ENDIAN
+                uint64_t k = *data++;
                 uint8_t * p = (uint8_t*) &k;
                 uint8_t c;
                 c = p[0]; p[0] = p[7]; p[7] = c;

@@ -1,19 +1,16 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "Network.h"
-#include "BSDSocket.h"
-#include "Memory.h"
-#include "Queue.h"
+#include "network/Network.h"
+#include "network/BSDSocket.h"
+#include "core/Memory.h"
+#include "core/Queue.h"
 
-#if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+#if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
 
     #include <winsock2.h>
     #pragma comment( lib, "wsock32.lib" )
 
-#elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+#elif CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
 
     #include <sys/socket.h>
     #include <sys/types.h>
@@ -31,21 +28,21 @@
 
 #endif
 
-namespace protocol 
+namespace core
 {     
     BSDSocket::BSDSocket( const BSDSocketConfig & config )
         : m_config( config ), 
           m_send_queue( config.allocator ? *config.allocator : memory::default_allocator() ),
           m_receive_queue( config.allocator ? *config.allocator : memory::default_allocator() )
     {
-        PROTOCOL_ASSERT( IsNetworkInitialized() );
+        CORE_ASSERT( IsNetworkInitialized() );
 
-        PROTOCOL_ASSERT( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
-        PROTOCOL_ASSERT( m_config.maxPacketSize > 0 );
+        CORE_ASSERT( m_config.packetFactory );       // IMPORTANT: You must supply a packet factory!
+        CORE_ASSERT( m_config.maxPacketSize > 0 );
 
         m_allocator = m_config.allocator ? m_config.allocator : &memory::default_allocator();
 
-        PROTOCOL_ASSERT( m_allocator );
+        CORE_ASSERT( m_allocator );
 
         queue::reserve( m_send_queue, m_config.sendQueueSize );
         queue::reserve( m_receive_queue, m_config.receiveQueueSize );
@@ -118,7 +115,7 @@ namespace protocol
 
         // set non-blocking io
 
-        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+        #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
     
             int nonBlocking = 1;
             if ( fcntl( m_socket, F_SETFL, O_NONBLOCK, nonBlocking ) == -1 )
@@ -128,7 +125,7 @@ namespace protocol
                 return;
             }
         
-        #elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+        #elif CORE_PLATFORM == CORE_PLATFORM_WINDOWS
     
             DWORD nonBlocking = 1;
             if ( ioctlsocket( m_socket, FIONBIO, &nonBlocking ) != 0 )
@@ -155,9 +152,9 @@ namespace protocol
 
         if ( m_socket != 0 )
         {
-            #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_MAC || PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_UNIX
+            #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
             close( m_socket );
-            #elif PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+            #elif CORE_PLATFORM == CORE_PLATFORM_WINDOWS
             closesocket( m_socket );
             #else
             #error unsupported platform
@@ -168,14 +165,14 @@ namespace protocol
         for ( int i = 0; i < queue::size( m_send_queue ); ++i )
         {
             auto packet = m_send_queue[i];
-            PROTOCOL_ASSERT( packet );
+            CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
         for ( int i = 0; i < queue::size( m_receive_queue ); ++i )
         {
             auto packet = m_receive_queue[i];
-            PROTOCOL_ASSERT( packet );
+            CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
@@ -201,8 +198,8 @@ namespace protocol
             return;
         }
 
-        PROTOCOL_ASSERT( packet );
-        PROTOCOL_ASSERT( address.IsValid() );
+        CORE_ASSERT( packet );
+        CORE_ASSERT( address.IsValid() );
         
         packet->SetAddress( address );
 
@@ -247,7 +244,7 @@ namespace protocol
 
     PacketFactory & BSDSocket::GetPacketFactory() const
     {
-        PROTOCOL_ASSERT( m_config.packetFactory );
+        CORE_ASSERT( m_config.packetFactory );
         return *m_config.packetFactory;
     }
 
@@ -258,8 +255,8 @@ namespace protocol
 
     uint64_t BSDSocket::GetCounter( int index ) const
     {
-        PROTOCOL_ASSERT( index >= 0 );
-        PROTOCOL_ASSERT( index < BSD_SOCKET_COUNTER_NUM_COUNTERS );
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < BSD_SOCKET_COUNTER_NUM_COUNTERS );
         return m_counters[index];
     }
 
@@ -301,7 +298,7 @@ namespace protocol
 
             stream.Flush();
 
-            PROTOCOL_ASSERT( !stream.IsOverflow() );
+            CORE_ASSERT( !stream.IsOverflow() );
 
             if ( stream.IsOverflow() )
             {
@@ -313,7 +310,7 @@ namespace protocol
             const int bytes = stream.GetBytesWritten();
             const uint8_t * data = stream.GetData();
 
-            PROTOCOL_ASSERT( bytes <= m_config.maxPacketSize );
+            CORE_ASSERT( bytes <= m_config.maxPacketSize );
             if ( bytes > m_config.maxPacketSize )
             {
                 m_counters[BSD_SOCKET_COUNTER_PACKET_TOO_LARGE_TO_SEND]++;
@@ -360,8 +357,8 @@ namespace protocol
             stream.Align();
 
             auto packet = m_config.packetFactory->Create( packetType );
-            PROTOCOL_ASSERT( packet );
-            PROTOCOL_ASSERT( packet->GetType() == packetType );
+            CORE_ASSERT( packet );
+            CORE_ASSERT( packet->GetType() == packetType );
             if ( !packet )
             {
 //                printf( "failed to create packet of type %d\n", packetType );
@@ -379,7 +376,7 @@ namespace protocol
                 continue;
             }
 
-            PROTOCOL_ASSERT( !stream.IsOverflow() );
+            CORE_ASSERT( !stream.IsOverflow() );
             if ( stream.IsOverflow() )
             {
                 m_counters[BSD_SOCKET_COUNTER_SERIALIZE_READ_OVERFLOW]++;
@@ -401,10 +398,10 @@ namespace protocol
 
     bool BSDSocket::SendPacketInternal( const Address & address, const uint8_t * data, size_t bytes )
     {
-        PROTOCOL_ASSERT( m_socket );
-        PROTOCOL_ASSERT( address.IsValid() );
-        PROTOCOL_ASSERT( bytes > 0 );
-        PROTOCOL_ASSERT( bytes <= m_config.maxPacketSize );
+        CORE_ASSERT( m_socket );
+        CORE_ASSERT( address.IsValid() );
+        CORE_ASSERT( bytes > 0 );
+        CORE_ASSERT( bytes <= m_config.maxPacketSize );
 
         bool result = false;
 
@@ -442,11 +439,11 @@ namespace protocol
 
     int BSDSocket::ReceivePacketInternal( Address & sender, void * data, int size )
     {
-        PROTOCOL_ASSERT( data );
-        PROTOCOL_ASSERT( size > 0 );
-        PROTOCOL_ASSERT( m_socket );
+        CORE_ASSERT( data );
+        CORE_ASSERT( size > 0 );
+        CORE_ASSERT( m_socket );
 
-        #if PROTOCOL_PLATFORM == PROTOCOL_PLATFORM_WINDOWS
+        #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
         typedef int socklen_t;
         #endif
         
@@ -467,7 +464,7 @@ namespace protocol
 
         sender = Address( from );
 
-        PROTOCOL_ASSERT( result >= 0 );
+        CORE_ASSERT( result >= 0 );
 
         m_counters[BSD_SOCKET_COUNTER_PACKETS_RECEIVED]++;
 

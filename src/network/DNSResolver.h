@@ -1,23 +1,22 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_DNS_RESOLVER_H
-#define PROTOCOL_DNS_RESOLVER_H
+#ifndef NETWORK_DNS_RESOLVER_H
+#define NETWORK_DNS_RESOLVER_H
 
-#include "Config.h"
+#include "network/Config.h"
 
-#if PROTOCOL_USE_RESOLVER
+#if NETWORK_USE_RESOLVER
 
-#include "Resolver.h"
+#include "network/Resolver.h"
 
 struct addrinfo;
 
-namespace protocol
+namespace network
 {
+    // todo: ewwwwww!
     ResolveResult DNSResolve_Blocking( std::string name, bool ipv6 );
 
+    // todo: ewwwwww!
     typedef std::map<std::string,ResolveEntry*> ResolveMap;
 
     class DNSResolver : public Resolver

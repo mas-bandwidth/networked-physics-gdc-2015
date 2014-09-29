@@ -1,23 +1,22 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_NETWORK_INTERFACE_H
-#define PROTOCOL_NETWORK_INTERFACE_H
+#ifndef NETWORK_INTERFACE_H
+#define NETWORK_INTERFACE_H
 
-#include "Common.h"
-#include "Stream.h"
-#include "Address.h"
+// todo: maybe rename this to "Interface.h"?
+
+#include "core/Common.h"
+#include "network/Address.h"
+#include "Stream.h"     // todo: can't depend on protocol stuff from network!
 #include "Packet.h"
 
-namespace protocol
+namespace network
 {
-    class NetworkInterface
+    class Interface
     {
     public:
 
-        virtual ~NetworkInterface() {}
+        virtual ~Interface() {}
 
         virtual void SendPacket( const Address & address, Packet * packet ) = 0;        // takes ownership of packet pointer
 
@@ -25,10 +24,9 @@ namespace protocol
 
         virtual void Update( const TimeBase & timeBase ) = 0;
 
+        // todo: really can't be doing this stuff at the network interface level!
         virtual uint32_t GetMaxPacketSize() const = 0;
-
         virtual PacketFactory & GetPacketFactory() const = 0;
-
         virtual void SetContext( const void ** context ) = 0;
     };
 }

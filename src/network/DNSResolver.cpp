@@ -1,11 +1,8 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "DNSResolver.h"
+#include "network/DNSResolver.h"
 
-#if PROTOCOL_USE_RESOLVER
+#if CORE_USE_RESOLVER
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,7 +10,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-namespace protocol
+namespace network
 {
     ResolveResult DNSResolve_Blocking( std::string name, bool ipv6 = true )
     {

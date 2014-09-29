@@ -1,9 +1,11 @@
-#ifndef PROTOCOL_HASH_H
-#define PROTOCOL_HASH_H
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+
+#ifndef CORE_HASH_H
+#define CORE_HASH_H
 
 #include "Array.h"
 
-namespace protocol
+namespace core
 {
     namespace hash
     {

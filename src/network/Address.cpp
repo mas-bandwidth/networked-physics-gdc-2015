@@ -1,15 +1,12 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "Address.h"
+#include "network/Address.h"
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <memory.h>
 #include <string.h>
 
-namespace protocol
+namespace network
 {
     Address::Address()
     {
@@ -72,7 +69,7 @@ namespace protocol
         }
         else
         {
-            PROTOCOL_ASSERT( false );
+            CORE_ASSERT( false );
             Clear();
         }
     }
@@ -113,7 +110,7 @@ namespace protocol
         // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
         // 2. otherwise try to parse as raw IPv6 address, parse using inet_pton
 
-        PROTOCOL_ASSERT( address_in );
+        CORE_ASSERT( address_in );
 
         char buffer[256];
         char * address = buffer;
@@ -186,13 +183,13 @@ namespace protocol
 
     uint32_t Address::GetAddress4() const
     {
-        PROTOCOL_ASSERT( m_type == ADDRESS_IPV4 );
+        CORE_ASSERT( m_type == ADDRESS_IPV4 );
         return m_address4;
     }
 
     const uint16_t * Address::GetAddress6() const
     {
-        PROTOCOL_ASSERT( m_type == ADDRESS_IPV6 );
+        CORE_ASSERT( m_type == ADDRESS_IPV6 );
         return m_address6;
     }
 

@@ -1,7 +1,7 @@
 solution "Protocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
-    includedirs { "include", "." }
+    includedirs { "src", "." }
     platforms { "x64", "x32" }
     configurations { "Debug", "Release" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
@@ -9,70 +9,75 @@ solution "Protocol"
         flags { "OptimizeSpeed" }
         defines { "NDEBUG" }
 
+project "core"
+    kind "StaticLib"
+    files { "src/core/*.h", "src/core/*.cpp" }
+    targetdir "lib"
+
 project "protocol"
     kind "StaticLib"
-    files { "include/*.h", "src/*.cpp" }
+    files { "src/protocol/*.h", "src/protocol/*.cpp" }
     targetdir "lib"
 
 project "UnitTest"
     kind "ConsoleApp"
     files { "tests/UnitTest.cpp", "tests/Test*.cpp" }
-    links { "protocol" }
+    links { "core", "protocol" }
     location "build"
     targetdir "bin"
 
 project "SoakProtocol"
     kind "ConsoleApp"
     files { "tests/SoakProtocol.cpp" }
-    links { "protocol" }
+    links { "core", "protocol" }
     targetdir "bin"
     location "build"
 
 project "SoakClientServer"
     kind "ConsoleApp"
     files { "tests/SoakClientServer.cpp" }
-    links { "protocol" }
+    links { "core", "protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileProtocol"
     kind "ConsoleApp"
     files { "tests/ProfileProtocol.cpp" }
-    links { "protocol" }
+    links { "core", "protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileClientServer"
     kind "ConsoleApp"
     files { "tests/ProfileClientServer.cpp" }
-    links { "protocol" }
+    links { "core", "protocol" }
     targetdir "bin"
     location "build"
 
 project "FontBuilder"
     kind "ConsoleApp"
     files { "tools/FontBuilder/*.cpp" }
-    links { "freetype", "jansson" }
+    links { "core", "freetype", "jansson" }
     location "build"
     targetdir "bin"
 
 project "Client"
     kind "ConsoleApp"
-    files { "game/*.cpp" }
-    links { "protocol", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    files { "src/game/*.cpp" }
+    links { "core", "protocol", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
 
 project "Server"
     kind "ConsoleApp"
-    files { "game/*.cpp" }
-    links { "protocol" }
+    files { "src/game/*.cpp" }
+    links { "core", "protocol" }
     location "build"
     targetdir "bin"
 
 if _ACTION == "clean" then
-    os.execute "rm -rf bin"     -- IMPORTANT: os.rmdif follows symlinks and we don't want that
+    os.execute "rm -rf bin"     -- IMPORTANT: LUA os.rmdif follows symlinks and we don't want that!!!
     os.rmdir "lib"
     os.rmdir "obj"
     os.rmdir "build"
@@ -118,7 +123,33 @@ if not os.is "windows" then
 
     newaction
     {
-        trigger     = "lib",
+        trigger     = "core",
+        description = "Build core library",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            os.execute "make -j32 core"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "network",
+        description = "Build network library",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            os.execute "make -j32 network"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "protocol",
         description = "Build protocol library",
         valid_kinds = premake.action.get("gmake").valid_kinds,
         valid_languages = premake.action.get("gmake").valid_languages,

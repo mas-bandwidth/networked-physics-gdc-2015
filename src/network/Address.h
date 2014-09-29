@@ -1,18 +1,15 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_ADDRESS_H
-#define PROTOCOL_ADDRESS_H
+#ifndef NETWORK_ADDRESS_H
+#define NETWORK_ADDRESS_H
 
-#include "Common.h"
+#include "core/Common.h"
 
 struct addrinfo;
 struct sockaddr_in6;
 struct sockaddr_storage;
 
-namespace protocol
+namespace network
 {    
     class Address
     {

@@ -1,27 +1,56 @@
 DONE:
 
-    Need to access shader manager inside font manager in order to get font shader.
-
-    Seems like managers need to be inside globals, eg. globals.fontManager, globals.shaderManager etc.
-
-    I feel that I would prefer global.shaderManager instead of globals.shaderManager
-
-    Remember, the code that I'm writing here is game code it is OK to be bound together. This is not library code!
-
-TODO:
-
-    ------------------------------
-
-    Split out common stuff from protocol to "core"
-
-    This should include types, allocators, common, log functions, file functions (from tools)
-    and so on. Core should be accessible to all libraries, tools and executables, client and server.
-
     I'm thinking src/core, src/protocol and so on.
 
-    This would avoid annoying stuff like protocol::hash::get and so on. Hash is not part of protocol!
+    Set up directory structure src/core, src/protocol, src/game and so on.
 
-    Move useful file related routines from the font builder / loader somewhere that they can be shared.
+    Move all existing source to "src/protocol" and make sure core is built and links w. everything.
+
+    Make sure game still compiles and links.
+
+    Start moving stuff over to core.
+
+    Start with "core/Common.h". Switch so it is necessary to include files across projects via prefex, eg. "core/" "protocol/" etc.
+
+    This should include types, allocators, common, log functions, asserts, file functions (from tools)
+    and so on. Core should be accessible to all libraries, tools and executables, client and server.
+
+    Continue moving stuff until core compiles. Then conver core to "CORE_" and "namespace core".
+
+    Split out the network related stuff from protocol into network.
+
+TODO:
+    
+    One thing that I really dislike, the network interfaces are taking raw packets
+    and instead of serializing them to packets and sending those packets, they are
+    doing that internally.
+
+    This seems wrong to me. I think the concept of an abstract packet is "protocol"
+    and should be separate frome networking.
+
+    Networking should definitely not need to know about serialization, or streams, or abstract packets.
+
+    But. The entirity of the network interface is based around the packet.
+
+    It seems that serialization must occur *before* the network interface handles the packet.
+
+    Network interface should primarily be concerned with passing around pointers to packet data.
+
+    Not the content of this packet data or serialization of it!
+
+    ---------------------------------
+
+    Update protocol until it compiles.
+
+    core/Common.h should probably become core/Core.h?
+
+    Pass over unit tests and convert them to the new library split.
+
+    ---------------------------------
+
+    Sublime needs to be updated to include "../" as an include dir, as well as "../src"!
+
+    Setup a way to switch between build systems easily inside Sublime, eg. "C++11 (Client)", "C++11 (Server)"
 
     ---------------------------------
 

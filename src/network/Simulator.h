@@ -1,27 +1,27 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_NETWORK_SIMULATOR_H
-#define PROTOCOL_NETWORK_SIMULATOR_H
+#ifndef NETWORK_SIMULATOR_H
+#define NETWORK_SIMULATOR_H
 
-#include "Common.h"
-#include "NetworkInterface.h"
+// todo: probably rename this to Simulator.h
 
-namespace protocol
+#include "core/Common.h"
+#include "network/NetworkInterface.h"
+
+namespace core { class Allocator; }
+
+namespace network
 {
-    class Allocator;
     class PacketFactory;
 
-    struct NetworkSimulatorConfig
+    struct SimulatorConfig
     {
         Allocator * allocator;
         PacketFactory * packetFactory;
         int stateChance;                    // 1 in n chance to change state per-update
         int numPackets;                     // number of packets to buffer
 
-        NetworkSimulatorConfig()
+        SimulatorConfig()
         {   
             allocator = nullptr;            // allocator used for allocations with the same life cycle as this object.
             packetFactory = nullptr;        // packet factory. must be specified -- we need it to destroy buffered packets in destructor.
@@ -30,22 +30,22 @@ namespace protocol
         }
     };
 
-    struct NetworkSimulatorState
+    struct SimulatorState
     {
         float latency;                      // amount of latency in seconds
         float jitter;                       // amount of jitter +/- in seconds
         float packetLoss;                   // packet loss (%)
 
-        NetworkSimulatorState()
+        SimulatorState()
         {
             latency = 0.0f;
             jitter = 0.0f;
             packetLoss = 0.0f;
         }
 
-        NetworkSimulatorState( float _latency,
-                               float _jitter,
-                               float _packetLoss )
+        SimulatorState( float _latency,
+                        float _jitter,
+                        float _packetLoss )
         {
             latency = _latency;
             jitter = _jitter;
@@ -53,15 +53,15 @@ namespace protocol
         }
     };
 
-    class NetworkSimulator : public NetworkInterface
+    class Simulator : public Interface
     {
     public:
 
-        NetworkSimulator( const NetworkSimulatorConfig & config = NetworkSimulatorConfig() );
+        Simulator( const SimulatorConfig & config = SimulatorConfig() );
 
-        ~NetworkSimulator();
+        ~Simulator();
 
-        void AddState( const NetworkSimulatorState & state );
+        void AddState( const SimulatorState & state );
 
         void SendPacket( const Address & address, Packet * packet );
 
@@ -69,10 +69,9 @@ namespace protocol
 
         void Update( const TimeBase & timeBase );
 
+        // todo: this stuff simply doesn't belong here
         uint32_t GetMaxPacketSize() const;
-
         PacketFactory & GetPacketFactory() const;
-
         void SetContext( const void ** context ) {}        // not needed, we don't actually serialize the packets
 
     private:
@@ -84,7 +83,7 @@ namespace protocol
             uint32_t packetNumber = 0;
         };
 
-        const NetworkSimulatorConfig m_config;
+        const SimulatorConfig m_config;
 
         Allocator * m_allocator;
 
@@ -94,11 +93,11 @@ namespace protocol
         PacketData * m_packets;
 
         int m_numStates;
-        NetworkSimulatorState m_state;
-        NetworkSimulatorState m_states[MaxSimulatorStates];
+        SimulatorState m_state;
+        SimulatorState m_states[MaxSimulatorStates];
 
-        NetworkSimulator( const NetworkSimulator & other );
-        const NetworkSimulator & operator = ( const NetworkSimulator & other );
+        Simulator( const Simulator & other );
+        const Simulator & operator = ( const Simulator & other );
     };
 }
 

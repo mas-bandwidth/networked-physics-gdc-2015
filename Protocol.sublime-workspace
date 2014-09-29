@@ -433,22 +433,61 @@
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
+		"/Users/gaffer/git/protocol/src/core/Memory.h",
+		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/src/network/Address.h",
+		"/Users/gaffer/git/protocol/src/network/BSDSocket.h",
+		"/Users/gaffer/git/protocol/src/network/DNSResolver.h",
+		"/Users/gaffer/git/protocol/src/network/Network.h",
+		"/Users/gaffer/git/protocol/src/network/NetworkInterface.h",
+		"/Users/gaffer/git/protocol/src/network/NetworkSimulator.h",
+		"/Users/gaffer/git/protocol/src/network/Resolver.h",
+		"/Users/gaffer/git/protocol/src/network/Address.cpp",
+		"/Users/gaffer/git/protocol/src/network/BSDSocket.cpp",
+		"/Users/gaffer/git/protocol/src/network/DNSResolver.cpp",
+		"/Users/gaffer/git/protocol/src/network/Network.cpp",
+		"/Users/gaffer/git/protocol/src/network/NetworkSimulator.cpp",
+		"/Users/gaffer/git/protocol/src/core/Memory.cpp",
+		"/Users/gaffer/git/protocol/Makefile",
+		"/Users/gaffer/git/protocol/src/core/StringStream.h",
+		"/Users/gaffer/git/protocol/src/core/Queue.h",
+		"/Users/gaffer/git/protocol/src/core/untitled",
+		"/Users/gaffer/git/protocol/src/core/Log.h",
+		"/Users/gaffer/git/protocol/src/core/Hash.h",
+		"/Users/gaffer/git/protocol/src/core/Array.h",
+		"/Users/gaffer/git/protocol/src/core/Allocator.h",
+		"/Users/gaffer/git/protocol/src/core/Config.h",
+		"/Users/gaffer/git/protocol/src/core/Common.h",
+		"/Users/gaffer/git/protocol/src/core/Common.cpp",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/src/game/Game.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Client.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
+		"/Users/gaffer/git/protocol/src/protocol/Address.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
+		"/Users/gaffer/git/protocol/core.make",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/src/game/GameMessages.h",
+		"/Users/gaffer/git/protocol/data/shaders/Gouraud.frag",
+		"/Users/gaffer/git/protocol/build/Client.make",
+		"/Users/gaffer/git/protocol/src/core/Core.cpp",
 		"/Users/gaffer/git/protocol/game/Font.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
+		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
+		"/Users/gaffer/git/protocol/src/Memory.cpp",
+		"/Users/gaffer/git/protocol/game/Game.cpp",
+		"/Users/gaffer/git/protocol/game/Font.h",
+		"/Users/gaffer/git/protocol/data/shaders/Font.vert",
+		"/Users/gaffer/git/protocol/game/ShaderManager.h",
+		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
 		"/Users/gaffer/git/protocol/game/FontManager.cpp",
 		"/Users/gaffer/git/protocol/game/FontManager.h",
-		"/Users/gaffer/git/protocol/TODO",
 		"/Users/gaffer/git/protocol/game/Global.h",
 		"/Users/gaffer/git/protocol/data/shaders/Phong.vert",
-		"/Users/gaffer/git/protocol/data/shaders/Font.vert",
-		"/Users/gaffer/git/protocol/game/Game.cpp",
 		"/Users/gaffer/git/protocol/game/Globals.cpp",
 		"/Users/gaffer/git/protocol/game/Render.cpp",
 		"/Users/gaffer/git/protocol/game/ShaderManager.cpp",
-		"/Users/gaffer/git/protocol/src/Memory.cpp",
-		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
-		"/Users/gaffer/git/protocol/game/Font.h",
 		"/Users/gaffer/git/protocol/data/fonts/Fonts.json",
 		"/Users/gaffer/git/protocol/data/shaders/Triangle.frag",
 		"/Users/gaffer/git/protocol/tests/TestFoundation.cpp",
@@ -456,14 +495,10 @@
 		"/Users/gaffer/git/protocol/game/GameContext.h",
 		"/Users/gaffer/git/protocol/data/shaders/Specular.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Discard.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Discard.vert",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/game/ShaderManager.h",
 		"/Users/gaffer/git/protocol/data/shaders/Specular.frag",
 		"/Users/gaffer/git/protocol/include/Server.h",
 		"/Users/gaffer/git/protocol/data/shaders/Subroutine.frag",
-		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
 		"/Users/gaffer/git/protocol/build/SoakProtocol.make",
 		"/Users/gaffer/git/protocol/data/shaders/Default.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Flat.vert",
@@ -491,7 +526,6 @@
 		"/Users/gaffer/Dropbox/Personal Data/backup/protocol2/include/ProtocolCommon.h",
 		"/Users/gaffer/git/protocol/include/Allocator.h",
 		"/Users/gaffer/git/protocol/include/Address.h",
-		"/Users/gaffer/git/protocol/premake4.lua",
 		"/Users/gaffer/git/protocol/data/shaders/Triangle.vert",
 		"/Users/gaffer/git/protocol/include/Client.h",
 		"/Users/gaffer/git/protocol/bin/data/fonts/Console.font",
@@ -526,41 +560,7 @@
 		"/Users/gaffer/git/virtualgo/Dynamics.cpp",
 		"/Users/gaffer/git/virtualgo/Platform.h",
 		"/Users/gaffer/git/virtualgo/Common.h",
-		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Regular.font",
-		"/Users/gaffer/git/protocol/include/NetworkSimulator.h",
-		"/Users/gaffer/git/virtualgo/Tessellation.cpp",
-		"/Users/gaffer/git/virtualgo/Collision.cpp",
-		"/Users/gaffer/git/virtualgo/Mesh.h",
-		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Light.font",
-		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Italic.font",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/FontBuilder/FontBuilder.d",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Fonts.d",
-		"/Users/gaffer/git/protocol/bin/Client",
-		"/Users/gaffer/git/protocol/build/Client.make",
-		"/Users/gaffer/git/protocol/bin/FontBuilder",
-		"/Users/gaffer/git/protocol/tools/makefont/FontBuilder.cpp",
-		"/Users/gaffer/git/protocol/bin/font.bin",
-		"/Users/gaffer/git/protocol/include/Memory.h",
-		"/usr/local/include/freetype2/ftglyph.h",
-		"/usr/local/include/freetype2/ftimage.h",
-		"/Users/gaffer/git/protocol/tools/makefont/makefont.cpp",
-		"/usr/local/Cellar/freetype/2.5.3_1/include/freetype2/config/ftheader.h",
-		"/usr/local/include/freetype2/ft2build.h",
-		"/usr/local/include/freetype2/freetype.h",
-		"/usr/local/include/freetype2/config/ftoption.h",
-		"/usr/local/include/freetype2/config/ftconfig.h",
-		"/usr/local/include/freetype2/fttypes.h",
-		"/usr/local/include/freetype2/ftsystem.h",
-		"/Users/gaffer/git/protocol/tools/fonttool/#include <string>",
-		"/Users/gaffer/git/protocol/game/GameServer.h",
-		"/Users/gaffer/git/protocol/src/Server.cpp",
-		"/Users/gaffer/git/protocol/src/Client.cpp",
-		"/Users/gaffer/git/protocol/src/ReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/include/Enums.h",
-		"/Users/gaffer/git/protocol/include/Block.h",
-		"/Users/gaffer/git/protocol/src/BSDSocket.cpp",
-		"/Users/gaffer/git/protocol/include/Array.h",
-		"/Users/gaffer/git/protocol/tests/SoakClientServer.cpp"
+		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Regular.font"
 	],
 	"find":
 	{
@@ -602,6 +602,17 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"PROTOCOL",
+			"protocol",
+			"core/Assert.h",
+			"PROTOCOL",
+			"CORE",
+			"PROTOCOL",
+			"zip",
+			"shaderManager->",
+			"shaderManager",
+			"fontManager",
+			"memory_global.",
 			"globals.",
 			"Globals.h",
 			"->Get",
@@ -718,18 +729,7 @@
 			"SendMessage",
 			".Clear()",
 			"simulator",
-			".networkSim",
-			"networkSimulator",
-			" = networkSimulator",
-			"UpdateNetworkInterface",
-			"simulator.",
-			"->Receive",
-			"Simulator",
-			".Clear",
-			"// todo",
-			"Connect(;",
-			"ClientIndex",
-			"FindClient"
+			".networkSim"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -737,6 +737,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"memory_globals.",
 			"global.",
 			"PROTOCOL_CHECK(",
 			"PROTOCOL_ASSERT(",
@@ -764,7 +765,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 25.0
+		"height": 26.0
 	},
 	"input":
 	{
@@ -804,7 +805,7 @@
 	"project": "Protocol.sublime-project",
 	"replace":
 	{
-		"height": 46.0
+		"height": 48.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -813,40 +814,96 @@
 		"selected_items":
 		[
 			[
-				"globals.h",
-				"game/Globals.h"
+				"memory.h",
+				"src/core/Memory.h"
 			],
 			[
 				"todo",
 				"TODO"
 			],
 			[
-				"fontmanager.cpp",
-				"game/FontManager.cpp"
+				"array.h",
+				"src/core/Array.h"
+			],
+			[
+				"hash.h",
+				"src/core/Hash.h"
+			],
+			[
+				"config.h",
+				"src/core/Config.h"
+			],
+			[
+				"common.h",
+				"src/core/Common.h"
+			],
+			[
+				"common.cpp",
+				"src/core/Common.cpp"
+			],
+			[
+				"enums.h",
+				"src/protocol/Enums.h"
+			],
+			[
+				"premake4",
+				"premake4.lua"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
+			],
+			[
+				"core.h",
+				"src/core/Common.h"
+			],
+			[
+				"game.cpp",
+				"src/game/Game.cpp"
+			],
+			[
+				"client.cpp",
+				"src/protocol/Client.cpp"
+			],
+			[
+				"premake",
+				"premake4.lua"
+			],
+			[
+				"changes",
+				"CHANGES"
 			],
 			[
 				"font.cpp",
 				"game/Font.cpp"
 			],
 			[
-				"fontmanager.h",
-				"game/FontManager.h"
-			],
-			[
-				"game.cpp",
-				"game/Game.cpp"
-			],
-			[
-				"font.frag",
-				"data/shaders/Font.frag"
+				"font.h",
+				"game/Font.h"
 			],
 			[
 				"font.vert",
 				"data/shaders/Font.vert"
 			],
 			[
-				"changes",
-				"CHANGES"
+				"font.",
+				"data/shaders/Font.frag"
+			],
+			[
+				"globals.h",
+				"game/Globals.h"
+			],
+			[
+				"fontmanager.cpp",
+				"game/FontManager.cpp"
+			],
+			[
+				"fontmanager.h",
+				"game/FontManager.h"
+			],
+			[
+				"font.frag",
+				"data/shaders/Font.frag"
 			],
 			[
 				"shadermanager.cpp",
@@ -893,10 +950,6 @@
 				"data/fonts/Fonts.json-old"
 			],
 			[
-				"font.h",
-				"game/Font.h"
-			],
-			[
 				"shadermanager.h",
 				"game/ShaderManager.h"
 			],
@@ -907,10 +960,6 @@
 			[
 				"types.h",
 				"include/Types.h"
-			],
-			[
-				"hash.h",
-				"include/Hash.h"
 			],
 			[
 				"testfoundation.cpp",
@@ -925,20 +974,8 @@
 				"data/shaders/Default.frag"
 			],
 			[
-				"common.cpp",
-				"src/Common.cpp"
-			],
-			[
-				"common.h",
-				"include/Common.h"
-			],
-			[
 				"render.h",
 				"game/Render.h"
-			],
-			[
-				"premake4.lua",
-				"premake4.lua"
 			],
 			[
 				"fonts.h",
@@ -997,10 +1034,6 @@
 				"tools/FontBuilder/FontBuilder.cpp"
 			],
 			[
-				"premake",
-				"premake4.lua"
-			],
-			[
 				"fontbuildercpp",
 				"tools/FontBuilder/FontBuilder.cpp"
 			],
@@ -1013,16 +1046,8 @@
 				"tools/makefont/makefont.cpp"
 			],
 			[
-				"client.cpp",
-				"src/Client.cpp"
-			],
-			[
 				"crient.h",
 				"include/ClientServerContext.h"
-			],
-			[
-				"enums.h",
-				"include/Enums.h"
 			],
 			[
 				"server.cpp",
@@ -1055,10 +1080,6 @@
 			[
 				"gameserevr.h",
 				"game/GameServer.h"
-			],
-			[
-				"memory.h",
-				"include/Memory.h"
 			],
 			[
 				"gamepacket",
@@ -1261,10 +1282,6 @@
 				"include/Constants.h"
 			],
 			[
-				"config.h",
-				"include/Config.h"
-			],
-			[
 				"cilent.h",
 				"include/Client.h"
 			],
@@ -1307,22 +1324,6 @@
 			[
 				"testbsdsocket.cpp",
 				"tests/TestBSDSocket.cpp"
-			],
-			[
-				"testbsd",
-				"tests/TestBSDSocket.cpp"
-			],
-			[
-				"testdns",
-				"tests/TestDNSResolver.cpp"
-			],
-			[
-				"address.h",
-				"include/Address.h"
-			],
-			[
-				"profile.cpp",
-				"tests/Profile.cpp"
 			]
 		],
 		"width": 0.0

@@ -1,14 +1,11 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_ALLOCATOR_H
-#define PROTOCOL_ALLOCATOR_H
+#ifndef CORE_ALLOCATOR_H
+#define CORE_ALLOCATOR_H
 
 #include <stdint.h>
 
-namespace protocol
+namespace core
 {
 	// allocator base class
 

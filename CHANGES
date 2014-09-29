@@ -1,3 +1,15 @@
+Sunday Evening, September 29th, 2014:
+-------------------------------------
+
+    Need to access shader manager inside font manager in order to get font shader.
+
+    Seems like managers need to be inside globals, eg. globals.fontManager, globals.shaderManager etc.
+
+    I feel that I would prefer global.shaderManager instead of globals.shaderManager
+
+    Remember, the code that I'm writing here is game code it is OK to be bound together. This is not library code!
+
+
 Sunday Morning, September 28th, 2014:
 -------------------------------------
 

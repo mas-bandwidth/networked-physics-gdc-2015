@@ -1,19 +1,16 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_BSD_SOCKET_H
-#define PROTOCOL_BSD_SOCKET_H
+#ifndef NETWORK_BSD_SOCKET_H
+#define NETWORK_BSD_SOCKET_H
 
-#include "Types.h"
-    #include "PacketFactory.h"
-#include "NetworkInterface.h"
+#include "core/Types.h"
+#include "PacketFactory.h"  // todo: we need to decouple from protocol here!
+#include "network/NetworkInterface.h"
 
-namespace protocol 
+namespace core { class Allocator; }
+
+namespace network 
 {     
-    class Allocator;
-
     struct BSDSocketConfig
     {
         BSDSocketConfig()

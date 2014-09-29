@@ -1,21 +1,18 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_RESOLVER_H
-#define PROTOCOL_RESOLVER_H
+#ifndef NETWORK_RESOLVER_H
+#define NETWORK_RESOLVER_H
 
 #include "Config.h"
 
-#if PROTOCOL_USE_RESOLVER
+#if NETWORK_USE_RESOLVER
 
-#include "Common.h"
-#include "Address.h"
-#include <future>
+#include "core/Common.h"
+#include "network/Address.h"
+#include <future>   // todo: ewwwww!
 #include <string>
 
-namespace protocol
+namespace network
 {
     struct ResolveResult
     {

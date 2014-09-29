@@ -1,14 +1,10 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_COMMON_H
-#define PROTOCOL_COMMON_H
+#ifndef CORE_COMMON_H
+#define CORE_COMMON_H
 
-#include "Config.h"
-#include "Types.h"
-#include "Constants.h"
+#include "core/Config.h"
+#include "core/Types.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -27,7 +23,7 @@ extern "C"
     extern void exit( int result );
 }
 
-namespace protocol
+namespace core
 {
     extern void DefaultAssertHandler( const char * condition, 
                                       const char * function,
@@ -41,37 +37,36 @@ namespace protocol
 }
 
 #ifndef NDEBUG
-#define PROTOCOL_ASSERT( condition )                                                        \
+#define CORE_ASSERT( condition )                                                            \
 do                                                                                          \
 {                                                                                           \
     if ( !(condition) )                                                                     \
     {                                                                                       \
-        protocol::DefaultAssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );     \
+        core::DefaultAssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );         \
     }                                                                                       \
 } while(0)
 #else
-#define PROTOCOL_ASSERT( condition ) do {} while(0)
+#define CORE_ASSERT( condition ) do {} while(0)
 #endif
 
-#define PROTOCOL_CHECK( condition )                                                         \
+#define CORE_CHECK( condition )                                                             \
 do                                                                                          \
 {                                                                                           \
     if ( !(condition) )                                                                     \
     {                                                                                       \
-        protocol::DefaultCheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );      \
+        core::DefaultCheckHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );          \
     }                                                                                       \
 } while(0)
 
-#include "Enums.h"
-#include "Log.h"
+#include "core/Log.h"
 
-namespace protocol
+namespace core
 {
     void sleep_milliseconds( uint32_t milliseconds );
 
     inline uint32_t host_to_network( uint32_t value )
     {
-#if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN
+#if COR_ENDIAN == CORE_BIG_ENDIAN
         return __builtin_bswap32( value );
 #else
         return value;
@@ -80,7 +75,7 @@ namespace protocol
 
     inline uint32_t network_to_host( uint32_t value )
     {
-#if PROTOCOL_ENDIAN == PROTOCOL_BIG_ENDIAN
+#if CORE_ENDIAN == CORE_BIG_ENDIAN
         return __builtin_bswap32( value );
 #else
         return value;
@@ -182,6 +177,17 @@ namespace protocol
 
     float random_float( float min, float max );
 
+    uint32_t hash_data( const uint8_t * data, uint32_t length, uint32_t hash = 0 );
+    uint32_t hash_string( const char string[], uint32_t hash = 0 );
+    uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed );
+
+    struct TimeBase
+    {
+        double time = 0.0;                // frame time. 0.0 is start of process
+        double deltaTime = 0.0;           // delta time this frame in seconds.
+    };
+
+    // todo: These aren't really common. The actually are used only by memory. Move to there?
     inline void * align_forward( void * p, uint32_t align )
     {
         uintptr_t pi = uintptr_t( p );
@@ -211,18 +217,7 @@ namespace protocol
         return (const void*) ( (const char*)p - bytes );
     }
 
-    uint32_t hash_data( const uint8_t * data, uint32_t length, uint32_t hash = 0 );
-    uint32_t hash_string( const char string[], uint32_t hash = 0 );
-    uint64_t murmur_hash_64( const void * key, uint32_t len, uint64_t seed );
-
-    struct TimeBase
-    {
-        TimeBase() : time(0), deltaTime(0) {}
-
-        double time;                    // frame time. 0.0 is start of process
-        double deltaTime;               // delta time this frame in seconds.
-    };
-
+    // todo: This doesn't really belong here. Move to protocol/Object.h
     class Object
     {  
     public:

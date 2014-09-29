@@ -1,15 +1,12 @@
-/*
-    Network Protocol Foundation Library.
-    Copyright (c) 2014, The Network Protocol Company, Inc.
-*/
+// Core Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_ARRAY_H
-#define PROTOCOL_ARRAY_H
+#ifndef CORE_ARRAY_H
+#define CORE_ARRAY_H
 
 #include "Allocator.h"
 #include "Types.h"
 
-namespace protocol
+namespace core
 {
 	namespace array
 	{
