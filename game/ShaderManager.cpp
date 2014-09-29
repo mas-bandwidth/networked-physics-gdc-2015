@@ -4,7 +4,7 @@
 #ifdef CLIENT
 
 #include "Common.h"
-#include "Globals.h"
+#include "Global.h"
 #include "Hash.h"
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ void ShaderManager::Unload()
     for ( auto itor = protocol::hash::begin( m_shaders ); itor != protocol::hash::end( m_shaders ); ++itor )
     {
         const uint32_t shader = itor->value;
-        printf( "%.2f: Delete shader %u\n", globals.timeBase.time, shader );
+        printf( "%.2f: Delete shader %u\n", global.timeBase.time, shader );
         glDeleteShader( shader );
     }
  

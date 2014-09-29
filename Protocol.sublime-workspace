@@ -339,7 +339,7 @@
 	"build_system": "Packages/User/C++11.sublime-build",
 	"command_palette":
 	{
-		"height": 147.0,
+		"height": 27.0,
 		"selected_items":
 		[
 			[
@@ -407,7 +407,7 @@
 				"Package Control: Install Package"
 			]
 		],
-		"width": 647.0
+		"width": 449.0
 	},
 	"console":
 	{
@@ -433,25 +433,93 @@
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/game/Game.cpp",
-		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
+		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
+		"/Users/gaffer/git/protocol/game/Font.cpp",
+		"/Users/gaffer/git/protocol/game/FontManager.cpp",
+		"/Users/gaffer/git/protocol/game/FontManager.h",
 		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/Documents/hit and run.txt",
-		"/Users/gaffer/git/protocol/include/Hash.h",
-		"/Users/gaffer/git/protocol/premake4.lua",
-		"/Users/gaffer/git/protocol/game/Fonts.cpp",
+		"/Users/gaffer/git/protocol/game/Global.h",
+		"/Users/gaffer/git/protocol/data/shaders/Phong.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Font.vert",
+		"/Users/gaffer/git/protocol/game/Game.cpp",
+		"/Users/gaffer/git/protocol/game/Globals.cpp",
+		"/Users/gaffer/git/protocol/game/Render.cpp",
+		"/Users/gaffer/git/protocol/game/ShaderManager.cpp",
+		"/Users/gaffer/git/protocol/src/Memory.cpp",
+		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
+		"/Users/gaffer/git/protocol/game/Font.h",
 		"/Users/gaffer/git/protocol/data/fonts/Fonts.json",
-		"/Users/gaffer/git/protocol/game/GameClient.h",
-		"/Users/gaffer/git/protocol/game/Fonts.h",
+		"/Users/gaffer/git/protocol/data/shaders/Triangle.frag",
+		"/Users/gaffer/git/protocol/tests/TestFoundation.cpp",
+		"/Users/gaffer/git/protocol/tests/TestPackets.h",
+		"/Users/gaffer/git/protocol/game/GameContext.h",
+		"/Users/gaffer/git/protocol/data/shaders/Specular.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Discard.frag",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Discard.vert",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/game/ShaderManager.h",
+		"/Users/gaffer/git/protocol/data/shaders/Specular.frag",
+		"/Users/gaffer/git/protocol/include/Server.h",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.frag",
+		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
+		"/Users/gaffer/git/protocol/build/SoakProtocol.make",
+		"/Users/gaffer/git/protocol/data/shaders/Default.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Flat.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Diffuse.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Flat.frag",
+		"/Users/gaffer/git/protocol/include/DataBlockReceiver.h",
+		"/Users/gaffer/git/protocol/data/fonts/Inconsolata/Inconsolata.otf",
+		"/Users/gaffer/git/protocol/include/PacketFactory.h",
+		"/Users/gaffer/git/protocol/data/shaders/Default.frag",
+		"/Users/gaffer/git/protocol/tests/TestDataBlockSendAndReceive.cpp",
+		"/Users/gaffer/git/protocol/WOULD BE NICE",
 		"/Users/gaffer/git/protocol/data/fonts/Fonts.json-old",
+		"/Users/gaffer/git/protocol/src/Common.cpp",
+		"/Users/gaffer/git/protocol/include/Common.h",
+		"/Users/gaffer/git/protocol/include/Types.h",
+		"/Users/gaffer/git/protocol/include/Hash.h",
+		"/Users/gaffer/git/protocol/tests/ProfileClientServer.cpp",
+		"/Users/gaffer/git/protocol/game/GameChannelStructure.h",
+		"/Users/gaffer/git/protocol/game/Render.h",
+		"/Users/gaffer/Dropbox/Personal Data/backup/protocol2/include/ProtocolUtil.h",
+		"/Users/gaffer/Dropbox/Personal Data/backup/transport2/include/TransportUtil.h",
+		"/Users/gaffer/git/protocol/tests/TestChannelStructure.h",
+		"/Users/gaffer/git/protocol/tests/TestCommon.h",
+		"/Users/gaffer/Dropbox/Personal Data/backup/transport2/src/TransportUtil.cpp",
+		"/Users/gaffer/Dropbox/Personal Data/backup/protocol2/include/ProtocolCommon.h",
+		"/Users/gaffer/git/protocol/include/Allocator.h",
+		"/Users/gaffer/git/protocol/include/Address.h",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/data/shaders/Triangle.vert",
+		"/Users/gaffer/git/protocol/include/Client.h",
+		"/Users/gaffer/git/protocol/bin/data/fonts/Console.font",
+		"/Users/gaffer/git/protocol/game/Fonts.h",
+		"/Users/gaffer/git/protocol/game/GameClient.h",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/FONTLOG.txt",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousProMinus/README.txt",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousProMinus/FONTLOG.txt",
+		"/Users/gaffer/git/protocol/build/FontBuilder.make",
+		"/Users/gaffer/git/protocol/src/Channel.cpp",
+		"/Users/gaffer/git/protocol/include/ClientServerContext.h",
+		"/Users/gaffer/git/protocol/game/Fonts.cpp",
+		"/Users/gaffer/git/protocol/LICENCE",
+		"/Users/gaffer/git/protocol/bin/data/shaders/Triangle.frag",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/README.txt",
+		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/include/MessageFactory.h",
+		"/Users/gaffer/git/protocol/data/shaders/Triangle.vertex",
+		"/Users/gaffer/git/protocol/game/Shaders.h",
+		"/Users/gaffer/git/protocol/game/Shaders.cpp",
+		"/Users/gaffer/git/protocol/include/ReliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/glewinfo.txt",
+		"/Users/gaffer/Documents/hit and run.txt",
 		"/Users/gaffer/Downloads/ogldev-source/tutorial03.cpp",
 		"/Users/gaffer/git/virtualgo/Render.h",
-		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
 		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/ViewController.h",
 		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/AppDelegate.m",
-		"/Users/gaffer/git/protocol/include/Client.h",
 		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Bold.font",
-		"/Users/gaffer/git/protocol/game/GameContext.h",
 		"/Users/gaffer/Downloads/ogldev-source/tutorial16/tutorial16.cpp",
 		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/ViewController.m",
 		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/main.m",
@@ -467,18 +535,14 @@
 		"/Users/gaffer/git/protocol/bin/data/fonts/Console-Italic.font",
 		"/Users/gaffer/git/protocol/build/obj/x64/Debug/FontBuilder/FontBuilder.d",
 		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Fonts.d",
-		"/Users/gaffer/git/protocol/build/FontBuilder.make",
-		"/Users/gaffer/git/protocol/include/PacketFactory.h",
 		"/Users/gaffer/git/protocol/bin/Client",
 		"/Users/gaffer/git/protocol/build/Client.make",
 		"/Users/gaffer/git/protocol/bin/FontBuilder",
-		"/Users/gaffer/git/protocol/include/Common.h",
 		"/Users/gaffer/git/protocol/tools/makefont/FontBuilder.cpp",
 		"/Users/gaffer/git/protocol/bin/font.bin",
 		"/Users/gaffer/git/protocol/include/Memory.h",
 		"/usr/local/include/freetype2/ftglyph.h",
 		"/usr/local/include/freetype2/ftimage.h",
-		"/Users/gaffer/git/protocol/tests/TestFoundation.cpp",
 		"/Users/gaffer/git/protocol/tools/makefont/makefont.cpp",
 		"/usr/local/Cellar/freetype/2.5.3_1/include/freetype2/config/ftheader.h",
 		"/usr/local/include/freetype2/ft2build.h",
@@ -489,78 +553,14 @@
 		"/usr/local/include/freetype2/ftsystem.h",
 		"/Users/gaffer/git/protocol/tools/fonttool/#include <string>",
 		"/Users/gaffer/git/protocol/game/GameServer.h",
-		"/Users/gaffer/git/protocol/include/Server.h",
 		"/Users/gaffer/git/protocol/src/Server.cpp",
-		"/Users/gaffer/git/protocol/include/ClientServerContext.h",
 		"/Users/gaffer/git/protocol/src/Client.cpp",
 		"/Users/gaffer/git/protocol/src/ReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/include/DataBlockReceiver.h",
 		"/Users/gaffer/git/protocol/include/Enums.h",
-		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
 		"/Users/gaffer/git/protocol/include/Block.h",
 		"/Users/gaffer/git/protocol/src/BSDSocket.cpp",
-		"/Users/gaffer/git/protocol/include/Address.h",
 		"/Users/gaffer/git/protocol/include/Array.h",
-		"/Users/gaffer/git/protocol/tests/SoakClientServer.cpp",
-		"/Users/gaffer/git/protocol/include/BSDSocket.h",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/Activation.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/Engine.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/Game.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/Platform.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/Render.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/Simulation.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2011/engine/View.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2009/sandbox/source/Platform.h",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2009/sandbox/source/Client.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2009/sandbox/source/NetTransport.cpp",
-		"/Users/gaffer/Dropbox/Personal Data/talks/gdc2009/sandbox/source/Sandbox.cpp",
-		"/Users/gaffer/git/protocol/tests/ProfileClientServer.cpp",
-		"/Users/gaffer/git/protocol/game/GamePackets.h",
-		"/Users/gaffer/git/protocol/include/Packet.h",
-		"/Users/gaffer/git/protocol/game/GameMessages.h",
-		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
-		"/Users/gaffer/git/protocol/tests/TestStream.cpp",
-		"/Users/gaffer/git/protocol/tests/UnitTest.cpp",
-		"/Users/gaffer/git/protocol/include/Network.h",
-		"/Users/gaffer/git/protocol/include/Allocator.h",
-		"/Users/gaffer/git/protocol/include/Message.h",
-		"/Users/gaffer/git/protocol/include/MessageFactory.h",
-		"/Users/gaffer/git/protocol/tests/TestDataBlockSendAndReceive.cpp",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Server/Game.d",
-		"/Users/gaffer/git/protocol/game/GameChannelStructure.h",
-		"/Users/gaffer/git/protocol/game/GameCommon.h",
-		"/Users/gaffer/git/protocol/build/ProfileProtocol.make",
-		"/Users/gaffer/Documents/TAX",
-		"/Users/gaffer/git/protocol/NOTES",
-		"/Users/gaffer/git/protocol/Protocol.sublime-project",
-		"/Users/gaffer/git/cubes/client/Platform.cpp",
-		"/Users/gaffer/git/cubes/client/Platform.h",
-		"/Users/gaffer/git/cubes/shared/Activation.cpp",
-		"/Users/gaffer/git/cubes/shared/Engine.cpp",
-		"/Users/gaffer/git/cubes/shared/Game.cpp",
-		"/Users/gaffer/git/cubes/shared/Simulation.cpp",
-		"/Users/gaffer/git/protocol/obj/x64/Debug/NetworkSimulator.d",
-		"/Users/gaffer/git/protocol/tests/TestMessages.h",
-		"/Users/gaffer/git/protocol/tests/TestClientServer.h",
-		"/Users/gaffer/git/protocol/include/ReliableMessageChannel.h",
-		"/Users/gaffer/git/protocol/include/Connection.h",
-		"/Users/gaffer/git/protocol/src/Connection.cpp",
-		"/Users/gaffer/git/protocol/include/Channel.h",
-		"/Users/gaffer/git/protocol/src/DataBlockReceiver.cpp",
-		"/Users/gaffer/git/protocol/tests/TestCommon.h",
-		"/Users/gaffer/git/protocol/tests/TestConnection.cpp",
-		"/Users/gaffer/git/protocol/include/Config.h",
-		"/Users/gaffer/git/protocol/src/Channel.cpp",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/UnitTest/TestClientServer.d",
-		"/Users/gaffer/git/protocol/include/Packets.h",
-		"/Users/gaffer/git/protocol/include/Stream.h",
-		"/Users/gaffer/git/protocol/src/DNSResolver.cpp",
-		"/Users/gaffer/git/protocol/bin/SoakProtocol",
-		"/Users/gaffer/git/protocol/build/SoakProtocol.make",
-		"/Users/gaffer/git/protocol/build/SoakClientServer.make",
-		"/Users/gaffer/Desktop/test.cpp",
-		"/Users/gaffer/git/protocol/src/NetworkSimulator.cpp"
+		"/Users/gaffer/git/protocol/tests/SoakClientServer.cpp"
 	],
 	"find":
 	{
@@ -602,6 +602,31 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"globals.",
+			"Globals.h",
+			"->Get",
+			"font",
+			"Loading shader:",
+			"new Font",
+			"shader_prgor",
+			"::get",
+			"hash",
+			"hash_string",
+			"new ShaderManager",
+			"Loading shader",
+			"MaxPath",
+			"MAX_PATH",
+			"global",
+			"m_global",
+			"shader_program",
+			"hash_string",
+			"hash",
+			"Loaded font",
+			"Loaded",
+			"print",
+			"timeBase",
+			"timeBAse",
+			"rm -f",
 			"shutdown",
 			"not a valid font file",
 			"timeBase",
@@ -704,32 +729,7 @@
 			"// todo",
 			"Connect(;",
 			"ClientIndex",
-			"FindClient",
-			"printf",
-			"::Connect",
-			"Timeout",
-			"printf",
-			"printf( \"dis",
-			"printf( \"client",
-			"printf",
-			"std::",
-			"<thread>",
-			"std::",
-			"<chrono>",
-			".deltaTime = 0.1",
-			"_timeout",
-			"iterations < ",
-			"int iterations",
-			"test_client_and",
-			"test_client_data",
-			"client_side_disconnect",
-			"test_client_connection_established",
-			"test_client_connection_disconnect",
-			"std",
-			"<thread>",
-			"sleep",
-			"sleep::",
-			"sleep"
+			"FindClient"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -737,6 +737,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"global.",
 			"PROTOCOL_CHECK(",
 			"PROTOCOL_ASSERT(",
 			"assert",
@@ -812,56 +813,188 @@
 		"selected_items":
 		[
 			[
-				"changes",
-				"CHANGES"
+				"globals.h",
+				"game/Globals.h"
 			],
 			[
 				"todo",
 				"TODO"
 			],
 			[
+				"fontmanager.cpp",
+				"game/FontManager.cpp"
+			],
+			[
+				"font.cpp",
+				"game/Font.cpp"
+			],
+			[
+				"fontmanager.h",
+				"game/FontManager.h"
+			],
+			[
 				"game.cpp",
 				"game/Game.cpp"
 			],
 			[
-				"gameclient.h",
-				"game/GameClient.h"
+				"font.frag",
+				"data/shaders/Font.frag"
+			],
+			[
+				"font.vert",
+				"data/shaders/Font.vert"
+			],
+			[
+				"changes",
+				"CHANGES"
+			],
+			[
+				"shadermanager.cpp",
+				"game/ShaderManager.cpp"
+			],
+			[
+				"spe",
+				"data/shaders/Specular.vert"
+			],
+			[
+				"spec",
+				"data/shaders/Specular.frag"
+			],
+			[
+				"specular.vert",
+				"data/shaders/Specular.vert"
+			],
+			[
+				"diffuse.frag",
+				"data/shaders/Diffuse.frag"
+			],
+			[
+				"triangle.vert",
+				"data/shaders/Triangle.vert"
+			],
+			[
+				"default.vert",
+				"data/shaders/Default.vert"
+			],
+			[
+				"triangle.frag",
+				"data/shaders/Triangle.frag"
+			],
+			[
+				"would",
+				"WOULD BE NICE"
 			],
 			[
 				"fonts.json",
 				"data/fonts/Fonts.json"
 			],
 			[
-				"premake4.lua",
-				"premake4.lua"
-			],
-			[
 				"fonts",
 				"data/fonts/Fonts.json-old"
 			],
 			[
-				"fonts.cpp",
-				"game/Fonts.cpp"
+				"font.h",
+				"game/Font.h"
 			],
 			[
-				"fontbuilder.cpp",
-				"tools/FontBuilder/FontBuilder.cpp"
+				"shadermanager.h",
+				"game/ShaderManager.h"
 			],
 			[
-				"font.cpp",
-				"game/Fonts.cpp"
+				"tyeps.h",
+				"include/Types.h"
+			],
+			[
+				"types.h",
+				"include/Types.h"
+			],
+			[
+				"hash.h",
+				"include/Hash.h"
+			],
+			[
+				"testfoundation.cpp",
+				"tests/TestFoundation.cpp"
+			],
+			[
+				"testfound",
+				"tests/TestFoundation.cpp"
+			],
+			[
+				"default.frag",
+				"data/shaders/Default.frag"
+			],
+			[
+				"common.cpp",
+				"src/Common.cpp"
+			],
+			[
+				"common.h",
+				"include/Common.h"
+			],
+			[
+				"render.h",
+				"game/Render.h"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
 			],
 			[
 				"fonts.h",
 				"game/Fonts.h"
 			],
 			[
-				"font",
-				"bin/data/fonts/Console-Bold.font"
+				"shader",
+				"game/ShaderManager.h"
 			],
 			[
 				"client.h",
 				"include/Client.h"
+			],
+			[
+				"frag",
+				"data/shaders/Triangle.frag"
+			],
+			[
+				"ver",
+				"data/shaders/Triangle.vert"
+			],
+			[
+				"vert",
+				"data/shaders/Triangle.vert"
+			],
+			[
+				"fonts.cpp",
+				"game/Fonts.cpp"
+			],
+			[
+				"render.cpp",
+				"game/Render.cpp"
+			],
+			[
+				"premake4.lau",
+				"premake4.lua"
+			],
+			[
+				"font",
+				"tools/FontBuilder/FontBuilder.cpp"
+			],
+			[
+				"shaders.h",
+				"game/Shaders.h"
+			],
+			[
+				"glewinfo.txt",
+				"glewinfo.txt"
+			],
+			[
+				"gameclient.h",
+				"game/GameClient.h"
+			],
+			[
+				"fontbuilder.cpp",
+				"tools/FontBuilder/FontBuilder.cpp"
 			],
 			[
 				"premake",
@@ -870,10 +1003,6 @@
 			[
 				"fontbuildercpp",
 				"tools/FontBuilder/FontBuilder.cpp"
-			],
-			[
-				"common.h",
-				"include/Common.h"
 			],
 			[
 				"makefont",
@@ -918,10 +1047,6 @@
 			[
 				"bsdsocket.cpp",
 				"src/BSDSocket.cpp"
-			],
-			[
-				"would",
-				"WOULD BE NICE"
 			],
 			[
 				"soakclient",
@@ -1096,10 +1221,6 @@
 				"include/ClientServerContext.h"
 			],
 			[
-				"common.cpp",
-				"src/Common.cpp"
-			],
-			[
 				"noho",
 				"include/NetworkSimulator.h"
 			],
@@ -1202,126 +1323,6 @@
 			[
 				"profile.cpp",
 				"tests/Profile.cpp"
-			],
-			[
-				"profile",
-				"tests/Profile.cpp"
-			],
-			[
-				"soaktest.cpp",
-				"tests/SoakTest.cpp"
-			],
-			[
-				"queue.h",
-				"include/Queue.h"
-			],
-			[
-				"testaddress.cpp",
-				"tests/TestAddress.cpp"
-			],
-			[
-				"packetfactory.h",
-				"include/PacketFactory.h"
-			],
-			[
-				"datablocksender.cpp",
-				"src/DataBlockSender.cpp"
-			],
-			[
-				"serevr.cpp",
-				"src/Server.cpp"
-			],
-			[
-				"datablockreceiver.cpp",
-				"src/DataBlockReceiver.cpp"
-			],
-			[
-				"clientserver",
-				"src/ClientServerDataBlock.cpp"
-			],
-			[
-				"clientserver.cpp",
-				"tests/TestClientServer.cpp"
-			],
-			[
-				"clientser",
-				"include/ClientServerDataBlock.h"
-			],
-			[
-				"cahnges",
-				"CHANGES"
-			],
-			[
-				"clientserverdatablock",
-				"include/ClientServerDataBlock.h"
-			],
-			[
-				"clientserver.h",
-				"include/ClientServerDataBlock.h"
-			],
-			[
-				"sender.cpp",
-				"src/DataBlockSender.cpp"
-			],
-			[
-				"sender.h",
-				"include/DataBlockSender.h"
-			],
-			[
-				"datablokc",
-				"include/DataBlockReceiver.h"
-			],
-			[
-				"reciever.h",
-				"include/DataBlockReceiver.h"
-			],
-			[
-				"datablockreceiver.h",
-				"include/DataBlockReceiver.h"
-			],
-			[
-				"datablockrec",
-				"src/DataBlockReceiver.cpp"
-			],
-			[
-				"datablocksender.h",
-				"include/DataBlockSender.h"
-			],
-			[
-				"testcommon.cpp",
-				"tests/TestCommon.cpp"
-			],
-			[
-				"datablock",
-				"src/DataBlockReceiver.cpp"
-			],
-			[
-				"datablockreciever.h",
-				"include/DataBlockReceiver.h"
-			],
-			[
-				"types.h",
-				"include/Types.h"
-			],
-			[
-				"datablokcsender.h",
-				"include/DataBlockSender.h"
-			],
-			[
-				"packtes.h",
-				"include/Packets.h"
-			],
-			[
-				"testcient",
-				"tests/TestClientServer.cpp"
-			],
-			[
-				"contsants.h",
-				"include/Constants.h"
-			],
-			[
-				"packet.h",
-				"include/Packet.h"
 			]
 		],
 		"width": 0.0

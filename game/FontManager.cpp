@@ -4,7 +4,7 @@
 #ifdef CLIENT
 
 #include "Common.h"
-#include "Globals.h"
+#include "Global.h"
 #include "Hash.h"
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ void FontManager::Unload()
     for ( auto itor = protocol::hash::begin( m_fonts ); itor != protocol::hash::end( m_fonts ); ++itor )
     {
         Font * font = itor->value;
-        printf( "%.2f: Delete font %p\n", globals.timeBase.time, font );
+        printf( "%.2f: Delete font %p\n", global.timeBase.time, font );
         delete font;
     }
  

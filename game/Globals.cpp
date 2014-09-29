@@ -1,3 +1,3 @@
-#include "Globals.h"
+#include "Global.h"
 
-Globals globals;
+Global global;

@@ -4,8 +4,11 @@
     Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
+#ifdef CLIENT
+
 #include "Font.h"
-#include "Globals.h"
+#include "Global.h"
+#include "ShaderManager.h"
 
 // todo: remove this BS
 #include <iostream>
@@ -13,6 +16,12 @@
 
 #include <GLUT/glut.h>
 #include <OpenGL/OpenGL.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+using glm::mat4;
+using glm::vec3;
+using glm::vec4;
 
 // Helper function to read a piece of data from a stream.
 template<class T, class S>
@@ -46,7 +55,7 @@ Font::~Font()
 
 bool Font::Load( const char * filename )
 {
-    printf( "%.2f: Loading font \"%s\"\n", globals.timeBase.time, filename );
+    printf( "%.2f: Loading font \"%s\"\n", global.timeBase.time, filename );
 
     // Open the file and check whether it is any good (a font file starts with "FONT")
     std::ifstream input(filename, std::ios::binary);
@@ -165,6 +174,34 @@ void Font::DrawString( float x, float y, const char * str )
 {
     glBindTexture( GL_TEXTURE_2D, m_texture );
 
+    GLuint shader_program = global.shaderManager->GetShader( "Font" );
+
+    printf( "shader_program = %d\n", shader_program );
+
+    // todo: why is just selecting this shader causing an error?!
+
+//    glUseProgram( shader_program );
+
+    /*
+    glBindAttribLocation( shader_program, 0, "VertexPosition" );
+    glBindAttribLocation( shader_program, 1, "TexCoord" );
+
+    vec4 textColor = vec4( 0,0,0,1 );
+    mat4 modelViewProjection = mat4( 1.0f );
+
+    int location = glGetUniformLocation( shader_program, "TextColor" );
+    if ( location >= 0 )
+        glUniformMatrix4fv( location, 1, GL_FALSE, &textColor[0] );     // todo: pass this in
+
+    location = glGetUniformLocation( shader_program, "ModelViewProjection" );
+    if ( location >= 0 )
+        glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
+        */
+
+    //glBindVertexArray( vaoHandle );
+
+    //glDrawArrays( GL_TRIANGLES, 0, 6 );
+
     /* 
     glBegin( GL_QUADS );
     
@@ -194,3 +231,5 @@ void Font::DrawString( float x, float y, const char * str )
     glEnd();
     */
 }
+
+#endif

@@ -6,6 +6,8 @@
 
 #ifndef FONT_H
 #define FONT_H
+
+#ifdef CLIENT
  
 class Font
 {
@@ -47,5 +49,7 @@ private:
     int m_line_height;
     float m_tex_line_height;
 };
+
+#endif
 
 #endif

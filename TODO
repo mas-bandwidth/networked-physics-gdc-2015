@@ -1,38 +1,72 @@
 DONE:
 
-    Sketch out a shader to render the text. 
+    Need to access shader manager inside font manager in order to get font shader.
 
-    Don't worry about lighting or coloring yet, just get the texture coord out there.
+    Seems like managers need to be inside globals, eg. globals.fontManager, globals.shaderManager etc.
 
-    Need to get the text working with proper projection matrix. Might be good to just
-    keep it uniform, vs. having a specific text shader that only works in 2D space.
+    I feel that I would prefer global.shaderManager instead of globals.shaderManager
 
-    Work out how to get the .r coordinate in for an alpha texture. Done.
+    Remember, the code that I'm writing here is game code it is OK to be bound together. This is not library code!
 
 TODO:
 
+    ------------------------------
+
+    Split out common stuff from protocol to "core"
+
+    This should include types, allocators, common, log functions, file functions (from tools)
+    and so on. Core should be accessible to all libraries, tools and executables, client and server.
+
+    I'm thinking src/core, src/protocol and so on.
+
+    This would avoid annoying stuff like protocol::hash::get and so on. Hash is not part of protocol!
+
+    Move useful file related routines from the font builder / loader somewhere that they can be shared.
+
+    ---------------------------------
+
+    Get basic text render showing entire texture in middle of screen
+
+    eg. single quad with (0,0) -> (1,1) texture coords for the texture atlas.
+
+    ---------------------------------
+
     Work out how to get a projection matrix for screenspace for the text.
 
-    I think it's best to leave the text rendering general, eg. allow a matrix
-    to be passed in, much like all other vertex shaders, for generality.
+    Make sure to *derive this* and *understand* why this matrix is appropriate.
+
+    Don't be a fucking cut&paste programmer!!!!
+
+    -------------------------------
+
+    Offset the text by a small amount for the "diamond" rasterization rule
+    so I can be guaranteed 1:1 mapping of texels to pixels.
 
     Set this up and render some text with 1:1 texels 
 
-    Make sure to offset the text by a small amount for the "diamond"
-    rasterization rule so I can be guaranteed 1:1 mapping of texels
-    to pixels.
+    Get a basic string of text rendering, but not necessarily efficiently.
+
+    -------------------------------
+
+    How to render text efficiently?
+
+    Font needs a concept of Begin, DrawString, DrawString, DrawString, End.
+
+    Extend DrawString to include text color, *or* add a function to set text color.
+
+    It's probably better to have a SetTextColor thing (must be called between begin/end)
+
+    This will help provide efficient rendering with less draw calls, eg. typically
+    it should mean that you can batch up lots of rendering (eg. console, debug text
+    to occur at the same time and be efficient).
 
     Implement vertex buffer generation (dynamic?) to render text quads.
 
     Text should now render and look GREAT (hires, and with correct gamma)
 
-    Now try out a few different console fonts and pick out a good one.
-
     -------------------------------
 
-    Work out how to manage debug rendering of text, eg. is there some
-    debug manager that will handle rendering in order for debug triangles,
-    lines etc, eg. batching drawcalls, or should i do it immediate?
+    Try out a few different console fonts and pick out a good one.
 
     -------------------------------
 
@@ -47,18 +81,14 @@ TODO:
 
     ------------------------------
 
-    Split out common stuff from protocol to "core"
-
-    This should include types, allocators, common, log functions, file functions (from tools)
-    and so on. Core should be accessible to all libraries, tools and executables, client and server.
-
-    I'm thinking src/core, src/protocol and so on.
-
-    This would avoid annoying stuff like protocol::hash::get and so on. Hash is not part of protocol!
-
-    ------------------------------
-
     I would like a mesh manager
+
+    Mesh manager should load meshes in a binary format.
+
+    Meshes that exist inside data/meshes/ should be converted to binary representations
+    that directly match what will be used for the 
+
+    Generate a .mesh file that can actually be loaded.
 
     ------------------------------
 
@@ -69,6 +99,9 @@ TODO:
     Should not load *all* meshes and textures, only what is asked to be loaded.
 
     By tracking all the textures loaded, we can reload them as required, eg. reload textures.
+
+    Textures to be loaded should have source assets in data/textures directly and be copied
+    to bin/data on build mesh, eg: "pm meshes". This should be hooked up to "pm data"
 
     ------------------------------
 
@@ -95,7 +128,7 @@ TODO:
 
     ------------------------------
 
-    Write a tool to generate go stone meshes.
+    Write a tool to generate go stone meshes (.obj format).
 
     Tool should take JSON input to describe the stones, eg. width/height bevel, tesselation and such.
 

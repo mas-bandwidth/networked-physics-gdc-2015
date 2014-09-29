@@ -1,6 +1,6 @@
 #include "Common.h"
 #include "Network.h"
-#include "Globals.h"
+#include "Global.h"
 #include <time.h>
 #include <stdlib.h>
 
@@ -26,23 +26,43 @@ const int ServerPort = 10000;
 
 using glm::mat4;
 using glm::vec3;
+using glm::vec4;
 
 using namespace protocol;
 
 GameClient * client = nullptr;
-FontManager * fontManager = nullptr;
-ShaderManager * shaderManager = nullptr;
 
 GLuint vboHandles[2];
 GLuint vaoHandle;
 
 static void game_init()
 {
+    // todo: use allocator new instead of "new"
+    global.fontManager = new FontManager( memory::default_allocator() );
+    global.shaderManager = new ShaderManager( memory::default_allocator() );
+
+    client = CreateGameClient( memory::default_allocator() );
+
+    if ( !client )
+    {
+        printf( "%.2f: error: failed to create game client!\n", global.timeBase.time );
+        exit( 1 );
+    }
+
+    printf( "%.2f: Started game client on port %d\n", global.timeBase.time, client->GetPort() );
+
+    Address address( "::1" );
+    address.SetPort( ServerPort );
+
+    client->Connect( address );
+
+    global.timeBase.deltaTime = 1.0 / TickRate;
+
+    // ---------------------------------------------------
+
     glEnable( GL_FRAMEBUFFER_SRGB );
 
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
-
-    shaderManager = new ShaderManager( memory::default_allocator() );
 
     float positionData[] = 
     {
@@ -88,60 +108,39 @@ static void game_init()
     glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
 
     check_opengl_error( "after vertex buffer setup" );
-
-    // ---------------------
-
-    fontManager = new FontManager( memory::default_allocator() );
-
-    check_opengl_error( "after font load" );
-
-    client = CreateGameClient( memory::default_allocator() );
-
-    if ( !client )
-    {
-        printf( "%.2f: error: failed to create game client!\n", globals.timeBase.time );
-        exit( 1 );
-    }
-
-    printf( "%.2f: Started game client on port %d\n", globals.timeBase.time, client->GetPort() );
-
-    Address address( "::1" );
-    address.SetPort( ServerPort );
-
-    client->Connect( address );
-
-    globals.timeBase.deltaTime = 1.0 / TickRate;
 }
 
 static void game_update()
 {
-    client->Update( globals.timeBase );
+    client->Update( global.timeBase );
 
-    globals.timeBase.time += globals.timeBase.deltaTime;
+    global.timeBase.time += global.timeBase.deltaTime;
 }
 
 static void game_render()
 {
     check_opengl_error( "before render" );
 
-    client->Update( globals.timeBase );
+    client->Update( global.timeBase );
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     if ( ( rand() % 100 ) == 0 )
     {
-        fontManager->Reload();
-        shaderManager->Reload();
+        global.fontManager->Reload();
+        global.shaderManager->Reload();
     }
 
-    GLuint shader_program = shaderManager->GetShader( "Triangle" );
+    // ---------------------
+
+    GLuint shader_program = global.shaderManager->GetShader( "Triangle" );
 
     glUseProgram( shader_program );
 
     glBindAttribLocation( shader_program, 0, "VertexPosition" );
     glBindAttribLocation( shader_program, 1, "VertexColor" );
 
-    mat4 rotationMatrix = glm::rotate( mat4(1.0f), (float)globals.timeBase.time * 4, vec3(0.0f,0.0f,1.0f) );
+    mat4 rotationMatrix = glm::rotate( mat4(1.0f), (float)global.timeBase.time * 4, vec3(0.0f,0.0f,1.0f) );
 
     int location = glGetUniformLocation( shader_program, "RotationMatrix" );
     if ( location >= 0 )
@@ -151,7 +150,9 @@ static void game_render()
 
     glDrawArrays( GL_TRIANGLES, 0, 3 );
 
-    Font * font = fontManager->GetFont( "AnonymousPro" );
+    // --------------------
+
+    Font * font = global.fontManager->GetFont( "AnonymousPro" );
     if ( font )
         font->DrawString( 10, 200, "Hello" );
 
@@ -162,9 +163,10 @@ static void game_shutdown()
 {
     DestroyGameClient( memory::default_allocator(), client );
 
-    delete fontManager;
+    delete global.fontManager;
+    delete global.shaderManager;
 
-    delete shaderManager;
+    global = Global();
 }
 
 void framebuffer_size_callback( GLFWwindow* window, int width, int height )
@@ -180,7 +182,7 @@ int main( int argc, char * argv[] )
 
     if ( !InitializeNetwork() )
     {
-        printf( "%.2f: Failed to initialize network!\n", globals.timeBase.time );
+        printf( "%.2f: Failed to initialize network!\n", global.timeBase.time );
         return 1;
     }
 
@@ -235,7 +237,7 @@ int main( int argc, char * argv[] )
 
     ShutdownNetwork();
 
-    // IMPORTANT: Disabled until we fix leak issue with game client/server objects in config¡
+    // IMPORTANT: Disabled until we fix leak issue with game client/server objects in config
     //memory::shutdown();
 
     glfwTerminate();
@@ -259,13 +261,13 @@ int main( int argc, char ** argv )
 {
     srand( time( nullptr ) );
 
-    globals.timeBase.deltaTime = 1.0 / TickRate;
+    global.timeBase.deltaTime = 1.0 / TickRate;
 
     memory::initialize();
     
     if ( !InitializeNetwork() )
     {
-        printf( "%.2f: Failed to initialize network!\n", globals.timeBase.time );
+        printf( "%.2f: Failed to initialize network!\n", global.timeBase.time );
         return 1;
     }
 
@@ -273,29 +275,29 @@ int main( int argc, char ** argv )
 
     if ( !server )
     {
-        printf( "%.2f: Failed to not create server on port %d\n", globals.timeBase.time, ServerPort );
+        printf( "%.2f: Failed to not create server on port %d\n", global.timeBase.time, ServerPort );
         return 1;
     }
     
-    printf( "%.2f: Started game server on port %d\n", globals.timeBase.time, ServerPort );
+    printf( "%.2f: Started game server on port %d\n", global.timeBase.time, ServerPort );
 
     while ( true )
     {
         // ...
 
         // todo: rather than sleeping for MS we want a signal that comes in every n millis instead
-        // so we maintain a steady tick rate. how best to do this on linux and mac? (need both...)
+        // so we maintain a steady tick rate. how best to do this on linux, mac and windows respectively?
 
         // todo: want to detect the CTRL^C signal and actually break outta here
 
-        server->Update( globals.timeBase );
+        server->Update( global.timeBase );
 
-        sleep_milliseconds( globals.timeBase.deltaTime * 1000 );
+        sleep_milliseconds( global.timeBase.deltaTime * 1000 );
 
-        globals.timeBase.time += globals.timeBase.deltaTime;
+        global.timeBase.time += global.timeBase.deltaTime;
     }
 
-    printf( "%.2f: Shutting down game server\n", globals.timeBase.time );
+    printf( "%.2f: Shutting down game server\n", global.timeBase.time );
 
     DestroyGameServer( memory::default_allocator(), server );
 
