@@ -8,6 +8,7 @@
 
 #include "Font.h"
 #include "Global.h"
+#include "Render.h"
 #include "ShaderManager.h"
 
 // todo: remove this BS
@@ -176,13 +177,8 @@ void Font::DrawString( float x, float y, const char * str )
 
     GLuint shader_program = global.shaderManager->GetShader( "Font" );
 
-    printf( "shader_program = %d\n", shader_program );
+    glUseProgram( shader_program );
 
-    // todo: why is just selecting this shader causing an error?!
-
-//    glUseProgram( shader_program );
-
-    /*
     glBindAttribLocation( shader_program, 0, "VertexPosition" );
     glBindAttribLocation( shader_program, 1, "TexCoord" );
 
@@ -191,16 +187,75 @@ void Font::DrawString( float x, float y, const char * str )
 
     int location = glGetUniformLocation( shader_program, "TextColor" );
     if ( location >= 0 )
-        glUniformMatrix4fv( location, 1, GL_FALSE, &textColor[0] );     // todo: pass this in
+        glUniform4fv( location, 1, &textColor[0] );
 
     location = glGetUniformLocation( shader_program, "ModelViewProjection" );
     if ( location >= 0 )
         glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
-        */
 
-    //glBindVertexArray( vaoHandle );
+    // ---------------------------------------------
 
-    //glDrawArrays( GL_TRIANGLES, 0, 6 );
+    GLuint vboHandles[2];
+    GLuint vaoHandle;
+
+    const float s = 0.5f;
+
+    float positionData[] = 
+    {
+       -s, -s, 0.0f,
+       -s, +s, 0.0f,
+       +s, +s, 0.0f,
+    
+       -s, -s, 0.0f,
+       +s, +s, 0.0f,
+       +s, -s, 0.0f 
+    };
+
+    float texCoordData[] = 
+    {
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+
+        0.0f, 1.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+    };
+
+    glGenBuffers( 2, vboHandles );
+
+    GLuint positionBufferHandle = vboHandles[0];
+    GLuint texCoordBufferHandle = vboHandles[1];
+
+    // Populate the position buffer
+    glBindBuffer( GL_ARRAY_BUFFER, positionBufferHandle );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( positionData ), positionData, GL_DYNAMIC_DRAW );
+
+    // Populate the texcoord buffer
+    glBindBuffer( GL_ARRAY_BUFFER, texCoordBufferHandle );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( texCoordData ), texCoordData, GL_DYNAMIC_DRAW );
+
+    // Create and set-up the vertex array object
+    glGenVertexArrays( 1, &vaoHandle );
+    glBindVertexArray( vaoHandle );
+
+    // Enable the vertex attribute arrays
+    glEnableVertexAttribArray( 0 );  // Vertex position
+    glEnableVertexAttribArray( 1 );  // Vertex texcoord
+
+    // Map index 0 to the position buffer
+    glBindBuffer( GL_ARRAY_BUFFER, positionBufferHandle );
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
+
+    // Map index 1 to the color buffer
+    glBindBuffer( GL_ARRAY_BUFFER, texCoordBufferHandle );
+    glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
+
+    // ---------------------------------------------
+
+    glBindVertexArray( vaoHandle );
+
+    glDrawArrays( GL_TRIANGLES, 0, 6 );
 
     /* 
     glBegin( GL_QUADS );

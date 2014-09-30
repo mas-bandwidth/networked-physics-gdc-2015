@@ -11,5 +11,5 @@ uniform mat4 ModelViewProjection;
 void main()
 {
     TexCoord = VertexTexCoord;
-    gl_Position = ModelViewProject * vec4( VertexPosition, 1.0 );
+    gl_Position = ModelViewProjection * vec4( VertexPosition, 1.0 );
 }

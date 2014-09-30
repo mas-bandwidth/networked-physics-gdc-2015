@@ -59,6 +59,9 @@ static void game_init()
 
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
     float positionData[] = 
     {
        -0.8f, -0.8f, 0.0f,
@@ -160,6 +163,8 @@ static void game_shutdown()
 
     delete global.fontManager;
     delete global.shaderManager;
+
+    // todo: clean up textures, vertex array etc.
 
     global = Global();
 }
