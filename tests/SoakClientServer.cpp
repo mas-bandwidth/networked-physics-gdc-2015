@@ -1,15 +1,13 @@
-#include "Connection.h"
+#include "protocol/Connection.h"
+#include "protocol/ReliableMessageChannel.h"
+#include "network/Simulator.h"
+#include "network/BSDSocket.h"
+#include "network/Network.h"
 #include "TestMessages.h"
 #include "TestPackets.h"
 #include "TestClientServer.h"
 #include "TestChannelStructure.h"
-#include "ReliableMessageChannel.h"
-#include "NetworkSimulator.h"
-#include "BSDSocket.h"
-#include "Network.h"
 #include <time.h>
-
-using namespace protocol;
 
 const int NumServers = 8;
 const int NumClients = 256;
@@ -19,11 +17,11 @@ const int BaseClientPort = 20000;
 
 struct ClientInfo
 {
-    Address address;
+    network::Address address;
     TestClient * client;
-    Block * clientData;
-    NetworkInterface * networkInterface;
-    NetworkSimulator * networkSimulator;
+    protocol::Block * clientData;
+    network::Interface * networkInterface;
+    network::Simulator * networkSimulator;
     int state;
     int serverIndex;
     double lastReceiveTime;
@@ -47,11 +45,11 @@ struct ClientInfo
 
 struct ServerInfo
 {
-    Address address;
+    network::Address address;
     TestServer * server;
-    Block * serverData;
-    NetworkInterface * networkInterface;
-    NetworkSimulator * networkSimulator;
+    protocol::Block * serverData;
+    network::Interface * networkInterface;
+    network::Simulator * networkSimulator;
 };
 
 void soak_test()
@@ -62,11 +60,11 @@ void soak_test()
     printf( "[soak client server]\n" );
 #endif
 
-    TestMessageFactory messageFactory( memory::default_allocator() );
+    TestMessageFactory messageFactory( core::memory::default_allocator() );
 
     TestChannelStructure channelStructure( messageFactory );
 
-    TestPacketFactory packetFactory( memory::default_allocator() );
+    TestPacketFactory packetFactory( core::memory::default_allocator() );
 
     // create a bunch of servers
 
@@ -74,25 +72,25 @@ void soak_test()
 
     for( int i = 0; i < NumServers; ++i )
     {
-        serverInfo[i].address = Address( "::1" );
+        serverInfo[i].address = network::Address( "::1" );
         serverInfo[i].address.SetPort( BaseServerPort + i );
 
-        BSDSocketConfig bsdSocketConfig;
+        network::BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = BaseServerPort + i;
         bsdSocketConfig.maxPacketSize = 1200;
         bsdSocketConfig.packetFactory = &packetFactory;
-        serverInfo[i].networkInterface = CORE_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+        serverInfo[i].networkInterface = CORE_NEW( core::memory::default_allocator(), network::BSDSocket, bsdSocketConfig );
 
-        NetworkSimulatorConfig networkSimulatorConfig;
+        network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packetFactory;
-        serverInfo[i].networkSimulator = CORE_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+        serverInfo[i].networkSimulator = CORE_NEW( core::memory::default_allocator(), network::Simulator, networkSimulatorConfig );
         serverInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
 
         const int serverDataSize = sizeof(TestContext) + 256 * i + 11 + i;
-        serverInfo[i].serverData = CORE_NEW( memory::default_allocator(), Block, memory::default_allocator(), serverDataSize );
+        serverInfo[i].serverData = CORE_NEW( core::memory::default_allocator(), protocol::Block, core::memory::default_allocator(), serverDataSize );
         {
             uint8_t * data = serverInfo[i].serverData->GetData();
             for ( int j = 0; j < serverDataSize; ++j )
@@ -103,14 +101,14 @@ void soak_test()
             testContext->value_max = rand() % 1000000000;
         }
 
-        ServerConfig serverConfig;
+        protocol::ServerConfig serverConfig;
         serverConfig.serverData = serverInfo[i].serverData;
         serverConfig.maxClients = NumClientsPerServer;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = serverInfo[i].networkInterface;
         serverConfig.networkSimulator = serverInfo[i].networkSimulator;
 
-        serverInfo[i].server = CORE_NEW( memory::default_allocator(), TestServer, serverConfig );
+        serverInfo[i].server = CORE_NEW( core::memory::default_allocator(), TestServer, serverConfig );
     }
 
     // create a bunch of clients
@@ -119,42 +117,42 @@ void soak_test()
 
     for ( int i = 0; i < NumClients; ++i )
     {
-        clientInfo[i].address = Address( "::1" );
+        clientInfo[i].address = network::Address( "::1" );
         clientInfo[i].address.SetPort( BaseClientPort + i );
 
-        BSDSocketConfig bsdSocketConfig;
+        network::BSDSocketConfig bsdSocketConfig;
         bsdSocketConfig.port = BaseClientPort + i;
         bsdSocketConfig.maxPacketSize = 1200;
         bsdSocketConfig.packetFactory = &packetFactory;
-        clientInfo[i].networkInterface = CORE_NEW( memory::default_allocator(), BSDSocket, bsdSocketConfig );
+        clientInfo[i].networkInterface = CORE_NEW( core::memory::default_allocator(), network::BSDSocket, bsdSocketConfig );
 
-        NetworkSimulatorConfig networkSimulatorConfig;
+        network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packetFactory;
-        clientInfo[i].networkSimulator = CORE_NEW( memory::default_allocator(), NetworkSimulator, networkSimulatorConfig );
+        clientInfo[i].networkSimulator = CORE_NEW( core::memory::default_allocator(), network::Simulator, networkSimulatorConfig );
         clientInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
         clientInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
         clientInfo[i].networkSimulator->AddState( { 0.2f, 0.1f, 10.0f } );
         clientInfo[i].networkSimulator->AddState( { 0.25f, 0.1f, 25.0f } );
 
         const int clientDataSize = 10 + 64 * i + 21 + i;
-        clientInfo[i].clientData = CORE_NEW( memory::default_allocator(), Block, memory::default_allocator(), clientDataSize );
+        clientInfo[i].clientData = CORE_NEW( core::memory::default_allocator(), protocol::Block, core::memory::default_allocator(), clientDataSize );
         {
             uint8_t * data = clientInfo[i].clientData->GetData();
             for ( int j = 0; j < clientDataSize; ++j )
                 data[j] = ( 20 + i + j ) % 256;
         }
 
-        ClientConfig clientConfig;
+        protocol::ClientConfig clientConfig;
         clientConfig.clientData = clientInfo[i].clientData;
         clientConfig.channelStructure = &channelStructure;        
         clientConfig.networkInterface = clientInfo[i].networkInterface;
         clientConfig.networkSimulator = clientInfo[i].networkSimulator;
 
-        clientInfo[i].client = CORE_NEW( memory::default_allocator(), TestClient, clientConfig );
+        clientInfo[i].client = CORE_NEW( core::memory::default_allocator(), TestClient, clientConfig );
         clientInfo[i].Clear();
     }
 
-    TimeBase timeBase;
+    core::TimeBase timeBase;
     timeBase.deltaTime = 1.0 / 60.0;
 
     float lastConnectedClientTime = 0.0;
@@ -178,10 +176,10 @@ void soak_test()
 
             for ( int j = 0; j < NumClientsPerServer; ++j )
             {
-                if ( serverInfo[i].server->GetClientState(j) == SERVER_CLIENT_STATE_CONNECTED )
+                if ( serverInfo[i].server->GetClientState(j) == protocol::SERVER_CLIENT_STATE_CONNECTED )
                 {
                     auto connection = serverInfo[i].server->GetClientConnection( j );
-                    auto messageChannel = static_cast<ReliableMessageChannel*>( connection->GetChannel( 0 ) );
+                    auto messageChannel = static_cast<protocol::ReliableMessageChannel*>( connection->GetChannel( 0 ) );
                     while ( true )
                     {
                         if ( !messageChannel->CanSendMessage() )
@@ -191,7 +189,7 @@ void soak_test()
                         if ( !message )
                             break;
 
-                        PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
+                        CORE_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
 
                         auto testContextMessage = (TestContextMessage*) message;
 
@@ -220,41 +218,41 @@ void soak_test()
             const int newState = clientInfo[i].state = clientInfo[i].client->GetState();
             if ( newState != oldState )
             {
-                if ( newState == CLIENT_STATE_CONNECTED )
+                if ( newState == protocol::CLIENT_STATE_CONNECTED )
                 {
                     const int j = clientInfo[i].serverIndex;
 
                     printf( "%09.2f - client %d successfully connected to server %d\n", timeBase.time, i, j );
 
-                    PROTOCOL_CHECK( j >= 0 );
-                    PROTOCOL_CHECK( j < NumServers );
+                    CORE_CHECK( j >= 0 );
+                    CORE_CHECK( j < NumServers );
 
                     int clientSlot = serverInfo[j].server->FindClientSlot( clientInfo[i].address, clientInfo[i].client->GetClientId(), clientInfo[i].client->GetServerId() );
 
-                    PROTOCOL_CHECK( clientSlot != -1 );
+                    CORE_CHECK( clientSlot != -1 );
 
                     // verify client data matches
 
-                    const Block * serverClientData = serverInfo[j].server->GetClientData( clientSlot );
-                    PROTOCOL_CHECK( serverClientData );
-                    PROTOCOL_CHECK( serverClientData->GetSize() > 0 );
-                    PROTOCOL_CHECK( serverClientData->GetSize() == clientInfo[i].clientData->GetSize() );
-                    PROTOCOL_CHECK( memcmp( serverClientData->GetData(), clientInfo[i].clientData->GetData(), serverClientData->GetSize() ) == 0 );
+                    const protocol::Block * serverClientData = serverInfo[j].server->GetClientData( clientSlot );
+                    CORE_CHECK( serverClientData );
+                    CORE_CHECK( serverClientData->GetSize() > 0 );
+                    CORE_CHECK( serverClientData->GetSize() == clientInfo[i].clientData->GetSize() );
+                    CORE_CHECK( memcmp( serverClientData->GetData(), clientInfo[i].clientData->GetData(), serverClientData->GetSize() ) == 0 );
 
                     // verify server data matches
 
-                    const Block * clientServerData = clientInfo[i].client->GetServerData();
-                    PROTOCOL_CHECK( clientServerData );
-                    PROTOCOL_CHECK( clientServerData->GetSize() > 0 );
-                    PROTOCOL_CHECK( clientServerData->GetSize() == serverInfo[j].serverData->GetSize() );
-                    PROTOCOL_CHECK( memcmp( clientServerData->GetData(), serverInfo[j].serverData->GetData(), clientServerData->GetSize() ) == 0 );
+                    const protocol::Block * clientServerData = clientInfo[i].client->GetServerData();
+                    CORE_CHECK( clientServerData );
+                    CORE_CHECK( clientServerData->GetSize() > 0 );
+                    CORE_CHECK( clientServerData->GetSize() == serverInfo[j].serverData->GetSize() );
+                    CORE_CHECK( memcmp( clientServerData->GetData(), serverInfo[j].serverData->GetData(), clientServerData->GetSize() ) == 0 );
 
                     clientInfo[i].lastReceiveTime = timeBase.time;
                 }
 
-                if ( newState == CLIENT_STATE_DISCONNECTED )
+                if ( newState == protocol::CLIENT_STATE_DISCONNECTED )
                 {
-                    if ( oldState != CLIENT_STATE_CONNECTED )
+                    if ( oldState != protocol::CLIENT_STATE_CONNECTED )
                         printf( "%09.2f - client %d failed to connect to server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
                     else
                         printf( "%09.2f - client %d was disconnected from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
@@ -267,13 +265,13 @@ void soak_test()
             {
                 auto testContext = clientInfo[i].client->GetTestContext();
                 auto connection = clientInfo[i].client->GetConnection();
-                auto messageChannel = static_cast<ReliableMessageChannel*>( connection->GetChannel( 0 ) );
+                auto messageChannel = static_cast<protocol::ReliableMessageChannel*>( connection->GetChannel( 0 ) );
                 if ( messageChannel->CanSendMessage() )
                 {
                     auto message = (TestContextMessage*) messageFactory.Create( MESSAGE_TEST_CONTEXT );
-                    PROTOCOL_CHECK( message );
+                    CORE_CHECK( message );
                     message->sequence = clientInfo[i].sendSequence++;
-                    message->value = random_int( testContext->value_min, testContext->value_max );
+                    message->value = core::random_int( testContext->value_min, testContext->value_max );
                     messageChannel->SendMessage( message );
                 }
 
@@ -283,18 +281,18 @@ void soak_test()
                     if ( !message )
                         break;
 
-                    PROTOCOL_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
+                    CORE_CHECK( message->GetType() == MESSAGE_TEST_CONTEXT );
 
                     TestContextMessage * testContextMessage = (TestContextMessage*) message;
 
-                    PROTOCOL_CHECK( testContextMessage->sequence == clientInfo[i].receiveSequence++ );
+                    CORE_CHECK( testContextMessage->sequence == clientInfo[i].receiveSequence++ );
 
                     clientInfo[i].lastReceiveTime = timeBase.time;
 
                     messageFactory.Release( message );
                 }
 
-                PROTOCOL_CHECK( clientInfo[i].lastReceiveTime >= timeBase.time - 30.0 );
+                CORE_CHECK( clientInfo[i].lastReceiveTime >= timeBase.time - 30.0 );
             }
 
             if ( clientInfo[i].client->IsConnected() )
@@ -317,7 +315,7 @@ void soak_test()
                 }
             }
 
-            if ( clientInfo[i].client->GetState() == CLIENT_STATE_DISCONNECTED )
+            if ( clientInfo[i].client->GetState() == protocol::CLIENT_STATE_DISCONNECTED )
             {
                 if ( ( rand() % 200 ) == 0 )
                 {
@@ -331,17 +329,20 @@ void soak_test()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            if ( clientInfo[i].client->GetState() == CLIENT_STATE_CONNECTED )
+            if ( clientInfo[i].client->GetState() == protocol::CLIENT_STATE_CONNECTED )
             {
                 lastConnectedClientTime = timeBase.time;
                 break;                
             }
         }
 
-        PROTOCOL_CHECK( lastConnectedClientTime >= timeBase.time - 10.0 );
+        CORE_CHECK( lastConnectedClientTime >= timeBase.time - 10.0 );
 
         timeBase.time += timeBase.deltaTime;
     }
+
+    // todo: hack
+    typedef network::Interface NetworkInterface;
 
     for ( int i = 0; i < NumServers; ++i )
     {
@@ -351,18 +352,18 @@ void soak_test()
             printf( " - client slot %d: %s\n", j, GetServerClientStateName( serverInfo[i].server->GetClientState( j ) ) );
         }
 
-        CORE_DELETE( memory::default_allocator(), TestServer, serverInfo[i].server );
-        CORE_DELETE( memory::default_allocator(), Block, serverInfo[i].serverData );
-        CORE_DELETE( memory::default_allocator(), NetworkInterface, serverInfo[i].networkInterface );
+        CORE_DELETE( core::memory::default_allocator(), TestServer, serverInfo[i].server );
+        CORE_DELETE( core::memory::default_allocator(), Block, serverInfo[i].serverData );
+        CORE_DELETE( core::memory::default_allocator(), NetworkInterface, serverInfo[i].networkInterface );
     }
 
     for ( int i = 0; i < NumClients; ++i )
     {
         printf( "client %d: %s\n", i, GetClientStateName( clientInfo[i].client->GetState() ) );
 
-        CORE_DELETE( memory::default_allocator(), TestClient, clientInfo[i].client );
-        CORE_DELETE( memory::default_allocator(), Block, clientInfo[i].clientData );
-        CORE_DELETE( memory::default_allocator(), NetworkInterface, clientInfo[i].networkInterface );
+        CORE_DELETE( core::memory::default_allocator(), TestClient, clientInfo[i].client );
+        CORE_DELETE( core::memory::default_allocator(), Block, clientInfo[i].clientData );
+        CORE_DELETE( core::memory::default_allocator(), NetworkInterface, clientInfo[i].networkInterface );
     }
 }
 
@@ -370,23 +371,23 @@ int main()
 {
     srand( time( nullptr ) );
 
-    memory::initialize();
+    core::memory::initialize();
 
     srand( time( nullptr ) );
 
-    if ( !InitializeNetwork() )
+    if ( !network::InitializeNetwork() )
     {
         printf( "failed to initialize network\n" );
         return 1;
     }
 
-    CORE_ASSERT( IsNetworkInitialized() );
+    CORE_ASSERT( network::IsNetworkInitialized() );
 
     soak_test();
 
-    ShutdownNetwork();
+    network::ShutdownNetwork();
 
-    memory::shutdown();
+    core::memory::shutdown();
 
     return 0;
 }

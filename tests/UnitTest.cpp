@@ -1,12 +1,8 @@
-// todo: need to update build rules so that ../src and ../../src is an include dir as well.
-
 #include "core/Core.h"
 #include "network/Network.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-using namespace protocol;
 
 extern void test_memory();
 extern void test_scratch();
@@ -82,13 +78,13 @@ int main()
 {
     srand( time( nullptr ) );
 
-    if ( !InitializeNetwork() )
+    if ( !network::InitializeNetwork() )
     {
         printf( "failed to initialize network\n" );
         return 1;
     }
 
-    CORE_ASSERT( IsNetworkInitialized() );
+    CORE_ASSERT( network::IsNetworkInitialized() );
 
     while ( true )
     {
@@ -167,7 +163,7 @@ int main()
         test_client_server_user_context();
     }
 
-    ShutdownNetwork();
+    network::ShutdownNetwork();
 
     return 0;
 }

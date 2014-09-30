@@ -1,24 +1,22 @@
-#include "Config.h"
+#include "network/Config.h"
 
-#if PROTOCOL_USE_RESOLVER
+#if NETWORK_USE_RESOLVER
 
-#include "DNSResolver.h"
-
-using namespace protocol;
+#include "network/DNSResolver.h"
 
 void test_dns_resolve()
 {
     printf( "test_dns_resolve\n" );
 
-    DNSResolver resolver;
+    network::DNSResolver resolver;
 
     std::string google_hostname( "google.com" );
 
     resolver.Resolve( google_hostname );
 
     auto google_entry = resolver.GetEntry( google_hostname );
-    PROTOCOL_CHECK( google_entry );
-    PROTOCOL_CHECK( google_entry->status == RESOLVE_IN_PROGRESS );
+    CORE_CHECK( google_entry );
+    CORE_CHECK( google_entry->status == network::RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -29,7 +27,7 @@ void test_dns_resolve()
         resolver.Update( TimeBase() );
 
         auto google_entry = resolver.GetEntry( google_hostname );
-        if ( google_entry && google_entry->status != RESOLVE_IN_PROGRESS )
+        if ( google_entry && google_entry->status != network::RESOLVE_IN_PROGRESS )
             break;
 
         sleep_milliseconds( ms );
@@ -38,24 +36,24 @@ void test_dns_resolve()
     }
 
     google_entry = resolver.GetEntry( google_hostname );
-    PROTOCOL_CHECK( google_entry );
-    PROTOCOL_CHECK( google_entry->status == RESOLVE_SUCCEEDED );
-    PROTOCOL_CHECK( google_entry->result.numAddresses );
+    CORE_CHECK( google_entry );
+    CORE_CHECK( google_entry->status == network::RESOLVE_SUCCEEDED );
+    CORE_CHECK( google_entry->result.numAddresses );
 }
 
 void test_dns_resolve_with_port()
 {
     printf( "test_dns_resolve_with_port\n" );
 
-    DNSResolver resolver;
+    network::DNSResolver resolver;
 
     std::string google_hostname( "google.com:5000" );
 
     resolver.Resolve( google_hostname );
 
     auto google_entry = resolver.GetEntry( google_hostname );
-    PROTOCOL_CHECK( google_entry );
-    PROTOCOL_CHECK( google_entry->status == RESOLVE_IN_PROGRESS );
+    CORE_CHECK( google_entry );
+    CORE_CHECK( google_entry->status == network::RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -66,7 +64,7 @@ void test_dns_resolve_with_port()
         resolver.Update( TimeBase() );
 
         auto google_entry = resolver.GetEntry( google_hostname );
-        if ( google_entry && google_entry->status != RESOLVE_IN_PROGRESS )
+        if ( google_entry && google_entry->status != network::RESOLVE_IN_PROGRESS )
             break;
 
         sleep_milliseconds( ms );
@@ -75,18 +73,18 @@ void test_dns_resolve_with_port()
     }
 
     google_entry = resolver.GetEntry( google_hostname );
-    PROTOCOL_CHECK( google_entry );
-    PROTOCOL_CHECK( google_entry->status == RESOLVE_SUCCEEDED );
-    PROTOCOL_CHECK( google_entry->result.numAddresses );
+    CORE_CHECK( google_entry );
+    CORE_CHECK( google_entry->status == network::RESOLVE_SUCCEEDED );
+    CORE_CHECK( google_entry->result.numAddresses );
     for ( int i = 0; i < google_entry->result.numAddresses; ++i )
-        PROTOCOL_CHECK( google_entry->result.address[i].GetPort() == 5000 );
+        CORE_CHECK( google_entry->result.address[i].GetPort() == 5000 );
 }
 
 void test_dns_resolve_failure()
 {
     printf( "test_dns_resolve_failure\n" );
 
-    DNSResolver resolver;
+    network::DNSResolver resolver;
 
     std::string garbage_hostname( "aoeusoanthuoaenuhansuhtasthas" );
 
@@ -95,8 +93,8 @@ void test_dns_resolve_failure()
     resolver.Resolve( garbage_hostname );
 
     auto entry = resolver.GetEntry( garbage_hostname );
-    PROTOCOL_CHECK( entry );
-    PROTOCOL_CHECK( entry->status == RESOLVE_IN_PROGRESS );
+    CORE_CHECK( entry );
+    CORE_CHECK( entry->status == network::RESOLVE_IN_PROGRESS );
 
     double t = 0.0;
     double dt = 0.1f;
@@ -107,7 +105,7 @@ void test_dns_resolve_failure()
         resolver.Update( TimeBase() );
 
         auto entry = resolver.GetEntry( garbage_hostname );
-        if ( entry && entry->status != RESOLVE_IN_PROGRESS )
+        if ( entry && entry->status != network::RESOLVE_IN_PROGRESS )
             break;
 
         sleep_milliseconds( ms );
@@ -116,12 +114,13 @@ void test_dns_resolve_failure()
     }
 
     entry = resolver.GetEntry( garbage_hostname );
-    PROTOCOL_CHECK( entry );
+    CORE_CHECK( entry );
 
-    PROTOCOL_CHECK( entry->status == RESOLVE_FAILED );
+    CORE_CHECK( entry->status == network::RESOLVE_FAILED );
 }
 
 #else
 
 enum { Dummy };
+
 #endif

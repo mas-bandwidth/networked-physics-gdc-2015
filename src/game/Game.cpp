@@ -1,5 +1,5 @@
-#include "Common.h"
-#include "Network.h"
+#include "core/Core.h"
+#include "network/Network.h"
 #include "Global.h"
 #include <time.h>
 #include <stdlib.h>
@@ -16,19 +16,14 @@ const int ServerPort = 10000;
 #include "Font.h"
 #include "Render.h"
 #include "GameClient.h"
-#include "BSDSocket.h"
-#include "NetworkSimulator.h"
 #include "ShaderManager.h"
 #include "FontManager.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 using glm::mat4;
 using glm::vec3;
 using glm::vec4;
-
-using namespace protocol;
 
 GameClient * client = nullptr;
 
@@ -38,10 +33,10 @@ GLuint vaoHandle;
 static void game_init()
 {
     // todo: use allocator new instead of "new"
-    global.fontManager = new FontManager( memory::default_allocator() );
-    global.shaderManager = new ShaderManager( memory::default_allocator() );
+    global.fontManager = new FontManager( core::memory::default_allocator() );
+    global.shaderManager = new ShaderManager( core::memory::default_allocator() );
 
-    client = CreateGameClient( memory::default_allocator() );
+    client = CreateGameClient( core::memory::default_allocator() );
 
     if ( !client )
     {
@@ -51,7 +46,7 @@ static void game_init()
 
     printf( "%.2f: Started game client on port %d\n", global.timeBase.time, client->GetPort() );
 
-    Address address( "::1" );
+    network::Address address( "::1" );
     address.SetPort( ServerPort );
 
     client->Connect( address );
@@ -161,7 +156,7 @@ static void game_render()
 
 static void game_shutdown()
 {
-    DestroyGameClient( memory::default_allocator(), client );
+    DestroyGameClient( core::memory::default_allocator(), client );
 
     delete global.fontManager;
     delete global.shaderManager;
@@ -178,15 +173,15 @@ int main( int argc, char * argv[] )
 {
     srand( time( nullptr ) );
 
-    memory::initialize();
+    core::memory::initialize();
 
-    if ( !InitializeNetwork() )
+    if ( !network::InitializeNetwork() )
     {
         printf( "%.2f: Failed to initialize network!\n", global.timeBase.time );
         return 1;
     }
 
-    CORE_ASSERT( IsNetworkInitialized() );
+    CORE_ASSERT( network::IsNetworkInitialized() );
 
     glfwInit();
 
@@ -235,7 +230,7 @@ int main( int argc, char * argv[] )
 
     game_shutdown();
 
-    ShutdownNetwork();
+    network::ShutdownNetwork();
 
     // IMPORTANT: Disabled until we fix leak issue with game client/server objects in config
     //memory::shutdown();

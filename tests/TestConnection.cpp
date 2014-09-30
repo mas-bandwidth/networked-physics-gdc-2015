@@ -1,20 +1,18 @@
-#include "Memory.h"
-#include "Connection.h"
+#include "protocol/Connection.h"
+#include "core/Memory.h"
 #include "TestPackets.h"
 
-using namespace protocol;
-
-class FakeChannel : public ChannelAdapter 
+class FakeChannel : public protocol::ChannelAdapter 
 {
 public:
     FakeChannel() {}
 };
 
-class FakeChannelStructure : public ChannelStructure
+class FakeChannelStructure : public protocol::ChannelStructure
 {
 public:
 
-    FakeChannelStructure() : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 ) {}
+    FakeChannelStructure() : ChannelStructure( core::memory::default_allocator(), core::memory::scratch_allocator(), 1 ) {}
 
 protected:
 
@@ -23,12 +21,12 @@ protected:
         return "fake channel";
     }
 
-    Channel * CreateChannelInternal( int channeIndex )
+    protocol::Channel * CreateChannelInternal( int channeIndex )
     {
         return CORE_NEW( GetChannelAllocator(), FakeChannel );
     }
 
-    ChannelData * CreateChannelDataInternal( int channeIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int channeIndex )
     {
         return nullptr;
     }
@@ -38,19 +36,19 @@ void test_connection()
 {
     printf( "test_connection\n" );
 
-    memory::initialize();
+    core::memory::initialize();
     {
         FakeChannelStructure channelStructure;
 
-        TestPacketFactory packetFactory( memory::default_allocator() );
+        TestPacketFactory packetFactory( core::memory::default_allocator() );
 
-        ConnectionConfig connectionConfig;
+        protocol::ConnectionConfig connectionConfig;
         connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = 4 * 1024;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
 
-        Connection connection( connectionConfig );
+        protocol::Connection connection( connectionConfig );
 
         const int NumAcks = 100;
 
@@ -58,25 +56,25 @@ void test_connection()
         {
             auto packet = connection.WritePacket();
 
-            PROTOCOL_CHECK( packet );
+            CORE_CHECK( packet );
 
             connection.ReadPacket( packet );
             packetFactory.Destroy( packet );
             packet = nullptr;
 
-            if ( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) >= NumAcks )
+            if ( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) >= NumAcks )
                 break;
         }
 
-        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
-        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
-        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
-        PROTOCOL_CHECK( connection.GetCounter( CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
+        CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) == NumAcks );
+        CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 );
+        CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) == NumAcks + 1 );
+        CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_DISCARDED ) == 0 );
     }
-    memory::shutdown();
+    core::memory::shutdown();
 }
 
-class AckChannel : public ChannelAdapter
+class AckChannel : public protocol::ChannelAdapter
 {
 public:
 
@@ -85,7 +83,7 @@ public:
     AckChannel( int * _ackedPackets )
         : ackedPackets( _ackedPackets ) {}
 
-    bool ProcessData( uint16_t sequence, ChannelData * data )
+    bool ProcessData( uint16_t sequence, protocol::ChannelData * data )
     {
         return rand() % 10 != 0;
     }
@@ -97,14 +95,14 @@ public:
     }
 };
 
-class AckChannelStructure : public ChannelStructure
+class AckChannelStructure : public protocol::ChannelStructure
 {
     int * ackedPackets = nullptr;
 
 public:
 
     AckChannelStructure( int * _ackedPackets )
-        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 )
+        : ChannelStructure( core::memory::default_allocator(), core::memory::scratch_allocator(), 1 )
     {
         ackedPackets = _ackedPackets;
     }
@@ -116,12 +114,12 @@ protected:
         return "ack channel";
     }
 
-    Channel * CreateChannelInternal( int channelIndex )
+    protocol::Channel * CreateChannelInternal( int channelIndex )
     {
         return CORE_NEW( GetChannelAllocator(), AckChannel, ackedPackets );
     }
 
-    ChannelData * CreateChannelDataInternal( int channelIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int channelIndex )
     {
         return nullptr;
     }
@@ -131,7 +129,7 @@ void test_acks()
 {
     printf( "test_acks\n" );
 
-    memory::initialize();
+    core::memory::initialize();
     {
         const int NumIterations = 10*1024;
 
@@ -143,21 +141,21 @@ void test_acks()
 
         AckChannelStructure channelStructure( ackedPackets );
 
-        TestPacketFactory packetFactory( memory::default_allocator() );
+        TestPacketFactory packetFactory( core::memory::default_allocator() );
 
-        ConnectionConfig connectionConfig;
+        protocol::ConnectionConfig connectionConfig;
         connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = 4 * 1024;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
 
-        Connection connection( connectionConfig );
+        protocol::Connection connection( connectionConfig );
 
         for ( int i = 0; i < NumIterations; ++i )
         {
             auto packet = connection.WritePacket();
 
-            PROTOCOL_CHECK( packet );
+            CORE_CHECK( packet );
 
             if ( rand() % 100 == 0 )
             {
@@ -189,13 +187,13 @@ void test_acks()
 
             // an acked packet *must* have been received
             if ( ackedPackets[i] && !receivedPackets[i] )
-                PROTOCOL_CHECK( false );
+                CORE_CHECK( false );
         }
 
-        PROTOCOL_CHECK( numAckedPackets > 0 );
-        PROTOCOL_CHECK( numReceivedPackets >= numAckedPackets );
+        CORE_CHECK( numAckedPackets > 0 );
+        CORE_CHECK( numReceivedPackets >= numAckedPackets );
 
     //    printf( "%d packets received, %d packets acked\n", numReceivedPackets, numAckedPackets );
     }
-    memory::shutdown();
+    core::memory::shutdown();
 }

@@ -1,26 +1,24 @@
 #ifndef GAME_CLIENT_H
 #define GAME_CLIENT_H
 
-#include "Client.h"
+#include "protocol/Client.h"
+#include "network/BSDSocket.h"
+#include "network/Simulator.h"
 #include "GameMessages.h"
 #include "GameContext.h"
 #include "GamePackets.h"
 #include "GameMessages.h"
 #include "GameChannelStructure.h"
-#include "BSDSocket.h"
-#include "NetworkSimulator.h"
 
-using namespace protocol;
-
-class GameClient : public Client
+class GameClient : public protocol::Client
 {
 public:
 
-    GameClient( const ClientConfig & config ) : Client( config ) {}
+    GameClient( const protocol::ClientConfig & config ) : Client( config ) {}
 
     const GameContext * GetGameContext() const
     {
-        const Block * block = GetServerData();
+        const protocol::Block * block = GetServerData();
         if ( block )
             return (const GameContext*) block->GetData();
         else
@@ -29,7 +27,7 @@ public:
 
     uint16_t GetPort() const
     {
-        auto socket = (BSDSocket*) GetConfig().networkInterface;
+        auto socket = (network::BSDSocket*) GetConfig().networkInterface;
         CORE_ASSERT( socket );
         return socket->GetPort();
     }
@@ -41,7 +39,7 @@ public:
 
 protected:
 
-    void OnConnect( const Address & address ) override
+    void OnConnect( const network::Address & address ) override
     {
         char buffer[256];
         printf( "%.2f: Client connecting to %s\n", GetTime(), address.ToString( buffer, sizeof( buffer ) ) );
@@ -52,7 +50,7 @@ protected:
         printf( "%.2f: Client connecting to %s\n", GetTime(), hostname );
     }
 
-    void OnStateChange( ClientState previous, ClientState current ) override
+    void OnStateChange( protocol::ClientState previous, protocol::ClientState current ) override
     {
         printf( "%.2f: Client state change: %s -> %s\n", GetTime(), GetClientStateName( previous ), GetClientStateName( current ) );
     }
@@ -62,20 +60,20 @@ protected:
         printf( "%.2f: Client disconnect\n", GetTime() );
     }
 
-    void OnError( ClientError error, uint32_t extendedError ) override
+    void OnError( protocol::ClientError error, uint32_t extendedError ) override
     {
         printf( "%.2f: Client error: %s [%d]\n", GetTime(), GetClientErrorString( error ), extendedError );
     }
 
-    void OnServerDataReceived( const Block & block ) override
+    void OnServerDataReceived( const protocol::Block & block ) override
     {
         printf( "%.2f: Client received server data: %d bytes\n", GetTime(), block.GetSize() );
 
-        SetContext( CONTEXT_USER, block.GetData() );
+        SetContext( protocol::CONTEXT_USER, block.GetData() );
     }
 };
 
-GameClient * CreateGameClient( Allocator & allocator, int clientPort = 0 )
+GameClient * CreateGameClient( core::Allocator & allocator, int clientPort = 0 )
 {
     auto packetFactory = CORE_NEW( allocator, GamePacketFactory, allocator );
 
@@ -83,25 +81,25 @@ GameClient * CreateGameClient( Allocator & allocator, int clientPort = 0 )
 
     auto channelStructure = CORE_NEW( allocator, GameChannelStructure, *messageFactory );
 
-    BSDSocketConfig bsdSocketConfig;
+    network::BSDSocketConfig bsdSocketConfig;
     bsdSocketConfig.port = clientPort;
     bsdSocketConfig.maxPacketSize = 1200;
     bsdSocketConfig.packetFactory = packetFactory;
-    auto networkInterface = CORE_NEW( allocator, BSDSocket, bsdSocketConfig );
+    auto networkInterface = CORE_NEW( allocator, network::BSDSocket, bsdSocketConfig );
 
-    NetworkSimulatorConfig networkSimulatorConfig;
+    network::SimulatorConfig networkSimulatorConfig;
     networkSimulatorConfig.packetFactory = packetFactory;
-    auto networkSimulator = CORE_NEW( allocator, NetworkSimulator, networkSimulatorConfig );
+    auto networkSimulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
 
     const int clientDataSize = 4096 + 21;
-    auto clientData = CORE_NEW( allocator, Block, allocator, clientDataSize );
+    auto clientData = CORE_NEW( allocator, protocol::Block, allocator, clientDataSize );
     {
         uint8_t * data = clientData->GetData();
         for ( int i = 0; i < clientDataSize; ++i )
             data[i] = ( 20 + i ) % 256;
     }
 
-    ClientConfig clientConfig;
+    protocol::ClientConfig clientConfig;
     clientConfig.clientData = clientData;
     clientConfig.channelStructure = channelStructure;        
     clientConfig.networkInterface = networkInterface;
@@ -110,11 +108,15 @@ GameClient * CreateGameClient( Allocator & allocator, int clientPort = 0 )
     return CORE_NEW( allocator, GameClient, clientConfig );
 }
 
-void DestroyGameClient( Allocator & allocator, GameClient * client )
+void DestroyGameClient( core::Allocator & allocator, GameClient * client )
 {
     CORE_ASSERT( client );
 
-    ClientConfig config = client->GetConfig();
+    protocol::ClientConfig config = client->GetConfig();
+
+    // todo: hack
+    typedef network::Interface NetworkInterface;
+    typedef network::Simulator NetworkSimulator;
 
     CORE_DELETE( allocator, GameClient, client );
     CORE_DELETE( allocator, ChannelStructure, config.channelStructure );

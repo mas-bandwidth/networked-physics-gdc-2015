@@ -1,32 +1,30 @@
 #ifndef TEST_CHANNEL_STRUCTURE_H
 #define TEST_CHANNEL_STRUCTURE_H
 
+#include "protocol/ReliableMessageChannel.h"
+#include "core/Memory.h"
 #include "TestMessages.h"
-#include "ReliableMessageChannel.h"
-#include "Memory.h"
 
-using namespace protocol;
-
-class TestChannelStructure : public ChannelStructure
+class TestChannelStructure : public protocol::ChannelStructure
 {
-    ReliableMessageChannelConfig m_config;
+    protocol::ReliableMessageChannelConfig m_config;
 
 public:
 
     TestChannelStructure( TestMessageFactory & messageFactory )
-        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 )
+        : ChannelStructure( core::memory::default_allocator(), core::memory::scratch_allocator(), 1 )
     {
         m_config.messageFactory = &messageFactory;
-        m_config.messageAllocator = &memory::default_allocator();
-        m_config.smallBlockAllocator = &memory::default_allocator();
-        m_config.largeBlockAllocator = &memory::default_allocator();
+        m_config.messageAllocator = &core::memory::default_allocator();
+        m_config.smallBlockAllocator = &core::memory::default_allocator();
+        m_config.largeBlockAllocator = &core::memory::default_allocator();
 
         CORE_ASSERT( m_config.messageAllocator );
         CORE_ASSERT( m_config.smallBlockAllocator );
         CORE_ASSERT( m_config.largeBlockAllocator );
     }
 
-    const ReliableMessageChannelConfig & GetConfig() const
+    const protocol::ReliableMessageChannelConfig & GetConfig() const
     {
         return m_config;
     }
@@ -38,14 +36,14 @@ protected:
         return "reliable message channel";
     }
     
-    Channel * CreateChannelInternal( int channelIndex )
+    protocol::Channel * CreateChannelInternal( int channelIndex )
     {
-        return CORE_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
+        return CORE_NEW( GetChannelAllocator(), protocol::ReliableMessageChannel, m_config );
     }
 
-    ChannelData * CreateChannelDataInternal( int channelIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int channelIndex )
     {
-        return CORE_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
+        return CORE_NEW( GetChannelDataAllocator(), protocol::ReliableMessageChannelData, m_config );
     }
 };
 

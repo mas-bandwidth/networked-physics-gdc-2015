@@ -1,4 +1,23 @@
-Sunday Night, September 29th, 2014:
+Monday Night, September 29th, 2014:
+--------------------------------------
+
+    Pass over unit tests and convert them to the new library split.
+
+    Make sure unit tests pass.
+
+    Convert protocol soak test.
+
+    Convert client server soak test.
+
+    Pass over tools and make FontBuilder depend on core, eg. and move any useful functions
+    defined in font builder into core so it can be reused across tools.
+
+    Get game building again.
+
+    *** RETURN TO PRODUCTIVE WORK ***
+
+
+Sunday Night, September 28th, 2014:
 -----------------------------------
 
     I'm thinking src/core, src/protocol and so on.
@@ -46,7 +65,7 @@ Sunday Night, September 29th, 2014:
     Work on protocol until it compiles.
 
 
-Sunday Evening, September 29th, 2014:
+Sunday Evening, September 28th, 2014:
 -------------------------------------
 
     Need to access shader manager inside font manager in order to get font shader.

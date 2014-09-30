@@ -3,19 +3,18 @@
 
 #ifdef CLIENT
 
-#include "Common.h"
+#include "core/Core.h"
+#include "core/Hash.h"
 #include "Global.h"
-#include "Hash.h"
-
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
 #include <stdio.h>
 
-ShaderManager::ShaderManager( protocol::Allocator & allocator )
+ShaderManager::ShaderManager( core::Allocator & allocator )
     : m_shaders( allocator )
 {
-    protocol::hash::reserve( m_shaders, 256 );
+    core::hash::reserve( m_shaders, 256 );
     Reload();
 }
 
@@ -32,16 +31,16 @@ void ShaderManager::Reload()
 
 unsigned int ShaderManager::GetShader( const char * name )
 {
-    const uint64_t key = protocol::hash_string( name );
+    const uint64_t key = core::hash_string( name );
     
-    uint32_t shader = protocol::hash::get( m_shaders, key, uint32_t(0) );
+    uint32_t shader = core::hash::get( m_shaders, key, uint32_t(0) );
     
     if ( shader )
         return shader;
 
-    const uint64_t default_key = protocol::hash_string( "default" );
+    const uint64_t default_key = core::hash_string( "default" );
     
-    return protocol::hash::get( m_shaders, default_key, uint32_t(0) );
+    return core::hash::get( m_shaders, default_key, uint32_t(0) );
 }
 
 void ShaderManager::Load()
@@ -84,9 +83,9 @@ void ShaderManager::Load()
                 continue;
             }
 
-            uint32_t key = protocol::hash_string( filename_without_extension );
+            uint32_t key = core::hash_string( filename_without_extension );
 
-            protocol::hash::set( m_shaders, key, shader );
+            core::hash::set( m_shaders, key, shader );
         }
     }
     
@@ -95,14 +94,14 @@ void ShaderManager::Load()
 
 void ShaderManager::Unload()
 {
-    for ( auto itor = protocol::hash::begin( m_shaders ); itor != protocol::hash::end( m_shaders ); ++itor )
+    for ( auto itor = core::hash::begin( m_shaders ); itor != core::hash::end( m_shaders ); ++itor )
     {
         const uint32_t shader = itor->value;
         printf( "%.2f: Delete shader %u\n", global.timeBase.time, shader );
         glDeleteShader( shader );
     }
  
-    protocol::hash::clear( m_shaders );
+    core::hash::clear( m_shaders );
 }
 
 #endif

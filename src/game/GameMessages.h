@@ -1,16 +1,14 @@
 #ifndef GAME_MESSAGES_H
 #define GAME_MESSAGES_H
 
-#include "Message.h"
+#include "protocol/Message.h"
+#include "protocol/BlockMessage.h"
+#include "protocol/MessageFactory.h"
 #include "GameContext.h"
-#include "BlockMessage.h"
-#include "MessageFactory.h"
-
-using namespace protocol;
 
 enum MessageType
 {
-    MESSAGE_BLOCK = BlockMessageType,
+    MESSAGE_BLOCK = protocol::BlockMessageType,
     MESSAGE_TEST,
     NUM_MESSAGE_TYPES
 };
@@ -23,7 +21,7 @@ inline int GetNumBitsForMessage( uint16_t sequence )
     return messageBitsArray[index];
 }
 
-struct TestMessage : public Message
+struct TestMessage : public protocol::Message
 {
     TestMessage() : Message( MESSAGE_TEST )
     {
@@ -44,24 +42,24 @@ struct TestMessage : public Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        auto gameContext = (const GameContext*) stream.GetContext( CONTEXT_USER );
+        auto gameContext = (const GameContext*) stream.GetContext( protocol::CONTEXT_USER );
         CORE_ASSERT( gameContext );
         serialize_int( stream, value, gameContext->value_min, gameContext->value_max );
 
-        PROTOCOL_CHECK( serialize_check( stream, 0xDEADBEEF ) );
+        CORE_CHECK( serialize_check( stream, 0xDEADBEEF ) );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -70,13 +68,13 @@ struct TestMessage : public Message
     int value;
 };
 
-class GameMessageFactory : public MessageFactory
+class GameMessageFactory : public protocol::MessageFactory
 {
-    Allocator * m_allocator;
+    core::Allocator * m_allocator;
 
 public:
 
-    GameMessageFactory( Allocator & allocator )
+    GameMessageFactory( core::Allocator & allocator )
         : MessageFactory( allocator, NUM_MESSAGE_TYPES )
     {
         m_allocator = &allocator;
@@ -84,11 +82,11 @@ public:
 
 protected:
 
-    Message * CreateInternal( int type )
+    protocol::Message * CreateInternal( int type )
     {
         switch ( type )
         {
-            case MESSAGE_BLOCK:     return CORE_NEW( *m_allocator, BlockMessage );
+            case MESSAGE_BLOCK:     return CORE_NEW( *m_allocator, protocol::BlockMessage );
             case MESSAGE_TEST:      return CORE_NEW( *m_allocator, TestMessage );
             default:
                 return nullptr;

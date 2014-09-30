@@ -4,65 +4,12 @@
     Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "core/Core.h"
+#include "core/File.h"
 #include <jansson.h>
 #include <freetype2/ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
-
-template <typename T> const T & max( const T & a, const T & b )
-{
-    return ( a > b ) ? a : b;
-} 
-
-bool file_exists( const char * filename )
-{
-    struct stat sb;
-    return stat( filename, &sb ) == 0;
-}
-
-time_t file_time( const char * filename )
-{
-    struct stat sb;
-    if ( stat( filename, &sb ) != 0 )
-        return (time_t) 0;   
-    else
-        return sb.st_mtime;
-}
-
-void make_path( const char * dir )
-{
-    char tmp[1024];
-    char * p = NULL;
-    int len;
-    snprintf( tmp, sizeof(tmp), "%s", dir );
-    len = strlen( tmp );
-    if ( tmp[len-1] == '/' )
-        tmp[len-1] = 0;
-    for ( p = tmp + 1; *p; p++ )
-    {
-        if ( *p == '/' ) 
-        {
-            *p = 0;
-            mkdir( tmp, S_IRWXU );
-            *p = '/';
-        }
-    }
-    mkdir( tmp, S_IRWXU );
-}
-
-void split_path_file( char ** p, char ** f, const char * pf ) 
-{
-    const char * slash = pf, *next;
-    while ( ( next = strpbrk( slash + 1, "\\/" ) ) ) slash = next;
-    if ( pf != slash ) slash++;
-    *p = strndup( pf, slash - pf );
-    *f = strdup( slash );
-}
 
 char charset[] = { "abcdefghijklmnopqrstuvwxyz"
                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -144,8 +91,8 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
         }
         space_on_line -= advance;
 
-        max_ascent = max( face->glyph->bitmap_top, max_ascent );
-        max_descent = max( face->glyph->bitmap.rows - face->glyph->bitmap_top, max_descent );
+        max_ascent = core::max( face->glyph->bitmap_top, max_ascent );
+        max_descent = core::max( face->glyph->bitmap.rows - face->glyph->bitmap_top, max_descent );
     }
 
     // Compute how high the texture has to be.
@@ -247,7 +194,7 @@ int main( int argc, char * argv[] )
 
     const char * json_filename = argv[1];
 
-    if ( !file_exists( json_filename ) )
+    if ( !core::file_exists( json_filename ) )
     {
         printf( "error: \"%s\" does not exist\n", json_filename );
         return 1;
@@ -275,8 +222,8 @@ int main( int argc, char * argv[] )
         return 1;
     }
 
-    time_t executable_time = file_time( argv[0] );
-    time_t json_file_time = file_time( json_filename );
+    uint64_t executable_time = core::file_time( argv[0] );
+    uint64_t json_file_time = core::file_time( json_filename );
 
     int num_processed = 0;
 
@@ -326,8 +273,8 @@ int main( int argc, char * argv[] )
         const char * output_filename = json_string_value( json_output_filename );
         const int font_size = json_integer_value( json_font_size );
 
-        time_t input_file_time = file_time( input_filename );
-        time_t output_file_time = file_time( output_filename );
+        uint64_t input_file_time = core::file_time( input_filename );
+        uint64_t output_file_time = core::file_time( output_filename );
 
         if ( output_file_time < executable_time ||
              output_file_time < input_file_time || 
@@ -335,10 +282,10 @@ int main( int argc, char * argv[] )
         {
             char * path;
             char * file;
-            split_path_file( &path, &file, output_filename );
+            core::split_path_file( &path, &file, output_filename );
 
             if ( path[0] != '\0' )
-                make_path( path );
+                core::make_path( path );
 
             free( path );
             free( file );

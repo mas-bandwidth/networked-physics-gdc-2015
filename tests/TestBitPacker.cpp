@@ -1,7 +1,5 @@
-#include "BitPacker.h"
+#include "protocol/BitPacker.h"
 #include <stdio.h>
-
-using namespace protocol;
 
 void test_bitpacker()
 {
@@ -11,13 +9,13 @@ void test_bitpacker()
 
     uint8_t buffer[256];
 
-    BitWriter writer( buffer, BufferSize );
+    protocol::BitWriter writer( buffer, BufferSize );
 
-    PROTOCOL_CHECK( writer.GetData() == buffer );
-    PROTOCOL_CHECK( writer.GetTotalBytes() == BufferSize );
-    PROTOCOL_CHECK( writer.GetBitsWritten() == 0 );
-    PROTOCOL_CHECK( writer.GetBytesWritten() == 0 );
-    PROTOCOL_CHECK( writer.GetBitsAvailable() == BufferSize * 8 );
+    CORE_CHECK( writer.GetData() == buffer );
+    CORE_CHECK( writer.GetTotalBytes() == BufferSize );
+    CORE_CHECK( writer.GetBitsWritten() == 0 );
+    CORE_CHECK( writer.GetBytesWritten() == 0 );
+    CORE_CHECK( writer.GetBitsAvailable() == BufferSize * 8 );
 
     writer.WriteBits( 0, 1 );
     writer.WriteBits( 1, 1 );
@@ -30,15 +28,15 @@ void test_bitpacker()
 
     const int bitsWritten = 1 + 1 + 8 + 8 + 10 + 16 + 32;
 
-    PROTOCOL_CHECK( writer.GetBytesWritten() == 3*4 );
-    PROTOCOL_CHECK( writer.GetTotalBytes() == BufferSize );
-    PROTOCOL_CHECK( writer.GetBitsWritten() == bitsWritten );
-    PROTOCOL_CHECK( writer.GetBitsAvailable() == BufferSize * 8 - bitsWritten );
+    CORE_CHECK( writer.GetBytesWritten() == 3*4 );
+    CORE_CHECK( writer.GetTotalBytes() == BufferSize );
+    CORE_CHECK( writer.GetBitsWritten() == bitsWritten );
+    CORE_CHECK( writer.GetBitsAvailable() == BufferSize * 8 - bitsWritten );
 
-    BitReader reader( buffer, BufferSize );
+    protocol::BitReader reader( buffer, BufferSize );
 
-    PROTOCOL_CHECK( reader.GetBitsRead() == 0 );
-    PROTOCOL_CHECK( reader.GetBitsRemaining() == BufferSize * 8 );
+    CORE_CHECK( reader.GetBitsRead() == 0 );
+    CORE_CHECK( reader.GetBitsRemaining() == BufferSize * 8 );
 
     uint32_t a = reader.ReadBits( 1 );
     uint32_t b = reader.ReadBits( 1 );
@@ -48,14 +46,14 @@ void test_bitpacker()
     uint32_t f = reader.ReadBits( 16 );
     uint32_t g = reader.ReadBits( 32 );
 
-    PROTOCOL_CHECK( a == 0 );
-    PROTOCOL_CHECK( b == 1 );
-    PROTOCOL_CHECK( c == 10 );
-    PROTOCOL_CHECK( d == 255 );
-    PROTOCOL_CHECK( e == 1000 );
-    PROTOCOL_CHECK( f == 50000 );
-    PROTOCOL_CHECK( g == 9999999 );
+    CORE_CHECK( a == 0 );
+    CORE_CHECK( b == 1 );
+    CORE_CHECK( c == 10 );
+    CORE_CHECK( d == 255 );
+    CORE_CHECK( e == 1000 );
+    CORE_CHECK( f == 50000 );
+    CORE_CHECK( g == 9999999 );
 
-    PROTOCOL_CHECK( reader.GetBitsRead() == bitsWritten );
-    PROTOCOL_CHECK( reader.GetBitsRemaining() == BufferSize * 8 - bitsWritten );
+    CORE_CHECK( reader.GetBitsRead() == bitsWritten );
+    CORE_CHECK( reader.GetBitsRemaining() == BufferSize * 8 - bitsWritten );
 }

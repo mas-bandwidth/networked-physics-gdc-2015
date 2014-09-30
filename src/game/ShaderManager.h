@@ -3,13 +3,13 @@
 
 #ifdef CLIENT
 
-#include "Types.h"
+#include "core/Types.h"
 
 class ShaderManager
 {
 public:
 
-    ShaderManager( protocol::Allocator & allocator );
+    ShaderManager( core::Allocator & allocator );
     
     ~ShaderManager();
 
@@ -22,7 +22,7 @@ private:
     void Load();
     void Unload();
 
-    protocol::Hash<uint32_t> m_shaders;
+    core::Hash<uint32_t> m_shaders;
 };
 
 #endif

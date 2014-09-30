@@ -1,12 +1,11 @@
-#include "Stream.h"
+#include "protocol/Object.h"
+#include "protocol/Stream.h"
 #include <stdio.h>
 #include <string.h>
 
-using namespace protocol;
-
 const int MaxItems = 16;
 
-struct TestObject : public Object
+struct TestObject : public protocol::Object
 {
     int a,b,c;
     uint32_t d : 8;
@@ -60,17 +59,17 @@ struct TestObject : public Object
             serialize_bits( stream, items[i], 8 );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -89,7 +88,7 @@ void test_stream()
     TestObject writeObject;
     writeObject.Init();
     {
-        WriteStream writeStream( buffer, BufferSize );
+        protocol::WriteStream writeStream( buffer, BufferSize );
         writeObject.SerializeWrite( writeStream );
         writeStream.Flush();
     }
@@ -98,22 +97,22 @@ void test_stream()
 
     TestObject readObject;
     {
-        ReadStream readStream( buffer, BufferSize );
+        protocol::ReadStream readStream( buffer, BufferSize );
         readObject.SerializeRead( readStream );
     }
 
     // verify read object matches written object
 
-    PROTOCOL_CHECK( readObject.a == writeObject.a );
-    PROTOCOL_CHECK( readObject.b == writeObject.b );
-    PROTOCOL_CHECK( readObject.c == writeObject.c );
-    PROTOCOL_CHECK( readObject.d == writeObject.d );
-    PROTOCOL_CHECK( readObject.e == writeObject.e );
-    PROTOCOL_CHECK( readObject.f == writeObject.f );
-    PROTOCOL_CHECK( readObject.g == writeObject.g );
-    PROTOCOL_CHECK( readObject.numItems == writeObject.numItems );
+    CORE_CHECK( readObject.a == writeObject.a );
+    CORE_CHECK( readObject.b == writeObject.b );
+    CORE_CHECK( readObject.c == writeObject.c );
+    CORE_CHECK( readObject.d == writeObject.d );
+    CORE_CHECK( readObject.e == writeObject.e );
+    CORE_CHECK( readObject.f == writeObject.f );
+    CORE_CHECK( readObject.g == writeObject.g );
+    CORE_CHECK( readObject.numItems == writeObject.numItems );
     for ( int i = 0; i < readObject.numItems; ++i )
-        PROTOCOL_CHECK( readObject.items[i] == writeObject.items[i] );
+        CORE_CHECK( readObject.items[i] == writeObject.items[i] );
 }
 
 struct ContextA
@@ -128,7 +127,7 @@ struct ContextB
     int max = 23;
 };
 
-struct TestContextObject : public Object
+struct TestContextObject : public protocol::Object
 {
     int a,b;
 
@@ -143,24 +142,24 @@ struct TestContextObject : public Object
         auto context_a = (const ContextA*) stream.GetContext( 0 );
         auto context_b = (const ContextB*) stream.GetContext( 1 );
 
-        PROTOCOL_CHECK( context_a );
-        PROTOCOL_CHECK( context_b );
+        CORE_CHECK( context_a );
+        CORE_CHECK( context_b );
 
         serialize_int( stream, a, context_a->min, context_a->max );
         serialize_int( stream, b, context_b->min, context_b->max );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -185,15 +184,15 @@ void test_stream_context()
     writeObject.a = 2;
     writeObject.b = 7;
     {
-        WriteStream writeStream( buffer, BufferSize );
+        protocol::WriteStream writeStream( buffer, BufferSize );
 
-        PROTOCOL_CHECK( writeStream.GetContext(0) == nullptr );
-        PROTOCOL_CHECK( writeStream.GetContext(1) == nullptr );
+        CORE_CHECK( writeStream.GetContext(0) == nullptr );
+        CORE_CHECK( writeStream.GetContext(1) == nullptr );
 
         writeStream.SetContext( &context[0] );
 
-        PROTOCOL_CHECK( writeStream.GetContext(0) == &context_a );
-        PROTOCOL_CHECK( writeStream.GetContext(1) == &context_b );
+        CORE_CHECK( writeStream.GetContext(0) == &context_a );
+        CORE_CHECK( writeStream.GetContext(1) == &context_b );
 
         writeObject.SerializeWrite( writeStream );
 
@@ -204,18 +203,18 @@ void test_stream_context()
 
     TestContextObject readObject;
     {
-        ReadStream readStream( buffer, BufferSize );
+        protocol::ReadStream readStream( buffer, BufferSize );
 
         readStream.SetContext( &context[0] );
 
-        PROTOCOL_CHECK( readStream.GetContext(0) == &context_a );
-        PROTOCOL_CHECK( readStream.GetContext(1) == &context_b );
+        CORE_CHECK( readStream.GetContext(0) == &context_a );
+        CORE_CHECK( readStream.GetContext(1) == &context_b );
 
         readObject.SerializeRead( readStream );
     }
 
     // verify read object matches written object
 
-    PROTOCOL_CHECK( readObject.a == writeObject.a );
-    PROTOCOL_CHECK( readObject.b == writeObject.b );
+    CORE_CHECK( readObject.a == writeObject.a );
+    CORE_CHECK( readObject.b == writeObject.b );
 }

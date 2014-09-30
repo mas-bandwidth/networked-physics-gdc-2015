@@ -6,7 +6,7 @@
 #include <unistd.h>
 #endif
 
-namespace protocol
+namespace core
 {
     void DefaultAssertHandler( const char * condition, 
                                const char * function,

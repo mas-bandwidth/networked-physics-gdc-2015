@@ -1,28 +1,26 @@
+#include "core/Memory.h"
 #include "TestMessages.h"
-#include "Memory.h"
 #include <string.h>
-
-using namespace protocol;
 
 void test_message_factory()
 {
     printf( "test_message_factory\n" );
 
-    memory::initialize();
+    core::memory::initialize();
     {
-        TestMessageFactory messageFactory( memory::default_allocator() );
+        TestMessageFactory messageFactory( core::memory::default_allocator() );
 
         auto testMessage = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-        PROTOCOL_CHECK( testMessage );
-        PROTOCOL_CHECK( testMessage->GetRefCount() == 1 );
-        PROTOCOL_CHECK( testMessage->GetType() == MESSAGE_TEST );
+        CORE_CHECK( testMessage );
+        CORE_CHECK( testMessage->GetRefCount() == 1 );
+        CORE_CHECK( testMessage->GetType() == MESSAGE_TEST );
 
-        auto blockMessage = (BlockMessage*) messageFactory.Create( MESSAGE_BLOCK );
-        PROTOCOL_CHECK( blockMessage );
-        PROTOCOL_CHECK( blockMessage->GetRefCount() == 1 );
-        PROTOCOL_CHECK( blockMessage->GetType() == MESSAGE_BLOCK );
+        auto blockMessage = (protocol::BlockMessage*) messageFactory.Create( MESSAGE_BLOCK );
+        CORE_CHECK( blockMessage );
+        CORE_CHECK( blockMessage->GetRefCount() == 1 );
+        CORE_CHECK( blockMessage->GetType() == MESSAGE_BLOCK );
 
-        Block block( memory::default_allocator(), 1024 );
+        protocol::Block block( core::memory::default_allocator(), 1024 );
         uint8_t * data = block.GetData();
         memset( data, 1024, 0 );
         blockMessage->Connect( block );
@@ -30,5 +28,5 @@ void test_message_factory()
         messageFactory.Release( blockMessage );
         messageFactory.Release( testMessage );
     }
-    memory::shutdown();
+    core::memory::shutdown();
 }

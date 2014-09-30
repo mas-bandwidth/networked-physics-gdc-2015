@@ -1,15 +1,13 @@
 #ifndef TEST_PACKETS_H
 #define TEST_PACKETS_H
 
-#include "Stream.h"
-#include "Packets.h"
-#include "PacketFactory.h"
-
-using namespace protocol;
+#include "protocol/Stream.h"
+#include "protocol/Packets.h"
+#include "protocol/PacketFactory.h"
 
 enum PacketTypes
 {
-    PACKET_CONNECTION = CLIENT_SERVER_PACKET_CONNECTION,
+    PACKET_CONNECTION = protocol::CLIENT_SERVER_PACKET_CONNECTION,
 
     PACKET_CONNECT,
     PACKET_UPDATE,
@@ -18,7 +16,7 @@ enum PacketTypes
     NUM_PACKET_TYPES
 };
 
-struct ConnectPacket : public Packet
+struct ConnectPacket : public protocol::Packet
 {
     int a,b,c;
 
@@ -36,17 +34,17 @@ struct ConnectPacket : public Packet
         serialize_int( stream, c, -10, 10 );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -70,7 +68,7 @@ struct ConnectPacket : public Packet
     }
 };
 
-struct UpdatePacket : public Packet
+struct UpdatePacket : public protocol::Packet
 {
     uint16_t timestamp;
 
@@ -84,17 +82,17 @@ struct UpdatePacket : public Packet
         serialize_bits( stream, timestamp, 16 );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -116,7 +114,7 @@ struct UpdatePacket : public Packet
     }
 };
 
-struct DisconnectPacket : public Packet
+struct DisconnectPacket : public protocol::Packet
 {
     int x;
 
@@ -130,17 +128,17 @@ struct DisconnectPacket : public Packet
         serialize_int( stream, x, -100, +100 );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -162,13 +160,13 @@ struct DisconnectPacket : public Packet
     }
 };
 
-class TestPacketFactory : public PacketFactory
+class TestPacketFactory : public protocol::PacketFactory
 {
-    Allocator * m_allocator;
+    core::Allocator * m_allocator;
 
 public:
 
-    TestPacketFactory( Allocator & allocator )
+    TestPacketFactory( core::Allocator & allocator )
         : PacketFactory( allocator, NUM_PACKET_TYPES )
     {
         m_allocator = &allocator;
@@ -176,22 +174,25 @@ public:
 
 protected:
 
-    Packet * CreateInternal( int type )
+    protocol::Packet * CreateInternal( int type )
     {
         switch ( type )
         {
-            case CLIENT_SERVER_PACKET_CONNECTION_REQUEST:       return CORE_NEW( *m_allocator, ConnectionRequestPacket );
-            case CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE:       return CORE_NEW( *m_allocator, ChallengeResponsePacket );
+            // todo: maybe remove the whole CLIENT_SERVER prefix. Just PACKET_ should do (protocol::)
 
-            case CLIENT_SERVER_PACKET_CONNECTION_DENIED:        return CORE_NEW( *m_allocator, ConnectionDeniedPacket );
-            case CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE:     return CORE_NEW( *m_allocator, ConnectionChallengePacket );
+            case protocol::CLIENT_SERVER_PACKET_CONNECTION_REQUEST:       return CORE_NEW( *m_allocator, protocol::ConnectionRequestPacket );
+            case protocol::CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE:       return CORE_NEW( *m_allocator, protocol::ChallengeResponsePacket );
 
-            case CLIENT_SERVER_PACKET_READY_FOR_CONNECTION:     return CORE_NEW( *m_allocator, ReadyForConnectionPacket );
-            case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT:      return CORE_NEW( *m_allocator, DataBlockFragmentPacket );
-            case CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK:  return CORE_NEW( *m_allocator, DataBlockFragmentAckPacket );
-            case CLIENT_SERVER_PACKET_DISCONNECTED:             return CORE_NEW( *m_allocator, DisconnectedPacket );
+            case protocol::CLIENT_SERVER_PACKET_CONNECTION_DENIED:        return CORE_NEW( *m_allocator, protocol::ConnectionDeniedPacket );
+            case protocol::CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE:     return CORE_NEW( *m_allocator, protocol::ConnectionChallengePacket );
 
-            case PACKET_CONNECTION:     return CORE_NEW( *m_allocator, ConnectionPacket );
+            case protocol::CLIENT_SERVER_PACKET_READY_FOR_CONNECTION:     return CORE_NEW( *m_allocator, protocol::ReadyForConnectionPacket );
+            case protocol::CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT:      return CORE_NEW( *m_allocator, protocol::DataBlockFragmentPacket );
+            case protocol::CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK:  return CORE_NEW( *m_allocator, protocol::DataBlockFragmentAckPacket );
+            case protocol::CLIENT_SERVER_PACKET_DISCONNECTED:             return CORE_NEW( *m_allocator, protocol::DisconnectedPacket );
+
+            // todo: don't like the aliasing here
+            case PACKET_CONNECTION:     return CORE_NEW( *m_allocator, protocol::ConnectionPacket );
 
             case PACKET_CONNECT:        return CORE_NEW( *m_allocator, ConnectPacket );
             case PACKET_UPDATE:         return CORE_NEW( *m_allocator, UpdatePacket );

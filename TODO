@@ -2,13 +2,6 @@ DONE:
 
 TODO:
 
-    Pass over unit tests and convert them to the new library split.
-
-    Pass over tools and make FontBuilder depend on core, eg. and move any useful functions
-    defined in font builder into core so it can be reused across tools.
-
-    *** RETURN TO PRODUCTIVE WORK ***
-
     ---------------------------------
 
     Get basic text render showing entire texture in middle of screen

@@ -1,20 +1,18 @@
-#include "Connection.h"
+#include "protocol/Connection.h"
+#include "protocol/ReliableMessageChannel.h"
+#include "network/Simulator.h"
 #include "TestMessages.h"
 #include "TestPackets.h"
-#include "NetworkSimulator.h"
-#include "ReliableMessageChannel.h"
 #include <time.h>
 
-using namespace protocol;
-
-class TestChannelStructure : public ChannelStructure
+class TestChannelStructure : public protocol::ChannelStructure
 {
-    ReliableMessageChannelConfig m_config;
+    protocol::ReliableMessageChannelConfig m_config;
 
 public:
 
-    TestChannelStructure( MessageFactory & messageFactory )
-        : ChannelStructure( memory::default_allocator(), memory::scratch_allocator(), 1 )
+    TestChannelStructure( protocol::MessageFactory & messageFactory )
+        : ChannelStructure( core::memory::default_allocator(), core::memory::scratch_allocator(), 1 )
     {
         m_config.maxMessagesPerPacket = 256;
         m_config.sendQueueSize = 2048;
@@ -24,12 +22,12 @@ public:
         m_config.blockFragmentSize = 3900;
         m_config.maxLargeBlockSize = 32 * 1024 * 1024;
         m_config.messageFactory = &messageFactory;
-        m_config.messageAllocator = &memory::default_allocator();
-        m_config.smallBlockAllocator = &memory::default_allocator();
-        m_config.largeBlockAllocator = &memory::default_allocator();
+        m_config.messageAllocator = &core::memory::default_allocator();
+        m_config.smallBlockAllocator = &core::memory::default_allocator();
+        m_config.largeBlockAllocator = &core::memory::default_allocator();
     }
 
-    const ReliableMessageChannelConfig & GetConfig() const
+    const protocol::ReliableMessageChannelConfig & GetConfig() const
     {
         return m_config;
     }
@@ -41,14 +39,14 @@ protected:
         return "reliable message channel";
     }
 
-    Channel * CreateChannelInternal( int channelIndex )
+    protocol::Channel * CreateChannelInternal( int channelIndex )
     {
-        return CORE_NEW( GetChannelAllocator(), ReliableMessageChannel, m_config );
+        return CORE_NEW( GetChannelAllocator(), protocol::ReliableMessageChannel, m_config );
     }
 
-    ChannelData * CreateChannelDataInternal( int channelIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int channelIndex )
     {   
-        return CORE_NEW( GetChannelDataAllocator(), ReliableMessageChannelData, m_config );
+        return CORE_NEW( GetChannelDataAllocator(), protocol::ReliableMessageChannelData, m_config );
     }
 };
 
@@ -60,22 +58,22 @@ void soak_test()
     printf( "[soak protocol]\n" );
 #endif
 
-    TestMessageFactory messageFactory( memory::default_allocator() );
+    TestMessageFactory messageFactory( core::memory::default_allocator() );
 
     TestChannelStructure channelStructure( messageFactory );
 
-    TestPacketFactory packetFactory( memory::default_allocator() );
+    TestPacketFactory packetFactory( core::memory::default_allocator() );
 
-    const void * context[MaxContexts];
+    const void * context[protocol::MaxContexts];
     memset( context, 0, sizeof( context ) );
-    context[CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+    context[protocol::CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
 
     const int MaxPacketSize = 4096;
 
 #if !PROFILE
-    NetworkSimulatorConfig simulatorConfig;
+    network::SimulatorConfig simulatorConfig;
     simulatorConfig.packetFactory = &packetFactory;
-    NetworkSimulator simulator( simulatorConfig );
+    network::Simulator simulator( simulatorConfig );
     simulator.AddState( { 0.0f, 0.0f, 0.0f } );
     simulator.AddState( { 0.1f, 0.01f, 1.0f } );
     simulator.AddState( { 0.1f, 0.01f, 1.0f } );
@@ -86,18 +84,18 @@ void soak_test()
     simulator.AddState( { 1.0f, 1.00f, 100.0f } );
 #endif
 
-    Address address( "::1" );
+    network::Address address( "::1" );
 
-    ConnectionConfig connectionConfig;
+    protocol::ConnectionConfig connectionConfig;
     connectionConfig.packetType = PACKET_CONNECTION;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = &packetFactory;
     connectionConfig.slidingWindowSize = 1024;
     connectionConfig.channelStructure = &channelStructure;
 
-    Connection connection( connectionConfig );
+    protocol::Connection connection( connectionConfig );
 
-    auto messageChannel = static_cast<ReliableMessageChannel*>( connection.GetChannel( 0 ) );
+    auto messageChannel = static_cast<protocol::ReliableMessageChannel*>( connection.GetChannel( 0 ) );
 
     auto messageChannelConfig = channelStructure.GetConfig(); 
     
@@ -105,7 +103,7 @@ void soak_test()
     uint64_t numMessagesSent = 0;
     uint64_t numMessagesReceived = 0;
 
-    TimeBase timeBase;
+    core::TimeBase timeBase;
     timeBase.time = 0.0;
     timeBase.deltaTime = 0.01;
 
@@ -125,7 +123,7 @@ void soak_test()
             {
                 // bitpacked message
                 auto message = (TestMessage*) messageFactory.Create( MESSAGE_TEST );
-                PROTOCOL_CHECK( message );
+                CORE_CHECK( message );
                 message->sequence = sendMessageId;
                 messageChannel->SendMessage( message );
             }
@@ -133,7 +131,7 @@ void soak_test()
             {
                 // small block
                 int index = sendMessageId % 32;
-                Block block( memory::default_allocator(), index + 1 );
+                protocol::Block block( core::memory::default_allocator(), index + 1 );
                 uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
                     data[i] = ( index + i ) % 256;
@@ -143,7 +141,7 @@ void soak_test()
             {
                 // large block
                 int index = sendMessageId % 4;
-                Block block( memory::default_allocator(), (index+1) * 1024 * 1000 + index );
+                protocol::Block block( core::memory::default_allocator(), (index+1) * 1024 * 1000 + index );
                 uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
                     data[i] = ( index + i ) % 256;
@@ -154,7 +152,7 @@ void soak_test()
             numMessagesSent++;
         }
 
-        ConnectionPacket * writePacket = connection.WritePacket();
+        protocol::ConnectionPacket * writePacket = connection.WritePacket();
 
 #if !PROFILE
 
@@ -170,22 +168,22 @@ void soak_test()
 
             uint8_t buffer[MaxPacketSize];
 
-            WriteStream writeStream( buffer, MaxPacketSize );
+            protocol::WriteStream writeStream( buffer, MaxPacketSize );
             writeStream.SetContext( context );
             packet->SerializeWrite( writeStream );
             writeStream.Flush();
-            PROTOCOL_CHECK( !writeStream.IsOverflow() );
+            CORE_CHECK( !writeStream.IsOverflow() );
 
             packetFactory.Destroy( packet );
             packet = nullptr;
 
-            ReadStream readStream( buffer, MaxPacketSize );
+            protocol::ReadStream readStream( buffer, MaxPacketSize );
             readStream.SetContext( context );
-            auto readPacket = (ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
+            auto readPacket = (protocol::ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
             readPacket->SerializeRead( readStream );
-            PROTOCOL_CHECK( !readStream.IsOverflow() );
+            CORE_CHECK( !readStream.IsOverflow() );
 
-            connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
+            connection.ReadPacket( static_cast<protocol::ConnectionPacket*>( readPacket ) );
 
             packetFactory.Destroy( readPacket );
             readPacket = nullptr;
@@ -199,7 +197,7 @@ void soak_test()
         writeStream.SetContext( context );
         writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
-        PROTOCOL_CHECK( !writeStream.IsOverflow() );
+        CORE_CHECK( !writeStream.IsOverflow() );
 
         packetFactory.Destroy( writePacket );
         writePacket = nullptr;
@@ -208,7 +206,7 @@ void soak_test()
         readStream.SetContext( context );
         auto readPacket = (ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
         readPacket->SerializeRead( readStream );
-        PROTOCOL_CHECK( !readStream.IsOverflow() );
+        CORE_CHECK( !readStream.IsOverflow() );
 
         connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
 
@@ -226,8 +224,8 @@ void soak_test()
             if ( !message )
                 break;
 
-            PROTOCOL_CHECK( message->GetId() == numMessagesReceived % 65536 );
-            PROTOCOL_CHECK( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
+            CORE_CHECK( message->GetId() == numMessagesReceived % 65536 );
+            CORE_CHECK( message->GetType() == MESSAGE_BLOCK || message->GetType() == MESSAGE_TEST );
 
             if ( message->GetType() == MESSAGE_TEST )
             {
@@ -237,17 +235,17 @@ void soak_test()
             }
             else
             {
-                auto blockMessage = static_cast<BlockMessage*>( message );
+                auto blockMessage = static_cast<protocol::BlockMessage*>( message );
                 
-                Block & block = blockMessage->GetBlock();                
+                protocol::Block & block = blockMessage->GetBlock();                
 
                 if ( block.GetSize() <= messageChannelConfig.maxSmallBlockSize )
                 {
                     const int index = numMessagesReceived % 32;
-                    PROTOCOL_CHECK( block.GetSize() == index + 1 );
+                    CORE_CHECK( block.GetSize() == index + 1 );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        PROTOCOL_CHECK( data[i] == ( index + i ) % 256 );
+                        CORE_CHECK( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - small block\n", timeBase.time, message->GetId() );
 #endif
@@ -255,10 +253,10 @@ void soak_test()
                 else
                 {
                     const int index = numMessagesReceived % 4;
-                    PROTOCOL_CHECK( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
+                    CORE_CHECK( block.GetSize() == ( index + 1 ) * 1024 * 1000 + index );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
-                        PROTOCOL_CHECK( data[i] == ( index + i ) % 256 );
+                        CORE_CHECK( data[i] == ( index + i ) % 256 );
 #if !PROFILE
                     printf( "%09.2f - received message %d - large block\n", timeBase.time, message->GetId() );
 #endif
@@ -280,9 +278,9 @@ void soak_test()
                     status.numFragments );
 #endif
 
-        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
-        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
-        PROTOCOL_CHECK( messageChannel->GetCounter( RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
+        CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == numMessagesSent );
+        CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+        CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
         timeBase.time += timeBase.deltaTime;
     }
@@ -292,11 +290,11 @@ int main()
 {
     srand( time( nullptr ) );
 
-    memory::initialize();
+    core::memory::initialize();
 
     soak_test();
 
-    memory::shutdown();
+    core::memory::shutdown();
 
     return 0;
 }

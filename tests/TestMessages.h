@@ -1,15 +1,13 @@
 #ifndef TEST_MESSAGES_H
 #define TEST_MESSAGES_H
 
-#include "Message.h"
-#include "BlockMessage.h"
-#include "MessageFactory.h"
-
-using namespace protocol;
+#include "protocol/Message.h"
+#include "protocol/BlockMessage.h"
+#include "protocol/MessageFactory.h"
 
 enum MessageType
 {
-    MESSAGE_BLOCK = BlockMessageType,
+    MESSAGE_BLOCK = protocol::BlockMessageType,
     MESSAGE_TEST,
     MESSAGE_TEST_CONTEXT,
     NUM_MESSAGE_TYPES
@@ -23,7 +21,7 @@ inline int GetNumBitsForMessage( uint16_t sequence )
     return messageBitsArray[index];
 }
 
-struct TestMessage : public Message
+struct TestMessage : public protocol::Message
 {
     TestMessage() : Message( MESSAGE_TEST )
     {
@@ -43,20 +41,20 @@ struct TestMessage : public Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        PROTOCOL_CHECK( serialize_check( stream, 0xDEADBEEF ) );
+        CORE_CHECK( serialize_check( stream, 0xDEADBEEF ) );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -70,7 +68,7 @@ struct TestContext
     int value_max = 0;
 };
 
-struct TestContextMessage : public Message
+struct TestContextMessage : public protocol::Message
 {
     TestContextMessage() : Message( MESSAGE_TEST_CONTEXT )
     {
@@ -91,24 +89,24 @@ struct TestContextMessage : public Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        auto testContext = (const TestContext*) stream.GetContext( CONTEXT_USER );
+        auto testContext = (const TestContext*) stream.GetContext( protocol::CONTEXT_USER );
         CORE_ASSERT( testContext );
         serialize_int( stream, value, testContext->value_min, testContext->value_max );
 
-        PROTOCOL_CHECK( serialize_check( stream, 0xDEADBEEF ) );
+        CORE_CHECK( serialize_check( stream, 0xDEADBEEF ) );
     }
 
-    void SerializeRead( ReadStream & stream )
+    void SerializeRead( protocol::ReadStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeWrite( WriteStream & stream )
+    void SerializeWrite( protocol::WriteStream & stream )
     {
         Serialize( stream );
     }
 
-    void SerializeMeasure( MeasureStream & stream )
+    void SerializeMeasure( protocol::MeasureStream & stream )
     {
         Serialize( stream );
     }
@@ -117,13 +115,13 @@ struct TestContextMessage : public Message
     int value;
 };
 
-class TestMessageFactory : public MessageFactory
+class TestMessageFactory : public protocol::MessageFactory
 {
-    Allocator * m_allocator;
+    core::Allocator * m_allocator;
 
 public:
 
-    TestMessageFactory( Allocator & allocator )
+    TestMessageFactory( core::Allocator & allocator )
         : MessageFactory( allocator, NUM_MESSAGE_TYPES )
     {
         m_allocator = &allocator;
@@ -131,11 +129,11 @@ public:
 
 protected:
 
-    Message * CreateInternal( int type )
+    protocol::Message * CreateInternal( int type )
     {
         switch ( type )
         {
-            case MESSAGE_BLOCK:         return CORE_NEW( *m_allocator, BlockMessage );
+            case MESSAGE_BLOCK:         return CORE_NEW( *m_allocator, protocol::BlockMessage );
             case MESSAGE_TEST:          return CORE_NEW( *m_allocator, TestMessage );
             case MESSAGE_TEST_CONTEXT:  return CORE_NEW( *m_allocator, TestContextMessage );
             default:

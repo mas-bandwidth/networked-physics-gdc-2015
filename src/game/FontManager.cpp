@@ -3,19 +3,19 @@
 
 #ifdef CLIENT
 
-#include "Common.h"
+#include "core/Core.h"
+#include "core/Hash.h"
 #include "Global.h"
-#include "Hash.h"
 
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
 #include <stdio.h>
 
-FontManager::FontManager( protocol::Allocator & allocator )
+FontManager::FontManager( core::Allocator & allocator )
     : m_fonts( allocator )
 {
-    protocol::hash::reserve( m_fonts, 256 );
+    core::hash::reserve( m_fonts, 256 );
     Reload();
 }
 
@@ -32,9 +32,9 @@ void FontManager::Reload()
 
 Font * FontManager::GetFont( const char * name )
 {
-    const uint64_t key = protocol::hash_string( name );
+    const uint64_t key = core::hash_string( name );
     
-    return protocol::hash::get( m_fonts, key, (Font*)nullptr );
+    return core::hash::get( m_fonts, key, (Font*)nullptr );
 }
 
 void FontManager::Load()
@@ -75,9 +75,9 @@ void FontManager::Load()
                 continue;
             }
 
-            uint32_t key = protocol::hash_string( filename_without_extension );
+            uint32_t key = core::hash_string( filename_without_extension );
 
-            protocol::hash::set( m_fonts, key, font );
+            core::hash::set( m_fonts, key, font );
         }
     }
     
@@ -86,14 +86,14 @@ void FontManager::Load()
 
 void FontManager::Unload()
 {
-    for ( auto itor = protocol::hash::begin( m_fonts ); itor != protocol::hash::end( m_fonts ); ++itor )
+    for ( auto itor = core::hash::begin( m_fonts ); itor != core::hash::end( m_fonts ); ++itor )
     {
         Font * font = itor->value;
         printf( "%.2f: Delete font %p\n", global.timeBase.time, font );
         delete font;
     }
  
-    protocol::hash::clear( m_fonts );
+    core::hash::clear( m_fonts );
 }
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "Common.h"
+#include "core/Core.h"
 
 class FontManager;
 class ShaderManager;
@@ -10,8 +10,7 @@ class MeshManager;
 
 struct Global
 {
-    protocol::TimeBase timeBase;
-    
+    core::TimeBase timeBase;
     FontManager * fontManager = nullptr;
     ShaderManager * shaderManager = nullptr;
     TextureManager * textureManager = nullptr;

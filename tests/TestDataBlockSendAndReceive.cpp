@@ -1,10 +1,8 @@
-#include "Common.h"
-#include "DataBlockSender.h"
-#include "DataBlockReceiver.h"
-#include "Memory.h"
+#include "core/Core.h"
+#include "core/Memory.h"
+#include "protocol/DataBlockSender.h"
+#include "protocol/DataBlockReceiver.h"
 #include <stdio.h>
-
-using namespace protocol;
 
 static const int FragmentSize = 1024;
 static const int FragmentsPerSecond = 60;
@@ -12,16 +10,16 @@ static const int MaxBlockSize = 256 * 1024;
 
 static int packetLossPercent = 0;
 
-class TestDataBlockSender : public DataBlockSender
+class TestDataBlockSender : public protocol::DataBlockSender
 {
-    DataBlockReceiver * m_receiver = nullptr;
+    protocol::DataBlockReceiver * m_receiver = nullptr;
 
 public:
 
-    TestDataBlockSender( Block & dataBlock )
-        : DataBlockSender( memory::default_allocator(), dataBlock, FragmentSize, FragmentsPerSecond ) {}
+    TestDataBlockSender( protocol::Block & dataBlock )
+        : DataBlockSender( core::memory::default_allocator(), dataBlock, FragmentSize, FragmentsPerSecond ) {}
 
-    void SetReceiver( DataBlockReceiver & receiver )
+    void SetReceiver( protocol::DataBlockReceiver & receiver )
     {
         m_receiver = &receiver;
     }
@@ -37,16 +35,16 @@ protected:
     }
 };
 
-class TestDataBlockReceiver : public DataBlockReceiver
+class TestDataBlockReceiver : public protocol::DataBlockReceiver
 {
-    DataBlockSender * m_sender = nullptr;
+    protocol::DataBlockSender * m_sender = nullptr;
 
 public:
 
     TestDataBlockReceiver()
-        : DataBlockReceiver( memory::default_allocator(), FragmentSize, MaxBlockSize ) {}
+        : DataBlockReceiver( core::memory::default_allocator(), FragmentSize, MaxBlockSize ) {}
 
-    void SetSender( DataBlockSender & sender )
+    void SetSender( protocol::DataBlockSender & sender )
     {
         m_sender = &sender;
     }
@@ -66,11 +64,11 @@ void test_data_block_send_and_receive()
 {
     printf( "test_data_block_send_and_receive\n" );
 
-    memory::initialize();
+    core::memory::initialize();
     {
         const int BlockSize = 10 * 1024 + 55;
 
-        Block sentBlock( memory::default_allocator(), BlockSize );
+        protocol::Block sentBlock( core::memory::default_allocator(), BlockSize );
         {
             uint8_t * data = sentBlock.GetData();
             for ( int i = 0; i < BlockSize; ++i )
@@ -83,7 +81,7 @@ void test_data_block_send_and_receive()
         sender.SetReceiver( receiver );
         receiver.SetSender( sender );
 
-        TimeBase timeBase;
+        core::TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
 
         for ( int i = 0; i < 100; ++i )
@@ -96,16 +94,16 @@ void test_data_block_send_and_receive()
             timeBase.time += timeBase.deltaTime;
         }
 
-        PROTOCOL_CHECK( sender.SendCompleted() );
-        PROTOCOL_CHECK( receiver.ReceiveCompleted() );
-        PROTOCOL_CHECK( receiver.GetBlock() );
+        CORE_CHECK( sender.SendCompleted() );
+        CORE_CHECK( receiver.ReceiveCompleted() );
+        CORE_CHECK( receiver.GetBlock() );
 
         auto block = receiver.GetBlock();
         const uint8_t * data = block->GetData();
         for ( int i = 0; i < BlockSize; ++i )
-            PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+            CORE_CHECK( data[i] == ( 10 + i ) % 256 );
     }
-    memory::shutdown();
+    core::memory::shutdown();
 }
 
 void test_data_block_send_and_receive_packet_loss()
@@ -114,11 +112,11 @@ void test_data_block_send_and_receive_packet_loss()
 
     packetLossPercent = 50;
 
-    memory::initialize();
+    core::memory::initialize();
     {
         const int BlockSize = 10 * 1024 + 55;
 
-        Block sentBlock( memory::default_allocator(), BlockSize );
+        protocol::Block sentBlock( core::memory::default_allocator(), BlockSize );
         {
             uint8_t * data = sentBlock.GetData();
             for ( int i = 0; i < BlockSize; ++i )
@@ -131,7 +129,7 @@ void test_data_block_send_and_receive_packet_loss()
         sender.SetReceiver( receiver );
         receiver.SetSender( sender );
 
-        TimeBase timeBase;
+        core::TimeBase timeBase;
         timeBase.deltaTime = 0.1f;
 
         for ( int i = 0; i < 100; ++i )
@@ -144,14 +142,14 @@ void test_data_block_send_and_receive_packet_loss()
             timeBase.time += timeBase.deltaTime;
         }
 
-        PROTOCOL_CHECK( sender.SendCompleted() );
-        PROTOCOL_CHECK( receiver.ReceiveCompleted() );
-        PROTOCOL_CHECK( receiver.GetBlock() );
+        CORE_CHECK( sender.SendCompleted() );
+        CORE_CHECK( receiver.ReceiveCompleted() );
+        CORE_CHECK( receiver.GetBlock() );
 
         auto block = receiver.GetBlock();
         const uint8_t * data = block->GetData();
         for ( int i = 0; i < BlockSize; ++i )
-            PROTOCOL_CHECK( data[i] == ( 10 + i ) % 256 );
+            CORE_CHECK( data[i] == ( 10 + i ) % 256 );
     }
-    memory::shutdown();
+    core::memory::shutdown();
 }
