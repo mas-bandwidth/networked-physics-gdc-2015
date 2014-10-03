@@ -1,33 +1,6 @@
 DONE:
 
-    Fixed the shader compilation so it prints errors out compilation properly
-    and returns 0 for any shader that fails to compile. Previously was failing
-    silently.
-
-    Get basic text render showing entire texture in middle of screen
-
-    eg. single quad with (0,0) -> (1,1) texture coords for the texture atlas.
-
-    Verified alpha blending is working properly now. Font shader appears correct.
-
-    For some reason the second triangle isn't rendering in the quad,
-    and the texture coordinates are messed up. Not sure why :(
-
-    urk. Missing "," in the array definition. WTF C++?
-
-    Working now.
-
 TODO:
-
-    ---------------------------------
-
-    Work out how to get a projection matrix for screenspace for the text.
-
-    Make sure to *derive this* and *understand* why this matrix is appropriate.
-
-    Don't be a fucking cut&paste programmer!!!!
-
-    -------------------------------
 
     How to render text efficiently?
 

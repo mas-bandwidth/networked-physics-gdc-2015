@@ -10,6 +10,8 @@ class MeshManager;
 
 struct Global
 {
+    int displayWidth;
+    int displayHeight;
     core::TimeBase timeBase;
     FontManager * fontManager = nullptr;
     ShaderManager * shaderManager = nullptr;

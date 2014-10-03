@@ -183,7 +183,7 @@ void Font::DrawString( float x, float y, const char * str )
     glBindAttribLocation( shader_program, 1, "TexCoord" );
 
     vec4 textColor = vec4( 0,0,0,1 );
-    mat4 modelViewProjection = mat4( 1.0f );
+    mat4 modelViewProjection = glm::ortho( 0.0f, (float) global.displayWidth, 0.0f, (float) global.displayHeight, -1.0f, 1.0f );
 
     int location = glGetUniformLocation( shader_program, "TextColor" );
     if ( location >= 0 )
@@ -198,17 +198,17 @@ void Font::DrawString( float x, float y, const char * str )
     GLuint vboHandles[2];
     GLuint vaoHandle;
 
-    const float s = 0.5f;
+    const float s = 512;
 
     float positionData[] = 
     {
-       -s, -s, 0.0f,
-       -s, +s, 0.0f,
-       +s, +s, 0.0f,
+        0,  0, 0.0f,
+        0,  s, 0.0f,
+        s,  s, 0.0f,
     
-       -s, -s, 0.0f,
+        0,  0, 0.0f,
        +s, +s, 0.0f,
-       +s, -s, 0.0f 
+       +s,  0, 0.0f 
     };
 
     float texCoordData[] = 

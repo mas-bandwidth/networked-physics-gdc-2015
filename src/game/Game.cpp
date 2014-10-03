@@ -171,6 +171,11 @@ static void game_shutdown()
 
 void framebuffer_size_callback( GLFWwindow* window, int width, int height )
 {
+    global.displayWidth = width;
+    global.displayHeight = height;
+
+    printf( "displayWidth = %d, displayHeight = %d\n", width, height );
+
     glViewport( 0, 0, width, height );
 }
 
@@ -201,6 +206,8 @@ int main( int argc, char * argv[] )
     GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
     
     //GLFWwindow* window = glfwCreateWindow(800, 600, "Client", glfwGetPrimaryMonitor(), nullptr); // Fullscreen    
+
+    glfwGetWindowSize( window, &global.displayWidth, &global.displayHeight );
 
     glfwSetFramebufferSizeCallback( window, framebuffer_size_callback );
 
