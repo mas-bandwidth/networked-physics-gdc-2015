@@ -12,9 +12,12 @@
 #include <string.h>
 #include <stdio.h>
 
+extern FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename );
+
 FontManager::FontManager( core::Allocator & allocator )
     : m_fonts( allocator )
 {
+    m_allocator = &allocator;
     core::hash::reserve( m_fonts, 256 );
     Reload();
 }
@@ -66,14 +69,12 @@ void FontManager::Load()
             char font_path[MaxPath];
             sprintf( font_path, "%s/%s.font", fontDirectory, filename_without_extension );
 
-            // todo: use allocator
-            Font * font = new Font();
-
-            if ( !font->Load( font_path ) )
-            {
-                delete font;        // todo: use allocator
+            FontAtlas * atlas = LoadFontAtlas( *m_allocator, font_path );
+            if ( !atlas )
                 continue;
-            }
+
+            // todo: use allocator
+            Font * font = new Font( *m_allocator, atlas );
 
             uint32_t key = core::hash_string( filename_without_extension );
 

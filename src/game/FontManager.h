@@ -5,7 +5,10 @@
 
 #include "core/Types.h"
 
+namespace core { class Allocator; }
+
 class Font;
+struct FontAtlas;
 
 class FontManager
 {
@@ -22,11 +25,13 @@ public:
 private:
 
     void Load();
+
     void Unload();
 
     core::Hash<Font*> m_fonts;
+    core::Allocator * m_allocator;
 };
 
-#endif
+#endif // #ifdef CLIENT
 
-#endif
+#endif // #ifndef FONT_MANAGER

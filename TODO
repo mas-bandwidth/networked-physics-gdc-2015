@@ -2,47 +2,46 @@ DONE:
 
 TODO:
 
-    How to render text efficiently?
+    Add a constant for max # of font vertices. I'm thinking 4*1024 for now.
 
-    Font needs a concept of Begin, DrawString, DrawString, DrawString, End.
+    Assert if # verts exceeded between font begin/end. Just double it whenever it needs it.
 
-    Extend DrawString to include text color, *or* add a function to set text color.
+    Add font vertex buffer inside FontRender, make sure to clean it up in dtor.
 
-    It's probably better to have a SetTextColor thing (must be called between begin/end)
+    Add current vertex index inside FontRender.
 
-    This will help provide efficient rendering with less draw calls, eg. typically
-    it should mean that you can batch up lots of rendering (eg. console, debug text
-    to occur at the same time and be efficient).
-
-    Implement vertex buffer generation (dynamic?) to render text quads.
-
-    Text should now render and look GREAT (hires, and with correct gamma)
+    On end, pass vertex index into draw call.
 
     -------------------------------
 
-    Try out a few different console fonts and pick out a good one.
+    Move current code into "DrawAtlas". Verify it works using font vertex array.
+
+    -------------------------------
+
+    Implement proper "DrawText" with 6 verts added per char.
+
+    Perhaps "DrawText" should be made smart enough to handle newlines.
+
+    -------------------------------
+
+    Extend DrawText to include text color as a parameter. 
+
+    This now needs to become a vertex parameter, eg. x,y,z,r,g,b,a,u,v
 
     -------------------------------
 
     Clean up awful font loader code
-
-    Clean up awful shader loader code
 
     Font should accept an allocator and do all allocations that way.
 
     It should use the temp allocator to create a temporary buffer
     for the image load and conversion step.
 
+    Should be no C++ bullshit involved.
+
     -------------------------------
 
-    Decide if I want fonts to bo 1:1 or if scaling is appropriate at runtime when rendering.
-
-    Offset the text by a small amount for the "diamond" rasterization rule
-    so I can be guaranteed 1:1 mapping of texels to pixels.
-
-    Set this up and render some text with 1:1 texels 
-
-    Get a basic string of text rendering, but not necessarily efficiently.
+    Clean up awful shader loader code
 
     ------------------------------
 

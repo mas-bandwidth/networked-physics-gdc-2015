@@ -152,7 +152,11 @@ static void game_render()
 
     Font * font = global.fontManager->GetFont( "AnonymousPro" );
     if ( font )
-        font->DrawString( 10, 200, "Hello" );
+    {
+        font->Begin();
+        font->DrawText( 10, 200, "Hello world" );
+        font->End();
+    }
 
     check_opengl_error( "after render" );
 }
@@ -173,8 +177,6 @@ void framebuffer_size_callback( GLFWwindow* window, int width, int height )
 {
     global.displayWidth = width;
     global.displayHeight = height;
-
-    printf( "displayWidth = %d, displayHeight = %d\n", width, height );
 
     glViewport( 0, 0, width, height );
 }
@@ -207,7 +209,7 @@ int main( int argc, char * argv[] )
     
     //GLFWwindow* window = glfwCreateWindow(800, 600, "Client", glfwGetPrimaryMonitor(), nullptr); // Fullscreen    
 
-    glfwGetWindowSize( window, &global.displayWidth, &global.displayHeight );
+    glfwGetFramebufferSize( window, &global.displayWidth, &global.displayHeight );
 
     glfwSetFramebufferSizeCallback( window, framebuffer_size_callback );
 

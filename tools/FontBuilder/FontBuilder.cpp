@@ -1,7 +1,6 @@
 /*
     Font Builder Tool
     Copyright (c) 2014, The Network Protocol Company, Inc.
-    Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
 #include "core/Core.h"
@@ -41,8 +40,8 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
     printf( "%s -> %s (%d)\n", fontfile, outfile, font_size );
 
     // Margins around characters to prevent them from 'bleeding' into each other.
-    const int margin = 8;
-    int image_height = 0, image_width = 1024;
+    const int margin = 2;
+    int image_height = 0, image_width = 256;            // todo: needs to determine appropriate image width based on point size!
 
     // Load the font
     FT_Face face;

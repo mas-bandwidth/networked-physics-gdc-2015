@@ -1,3 +1,43 @@
+Friday Night, October 4th, 2014:
+--------------------------------
+
+    Font needs a concept of Begin, DrawString, DrawString, DrawString, End.
+
+    Switch to interleaved vertex format w. specific FontVertex struct.
+
+    Make sure it still renders the texture atlas
+
+    Fix ortho projection so top-left corner is (0,0)
+
+    Convert font to pimpl, eg: FontInternal. 
+
+    So much implementation detail is being exposed to caller.
+
+    It's gross.
+
+    Maybe split up font loading / font loader / builder from the font itself.
+
+    It's annoying to have the bulk of the font file not dedicated to rendering,
+    but to tedious details of how to load the fucking font file.
+
+    Maybe split up FontRender and FontAtlas instead.
+
+    I like this split.
+
+    Decide if I want fonts to be 1:1 or if scaling is appropriate at runtime when rendering.
+
+    Decide I want 1:1
+
+    Offset the text by a small amount for the "diamond" rasterization rule
+    so I can be guaranteed 1:1 mapping of texels to pixels.
+
+    Text atlas should now render and look GREAT (hires, and with correct gamma)
+
+    Try out a few different console fonts and pick out a good one.
+
+    I really like the anonymous pro font at 32 point (effectively 16 point w. retina)
+
+
 Wednesday Night, October 2nd, 2014:
 -----------------------------------
 
