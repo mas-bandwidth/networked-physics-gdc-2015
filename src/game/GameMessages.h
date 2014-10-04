@@ -94,4 +94,4 @@ protected:
     }
 };
 
-#endif
+#endif // #ifndef GAME_MESSAGES_H

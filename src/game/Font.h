@@ -10,11 +10,18 @@
 #ifdef CLIENT
 
 #include <stdint.h>
- 
+#include <glm/glm.hpp>
+
 namespace core { class Allocator; }
 
 struct FontAtlas;
 struct FontRender;
+
+struct Color
+{
+    float r,g,b,a;
+    Color( float _r, float _g, float _b, float _a ) : r(_r), g(_g), b(_b), a(_a) {}
+};
 
 class Font
 {
@@ -32,9 +39,9 @@ public:
     
     void Begin();
 
-    void DrawAtlas( float x, float y );
+    void DrawAtlas( float x, float y, const Color & color = Color(0,0,0,1) );
 
-    void DrawText( float x, float y, const char * text );
+    void DrawText( float x, float y, const char * text, const Color & color = Color(0,0,0,1) );
 
     void End();
 
@@ -48,4 +55,3 @@ private:
 #endif // #ifdef CLIENT
 
 #endif // #ifndef FONT_H
-

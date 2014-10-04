@@ -56,4 +56,4 @@ protected:
     }
 };
 
-#endif
+#endif // #ifndef GAME_PACKETS_H

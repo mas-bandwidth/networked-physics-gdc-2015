@@ -25,6 +25,6 @@ private:
     core::Hash<uint32_t> m_shaders;
 };
 
-#endif
+#endif // #ifdef CLIENT
 
-#endif
+#endif // #ifndef SHADER_MANAGER_H

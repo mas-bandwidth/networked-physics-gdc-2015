@@ -47,4 +47,4 @@ protected:
     }
 };
 
-#endif
+#endif // #ifndef GAME_CHANNEL_STRUCTURE_H

@@ -117,4 +117,4 @@ GLuint load_shader( const char * vertex_file_path, const char * fragment_file_pa
     return ProgramID;
 }
 
-#endif
+#endif // #ifdef CLIENT

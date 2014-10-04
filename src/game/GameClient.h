@@ -130,4 +130,4 @@ void DestroyGameClient( core::Allocator & allocator, GameClient * client )
     // todo: delete channel structure
 }
 
-#endif
+#endif // #ifndef GAME_CLIENT_H

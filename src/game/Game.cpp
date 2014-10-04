@@ -150,12 +150,12 @@ static void game_render()
 
     // --------------------
 
-    Font * font = global.fontManager->GetFont( "AnonymousPro" );
+    Font * font = global.fontManager->GetFont( "Console" );
     if ( font )
     {
         font->Begin();
         font->DrawAtlas( 0, 0 );
-        font->DrawText( 400, 100, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat." );
+        font->DrawText( 400, 100, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", Color(0.8,0.8,0.8,1.0) );
         font->End();
     }
 
@@ -257,7 +257,7 @@ int main( int argc, char * argv[] )
 
 // ===================================================================================================================
 
-#else
+#else // #ifdef CLIENT
 
 // ===================================================================================================================
 //                                                       SERVER
@@ -320,4 +320,4 @@ int main( int argc, char ** argv )
 
 // ===================================================================================================================
 
-#endif
+#endif // #ifdef CLIENT

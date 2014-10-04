@@ -7,4 +7,4 @@ struct GameContext
     int value_max = 0;
 };
 
-#endif
+#endif // #ifndef GAME_CONTEXT_H

@@ -1,5 +1,3 @@
 [
-    [ "bin/data/fonts/ProggyTiny.font",   "data/fonts/Proggy/ProggyTiny.ttf", 32 ],
-    [ "bin/data/fonts/AnonymousPro.font",   "data/fonts/AnonymousPro/AnonymousPro.ttf", 32 ],
-    [ "bin/data/fonts/InputMonoNarrow.font", "data/fonts/InputMonoNarrow/InputMonoNarrow-Regular.ttf", 32 ]
+    [ "bin/data/fonts/Console.font", "data/fonts/InputMono/InputMono-Medium.ttf", 32 ]
 ]

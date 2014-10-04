@@ -21,4 +21,4 @@ struct Global
 
 extern Global global;
 
-#endif
+#endif // #ifndef GLOBAL_H

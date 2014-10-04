@@ -104,4 +104,4 @@ void ShaderManager::Unload()
     core::hash::clear( m_shaders );
 }
 
-#endif
+#endif // #ifdef CLIENT

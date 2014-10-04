@@ -1,12 +1,11 @@
 #version 410
 
 in vec2 TexCoord;
+flat in vec4 TextColor;
 
 layout( location = 0 ) out vec4 FragColor;
 
 uniform sampler2D Tex1;
-
-uniform vec4 TextColor;
 
 void main() 
 {

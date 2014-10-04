@@ -12,6 +12,7 @@ void check_opengl_error( const char * message );
 
 GLuint load_shader( const char * vertex_file_path, const char * fragment_file_path );
 
-#endif 
+#endif // #ifdef CLIENT
 
-#endif
+#endif // #ifndef RENDER_H
+ 

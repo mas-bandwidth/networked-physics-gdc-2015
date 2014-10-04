@@ -2,12 +2,6 @@ DONE:
 
 TODO:
 
-    Extend DrawText to include text color as a parameter. 
-
-    This now needs to become a vertex parameter, eg. x,y,z,r,g,b,a,u,v
-
-    -------------------------------
-
     Clean up awful font loader code
 
     Font should accept an allocator and do all allocations that way.

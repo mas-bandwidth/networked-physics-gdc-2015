@@ -157,7 +157,7 @@ const int MaxFontVertices = 4 * 1024;
 struct FontVertex
 {
     float x,y,z;
-    // float r,g,b,a;
+    float r,g,b,a;
     float u,v;
 };
 
@@ -240,20 +240,8 @@ void Font::Begin()
 
     glUseProgram( shader_program );
 
-    glBindAttribLocation( shader_program, 0, "VertexPosition" );
-    glBindAttribLocation( shader_program, 1, "TexCoord" );
-
-    // todo: pass this in per font render call instead, eg. vertex attribute
-    vec4 textColor = vec4( 0,0,0,1 );
-
     mat4 modelViewProjection = glm::ortho( 0.0f, (float) global.displayWidth, (float) global.displayHeight, 0.0f, -1.0f, 1.0f );
-
-    int location = glGetUniformLocation( shader_program, "TextColor" );
-    if ( location < 0 )
-        return;    
-    glUniform4fv( location, 1, &textColor[0] );
-
-    location = glGetUniformLocation( shader_program, "ModelViewProjection" );
+    int location = glGetUniformLocation( shader_program, "ModelViewProjection" );
     if ( location < 0 )
         return;
     glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
@@ -265,10 +253,11 @@ void Font::Begin()
         glBindVertexArray( m_render->vao );
         glEnableVertexAttribArray( 0 );
         glEnableVertexAttribArray( 1 );
+        glEnableVertexAttribArray( 2 );
         glBindBuffer( GL_ARRAY_BUFFER, m_render->vbo );
         glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)0 );
-        // todo: add color data r,g,b,a
-        glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(3*4) );
+        glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(3*4) );
+        glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(7*4) );
     }
     else
     {
@@ -277,7 +266,7 @@ void Font::Begin()
     }
 }
 
-void Font::DrawAtlas( float x, float y )
+void Font::DrawAtlas( float x, float y, const Color & color )
 {
     CORE_ASSERT( m_render );
     CORE_ASSERT( m_render->active );
@@ -293,24 +282,40 @@ void Font::DrawAtlas( float x, float y )
     a.x = 0;
     a.y = 0;
     a.z = 0;
+    a.r = color.r;
+    a.g = color.g;
+    a.b = color.b;
+    a.a = color.a;
     a.u = 0;
     a.v = 0;
 
     b.x = w;
     b.y = 0;
     b.z = 0;
+    b.r = color.r;
+    b.g = color.g;
+    b.b = color.b;
+    b.a = color.a;
     b.u = 1;
     b.v = 0;
 
     c.x = w;
     c.y = h;
     c.z = 0;
+    c.r = color.r;
+    c.g = color.g;
+    c.b = color.b;
+    c.a = color.a;
     c.u = 1;
     c.v = 1;
 
     d.x = 0;
     d.y = h;
     d.z = 0;
+    d.r = color.r;
+    d.g = color.g;
+    d.b = color.b;
+    d.a = color.a;
     d.u = 0;
     d.v = 1;
 
@@ -328,7 +333,7 @@ void Font::DrawAtlas( float x, float y )
     m_render->currentFontVertex += 6;
 }
 
-void Font::DrawText( float x, float y, const char * text )
+void Font::DrawText( float x, float y, const char * text, const Color & color )
 {
     CORE_ASSERT( m_render );
     CORE_ASSERT( m_render->active );
@@ -346,30 +351,43 @@ void Font::DrawText( float x, float y, const char * text )
 
         FontVertex a,b,c,d;
 
-        const float w = m_atlas->width;
-        const float h = m_atlas->height;
-
         a.x = x;
         a.y = y;
         a.z = 0;
+        a.r = color.r;
+        a.g = color.g;
+        a.b = color.b;
+        a.a = color.a;
         a.u = glyph->tex_x1;
         a.v = glyph->tex_y1;
 
         b.x = x + glyph->advance;
         b.y = y;
         b.z = 0;
+        b.r = color.r;
+        b.g = color.g;
+        b.b = color.b;
+        b.a = color.a;
         b.u = glyph->tex_x2;
         b.v = glyph->tex_y1;
 
         c.x = x + glyph->advance;
         c.y = y + m_atlas->line_height;
         c.z = 0;
+        c.r = color.r;
+        c.g = color.g;
+        c.b = color.b;
+        c.a = color.a;
         c.u = glyph->tex_x2;
         c.v = glyph->tex_y1 + m_atlas->tex_line_height;
 
         d.x = x;
         d.y = y + m_atlas->line_height;
         d.z = 0;
+        d.r = color.r;
+        d.g = color.g;
+        d.b = color.b;
+        d.a = color.a;
         d.u = glyph->tex_x1;
         d.v = glyph->tex_y1 + m_atlas->tex_line_height;
 
@@ -404,4 +422,3 @@ void Font::End()
 }
 
 #endif // #ifdef CLIENT
-

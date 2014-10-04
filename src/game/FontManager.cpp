@@ -97,4 +97,4 @@ void FontManager::Unload()
     core::hash::clear( m_fonts );
 }
 
-#endif
+#endif // #ifdef CLIENT

@@ -104,4 +104,4 @@ void DestroyGameServer( Allocator & allocator, GameServer * server )
     // todo: delete channel structure
 }
 
-#endif
+#endif // #ifndef GAME_SERVER_H

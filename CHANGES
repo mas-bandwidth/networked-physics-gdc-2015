@@ -52,6 +52,12 @@ Friday Night, October 4th, 2014:
     Implement proper "DrawText" with 6 verts added per char.
 
     Verify that test text renders properly!
+
+    Extend DrawText to include text color as a parameter. 
+
+    This now needs to become a vertex parameter, eg. x,y,z,r,g,b,a,u,v
+
+    Now have text rendering with color per-strings!
     
 
 Wednesday Night, October 2nd, 2014:
