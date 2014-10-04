@@ -154,7 +154,8 @@ static void game_render()
     if ( font )
     {
         font->Begin();
-        font->DrawText( 10, 200, "Hello world" );
+        font->DrawAtlas( 0, 0 );
+        font->DrawText( 400, 100, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat." );
         font->End();
     }
 
@@ -246,7 +247,7 @@ int main( int argc, char * argv[] )
 
     network::ShutdownNetwork();
 
-    // IMPORTANT: Disabled until we fix leak issue with game client/server objects in config
+    // IMPORTANT: Disabled until I fix leak issue with game client/server objects in config
     //memory::shutdown();
 
     glfwTerminate();

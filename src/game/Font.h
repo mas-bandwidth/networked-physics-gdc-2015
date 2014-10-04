@@ -32,6 +32,8 @@ public:
     
     void Begin();
 
+    void DrawAtlas( float x, float y );
+
     void DrawText( float x, float y, const char * text );
 
     void End();

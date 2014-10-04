@@ -152,6 +152,8 @@ void DestroyFontAtlas( core::Allocator & allocator, FontAtlas * atlas )
     CORE_DELETE( allocator, FontAtlas, atlas );
 }
 
+const int MaxFontVertices = 4 * 1024;
+
 struct FontVertex
 {
     float x,y,z;
@@ -164,12 +166,15 @@ struct FontRender
     bool active;
     GLuint vbo;
     GLuint vao;
+    int currentFontVertex;
+    FontVertex vertices[MaxFontVertices];
 
     FontRender()
     {
         active = false;
         vbo = 0;
         vao = 0;
+        currentFontVertex = 0;
     }
 };
 
@@ -272,7 +277,7 @@ void Font::Begin()
     }
 }
 
-void Font::DrawText( float x, float y, const char * text )
+void Font::DrawAtlas( float x, float y )
 {
     CORE_ASSERT( m_render );
     CORE_ASSERT( m_render->active );
@@ -309,40 +314,80 @@ void Font::DrawText( float x, float y, const char * text )
     d.u = 0;
     d.v = 1;
 
-    FontVertex vertexData[] = { a, b, c, a, c, d };
+    CORE_ASSERT( m_render->currentFontVertex + 6 < MaxFontVertices );
 
-    glBufferData( GL_ARRAY_BUFFER, sizeof( vertexData ), vertexData, GL_STREAM_DRAW );
+    FontVertex * vertex = m_render->vertices + m_render->currentFontVertex;
 
-    // ---------------------------------------------
+    vertex[0] = a;
+    vertex[1] = b;
+    vertex[2] = c;
+    vertex[3] = a;
+    vertex[4] = c;
+    vertex[5] = d;
 
-    /* 
-    glBegin( GL_QUADS );
-    
-    const char * p = str;
+    m_render->currentFontVertex += 6;
+}
+
+void Font::DrawText( float x, float y, const char * text )
+{
+    CORE_ASSERT( m_render );
+    CORE_ASSERT( m_render->active );
+
+    const char * p = text;
 
     while ( *p != '\0' )
     {
-        int c = *p++;
+        int character = *p++;
 
-        Glyph * glyph = m_table[c];
+        Glyph * glyph = m_atlas->table[character];
 
-        glTexCoord2f( glyph->tex_x1, glyph->tex_y1 + m_tex_line_height );
-        glVertex2f( x, y );
+        // a b
+        // d c
 
-        glTexCoord2f( glyph->tex_x1, glyph->tex_y1 );
-        glVertex2f( x, y + m_line_height );
-        
-        glTexCoord2f( glyph->tex_x2, glyph->tex_y1 );
-        glVertex2f( x + glyph->advance, y + m_line_height );
-        
-        glTexCoord2f( glyph->tex_x2, glyph->tex_y1 + m_tex_line_height );
-        glVertex2f( x + glyph->advance, y );
+        FontVertex a,b,c,d;
+
+        const float w = m_atlas->width;
+        const float h = m_atlas->height;
+
+        a.x = x;
+        a.y = y;
+        a.z = 0;
+        a.u = glyph->tex_x1;
+        a.v = glyph->tex_y1;
+
+        b.x = x + glyph->advance;
+        b.y = y;
+        b.z = 0;
+        b.u = glyph->tex_x2;
+        b.v = glyph->tex_y1;
+
+        c.x = x + glyph->advance;
+        c.y = y + m_atlas->line_height;
+        c.z = 0;
+        c.u = glyph->tex_x2;
+        c.v = glyph->tex_y1 + m_atlas->tex_line_height;
+
+        d.x = x;
+        d.y = y + m_atlas->line_height;
+        d.z = 0;
+        d.u = glyph->tex_x1;
+        d.v = glyph->tex_y1 + m_atlas->tex_line_height;
+
+        CORE_ASSERT( m_render->currentFontVertex + 6 < MaxFontVertices );
+
+        FontVertex * vertex = m_render->vertices + m_render->currentFontVertex;
+
+        vertex[0] = a;
+        vertex[1] = b;
+        vertex[2] = c;
+        vertex[3] = a;
+        vertex[4] = c;
+        vertex[5] = d;
+
+        m_render->currentFontVertex += 6;
 
         x += glyph->advance;
     }
-
-    glEnd();
-    */
 }
 
 void Font::End()
@@ -350,9 +395,12 @@ void Font::End()
     CORE_ASSERT( m_render );
     CORE_ASSERT( m_render->active );
 
-    glDrawArrays( GL_TRIANGLES, 0, 6 );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( FontVertex ) * m_render->currentFontVertex, m_render->vertices, GL_STREAM_DRAW );
+
+    glDrawArrays( GL_TRIANGLES, 0, m_render->currentFontVertex );
 
     m_render->active = false;
+    m_render->currentFontVertex = 0;
 }
 
 #endif // #ifdef CLIENT

@@ -37,6 +37,22 @@ Friday Night, October 4th, 2014:
 
     I really like the anonymous pro font at 32 point (effectively 16 point w. retina)
 
+    Add a constant for max # of font vertices. I'm thinking 4*1024 for now.
+
+    Assert if # verts exceeded between font begin/end. Just double it whenever it needs it.
+
+    Add font vertex buffer inside FontRender.
+
+    Add current vertex index inside FontRender.
+
+    On end, pass vertex index into draw call.
+
+    Move current code into "DrawAtlas". Verify it works using font vertex array.
+
+    Implement proper "DrawText" with 6 verts added per char.
+
+    Verify that test text renders properly!
+    
 
 Wednesday Night, October 2nd, 2014:
 -----------------------------------

@@ -2,28 +2,6 @@ DONE:
 
 TODO:
 
-    Add a constant for max # of font vertices. I'm thinking 4*1024 for now.
-
-    Assert if # verts exceeded between font begin/end. Just double it whenever it needs it.
-
-    Add font vertex buffer inside FontRender, make sure to clean it up in dtor.
-
-    Add current vertex index inside FontRender.
-
-    On end, pass vertex index into draw call.
-
-    -------------------------------
-
-    Move current code into "DrawAtlas". Verify it works using font vertex array.
-
-    -------------------------------
-
-    Implement proper "DrawText" with 6 verts added per char.
-
-    Perhaps "DrawText" should be made smart enough to handle newlines.
-
-    -------------------------------
-
     Extend DrawText to include text color as a parameter. 
 
     This now needs to become a vertex parameter, eg. x,y,z,r,g,b,a,u,v
@@ -98,7 +76,7 @@ TODO:
 
     Generate a bunch of different sizes, eg. all the standard sizes that can exist and make sure the stones are generated to a high resolution.
 
-    Make sure the generation is fast. If it's not fast, optimize it (eg. optimize the code that calculates the )
+    Make sure the generation is fast. If it's not fast, optimize it (eg. optimize the code that calculates the inertia tensor)
 
     Make sure the go stone generation code doesn't do work if the meshes already exist.
 
