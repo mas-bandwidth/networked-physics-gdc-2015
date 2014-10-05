@@ -98,7 +98,7 @@ void ShaderManager::Unload()
     {
         const uint32_t shader = itor->value;
         printf( "%.2f: Delete shader %u\n", global.timeBase.time, shader );
-        glDeleteShader( shader );
+        delete_shader( shader );
     }
  
     core::hash::clear( m_shaders );

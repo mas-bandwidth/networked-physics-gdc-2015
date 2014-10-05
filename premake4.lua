@@ -26,6 +26,12 @@ project "protocol"
     links { "core", "network" }
     targetdir "lib"
 
+project "virtualgo"
+    kind "StaticLib"
+    files { "src/virtualgo/*.h", "src/virtualgo/*.cpp" }
+    links { "core" }
+    targetdir "lib"
+
 project "UnitTest"
     kind "ConsoleApp"
     files { "tests/UnitTest.cpp", "tests/Test*.cpp" }
@@ -65,6 +71,13 @@ project "FontBuilder"
     kind "ConsoleApp"
     files { "tools/FontBuilder/*.cpp" }
     links { "core", "freetype", "jansson" }
+    location "build"
+    targetdir "bin"
+
+project "StoneGenerator"
+    kind "ConsoleApp"
+    files { "tools/StoneGenerator/*.cpp" }
+    links { "core", "virtualgo", "jansson" }
     location "build"
     targetdir "bin"
 
@@ -169,6 +182,19 @@ if not os.is "windows" then
 
     newaction
     {
+        trigger     = "virtualgo",
+        description = "Build virtualgo library",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            os.execute "make -j32 virtualgo"
+        end
+    }
+
+    newaction
+    {
         trigger     = "test",
         description = "Build and run unit tests",
         valid_kinds = premake.action.get("gmake").valid_kinds,
@@ -193,6 +219,23 @@ if not os.is "windows" then
         execute = function ()
             if os.execute "make -j32 FontBuilder" == 0 then
                 if os.execute "bin/FontBuilder data/fonts/Fonts.json" ~= 0 then
+                    os.exit(1)
+                end
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "stones",
+        description = "Build stones",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j32 StoneGenerator" == 0 then
+                if os.execute "bin/StoneGenerator data/stones/Stones.json" ~= 0 then
                     os.exit(1)
                 end
             end

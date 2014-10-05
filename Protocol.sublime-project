@@ -4,6 +4,14 @@
 		{
 			"follow_symlinks": true,
 			"path": "."
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/gaffer/experiments/datablock"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/gaffer/git/cubes"
 		}
 	]
 }

@@ -20,6 +20,8 @@ const int ServerPort = 10000;
 #include "FontManager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 using glm::mat4;
 using glm::vec3;
@@ -27,14 +29,20 @@ using glm::vec4;
 
 GameClient * client = nullptr;
 
+// --------------------
+
 GLuint vboHandles[2];
 GLuint vaoHandle;
 
+// --------------------
+
 static void game_init()
 {
-    // todo: use allocator new instead of "new"
-    global.fontManager = new FontManager( core::memory::default_allocator() );
-    global.shaderManager = new ShaderManager( core::memory::default_allocator() );
+    auto & allocator = core::memory::default_allocator();
+
+    global.fontManager = CORE_NEW( allocator, FontManager, allocator );
+
+    global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
 
     client = CreateGameClient( core::memory::default_allocator() );
 
@@ -53,14 +61,14 @@ static void game_init()
 
     global.timeBase.deltaTime = 1.0 / TickRate;
 
-    // ---------------------------------------------------
-
     glEnable( GL_FRAMEBUFFER_SRGB );
 
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    // ---------------------------------------------------
 
     float positionData[] = 
     {
@@ -105,7 +113,9 @@ static void game_init()
     glBindBuffer( GL_ARRAY_BUFFER, colorBufferHandle );
     glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
 
-    check_opengl_error( "after vertex buffer setup" );
+    // ---------------------------------------------------
+
+    check_opengl_error( "after game_init" );
 }
 
 static void game_update()
@@ -164,12 +174,12 @@ static void game_render()
 
 static void game_shutdown()
 {
-    DestroyGameClient( core::memory::default_allocator(), client );
+    auto & allocator = core::memory::default_allocator();
 
-    delete global.fontManager;
-    delete global.shaderManager;
+    DestroyGameClient( allocator, client );
 
-    // todo: clean up textures, vertex array etc.
+    CORE_DELETE( allocator, FontManager, global.fontManager );
+    CORE_DELETE( allocator, ShaderManager, global.shaderManager );
 
     global = Global();
 }

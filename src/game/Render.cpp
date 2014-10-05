@@ -10,10 +10,8 @@
 #include <iostream>
 #include <fstream>
 
-template <typename T> const T & max( const T & a, const T & b )
-{
-    return ( a > b ) ? a : b;
-} 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 void clear_opengl_error()
 {
@@ -30,7 +28,7 @@ void check_opengl_error( const char * message )
     }    
 }
 
-GLuint load_shader( const char * vertex_file_path, const char * fragment_file_path )
+uint32_t load_shader( const char * vertex_file_path, const char * fragment_file_path )
 {
     printf( "%.2f: Loading shader \"%s\" \"%s\"\n", global.timeBase.time, vertex_file_path, fragment_file_path );
 
@@ -103,7 +101,7 @@ GLuint load_shader( const char * vertex_file_path, const char * fragment_file_pa
     // Check the program
     glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
     glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    std::vector<char> ProgramErrorMessage( max(InfoLogLength, int(1)) );
+    std::vector<char> ProgramErrorMessage( core::max(InfoLogLength, int(1)) );
     glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
     if ( Result == GL_FALSE )
     {
@@ -115,6 +113,11 @@ GLuint load_shader( const char * vertex_file_path, const char * fragment_file_pa
     glDeleteShader(FragmentShaderID);
  
     return ProgramID;
+}
+
+void delete_shader( uint32_t shader )
+{
+    glDeleteShader( shader );
 }
 
 #endif // #ifdef CLIENT

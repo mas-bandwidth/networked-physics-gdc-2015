@@ -17,7 +17,6 @@ char charset[] = { "abcdefghijklmnopqrstuvwxyz"
 
 struct GlyphEntry
 {
-    unsigned char magic;
     unsigned char ascii;
     unsigned short width;
     unsigned short x;
@@ -133,7 +132,6 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
         }
 
         // Fill in the GlyphEntry
-        entries[i].magic = 23;
         entries[i].ascii = charset[i];
         entries[i].width = advance - 3;
         entries[i].x = x;

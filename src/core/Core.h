@@ -113,6 +113,13 @@ namespace core
         static const uint32_t result = ( min == max ) ? 0 : Log2<uint32_t(max-min)>::result + 1;
     };
     
+    template <typename T> void swap( T & a, T & b )
+    {
+        T tmp = a;
+        a = b;
+        b = tmp;
+    };
+
     inline uint32_t popcount( uint32_t x )
     {
         const uint32_t a = x - ( ( x >> 1 )       & 0x55555555 );

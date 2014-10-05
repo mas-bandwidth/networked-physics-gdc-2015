@@ -1,3 +1,58 @@
+Sunday Afternoon, October 6th, 2014:
+------------------------------------
+
+    Should virtual go continue to use vectorial, or should it convert to glm?
+
+    I kinda prefer vectorial (simpler), less template BS.
+
+    Keep it vectorial for now.
+
+    WriteTGA is a useful bit of code. Should be put somewhere else though, eg. like inside game/Util.h?
+
+    Yep. Done.
+
+    Bring across virtual go stuff as a library, eg. "virtualgo"
+
+    Just get it all compiling don't change to much of it yet.
+
+    Split virtual go into tool side and runtime portions.
+
+    Minimize the runtime portion.
+
+    Clean up the existing mesh processing functionality w. vertex welding.
+
+    Get the existing tool working, eg. generating a .obj file with a tool mesh.
+
+    Research mesh optimization.
+
+    Winner seems to be an implementation of https://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html
+
+    There are several implementations here, some of which at least are BSD so I can use them.
+
+    http://www.martin.st/thesis/ (ZLib)
+    
+    https://raw.githubusercontent.com/farbrausch/fr_public/master/werkkzeug3/engine.cpp (BSD)
+
+    https://github.com/bkaradzic/bgfx/tree/master/3rdparty/forsyth-too (Public domain)
+
+    Skip over mesh optimization for now. It's a distraction. 
+
+    Get the stones built first, and loaded and rendering in the game.
+
+
+Saturday Morning, October 5th, 2014:
+------------------------------------
+
+    Clean up awful font loader code
+
+    Font should accept an allocator and do all allocations that way.
+
+    It should use the temp allocator to create a temporary buffer
+    for the image load and conversion step.
+
+    Remove the iostream bullshit from font loader
+
+
 Friday Night, October 4th, 2014:
 --------------------------------
 

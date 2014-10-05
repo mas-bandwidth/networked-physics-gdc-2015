@@ -3,7 +3,6 @@
 #include "core/Array.h"
 #include "core/Hash.h"
 #include "core/Queue.h"
-#include "core/StringStream.h"
 #include <string.h>
 #include <algorithm>
 
@@ -307,33 +306,4 @@ void test_pointer_arithmetic()
         uint8_t * value = (uint8_t*) core::pointer_add( data, i );
         CORE_CHECK( *value == buffer[i] );
     }
-}
-
-void test_string_stream()
-{
-    printf( "test_string_stream\n" );
-
-    core::memory::initialize();
-    {
-        using namespace core::string_stream;
-
-        core::TempAllocator1024 temp;
-        Buffer ss( temp );
-
-        ss << "Name";           tab( ss, 20 );    ss << "Score\n";
-        repeat( ss, 10, '-' );  tab( ss, 20 );    repeat( ss, 10, '-' ); ss << "\n";
-        ss << "Niklas";         tab( ss, 20 );    printf( ss, "%.2f", 2.7182818284f ); ss << "\n";
-        ss << "Jim";            tab( ss, 20 );    printf( ss, "%.2f", 3.14159265f ); ss << "\n";
-
-        CORE_CHECK
-        (
-            0 == strcmp( c_str( ss ),
-                "Name                Score\n"
-                "----------          ----------\n"
-                "Niklas              2.72\n"
-                "Jim                 3.14\n"
-            )
-        );
-    }
-    core::memory::shutdown();
 }

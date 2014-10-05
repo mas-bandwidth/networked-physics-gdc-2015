@@ -13,7 +13,6 @@ extern void test_multi_hash();
 extern void test_murmur_hash();
 extern void test_queue();
 extern void test_pointer_arithmetic();
-extern void test_string_stream();
 
 extern void test_sequence();
 extern void test_endian();
@@ -97,8 +96,7 @@ int main()
         test_murmur_hash();
         test_queue();
         test_pointer_arithmetic();
-        test_string_stream();
-
+        
         test_sequence();
         test_endian();
         test_address4();

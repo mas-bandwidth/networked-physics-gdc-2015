@@ -5,8 +5,8 @@
 
 #include "core/Core.h"
 #include "core/Hash.h"
+#include "core/Memory.h"
 #include "Global.h"
-
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
@@ -73,8 +73,7 @@ void FontManager::Load()
             if ( !atlas )
                 continue;
 
-            // todo: use allocator
-            Font * font = new Font( *m_allocator, atlas );
+            Font * font = CORE_NEW( *m_allocator, Font, *m_allocator, atlas );
 
             uint32_t key = core::hash_string( filename_without_extension );
 
@@ -91,7 +90,7 @@ void FontManager::Unload()
     {
         Font * font = itor->value;
         printf( "%.2f: Delete font %p\n", global.timeBase.time, font );
-        delete font;
+        CORE_DELETE( *m_allocator, Font, font );
     }
  
     core::hash::clear( m_fonts );

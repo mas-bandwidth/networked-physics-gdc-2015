@@ -1,7 +1,6 @@
 /*
     Font Loader
     Copyright (c) 2014, The Network Protocol Company, Inc.
-    Derived from public domain code: http://content.gpwiki.org/index.php/OpenGL:Tutorials:Font_System
 */  
 
 #ifdef CLIENT
@@ -11,50 +10,71 @@
 #include "Global.h"
 #include "Render.h"
 #include "ShaderManager.h"
-
-// todo: remove this BS
-#include <iostream>
-#include <fstream>
-
-#include <GLUT/glut.h>
-#include <OpenGL/OpenGL.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <stdio.h>
+#include <stdlib.h>
 
 using glm::mat4;
 using glm::vec3;
 using glm::vec4;
 
-template<class T, class S> void ReadObject( T & to_read, S & in )
+template <class T> bool ReadObject( FILE * file, const T & object )
 {
-    in.read( reinterpret_cast<char*>( &to_read ), sizeof(T) );
+    return fread( (char*) &object, sizeof(object), 1, file ) == 1;
 }
 
-struct GlyphBuffer
+struct FontGlyphBuffer
 {
-    unsigned char magic;
     unsigned char ascii; 
     unsigned short width;
     unsigned short x;
     unsigned short y;
 };
 
-struct Glyph
+struct FontGlyph
 {
-    float tex_x1, tex_y1, tex_x2;
+    float tex_x1;
+    float tex_y1;
+    float tex_x2;
     int advance;
 };
 
 struct FontAtlas
 {
-    Glyph * glyphs;
-    Glyph * table[256];
+    FontAtlas()
+    {
+        glyphs = nullptr;
+        num_glyphs = 0;
+        texture = 0;
+        width = 0;
+        height = 0;
+        line_height = 0;
+        tex_line_height = 0;
+    }
+
+    FontGlyph * glyphs;
+    FontGlyph * table[256];
     uint32_t texture;
+    int num_glyphs;
     int width;
     int height;
     int line_height;
     float tex_line_height;
 };
+
+void DestroyFontAtlas( core::Allocator & allocator, FontAtlas * atlas )
+{
+    CORE_ASSERT( atlas );
+    CORE_ASSERT( atlas->texture );
+    glDeleteTextures( 1, &atlas->texture );
+    CORE_DELETE_ARRAY( allocator, atlas->glyphs, atlas->num_glyphs );
+    atlas->glyphs = nullptr;
+    atlas->texture = 0;
+    CORE_DELETE( allocator, FontAtlas, atlas );
+}
 
 FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
 {
@@ -62,48 +82,48 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
 
     printf( "%.2f: Loading font \"%s\"\n", global.timeBase.time, filename );
 
-    // Open the file and check whether it is any good (a font file starts with "FONT")
-    std::ifstream input(filename, std::ios::binary);
-
-    if ( input.fail() )
+    FILE * file = fopen( filename, "rb" );
+    if ( !file )
     {
-        printf( "error: failed to load font file \"%s\"\n", filename );
+        printf( "%.2f: error: failed to load font file \"%s\"\n", global.timeBase.time, filename );
         return nullptr;
     }
 
-    if ( input.get() != 'F' || input.get() != 'O' || input.get() != 'N' || input.get() != 'T' )
+    char header[4];
+    if ( fread( header, 4, 1, file ) != 1 || header[0] != 'F' || header[1] != 'O' || header[2] != 'N' || header[3] != 'T' )
     {
-        // todo: proper error log and don't exit on error, return an error code
-        printf( "error: not a valid font file\n" );
+        printf( "%.2f: error: not a valid font file\n", global.timeBase.time );
+        fclose( file );
         return nullptr;
     }
 
     FontAtlas * atlas = CORE_NEW( allocator, FontAtlas );
 
-    int n_chars;
+    ReadObject( file, atlas->width );
+    ReadObject( file, atlas->height );
+    ReadObject( file, atlas->line_height );
+    ReadObject( file, atlas->num_glyphs );
 
-    ReadObject( atlas->width, input );
-    ReadObject( atlas->height, input );
-    ReadObject( atlas->line_height, input );
-    ReadObject( n_chars, input );
+    if ( ferror( file ) || feof( file ) )
+    {
+        printf( "%.2f: error: failed to read font info\n", global.timeBase.time );
+        DestroyFontAtlas( allocator, atlas );
+        fclose( file );
+        return nullptr;
+    }
 
     atlas->tex_line_height = static_cast<float>( atlas->line_height ) / atlas->height;
 
-    atlas->glyphs = new Glyph[n_chars];          // todo: use the allocator
+    atlas->glyphs = CORE_NEW_ARRAY( allocator, FontGlyph, atlas->num_glyphs );
     for ( int i = 0; i != 256; ++i )
         atlas->table[i] = nullptr;
 
-    for ( int i = 0; i < n_chars; ++i )
+    for ( int i = 0; i < atlas->num_glyphs; ++i )
     {
-        GlyphBuffer buffer;
-        ReadObject( buffer, input );
-        if ( buffer.magic != 23 )
-        {
-            // todo: add a proper log header with time
-            printf( "error: glyph %d magic mismatch: expected %d, got %d\n", i, 23, (int) buffer.magic );
-            CORE_DELETE( allocator, FontAtlas, atlas );
-            return nullptr;
-        }
+        FontGlyphBuffer buffer;
+
+        if ( !ReadObject( file, buffer ) )
+            break;
 
         atlas->glyphs[i].tex_x1 = float( buffer.x ) / atlas->width;
         atlas->glyphs[i].tex_x2 = float( buffer.x + buffer.width ) / atlas->width;
@@ -112,12 +132,20 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
         atlas->table[buffer.ascii] = atlas->glyphs + i;
     }
 
-    Glyph * default_glyph = atlas->table[ (unsigned char)'\xFF' ];
+    if ( ferror( file ) || feof( file ) )
+    {
+        printf( "%.2f: error: failed to read font glyph\n", global.timeBase.time );
+        DestroyFontAtlas( allocator, atlas );
+        fclose( file );
+        return nullptr;
+    }
+
+    FontGlyph * default_glyph = atlas->table[ (unsigned char)'\xFF' ];
     if ( !default_glyph )
     {
-        // todo: add a proper log header with time
-        printf( "error: font file contains no default glyph\n" );
-        CORE_DELETE( allocator, FontAtlas, atlas );
+        printf( "%.2f: error: font file contains no default glyph\n", global.timeBase.time );
+        DestroyFontAtlas( allocator, atlas );
+        fclose( file );
         return nullptr;
     }
     
@@ -127,8 +155,18 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
             atlas->table[i] = default_glyph;
     }
 
-    unsigned char * tex_data = new unsigned char[atlas->width * atlas->height];           // todo: use scratch allocator
-    input.read( reinterpret_cast<char*>(tex_data), atlas->width * atlas->height );
+    const int buffer_size = atlas->width * atlas->height;
+
+    uint8_t * tex_data = (uint8_t*) CORE_NEW_ARRAY( core::memory::scratch_allocator(), uint8_t, buffer_size );
+
+    if ( fread( tex_data, buffer_size, 1, file ) != 1 )
+    {
+        printf( "%.2f: error: failed to read atlas texture data\n", global.timeBase.time );
+        CORE_DELETE_ARRAY( allocator, tex_data, buffer_size );
+        DestroyFontAtlas( allocator, atlas );
+        fclose( file );
+        return nullptr;
+    }
 
     glGenTextures( 1, &atlas->texture );
     glBindTexture( GL_TEXTURE_2D, atlas->texture );
@@ -136,20 +174,11 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
     glTexImage2D( GL_TEXTURE_2D, 0, GL_R8, atlas->width, atlas->height, 0, GL_RED, GL_UNSIGNED_BYTE, tex_data );
 
-    delete [] tex_data;     // todo: use the allocator
+    CORE_DELETE_ARRAY( allocator, tex_data, buffer_size );
+
+    fclose( file );
 
     return atlas;
-}
-
-void DestroyFontAtlas( core::Allocator & allocator, FontAtlas * atlas )
-{
-    CORE_ASSERT( atlas );
-    CORE_ASSERT( atlas->texture );
-    glDeleteTextures( 1, &atlas->texture );
-    delete [] atlas->glyphs; // todo: use allocator
-    atlas->glyphs = nullptr;
-    atlas->texture = 0;
-    CORE_DELETE( allocator, FontAtlas, atlas );
 }
 
 const int MaxFontVertices = 4 * 1024;
@@ -344,7 +373,7 @@ void Font::DrawText( float x, float y, const char * text, const Color & color )
     {
         int character = *p++;
 
-        Glyph * glyph = m_atlas->table[character];
+        FontGlyph * glyph = m_atlas->table[character];
 
         // a b
         // d c

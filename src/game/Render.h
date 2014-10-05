@@ -3,14 +3,15 @@
 
 #ifdef CLIENT
 
-#include <GL/glew.h>             // todo: maybe we don't want to expose OpenGL stuff to the bulk of the client
-#include <GLFW/glfw3.h>
+#include <stdint.h>
 
 void clear_opengl_error();
 
 void check_opengl_error( const char * message );
 
-GLuint load_shader( const char * vertex_file_path, const char * fragment_file_path );
+uint32_t load_shader( const char * vertex_file_path, const char * fragment_file_path );
+
+void delete_shader( uint32_t shader );
 
 #endif // #ifdef CLIENT
 
