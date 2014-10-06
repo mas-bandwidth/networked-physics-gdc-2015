@@ -80,19 +80,19 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
 {
     CORE_ASSERT( filename );
 
-    printf( "%.2f: Loading font \"%s\"\n", global.timeBase.time, filename );
+    printf( "%.3f: Loading font \"%s\"\n", global.timeBase.time, filename );
 
     FILE * file = fopen( filename, "rb" );
     if ( !file )
     {
-        printf( "%.2f: error: failed to load font file \"%s\"\n", global.timeBase.time, filename );
+        printf( "%.3f: error: failed to load font file \"%s\"\n", global.timeBase.time, filename );
         return nullptr;
     }
 
     char header[4];
     if ( fread( header, 4, 1, file ) != 1 || header[0] != 'F' || header[1] != 'O' || header[2] != 'N' || header[3] != 'T' )
     {
-        printf( "%.2f: error: not a valid font file\n", global.timeBase.time );
+        printf( "%.3f: error: not a valid font file\n", global.timeBase.time );
         fclose( file );
         return nullptr;
     }
@@ -106,7 +106,7 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
 
     if ( ferror( file ) || feof( file ) )
     {
-        printf( "%.2f: error: failed to read font info\n", global.timeBase.time );
+        printf( "%.3f: error: failed to read font info\n", global.timeBase.time );
         DestroyFontAtlas( allocator, atlas );
         fclose( file );
         return nullptr;
@@ -134,7 +134,7 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
 
     if ( ferror( file ) || feof( file ) )
     {
-        printf( "%.2f: error: failed to read font glyph\n", global.timeBase.time );
+        printf( "%.3f: error: failed to read font glyph\n", global.timeBase.time );
         DestroyFontAtlas( allocator, atlas );
         fclose( file );
         return nullptr;
@@ -143,7 +143,7 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
     FontGlyph * default_glyph = atlas->table[ (unsigned char)'\xFF' ];
     if ( !default_glyph )
     {
-        printf( "%.2f: error: font file contains no default glyph\n", global.timeBase.time );
+        printf( "%.3f: error: font file contains no default glyph\n", global.timeBase.time );
         DestroyFontAtlas( allocator, atlas );
         fclose( file );
         return nullptr;
@@ -161,7 +161,7 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
 
     if ( fread( tex_data, buffer_size, 1, file ) != 1 )
     {
-        printf( "%.2f: error: failed to read atlas texture data\n", global.timeBase.time );
+        printf( "%.3f: error: failed to read atlas texture data\n", global.timeBase.time );
         CORE_DELETE_ARRAY( allocator, tex_data, buffer_size );
         DestroyFontAtlas( allocator, atlas );
         fclose( file );
@@ -291,7 +291,6 @@ void Font::Begin()
     else
     {
         glBindVertexArray( m_render->vao );
-        glBindBuffer( GL_ARRAY_BUFFER, m_render->vbo );
     }
 }
 
@@ -448,6 +447,8 @@ void Font::End()
 
     m_render->active = false;
     m_render->currentFontVertex = 0;
+
+    glBindVertexArray( 0 );
 }
 
 #endif // #ifdef CLIENT

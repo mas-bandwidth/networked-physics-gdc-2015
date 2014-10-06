@@ -1,5 +1,41 @@
 WOULD BE NICE:
 
+    ---------------------------
+
+    It's annoying and complicated to create a game server.
+
+    It's really nice that it's completely configurable,
+    but the config being passed in to the constructor makes it
+    difficult to create a derived class that just creates how
+    it wants to.
+
+    Maybe an init method would be a better idea? Even if it's internal...
+
+    I really want the game client and server to be self contained, eg. own all objects they use
+
+    ---------------------------
+
+    I want the client to have callbacks for pretty much everything that happens, eg. 
+    te be able to get callbacks on client connect, disconnect, to be able to override
+    packet receives (eg. process more packet types) and so on.
+
+    ---------------------------
+
+    The network simulator is coded in such a way that it is annoying to use
+    for a real application. I don't want it to randomly cycle between settings
+    automatically. I want the user to be able to choose between a series of presets.
+
+    ---------------------------
+
+    It's really annoying not being able to create an address passing in dynamic port,
+    eg. Address( "::1", ServerPort ) should be a thing.
+    
+    ---------------------------
+
+    Client connect takes over 1 second. Optimize!
+
+    ---------------------------
+    
     Network library should not depend on protocol. Work out how to split them apart.
 
     ----------------------------------

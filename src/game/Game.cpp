@@ -18,6 +18,7 @@ const int ServerPort = 10000;
 #include "GameClient.h"
 #include "ShaderManager.h"
 #include "FontManager.h"
+#include "MeshManager.h"
 #include "StoneManager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -45,6 +46,8 @@ static void game_init()
 
     global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
 
+    global.meshManager = CORE_NEW( allocator, MeshManager, allocator );
+
     global.stoneManager = CORE_NEW( allocator, StoneManager, allocator );
 
     const StoneData * stoneData = global.stoneManager->GetStoneData( "White-30" );
@@ -59,17 +62,19 @@ static void game_init()
         printf( " + inertia_y = %.6f\n", stoneData->inertia_y );
         printf( " + inertia_z = %.6f\n", stoneData->inertia_z );
         printf( " + mesh_filename = \"%s\"\n", stoneData->mesh_filename );
+
+        global.meshManager->LoadMesh( stoneData->mesh_filename );
     }
 
     client = CreateGameClient( core::memory::default_allocator() );
 
     if ( !client )
     {
-        printf( "%.2f: error: failed to create game client!\n", global.timeBase.time );
+        printf( "%.3f: error: failed to create game client!\n", global.timeBase.time );
         exit( 1 );
     }
 
-    printf( "%.2f: Started game client on port %d\n", global.timeBase.time, client->GetPort() );
+    printf( "%.3f: Started game client on port %d\n", global.timeBase.time, client->GetPort() );
 
     network::Address address( "::1" );
     address.SetPort( ServerPort );
@@ -198,6 +203,7 @@ static void game_shutdown()
 
     CORE_DELETE( allocator, FontManager, global.fontManager );
     CORE_DELETE( allocator, ShaderManager, global.shaderManager );
+    CORE_DELETE( allocator, MeshManager, global.meshManager );
     CORE_DELETE( allocator, StoneManager, global.stoneManager );
 
     global = Global();
@@ -219,7 +225,7 @@ int main( int argc, char * argv[] )
 
     if ( !network::InitializeNetwork() )
     {
-        printf( "%.2f: Failed to initialize network!\n", global.timeBase.time );
+        printf( "%.3f: Failed to initialize network!\n", global.timeBase.time );
         return 1;
     }
 
@@ -306,7 +312,7 @@ int main( int argc, char ** argv )
     
     if ( !InitializeNetwork() )
     {
-        printf( "%.2f: Failed to initialize network!\n", global.timeBase.time );
+        printf( "%.3f: Failed to initialize network!\n", global.timeBase.time );
         return 1;
     }
 
@@ -314,11 +320,11 @@ int main( int argc, char ** argv )
 
     if ( !server )
     {
-        printf( "%.2f: Failed to not create server on port %d\n", global.timeBase.time, ServerPort );
+        printf( "%.3f: Failed to not create server on port %d\n", global.timeBase.time, ServerPort );
         return 1;
     }
     
-    printf( "%.2f: Started game server on port %d\n", global.timeBase.time, ServerPort );
+    printf( "%.3f: Started game server on port %d\n", global.timeBase.time, ServerPort );
 
     while ( true )
     {
@@ -336,7 +342,7 @@ int main( int argc, char ** argv )
         global.timeBase.time += global.timeBase.deltaTime;
     }
 
-    printf( "%.2f: Shutting down game server\n", global.timeBase.time );
+    printf( "%.3f: Shutting down game server\n", global.timeBase.time );
 
     DestroyGameServer( memory::default_allocator(), server );
 

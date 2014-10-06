@@ -42,32 +42,32 @@ protected:
     void OnConnect( const network::Address & address ) override
     {
         char buffer[256];
-        printf( "%.2f: Client connecting to %s\n", GetTime(), address.ToString( buffer, sizeof( buffer ) ) );
+        printf( "%.3f: Client connecting to %s\n", GetTime(), address.ToString( buffer, sizeof( buffer ) ) );
     }
 
     void OnConnect( const char * hostname ) override
     {
-        printf( "%.2f: Client connecting to %s\n", GetTime(), hostname );
+        printf( "%.3f: Client connecting to %s\n", GetTime(), hostname );
     }
 
     void OnStateChange( protocol::ClientState previous, protocol::ClientState current ) override
     {
-        printf( "%.2f: Client state change: %s -> %s\n", GetTime(), GetClientStateName( previous ), GetClientStateName( current ) );
+        printf( "%.3f: Client state change: %s -> %s\n", GetTime(), GetClientStateName( previous ), GetClientStateName( current ) );
     }
 
     void OnDisconnect() override
     {
-        printf( "%.2f: Client disconnect\n", GetTime() );
+        printf( "%.3f: Client disconnect\n", GetTime() );
     }
 
     void OnError( protocol::ClientError error, uint32_t extendedError ) override
     {
-        printf( "%.2f: Client error: %s [%d]\n", GetTime(), GetClientErrorString( error ), extendedError );
+        printf( "%.3f: Client error: %s [%d]\n", GetTime(), GetClientErrorString( error ), extendedError );
     }
 
     void OnServerDataReceived( const protocol::Block & block ) override
     {
-        printf( "%.2f: Client received server data: %d bytes\n", GetTime(), block.GetSize() );
+        printf( "%.3f: Client received server data: %d bytes\n", GetTime(), block.GetSize() );
 
         SetContext( protocol::CONTEXT_USER, block.GetData() );
     }

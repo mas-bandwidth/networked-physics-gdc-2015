@@ -32,17 +32,17 @@ protected:
 
     void OnClientStateChange( int clientIndex, ServerClientState previous, ServerClientState current ) override
     {
-        printf( "%.2f: Client %d state change: %s -> %s\n", GetTime(), clientIndex, GetServerClientStateName( previous ), GetServerClientStateName( current ) );
+        printf( "%.3f: Client %d state change: %s -> %s\n", GetTime(), clientIndex, GetServerClientStateName( previous ), GetServerClientStateName( current ) );
     }
 
     void OnClientDataReceived( int clientIndex, const Block & block ) override
     {
-        printf( "%.2f: Client %d received client data: %d bytes\n", GetTime(), clientIndex, block.GetSize() );
+        printf( "%.3f: Client %d received client data: %d bytes\n", GetTime(), clientIndex, block.GetSize() );
     }
 
     void OnClientTimedOut( int clientIndex ) override
     {
-        printf( "%.2f: Client %d timed out\n", GetTime(), clientIndex );
+        printf( "%.3f: Client %d timed out\n", GetTime(), clientIndex );
     }
 };
 

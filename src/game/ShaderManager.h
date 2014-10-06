@@ -15,7 +15,7 @@ public:
 
     void Reload();
 
-    unsigned int GetShader( const char * name );
+    uint32_t GetShader( const char * name );
 
 private:
 

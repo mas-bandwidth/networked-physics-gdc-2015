@@ -9,28 +9,23 @@
 #include <string.h>
 #include <stdio.h>
 
-template <class T> bool ReadObject( FILE * file, const T & object )
-{
-    return fread( (char*) &object, sizeof(object), 1, file ) == 1;
-}
-
 static StoneData * LoadStoneData( core::Allocator & allocator, const char * filename )
 {
     CORE_ASSERT( filename );
 
-    printf( "%.2f: Loading stone data: \"%s\"\n", global.timeBase.time, filename );
+    printf( "%.3f: Loading stone data: \"%s\"\n", global.timeBase.time, filename );
 
     FILE * file = fopen( filename, "rb" );
     if ( !file )
     {
-        printf( "%.2f: error: failed to load font file \"%s\"\n", global.timeBase.time, filename );
+        printf( "%.3f: error: failed to load font file \"%s\"\n", global.timeBase.time, filename );
         return nullptr;
     }
 
     char header[5];
     if ( fread( header, 5, 1, file ) != 1 || header[0] != 'S' || header[1] != 'T' || header[2] != 'O' || header[3] != 'N' || header[4] != 'E' )
     {
-        printf( "%.2f: error: not a valid stone file\n", global.timeBase.time );
+        printf( "%.3f: error: not a valid stone file\n", global.timeBase.time );
         fclose( file );
         return nullptr;
     }
