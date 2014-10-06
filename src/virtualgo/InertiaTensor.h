@@ -51,7 +51,7 @@ namespace virtualgo
 
     void CalculateBiconvexInertiaTensor( float mass, const Biconvex & biconvex, vec3f & inertia, mat4f & inertiaTensor, mat4f & inverseInertiaTensor )
     {
-        const float resolution = 0.1;
+        const float resolution = 0.01f;
         const float width = biconvex.GetWidth();
         const float height = biconvex.GetHeight();
         const float xy_steps = ceil( width / resolution );

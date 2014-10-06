@@ -2,29 +2,28 @@ DONE:
 
 TODO:
 
-    I really dislike the hardcoded link between the tool side of the stones and the runtime.
+    Write function "LoadMesh" which returns a vertex array object
 
-    There should be no link at all, except possibly a naming convention.
+    Mesh manager should load meshes in binary mesh format.
 
-    I dislike writing out to one large file for all stones.
+    Mesh manager should take care of creating the appropriate static OpenGL vertex 
+    buffers for the mesh, and delete the vertex data loaded when finished loading.
 
-    I would rather write out a small bit of data per-stone, eg. "Black-Size-25.stone"
-
-    The stone manager should live in game, it should not live inside Virtual Go library.
-
-    It's game code. Like the rest of the fucking game code.
-
-    You are not making a library. You are coding a fucking game.
-
-    JUST CODE IT
+    Implement function to "DestroyMesh" that cleans up the vao.
 
     ------------------------------
-    
-    Implement runtime to load the stone data inside "virtualgo" library.
 
-    Implement a function to load a mesh.
+    Wrap a mesh manager around the "LoadMesh", "DestroyMesh"
 
-    Load one of the stone meshes (manually) and render it with phong shader.
+    Mesh manager should not load all meshes that exist in the directory,
+    but instead load meshes on request by filename.
+
+    Get a go stone mesh loaded and rendering in-game with phong shader.
+
+    Mesh manager should also have a "Clear" method to wipe all loaded meshes.
+
+    Mesh manager should support a reload method, which just reloads
+    all meshes it currently has loaded.
 
     ------------------------------
 
@@ -37,20 +36,7 @@ TODO:
 
     ------------------------------
 
-    I would like a mesh manager
-
-    Mesh manager should load meshes in a binary format.
-
-    Generate a .mesh file that can actually be loaded.
-
-    Mesh manager should not load all meshes that exist in the directory,
-    but instead load meshes or request by filename, eg. stones/Black-10.mesh
-
-    Get a go stone mesh loaded and rendering in-game.
-
-    ------------------------------
-
-    Get the virtual go tests running and passing.
+    Get the virtual go tests running and passing, eg. TestVirtualGo.cpp
 
     Restructure the virtual go code so it's simple and compiles quickly without exposing too much impl in headers.
 

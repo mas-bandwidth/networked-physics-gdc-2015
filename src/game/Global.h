@@ -7,16 +7,26 @@ class FontManager;
 class ShaderManager;
 class TextureManager;
 class MeshManager;
+class StoneManager;
 
 struct Global
 {
+    
+    core::TimeBase timeBase;
+    
+    #ifdef CLIENT
+
     int displayWidth;
     int displayHeight;
-    core::TimeBase timeBase;
+
     FontManager * fontManager = nullptr;
     ShaderManager * shaderManager = nullptr;
     TextureManager * textureManager = nullptr;
     MeshManager * meshManager = nullptr;
+
+    #endif // #ifdef CLIENT
+
+    StoneManager * stoneManager = nullptr;
 };
 
 extern Global global;

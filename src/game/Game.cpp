@@ -18,7 +18,7 @@ const int ServerPort = 10000;
 #include "GameClient.h"
 #include "ShaderManager.h"
 #include "FontManager.h"
-#include "virtualgo/Stones.h"
+#include "StoneManager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
@@ -29,8 +29,6 @@ using glm::vec3;
 using glm::vec4;
 
 GameClient * client = nullptr;
-
-virtualgo::StoneManager * stoneManager = nullptr;
 
 // --------------------
 
@@ -47,7 +45,21 @@ static void game_init()
 
     global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
 
-    stoneManager = CORE_NEW( allocator, virtualgo::StoneManager, allocator );
+    global.stoneManager = CORE_NEW( allocator, StoneManager, allocator );
+
+    const StoneData * stoneData = global.stoneManager->GetStoneData( "White-30" );
+    if ( stoneData )
+    {
+        printf( "stone data:\n" );
+        printf( " + width = %.2f\n", stoneData->width );
+        printf( " + height = %.2f\n", stoneData->height );
+        printf( " + bevel = %.6f\n", stoneData->bevel );
+        printf( " + mass = %.2f\n", stoneData->mass );
+        printf( " + inertia_x = %.6f\n", stoneData->inertia_x );
+        printf( " + inertia_y = %.6f\n", stoneData->inertia_y );
+        printf( " + inertia_z = %.6f\n", stoneData->inertia_z );
+        printf( " + mesh_filename = \"%s\"\n", stoneData->mesh_filename );
+    }
 
     client = CreateGameClient( core::memory::default_allocator() );
 
@@ -142,6 +154,7 @@ static void game_render()
     {
         global.fontManager->Reload();
         global.shaderManager->Reload();
+        global.stoneManager->Reload();
     }
 
     // ---------------------
@@ -185,6 +198,7 @@ static void game_shutdown()
 
     CORE_DELETE( allocator, FontManager, global.fontManager );
     CORE_DELETE( allocator, ShaderManager, global.shaderManager );
+    CORE_DELETE( allocator, StoneManager, global.stoneManager );
 
     global = Global();
 }

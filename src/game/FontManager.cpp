@@ -19,7 +19,7 @@ FontManager::FontManager( core::Allocator & allocator )
 {
     m_allocator = &allocator;
     core::hash::reserve( m_fonts, 256 );
-    Reload();
+    Load();
 }
 
 FontManager::~FontManager()

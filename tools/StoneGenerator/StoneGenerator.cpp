@@ -1,5 +1,8 @@
+/*
+    Stone Generator Tool
+    Copyright (c) 2014, The Network Protocol Company, Inc.
+*/  
 
-#include "virtualgo/Stones.h"
 #include "virtualgo/Biconvex.h"
 #include "virtualgo/InertiaTensor.h"
 #include "core/Core.h"
@@ -7,6 +10,25 @@
 #include "Mesh.h"
 
 using namespace virtualgo;
+
+enum StoneSize
+{
+    STONE_SIZE_22,
+    STONE_SIZE_25,
+    STONE_SIZE_28,
+    STONE_SIZE_30,
+    STONE_SIZE_31,
+    STONE_SIZE_32,
+    STONE_SIZE_33,
+    STONE_SIZE_34,
+    STONE_SIZE_35,
+    STONE_SIZE_36,
+    STONE_SIZE_37,
+    STONE_SIZE_38,
+    STONE_SIZE_39,
+    STONE_SIZE_40,
+    NUM_STONE_SIZES
+};
 
 const char * StoneSizeNames[]
 {
@@ -24,6 +46,12 @@ const char * StoneSizeNames[]
     "38",
     "39",
     "40"
+};
+
+enum StoneColor
+{
+    STONE_COLOR_BLACK,
+    STONE_COLOR_WHITE
 };
 
 const char * StoneColorNames[]
@@ -60,6 +88,35 @@ inline float GetStoneHeight( StoneSize size )
     return StoneHeight[size];
 }
 
+struct StoneData
+{
+    float width;
+    float height;
+    float bevel;
+    float mass;
+    float inertia_x;
+    float inertia_y;
+    float inertia_z;
+    char mesh_filename[256];
+};
+
+bool WriteStoneFile( const char * filename, const StoneData & stoneData )
+{
+    FILE * file = fopen( filename, "wb" );
+    if ( !file )
+    {
+        printf( "failed to open stone file for writing: \"%s\"\n", filename );
+        return false;
+    }
+
+    fwrite( "STONE", 5, 1, file );
+
+    core::WriteObject( file, stoneData );
+
+    fclose( file );
+
+    return true;
+}
 
 int main( int argc, char * argv[] )
 {
@@ -91,18 +148,18 @@ int main( int argc, char * argv[] )
 
     // generate stone data and stone meshes
 
-    StoneData stoneData[NumStones];
-
     for ( int i = 0; i < NumStones; ++i )
     {
         StoneSize size = stoneDefinition[i].size;
         StoneColor color = stoneDefinition[i].color;
 
-        char filename[256];
-        
-        sprintf( filename, "%s/Stone-%s-%s.mesh", stoneDirectory, StoneColorNames[color], StoneSizeNames[size] );
+        char mesh_filename[256];
+        sprintf( mesh_filename, "%s/%s-%s.mesh", stoneDirectory, StoneColorNames[color], StoneSizeNames[size] );
 
-        printf( "%s\n", filename );        
+        char stone_filename[256];
+        sprintf( stone_filename, "%s/%s-%s.stone", stoneDirectory, StoneColorNames[color], StoneSizeNames[size] );
+
+        printf( "Generating %s -> %s\n", stone_filename, mesh_filename );
 
         const float width = GetStoneWidth( size, color );
         const float height = GetStoneHeight( size );
@@ -120,39 +177,22 @@ int main( int argc, char * argv[] )
         Mesh<Vertex> mesh;
         GenerateBiconvexMesh( mesh, biconvex, subdivisions );
 
-        if ( !WriteMeshFile( mesh, filename ) )
+        if ( !WriteMeshFile( mesh, mesh_filename ) )
             exit( 1 );
 
-        stoneData[i].size = size;
-        stoneData[i].color = color;
-        stoneData[i].subdivisions = subdivisions;
-        stoneData[i].width = width;
-        stoneData[i].height = height;
-        stoneData[i].bevel = bevel;
-        stoneData[i].mass = mass;
-        stoneData[i].inertia = inertia;
-        strcpy( stoneData[i].mesh_filename, filename );
+        StoneData stoneData;
+        stoneData.width = width;
+        stoneData.height = height;
+        stoneData.bevel = bevel;
+        stoneData.mass = mass;
+        stoneData.inertia_x = inertia.x();
+        stoneData.inertia_y = inertia.y();
+        stoneData.inertia_z = inertia.z();
+        strcpy( stoneData.mesh_filename, mesh_filename );
+
+        if ( !WriteStoneFile( stone_filename, stoneData ) )
+            exit( 1 );
     }
-
-    // write the stone data out the "Stones.bin" file
-
-    char stones_bin_filename[256];
-    sprintf( stones_bin_filename, "%s/Stones.bin", stoneDirectory );
-    FILE * file = fopen( stones_bin_filename, "wb" );
-    if ( !file )
-    {
-        printf( "failed to open stones file for writing: \"%s\"\n", stones_bin_filename );
-        exit( 1 );
-    }
-
-    fwrite( "STONES", 6, 1, file );
-
-    core::WriteObject( file, NumStones );
-
-    for ( int i = 0; i < NumStones; ++i )
-        core::WriteObject( file, stoneData[i] );
-
-    fclose( file );
 
     return 0;
 }

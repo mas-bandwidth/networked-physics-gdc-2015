@@ -235,7 +235,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 StoneGenerator" == 0 then
-                if os.execute "bin/StoneGenerator data/stones/Stones.json" ~= 0 then
+                if os.execute "rm -rf data/stones; mkdir -p data/stones; bin/StoneGenerator" ~= 0 then
                     os.exit(1)
                 end
             end

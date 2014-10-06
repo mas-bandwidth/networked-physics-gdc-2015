@@ -8,7 +8,6 @@
 namespace core { class Allocator; }
 
 class Font;
-struct FontAtlas;
 
 class FontManager
 {

@@ -1,3 +1,25 @@
+Sunday Evening, October 6th, 2014:
+----------------------------------
+
+    I really dislike the hardcoded link between the tool side of the stones and the runtime.
+
+    There should be no link at all, except possibly a naming convention.
+
+    I dislike writing out to one large file for all stones.
+
+    I would rather write out a small bit of data per-stone, eg. "Black-Size-25.stone"
+
+    The stone manager should live in game, it should not live inside Virtual Go library.
+
+    Bring across code from font manager that finds all '*.stone' files and parses them
+
+    Implement code to load the stone data.
+
+    Write something to verify that the stone manager is actually working, 
+
+    eg. lookup a stone by name and print out its data.
+
+
 Sunday Afternoon, October 6th, 2014:
 ------------------------------------
 
