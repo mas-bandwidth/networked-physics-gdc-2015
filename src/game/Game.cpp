@@ -20,6 +20,7 @@ const int ServerPort = 10000;
 #include "FontManager.h"
 #include "MeshManager.h"
 #include "StoneManager.h"
+#include "StoneRender.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
@@ -31,12 +32,9 @@ using glm::vec4;
 
 GameClient * client = nullptr;
 
-// --------------------
+const char * stone_size = "Black-40";
 
-GLuint vboHandles[2];
-GLuint vaoHandle;
-
-// --------------------
+char stone_mesh_filename[256] = { '0' };
 
 static void game_init()
 {
@@ -50,7 +48,7 @@ static void game_init()
 
     global.stoneManager = CORE_NEW( allocator, StoneManager, allocator );
 
-    const StoneData * stoneData = global.stoneManager->GetStoneData( "White-30" );
+    const StoneData * stoneData = global.stoneManager->GetStoneData( stone_size );
     if ( stoneData )
     {
         printf( "stone data:\n" );
@@ -64,6 +62,8 @@ static void game_init()
         printf( " + mesh_filename = \"%s\"\n", stoneData->mesh_filename );
 
         global.meshManager->LoadMesh( stoneData->mesh_filename );
+
+        strcpy( stone_mesh_filename, stoneData->mesh_filename );
     }
 
     client = CreateGameClient( core::memory::default_allocator() );
@@ -87,55 +87,11 @@ static void game_init()
 
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glEnable( GL_CULL_FACE );
 
-    // ---------------------------------------------------
+    glFrontFace( GL_CW );
 
-    float positionData[] = 
-    {
-       -0.8f, -0.8f, 0.0f,
-        0.8f, -0.8f, 0.0f,
-        0.0f,  0.8f, 0.0f 
-    };
-
-    float colorData[] = 
-    {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f 
-    };
-
-    glGenBuffers( 2, vboHandles );
-
-    GLuint positionBufferHandle = vboHandles[0];
-    GLuint colorBufferHandle = vboHandles[1];
-
-    // Populate the position buffer
-    glBindBuffer( GL_ARRAY_BUFFER, positionBufferHandle );
-    glBufferData( GL_ARRAY_BUFFER, 9 * sizeof(float), positionData, GL_STATIC_DRAW );
-
-    // Populate the color buffer
-    glBindBuffer( GL_ARRAY_BUFFER, colorBufferHandle );
-    glBufferData( GL_ARRAY_BUFFER, 9 * sizeof(float), colorData, GL_STATIC_DRAW );
-
-    // Create and set-up the vertex array object
-    glGenVertexArrays( 1, &vaoHandle );
-    glBindVertexArray( vaoHandle );
-
-    // Enable the vertex attribute arrays
-    glEnableVertexAttribArray( 0 );  // Vertex position
-    glEnableVertexAttribArray( 1 );  // Vertex color
-
-    // Map index 0 to the position buffer
-    glBindBuffer( GL_ARRAY_BUFFER, positionBufferHandle );
-    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
-
-    // Map index 1 to the color buffer
-    glBindBuffer( GL_ARRAY_BUFFER, colorBufferHandle );
-    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
-
-    // ---------------------------------------------------
+    glEnable( GL_DEPTH_TEST );
 
     check_opengl_error( "after game_init" );
 }
@@ -162,26 +118,9 @@ static void game_render()
         global.stoneManager->Reload();
     }
 
-    // ---------------------
-
-    GLuint shader_program = global.shaderManager->GetShader( "Triangle" );
-
-    glUseProgram( shader_program );
-
-    glBindAttribLocation( shader_program, 0, "VertexPosition" );
-    glBindAttribLocation( shader_program, 1, "VertexColor" );
-
-    mat4 rotationMatrix = glm::rotate( mat4(1.0f), (float)global.timeBase.time * 4, vec3(0.0f,0.0f,1.0f) );
-
-    int location = glGetUniformLocation( shader_program, "RotationMatrix" );
-    if ( location >= 0 )
-        glUniformMatrix4fv( location, 1, GL_FALSE, &rotationMatrix[0][0] );
-
-    glBindVertexArray( vaoHandle );
-
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-
-    // --------------------
+    MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
+    if ( stoneMesh )
+        RenderStone( *stoneMesh );
 
     Font * font = global.fontManager->GetFont( "Console" );
     if ( font )
@@ -240,6 +179,7 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
     glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
     glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
+    glfwWindowHint( GLFW_SAMPLES, 8 );
 
     GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
     

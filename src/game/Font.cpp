@@ -292,6 +292,10 @@ void Font::Begin()
     {
         glBindVertexArray( m_render->vao );
     }
+
+    glEnable( GL_BLEND );
+
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 }
 
 void Font::DrawAtlas( float x, float y, const Color & color )
@@ -449,6 +453,10 @@ void Font::End()
     m_render->currentFontVertex = 0;
 
     glBindVertexArray( 0 );
+
+    glUseProgram( 0 );
+
+    glDisable( GL_BLEND );
 }
 
 #endif // #ifdef CLIENT

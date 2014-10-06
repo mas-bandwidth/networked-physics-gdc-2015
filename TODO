@@ -1,28 +1,18 @@
 DONE:
 
-    Setup new "MeshManager" around load/destroy mesh functions.
-
-    Mesh manager should only load meshes on request, eg. don't load all meshes
-
-    Mesh manager should also have a "Clear" method to wipe all loaded meshes.
-
-    Implement load_mesh_data function to load in vertex and index data from the file. 
-
-    Setup vertex buffer and load in data from file.
-
-    Implement destroy_mesh_data to clean up the VAO.
-
-    Setup index buffer and load in data from file.
-
 TODO:
-
-    Work out how to go about rendering the go stone. 
 
     Design a function to render a bunch of go stones, eg. pass in the transforms as an array
 
-    Create a shader specifically for rendering the go stone: Stone.frag, Stone.vert
+    Look down at a grid of 19x19 go stones.
 
-    Get a go stone rendering with backface culling and phong shading.
+    Implement a framerate counter.
+
+    Can I render 19x19 stones on the macbook?
+
+    ----------------------------
+
+    Fix stone shader so it works and renders some very basic lighting.
 
     ----------------------------
 

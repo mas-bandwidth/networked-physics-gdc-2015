@@ -1,0 +1,8 @@
+#ifndef STONE_RENDER_H
+#define STONE_RENDER_H
+
+struct MeshData;
+
+extern void RenderStone( MeshData & mesh );
+
+#endif // #ifndef STONE_RENDER_H

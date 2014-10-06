@@ -2,6 +2,32 @@ WOULD BE NICE:
 
     ---------------------------
 
+    Seems that what we really want when generating go stones is to
+    find the best fit stone that at edge the bevel, has correct width.
+
+    Right now, the width is the actual invisible biconvex solid.
+
+    This is more important with the thinner stones (eg. 22, 25)
+    because these stones lose so much more of the biconvex when
+    the bevel rounds it off.
+
+    ---------------------------
+
+    There seem some aethetic consideration about choosing
+    the bevel size relative to the go stone size.
+
+    How can this be quantified?
+
+    ---------------------------
+
+    Ideally, the go stone would be chopped such that when interacting
+    go stone to go stone, the biconvex is chopped, as per a cylinder
+    at the point of the bevel edge.
+
+    This would allow stones to appear to sit flush next to each other.
+
+    ---------------------------
+
     It's annoying and complicated to create a game server.
 
     It's really nice that it's completely configurable,

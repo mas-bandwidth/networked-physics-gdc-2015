@@ -78,6 +78,24 @@ const float StoneHeight[]
     1.13f
 };
 
+const float StoneBevel[]
+{
+    0.06f,      // 22
+    0.08f,      // 25
+    0.08f,      // 28
+    0.10f,      // 30
+    0.11f,      // 31
+    0.11f,      // 32
+    0.1125f,    // 33
+    0.1130f,    // 34
+    0.1150f,    // 35
+    0.1200f,    // 36
+    0.1200f,    // 37
+    0.1200f,    // 38
+    0.1450f,    // 39
+    0.15f       // 40
+};
+
 inline float GetStoneWidth( StoneSize size, StoneColor color )
 {
     return 2.2f + ( color == STONE_COLOR_BLACK ? 0.1f : 0.0f );
@@ -86,6 +104,11 @@ inline float GetStoneWidth( StoneSize size, StoneColor color )
 inline float GetStoneHeight( StoneSize size )
 {
     return StoneHeight[size];
+}
+
+inline float GetStoneBevel( StoneSize size )
+{
+    return StoneBevel[size];
 }
 
 struct StoneData
@@ -163,7 +186,7 @@ int main( int argc, char * argv[] )
 
         const float width = GetStoneWidth( size, color );
         const float height = GetStoneHeight( size );
-        const float bevel = 0.1f;
+        const float bevel = GetStoneBevel( size );
         const int subdivisions = 6;
 
         virtualgo::Biconvex biconvex( width, height, bevel );

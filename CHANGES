@@ -1,3 +1,41 @@
+Monday Afternoon, October 7th, 2014:
+------------------------------------
+
+    Optimize the various go stone meshes so they have aesthetically pleasing bevels.
+
+    Enable multisampling AA.
+
+
+Monday Morning, October 7th, 2014:
+----------------------------------
+
+    Setup function to render one stone initially.
+
+    Will be generalized to render multiple stones via instancing later.
+
+    Enable backface culling. Front face is CW winding order.
+
+    Enabled depth buffer.
+
+    Create a shader specifically for rendering the go stone derived from phong shader: Stone.frag, Stone.vert
+
+    Work out all the uniform attributes that need to be specified
+
+    Hacked up the uniform attributes.
+
+    When I call glDrawElements( GL_TRIANGLES, mesh.numTriangles * 3, GL_UNSIGNED_SHORT, nullptr );
+
+    It says invalid operation.
+
+    Why?
+
+    Seems to be caused by the shader.
+
+    If I drop the shader down to something really simple, it works fine.
+
+    Pass in proper MVP matrix for go stone.
+
+
 Sunday Evening, October 6th, 2014:
 ----------------------------------
 
@@ -18,6 +56,20 @@ Sunday Evening, October 6th, 2014:
     Write something to verify that the stone manager is actually working, 
 
     eg. lookup a stone by name and print out its data.
+
+    Setup new "MeshManager" around load/destroy mesh functions.
+
+    Mesh manager should only load meshes on request, eg. don't load all meshes
+
+    Mesh manager should also have a "Clear" method to wipe all loaded meshes.
+
+    Implement load_mesh_data function to load in vertex and index data from the file. 
+
+    Setup vertex buffer and load in data from file.
+
+    Implement destroy_mesh_data to clean up the VAO.
+
+    Setup index buffer and load in data from file.
 
 
 Sunday Afternoon, October 6th, 2014:
