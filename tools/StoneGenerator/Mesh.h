@@ -6,7 +6,6 @@
 #include "core/Core.h"
 #include <list>
 #include <vector>
-#include <algorithm>
 
 using namespace vectorial;
 

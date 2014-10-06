@@ -28,10 +28,12 @@ namespace virtualgo
         const float i_a = 1.0f/5.0f * mass * ( b*b + c*c );
         const float i_b = 1.0f/5.0f * mass * ( a*a + c*c );
         const float i_c = 1.0f/5.0f * mass * ( a*a + b*b );
+
         float values[] = { i_a,   0,   0, 0, 
                              0, i_b,   0, 0,
                              0,   0, i_c, 0,
                              0,   0,   0, 1 };
+                             
         float inverse_values[] = { 1/i_a,     0,     0,   0, 
                                        0, 1/i_b,     0,   0, 
                                        0,     0, 1/i_c,   0,
