@@ -1,44 +1,39 @@
 DONE:
 
-    I don't really think that I want to have the JSON hassle for generating stones.
-
-    Instead, I know the set of stone meshes I want to generate, and that set is not going to change.
-
-    Just hardcode the set of stones to generate.
-
-    Implement tool to generate stone meshes.
-
-    The generation doesn't need to run all the time.
-
-    Instead, treat the stone meshes as static data and *check them in*
-
-    Generate meshes initially in .obj format
-
-    Don't generate separate black and white stones meshes yet. Leave that until later when it is visually obvious.
-
 TODO:
 
-    Implement a stone definition struct, eg. data per-stone, parameters to generate a stone.
+    I really dislike the hardcoded link between the tool side of the stones and the runtime.
 
-    Generate an array of stone definitions and then iterate across these definitions when generating stones.
+    There should be no link at all, except possibly a naming convention.
 
-    Add a stone data struct with size, mesh filename, width, height, bevel, mass, color, inertia tensor ix,iy (relevant two)
+    I dislike writing out to one large file for all stones.
 
-    Accumulate stone data struct as stones are generated into an array.
+    I would rather write out a small bit of data per-stone, eg. "Black-Size-25.stone"
 
-    Iterate across this array and write out "Stones.bin" file with header 'STONES', num stone data,
-    then per-stone a binary stone data struct.
+    The stone manager should live in game, it should not live inside Virtual Go library.
 
-    Verify correct Stones.bin is generated.
+    It's game code. Like the rest of the fucking game code.
 
-    Symlink bin/data/stones -> data/stones as part of build process, like shaders.
+    You are not making a library. You are coding a fucking game.
+
+    JUST CODE IT
+
+    ------------------------------
+    
+    Implement runtime to load the stone data inside "virtualgo" library.
+
+    Implement a function to load a mesh.
+
+    Load one of the stone meshes (manually) and render it with phong shader.
 
     ------------------------------
 
-    Switch to writing out in '.mesh' format (binary)
+    Need to clean up the way I read and write to files.
 
+    The binary read/write using ad-hoc stuff is a bit ugly.
 
-    Implement runtime to load the stone data inside "virtualgo" library.
+    It would be nice to have a standardized file wrapper to do this,
+    with a bit less effort, eg. File class.
 
     ------------------------------
 
@@ -58,8 +53,6 @@ TODO:
     Get the virtual go tests running and passing.
 
     Restructure the virtual go code so it's simple and compiles quickly without exposing too much impl in headers.
-
-    ------------------------------
 
     Clean up awful shader loader code iostream and std::string bullshit
 

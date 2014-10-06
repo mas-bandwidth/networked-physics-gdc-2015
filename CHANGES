@@ -37,7 +37,38 @@ Sunday Afternoon, October 6th, 2014:
 
     Skip over mesh optimization for now. It's a distraction. 
 
-    Get the stones built first, and loaded and rendering in the game.
+    I don't really think that I want to have the JSON hassle for generating stones.
+
+    Instead, I know the set of stone meshes I want to generate, and that set is not going to change.
+
+    Just hardcode the set of stones to generate.
+
+    Implement tool to generate stone meshes.
+
+    The generation doesn't need to run all the time.
+
+    Instead, treat the stone meshes as static data and *check them in*
+
+    Generate meshes initially in .obj format
+
+    Don't generate separate black and white stones meshes yet. Leave that until later when it is visually obvious.
+
+    Implement a stone definition struct, eg. data per-stone, parameters to generate a stone.
+
+    Generate an array of stone definitions and then iterate across these definitions when generating stones.
+
+    Add a stone data struct with size, mesh filename, width, height, bevel, mass, color, inertia tensor ix,iy (relevant two)
+
+    Accumulate stone data struct as stones are generated into an array.
+
+    Iterate across this array and write out "Stones.bin" file with header 'STONES', num stone data,
+    then per-stone a binary stone data struct.
+
+    Verify correct Stones.bin is generated.
+
+    Symlink bin/data/stones -> data/stones as part of build process, like shaders.
+
+    Switch to writing out in '.mesh' format (binary)
 
 
 Saturday Morning, October 5th, 2014:

@@ -1,29 +1,12 @@
+
+#include "virtualgo/Stones.h"
 #include "virtualgo/Biconvex.h"
 #include "virtualgo/InertiaTensor.h"
 #include "core/Core.h"
 #include "core/File.h"
 #include "Mesh.h"
-#include <stdio.h>
-#include <stdlib.h>
 
-enum StoneSize
-{
-    STONE_SIZE_22,
-    STONE_SIZE_25,
-    STONE_SIZE_28,
-    STONE_SIZE_30,
-    STONE_SIZE_31,
-    STONE_SIZE_32,
-    STONE_SIZE_33,
-    STONE_SIZE_34,
-    STONE_SIZE_35,
-    STONE_SIZE_36,
-    STONE_SIZE_37,
-    STONE_SIZE_38,
-    STONE_SIZE_39,
-    STONE_SIZE_40,
-    NUM_STONE_SIZES
-};
+using namespace virtualgo;
 
 const char * StoneSizeNames[]
 {
@@ -41,12 +24,6 @@ const char * StoneSizeNames[]
     "38",
     "39",
     "40"
-};
-
-enum StoneColor
-{
-    STONE_COLOR_BLACK,
-    STONE_COLOR_WHITE
 };
 
 const char * StoneColorNames[]
@@ -73,49 +50,28 @@ const float StoneHeight[]
     1.13f
 };
 
-float GetStoneWidth( StoneSize size, StoneColor color )
+inline float GetStoneWidth( StoneSize size, StoneColor color )
 {
     return 2.2f + ( color == STONE_COLOR_BLACK ? 0.1f : 0.0f );
 }
 
-float GetStoneHeight( StoneSize size )
+inline float GetStoneHeight( StoneSize size )
 {
     return StoneHeight[size];
 }
 
-struct StoneDefinition
-{
-    StoneSize size;
-    StoneColor color;
-};
-
-struct StoneData
-{
-    StoneSize size;
-    StoneColor color;
-    int subdivisions;
-    float width;
-    float height;
-    float bevel;
-    float mass;
-    vec3f inertia;
-    char mesh_filename[256];
-};
-
-template <class T> void WriteObject( FILE * file, const T & object )
-{
-    if ( fwrite( (const char*) &object, sizeof(object), 1, file ) != 1 )
-    {
-        printf( "error: failed to write data to file\n" );
-        exit(1);
-    }
-}
 
 int main( int argc, char * argv[] )
 {
     const char * stoneDirectory = "data/stones";
         
     // setup stone definitions for black and white stones of all sizes
+
+    struct StoneDefinition
+    {
+        StoneSize size;
+        StoneColor color;
+    };
 
     const int NumStones = NUM_STONE_SIZES * 2;
 
@@ -144,7 +100,7 @@ int main( int argc, char * argv[] )
 
         char filename[256];
         
-        sprintf( filename, "%s/Stone-%s-%s.obj", stoneDirectory, StoneColorNames[color], StoneSizeNames[size] );
+        sprintf( filename, "%s/Stone-%s-%s.mesh", stoneDirectory, StoneColorNames[color], StoneSizeNames[size] );
 
         printf( "%s\n", filename );        
 
@@ -161,15 +117,12 @@ int main( int argc, char * argv[] )
         mat4f inverseInertiaTensor;
         virtualgo::CalculateBiconvexInertiaTensor( mass, biconvex, inertia, inertiaTensor, inverseInertiaTensor );
 
-/*
         Mesh<Vertex> mesh;
         GenerateBiconvexMesh( mesh, biconvex, subdivisions );
 
-        // todo: write to mesh file instead
-
-        if ( !WriteMeshToObjFile( mesh, filename ) )
+        if ( !WriteMeshFile( mesh, filename ) )
             exit( 1 );
-*/
+
         stoneData[i].size = size;
         stoneData[i].color = color;
         stoneData[i].subdivisions = subdivisions;
@@ -194,10 +147,10 @@ int main( int argc, char * argv[] )
 
     fwrite( "STONES", 6, 1, file );
 
-    WriteObject( file, NumStones );
+    core::WriteObject( file, NumStones );
 
     for ( int i = 0; i < NumStones; ++i )
-        WriteObject( file, stoneData[i] );
+        core::WriteObject( file, stoneData[i] );
 
     fclose( file );
 

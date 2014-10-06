@@ -18,6 +18,7 @@ const int ServerPort = 10000;
 #include "GameClient.h"
 #include "ShaderManager.h"
 #include "FontManager.h"
+#include "virtualgo/Stones.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
@@ -28,6 +29,8 @@ using glm::vec3;
 using glm::vec4;
 
 GameClient * client = nullptr;
+
+virtualgo::StoneManager * stoneManager = nullptr;
 
 // --------------------
 
@@ -43,6 +46,8 @@ static void game_init()
     global.fontManager = CORE_NEW( allocator, FontManager, allocator );
 
     global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
+
+    stoneManager = CORE_NEW( allocator, virtualgo::StoneManager, allocator );
 
     client = CreateGameClient( core::memory::default_allocator() );
 

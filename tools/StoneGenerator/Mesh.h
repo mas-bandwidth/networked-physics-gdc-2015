@@ -4,6 +4,7 @@
 #include "virtualgo/Common.h"
 #include "virtualgo/Biconvex.h"
 #include "core/Core.h"
+#include "core/File.h"
 #include <list>
 #include <vector>
 
@@ -420,9 +421,9 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
     }
 }
 
-bool WriteMeshToObjFile( Mesh<Vertex> & mesh, const char filename[] )
+bool WriteObjFile( Mesh<Vertex> & mesh, const char filename[] )
 {
-    FILE * file = fopen( filename, "wb" );
+    FILE * file = fopen( filename, "w" );
     if ( !file )
         return false;
 
@@ -455,5 +456,30 @@ bool WriteMeshToObjFile( Mesh<Vertex> & mesh, const char filename[] )
     return true;
 }
 
+bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
+{
+    FILE * file = fopen( filename, "wb" );
+    if ( !file )
+        return false;
+
+    const int numVertices = mesh.GetNumVertices();
+    const int numTriangles = mesh.GetNumTriangles();
+    const Vertex * vertices = mesh.GetVertexBuffer();
+    const uint16_t * indices = mesh.GetIndexBuffer();
+
+    fwrite( "MESH", 4, 1, file );
+
+    core::WriteObject( file, numVertices );
+
+    core::WriteObject( file, numTriangles );
+
+    fwrite( &vertices[0], sizeof(Vertex) * numVertices, 1, file );
+
+    fwrite( &indices[0], 2 * numTriangles * 3, 1, file );
+
+    fclose( file );
+
+    return true;
+}
 
 #endif

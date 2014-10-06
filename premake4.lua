@@ -84,7 +84,7 @@ project "StoneGenerator"
 project "Client"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    links { "core", "network", "protocol", "virtualgo", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
@@ -92,7 +92,7 @@ project "Client"
 project "Server"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol" }
+    links { "core", "network", "protocol", "virtualgo" }
     location "build"
     targetdir "bin"
 
@@ -268,6 +268,7 @@ if not os.is "windows" then
         execute = function ()
             premake.action.call( "fonts" )
             premake.action.call( "shaders" )
+            os.execute "mkdir -p bin/data; rm -f bin/data/stones; ln -s ~/git/protocol/data/stones bin/data/stones"
         end
     }
 
