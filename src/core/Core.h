@@ -20,6 +20,7 @@ extern "C"
     extern void srand( unsigned int seed );
     extern int atoi( const char * string );
     extern int printf( const char * format, ... );
+    extern int sprintf( char * str, const char * format, ... );
     extern int snprintf( char * str, size_t size, const char * format, ... );
     extern void exit( int result );
 }
@@ -168,6 +169,16 @@ namespace core
         return ( a > b ) ? a : b;
     }
 
+    template <typename T> T clamp( const T & value, const T & min, const T & max )
+    {
+        if ( value < min )
+            return min;
+        else if ( value > max )
+            return max;
+        else
+            return value;
+    }
+
     inline bool sequence_greater_than( uint16_t s1, uint16_t s2 )
     {
         return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
@@ -194,6 +205,10 @@ namespace core
         double time = 0.0;                // frame time. 0.0 is start of process
         double deltaTime = 0.0;           // delta time this frame in seconds.
     };
+
+    uint64_t nanoseconds();
+
+    double time();
 }
 
 #endif

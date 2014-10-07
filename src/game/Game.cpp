@@ -32,7 +32,7 @@ using glm::vec4;
 
 GameClient * client = nullptr;
 
-const char * stone_size = "Black-40";
+const char * stone_size = "White-40";
 
 char stone_mesh_filename[256] = { '0' };
 
@@ -91,20 +91,63 @@ static void game_init()
 
     glFrontFace( GL_CW );
 
-    glEnable( GL_DEPTH_TEST );
+//    glEnable( GL_DEPTH_TEST );
 
     check_opengl_error( "after game_init" );
 }
 
 static void game_update()
 {
+    // todo: proper timing
+
     client->Update( global.timeBase );
 
     global.timeBase.time += global.timeBase.deltaTime;
 }
 
+static double previous_frame_time = 0.0;
+static double frame_delta_time = 0.0;
+
+static void update_fps()
+{
+    const double current_frame_time = core::time();
+
+    frame_delta_time = core::clamp( current_frame_time - previous_frame_time, 0.0, 0.1 );
+
+    previous_frame_time = current_frame_time;
+}
+
+static void render_fps()
+{
+    const double epsilon = 0.0001f;
+
+    const int fps = floor( ( 1.0 / frame_delta_time ) + epsilon );
+
+    char fps_string[256];
+    snprintf( fps_string, (int) sizeof( fps_string ), "%3d   ", fps );
+
+    Font * font = global.fontManager->GetFont( "FPS" );
+    if ( font )
+    {
+        const float text_x = global.displayWidth - font->GetTextWidth( fps_string ) - 5;
+        const float text_y = 10;
+
+        const Color bad_fps_color = Color(0.6f,0,0);              // red
+        const Color good_fps_color = Color( 0.27f,0.81f,1.0f);    // blue
+        
+        const Color fps_color = ( fps >= 60 ) ? good_fps_color : bad_fps_color;
+
+        font->Begin();
+        font->DrawText( text_x, text_y, fps_string, fps_color );
+        font->DrawText( text_x, text_y, "   FPS", Color(0,0,0) );
+        font->End();
+    }
+}
+
 static void game_render()
 {
+    update_fps();
+
     check_opengl_error( "before render" );
 
     client->Update( global.timeBase );
@@ -127,11 +170,13 @@ static void game_render()
     {
         font->Begin();
         font->DrawAtlas( 0, 0 );
-        font->DrawText( 400, 100, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", Color(0.8,0.8,0.8,1.0) );
+        font->DrawText( 100, 1500, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", Color(0.0,0.0,0.25,1.0) );
         font->End();
     }
 
     check_opengl_error( "after render" );
+
+    render_fps();
 }
 
 static void game_shutdown()

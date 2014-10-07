@@ -1,14 +1,55 @@
 DONE:
 
-TODO:
+    Added high precision time functions: core::nanoseconds and core::time.
 
-    Design a function to render a bunch of go stones, eg. pass in the transforms as an array
+    Render 19x19 stones without instancing, eg. one drawcall per-stone.
 
-    Look down at a grid of 19x19 go stones.
+    We don't quite seem to be making framerate.
 
     Implement a framerate counter.
 
-    Can I render 19x19 stones on the macbook?
+    Display framerate in top-right corner. Red if drops below 60 fps.
+
+    Probably pick a different font for the framerate. Make it a bit larger.
+
+    Make the framerate counter look cool. Red for bad framerate. Blue for good.
+
+TODO:
+
+    Dropped to rendering only one stone.
+
+    Framerate counter is not solid at 60FPS
+
+    Why is this?!
+
+    ----------------------------
+
+    Things that can be done to optimize:
+
+        1. Pack the vertices tighter, eg. x,y,z,nx,ny,nz instead of vec4
+
+        2. Run the mesh optimizer over the mesh before export to .mesh
+
+        3. Use instancing to reduce the number of draw calls
+
+        4. Reduce the tesselation level for the stone
+    
+    ----------------------------
+
+    Setup proper client timing, eg. deltaTime
+
+    Logs should be converted over to use real time, eg: GetRealTime()
+    vs. frame time which doesn't reflect time passing between updates.
+
+    Implement framerate display in top-right
+
+    ----------------------------
+
+    Idea: I could be doing the go stone simulation on the CPU
+
+    This would likely be a lot faster than using the CPU.
+
+    Maybe this would allow me to get the # of stones I want?
 
     ----------------------------
 
@@ -27,6 +68,14 @@ TODO:
 
     It would be nice to have a standardized file wrapper to do this,
     with a bit less effort, eg. File class.
+
+    ------------------------------
+
+    Implement gaussian blur for shadow
+
+    Good article here:
+
+    http://www.roxlu.com/2014/045/fast-opengl-blur-shader
 
     ------------------------------
 

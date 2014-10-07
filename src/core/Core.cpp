@@ -5,6 +5,12 @@
 #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
 #include <unistd.h>
 #endif
+#if CORE_PLATFORM == CORE_PLATFORM_MAC
+#include <mach/mach_time.h>
+#elif CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 namespace core
 {
@@ -136,5 +142,62 @@ namespace core
         h ^= h >> r;
 
         return h;
+    }
+
+    uint64_t nanoseconds() 
+    {
+        static uint64_t is_init = 0;
+
+        #if CORE_PLATFORM == CORE_PLATFORM_MAC
+
+            static mach_timebase_info_data_t info;
+            if ( 0 == is_init )
+            {
+                mach_timebase_info( &info );
+                is_init = 1;
+            }
+            uint64_t now;
+            now = mach_absolute_time();
+            now *= info.numer;
+            now /= info.denom;
+            return now;
+
+        #elif CORE_PLATFORM == CORE_PLATFORM_LINUX
+
+            #ifdef CLOCK_MONOTONIC
+            #define CLOCKID CLOCK_MONOTONIC
+            #else
+            #define CLOCKID CLOCK_REALTIME
+            #endif
+            static struct timespec linux_rate;
+            if ( 0 == is_init )
+            {
+                clock_getres( CLOCKID, &linux_rate );
+                is_init = 1;
+            }
+            uint64_t now;
+            struct timespec spec;
+            clock_gettime( CLOCKID, &spec );
+            now = spec.tv_sec * 1.0e9 + spec.tv_nsec;
+            return now;
+
+        #elif CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
+            static LARGE_INTEGER win_frequency;
+            if ( 0 == is_init ) 
+            {
+                QueryPerformanceFrequency( &win_frequency );
+                is_init = 1;
+            }
+            LARGE_INTEGER now;
+            QueryPerformanceCounter( &now );
+            return (uint64_t) ( ( 1e9 * now.QuadPart ) / win_frequency.QuadPart );
+
+        #endif
+    }
+
+    double time()
+    {
+        return nanoseconds() / 1000000000.0;        
     }
 }
