@@ -16,8 +16,8 @@ using namespace vectorial;
 
 struct MeshVertex
 {
-    vec3f position;         // todo: switch to manual packing, eg: float x,y,z,nx,ny,nz
-    vec3f normal;
+    float x,y,z;
+    //float nx,ny,nz;
 };
 
 template <class T> bool ReadObject( FILE * file, const T & object )
@@ -80,33 +80,34 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
     glEnableVertexAttribArray( 0 );
-    glEnableVertexAttribArray( 1 );
+//    glEnableVertexAttribArray( 1 );
 
     GLuint vbo;
     glGenBuffers( 1, &vbo );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
     glBufferData( GL_ARRAY_BUFFER, meshData->numTriangles * sizeof(MeshVertex), vertices, GL_STATIC_DRAW );
     glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
-    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)(4*4) );     // todo: we want tighter packing!!!
-//    glDeleteBuffers( 1, &vbo );
+    //glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)(3*4) );
 
     GLuint ibo;
     glGenBuffers( 1, &ibo );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, 2*numIndices, indices, GL_STATIC_DRAW );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
-//    glDeleteBuffers( 1, &ibo );
-
-    CORE_DELETE_ARRAY( core::memory::scratch_allocator(), vertices, meshData->numVertices );
-    CORE_DELETE_ARRAY( core::memory::scratch_allocator(), indices, numIndices );
-
-    fclose( file );
 
     meshData->vao = vao;
 
     glBindVertexArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+
+    CORE_DELETE_ARRAY( core::memory::scratch_allocator(), vertices, meshData->numVertices );
+    CORE_DELETE_ARRAY( core::memory::scratch_allocator(), indices, numIndices );
+
+    glDeleteBuffers( 1, &vbo );
+    glDeleteBuffers( 1, &ibo );
+
+    fclose( file );
 
     return meshData;
 }

@@ -105,26 +105,44 @@ static void game_update()
     global.timeBase.time += global.timeBase.deltaTime;
 }
 
-static double previous_frame_time = 0.0;
-static double frame_delta_time = 0.0;
+static double start_time = 0.0;
+static int current_fps = 0;
+static int frame_count = 0;
+static int initial_wait = 20;
 
 static void update_fps()
 {
-    const double current_frame_time = core::time();
+    if ( initial_wait-- > 0 )
+        return;
 
-    frame_delta_time = core::clamp( current_frame_time - previous_frame_time, 0.0, 0.1 );
+    if ( frame_count == 0 )
+    {
+        start_time = core::time();
+    }
 
-    previous_frame_time = current_frame_time;
+    frame_count++;
+
+    const int sample_frames = 20;
+
+    if ( frame_count == sample_frames )
+    {
+        double finish_time = core::time();
+        double delta_time = ( finish_time - start_time ) / sample_frames;
+        current_fps = (int) floor( ( 1.0 / delta_time ) + 0.001 ); 
+        const int display_refresh_fps = 60; // todo: ideally get this from the OS
+        if ( current_fps > display_refresh_fps )
+            current_fps = display_refresh_fps;
+        frame_count = 0;
+    }
 }
 
 static void render_fps()
 {
-    const double epsilon = 0.0001f;
-
-    const int fps = floor( ( 1.0 / frame_delta_time ) + epsilon );
+    if ( current_fps == 0 )
+        return;
 
     char fps_string[256];
-    snprintf( fps_string, (int) sizeof( fps_string ), "%3d   ", fps );
+    snprintf( fps_string, (int) sizeof( fps_string ), "%3d   ", current_fps );
 
     Font * font = global.fontManager->GetFont( "FPS" );
     if ( font )
@@ -135,7 +153,7 @@ static void render_fps()
         const Color bad_fps_color = Color(0.6f,0,0);              // red
         const Color good_fps_color = Color( 0.27f,0.81f,1.0f);    // blue
         
-        const Color fps_color = ( fps >= 60 ) ? good_fps_color : bad_fps_color;
+        const Color fps_color = ( current_fps >= 55 ) ? good_fps_color : bad_fps_color;
 
         font->Begin();
         font->DrawText( text_x, text_y, fps_string, fps_color );
@@ -146,8 +164,6 @@ static void render_fps()
 
 static void game_render()
 {
-    update_fps();
-
     check_opengl_error( "before render" );
 
     client->Update( global.timeBase );
@@ -163,7 +179,7 @@ static void game_render()
 
     MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
     if ( stoneMesh )
-        RenderStone( *stoneMesh );
+        RenderStones( *stoneMesh );
 
     Font * font = global.fontManager->GetFont( "Console" );
     if ( font )
@@ -251,6 +267,8 @@ int main( int argc, char * argv[] )
 
     while ( !glfwWindowShouldClose( window ) )
     {
+        update_fps();
+
         glfwPollEvents();
 
         if ( glfwGetKey( window, GLFW_KEY_ESCAPE ) == GLFW_PRESS )
@@ -259,6 +277,8 @@ int main( int argc, char * argv[] )
         game_update();
 
         game_render();
+
+        render_fps();
 
         glfwSwapBuffers( window );
     }

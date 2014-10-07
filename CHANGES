@@ -1,12 +1,70 @@
-Monday Afternoon, October 7th, 2014:
-------------------------------------
+Tuesday Morning, October 7th, 2014:
+-----------------------------------
+
+    Rendering lots of stones is slow.
+
+    Things that can be done to optimize:
+
+        1. Pack the vertices tighter, eg. x,y,z,nx,ny,nz instead of vec4 (done)
+
+        2. Try just with x,y,z to see if that improves it (done -- doesn't improve it)
+
+        3. Run the mesh optimizer over the mesh before export to .mesh (done)
+
+        4. Reduce the tesselation level for the stone (done)
+
+        5. Use instancing to reduce the number of draw calls (PROBABLY BIG!!!)
+
+    Added code to detect if biconvex generate goes past 65535 indices.
+
+    It does go past on tesselation at subdivision 6!
+
+    Dropping to subdivision 5.
+
+    Optimized mesh works fine. It was probably exploding because it didn't have enough bits for indices.
+
+    To measure if optimized mesh helps, I've bumped up to 10000 meshes. This renders at 6fps (min)
+
+    Non-optimized meshes run at 4fps.
+
+    So mesh index order optimization is definitely helping!
+
+
+Monday Night, October 6th, 2014
+--------------------------------
+
+    Added high precision time functions: core::nanoseconds and core::time.
+
+    Render 19x19 stones without instancing, eg. one drawcall per-stone.
+
+    We don't quite seem to be making framerate.
+
+    Implement a framerate counter.
+
+    Display framerate in top-right corner. Red if drops below 60 fps.
+
+    Probably pick a different font for the framerate. Make it a bit larger.
+
+    Make the framerate counter look cool. Red for bad framerate. Blue for good.
+
+    Dropped to rendering only one stone.
+
+    Framerate counter is not solid at 60FPS
+
+    Why is this?!
+
+    Steadied the framerate counter by accumulating time for n frames and averaging.
+
+
+Monday Afternoon, October 6th, 2014:
+-------------------------------------
 
     Optimize the various go stone meshes so they have aesthetically pleasing bevels.
 
     Enable multisampling AA.
 
 
-Monday Morning, October 7th, 2014:
+Monday Morning, October 6th, 2014:
 ----------------------------------
 
     Setup function to render one stone initially.
@@ -36,7 +94,7 @@ Monday Morning, October 7th, 2014:
     Pass in proper MVP matrix for go stone.
 
 
-Sunday Evening, October 6th, 2014:
+Sunday Evening, October 5th, 2014:
 ----------------------------------
 
     I really dislike the hardcoded link between the tool side of the stones and the runtime.
@@ -72,7 +130,7 @@ Sunday Evening, October 6th, 2014:
     Setup index buffer and load in data from file.
 
 
-Sunday Afternoon, October 6th, 2014:
+Sunday Afternoon, October 5th, 2014:
 ------------------------------------
 
     Should virtual go continue to use vectorial, or should it convert to glm?
@@ -145,7 +203,7 @@ Sunday Afternoon, October 6th, 2014:
     Switch to writing out in '.mesh' format (binary)
 
 
-Saturday Morning, October 5th, 2014:
+Sunday Morning, October 5th, 2014:
 ------------------------------------
 
     Clean up awful font loader code
@@ -158,7 +216,7 @@ Saturday Morning, October 5th, 2014:
     Remove the iostream bullshit from font loader
 
 
-Friday Night, October 4th, 2014:
+Friday Night, October 3rd, 2014:
 --------------------------------
 
     Font needs a concept of Begin, DrawString, DrawString, DrawString, End.

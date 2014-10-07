@@ -187,7 +187,7 @@ int main( int argc, char * argv[] )
         const float width = GetStoneWidth( size, color );
         const float height = GetStoneHeight( size );
         const float bevel = GetStoneBevel( size );
-        const int subdivisions = 6;
+        const int subdivisions = 5;
 
         virtualgo::Biconvex biconvex( width, height, bevel );
 

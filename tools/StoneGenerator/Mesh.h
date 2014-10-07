@@ -1,8 +1,9 @@
-#ifndef VIRTUALGO_MESH_H
-#define VIRTUALGO_MESH_H
+#ifndef TOOL_MESH_H
+#define TOOL_MESH_H
 
 #include "virtualgo/Common.h"
 #include "virtualgo/Biconvex.h"
+#include "MeshOptimize.h"
 #include "core/Core.h"
 #include "core/File.h"
 #include <list>
@@ -419,6 +420,10 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
 
         SubdivideBiconvexMesh( mesh, biconvex, false, false, true, a, b, c, an, bn, cn, sphereCenter, false, -h, 0, subdivisions, texture_a, texture_b );//0, 0 );
     }
+
+    // IMPORTANT: Make sure we haven't blown past 16 bit indices
+    const int numIndices = mesh.GetNumTriangles() * 3;
+    CORE_ASSERT( numIndices <= 65535 );
 }
 
 bool WriteObjFile( Mesh<Vertex> & mesh, const char filename[] )
@@ -456,6 +461,12 @@ bool WriteObjFile( Mesh<Vertex> & mesh, const char filename[] )
     return true;
 }
 
+struct PackedVertex
+{
+    float x,y,z;
+//    float nx,ny,nz;
+};
+
 bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
 {
     FILE * file = fopen( filename, "wb" );
@@ -473,11 +484,31 @@ bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
 
     core::WriteObject( file, numTriangles );
 
-    fwrite( &vertices[0], sizeof(Vertex) * numVertices, 1, file );
+    PackedVertex * packedVertices = new PackedVertex[numVertices];
 
+    for ( int i = 0; i < numVertices; ++i )
+    {
+        packedVertices[i].x = vertices[i].position.x();
+        packedVertices[i].y = vertices[i].position.y();
+        packedVertices[i].z = vertices[i].position.z();
+//        packedVertices[i].nx = vertices[i].normal.x();
+//        packedVertices[i].ny = vertices[i].normal.y();
+//        packedVertices[i].nz = vertices[i].normal.z();
+    }
+
+    fwrite( &packedVertices[0], sizeof(PackedVertex) * numVertices, 1, file );
+
+    /*
+    uint16_t * optimizedIndices = reorderForsyth( indices, numTriangles, numVertices );
+
+    fwrite( &optimizedIndices[0], 2 * numTriangles * 3, 1, file );
+    */
     fwrite( &indices[0], 2 * numTriangles * 3, 1, file );
 
     fclose( file );
+
+    delete [] packedVertices;
+    //delete [] optimizedIndices;
 
     return true;
 }

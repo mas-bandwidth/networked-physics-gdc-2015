@@ -11,7 +11,6 @@ class StoneManager;
 
 struct Global
 {
-    
     core::TimeBase timeBase;
     
     #ifdef CLIENT

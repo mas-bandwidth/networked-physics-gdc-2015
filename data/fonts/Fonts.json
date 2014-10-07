@@ -1,4 +1,4 @@
 [
     [ "bin/data/fonts/Console.font", "data/fonts/InputMono/InputMono-Medium.ttf", 32 ],
-    [ "bin/data/fonts/FPS.font", "data/fonts/InputMono/InputMono-Bold.ttf", 64 ]
+    [ "bin/data/fonts/FPS.font", "data/fonts/InputMono/InputMono-Bold.ttf", 50 ]
 ]

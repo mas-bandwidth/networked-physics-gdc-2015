@@ -1,59 +1,42 @@
 DONE:
 
-    Added high precision time functions: core::nanoseconds and core::time.
-
-    Render 19x19 stones without instancing, eg. one drawcall per-stone.
-
-    We don't quite seem to be making framerate.
-
-    Implement a framerate counter.
-
-    Display framerate in top-right corner. Red if drops below 60 fps.
-
-    Probably pick a different font for the framerate. Make it a bit larger.
-
-    Make the framerate counter look cool. Red for bad framerate. Blue for good.
-
 TODO:
 
-    Dropped to rendering only one stone.
-
-    Framerate counter is not solid at 60FPS
-
-    Why is this?!
-
     ----------------------------
 
-    Things that can be done to optimize:
+    Implement instanced render for go stones
 
-        1. Pack the vertices tighter, eg. x,y,z,nx,ny,nz instead of vec4
+    http://ogldev.atspace.co.uk/www/tutorial33/tutorial33.html
 
-        2. Run the mesh optimizer over the mesh before export to .mesh
-
-        3. Use instancing to reduce the number of draw calls
-
-        4. Reduce the tesselation level for the stone
-    
-    ----------------------------
-
-    Setup proper client timing, eg. deltaTime
-
-    Logs should be converted over to use real time, eg: GetRealTime()
-    vs. frame time which doesn't reflect time passing between updates.
-
-    Implement framerate display in top-right
-
-    ----------------------------
-
-    Idea: I could be doing the go stone simulation on the CPU
-
-    This would likely be a lot faster than using the CPU.
-
-    Maybe this would allow me to get the # of stones I want?
+    Is it faster?
 
     ----------------------------
 
     Fix stone shader so it works and renders some very basic lighting.
+
+    Pack the normals into 32bits using: GL_INT_2_10_10_10_REV. 
+
+    Verify shading still works.
+
+    ----------------------------
+
+    Create a new "tool" library and put the mesh in there.
+
+    This lets me write non-trivial code that is not suitable for runtime,
+    but is available across multiple tools, eg. the "ToolMesh"
+
+    Split tool mesh into .h and .cpp
+
+    Ideally, tools would not be built all the time but would be built
+    and then checked in somewhere that is not cleaned with "pm clean"
+
+    This way building tools is never a bottleneck, and I don't care if tools use STL
+
+    This is important. Tools must not take any time to build away from iteration time.
+
+    Where should built tools go? Can't be under bin because bin itself is completely blown away on clean.
+
+    Make sure tools are in path, *or* helper scripts exist, eg: makestones, makefonts
 
     ----------------------------
 

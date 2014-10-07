@@ -111,45 +111,16 @@ void StoneManager::Load()
     }
     
     closedir( dir ); 
-
-
-    /*
-    printf( "Loading stone data\n" );
-
-    const char * filename = "data/stones/Stones.bin";
-
-    FILE * file = fopen( filename, "rb" );
-    if ( !file )
-        return false;
-
-    char header[6];
-    memset( header, 0, sizeof( header ) );
-    fread( header, 6, 1, file );
-    if ( header[0] != 'S' ||
-         header[1] != 'T' ||
-         header[2] != 'O' ||
-         header[3] != 'N' ||
-         header[4] != 'E' ||
-         header[5] != 'S' )
-        return false;
-
-    ReadObject( file, m_numStones );
-
-    printf( "Loading %d stones\n" );
-
-    m_stoneData = CORE_NEW_ARRAY( *m_allocator, StoneData, m_numStones );
-
-    if ( fread( m_stoneData, sizeof( StoneData ) * m_numStones, 1, file ) != 1 )
-    {
-        fclose( file );
-        return false;
-    }
-
-    fclose( file );
-    */
 }
 
 void StoneManager::Unload()
 {
-    // ...
+    for ( auto itor = core::hash::begin( m_stones ); itor != core::hash::end( m_stones ); ++itor )
+    {
+        StoneData * stoneData = itor->value;
+        printf( "%.3f: Delete stone %p\n", global.timeBase.time, stoneData );
+        CORE_DELETE( *m_allocator, StoneData, stoneData );
+    }
+ 
+    core::hash::clear( m_stones );
 }
