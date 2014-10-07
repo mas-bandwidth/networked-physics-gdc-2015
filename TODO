@@ -2,17 +2,7 @@ DONE:
 
 TODO:
 
-    ----------------------------
-
-    Implement instanced render for go stones
-
-    http://ogldev.atspace.co.uk/www/tutorial33/tutorial33.html
-
-    Is it faster?
-
-    ----------------------------
-
-    Fix stone shader so it works and renders some very basic lighting.
+    Fix stone shader so it works and renders some very basic lighting (no uniforms)
 
     Pack the normals into 32bits using: GL_INT_2_10_10_10_REV. 
 
@@ -20,7 +10,7 @@ TODO:
 
     ----------------------------
 
-    Create a new "tool" library and put the mesh in there.
+    Create a new "tool" library (or tools/common) and put the mesh code in there.
 
     This lets me write non-trivial code that is not suitable for runtime,
     but is available across multiple tools, eg. the "ToolMesh"
@@ -36,9 +26,15 @@ TODO:
 
     Where should built tools go? Can't be under bin because bin itself is completely blown away on clean.
 
-    Make sure tools are in path, *or* helper scripts exist, eg: makestones, makefonts
+    Make sure tools are in path and helper scripts exist, eg: makestones, makefonts
 
     ----------------------------
+
+    Mesh needs to own the concept of the instance vbo, and track whether or not one has been created for it.
+
+    This way when a mesh is passed in to RenderStonesIntanced it knows if it needs to setup a VBO for the
+    matrices if one doesn't exist yet. It seems that not all meshes want this concept, so probably best
+    not to create one on mesh load automatically?
 
     Mesh manager should support a reload method, which just reloads
     all meshes it currently has loaded.

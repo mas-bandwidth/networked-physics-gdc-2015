@@ -179,7 +179,7 @@ static void game_render()
 
     MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
     if ( stoneMesh )
-        RenderStones( *stoneMesh );
+        RenderStonesInstanced( *stoneMesh );
 
     Font * font = global.fontManager->GetFont( "Console" );
     if ( font )

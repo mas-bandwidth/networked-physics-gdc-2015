@@ -498,17 +498,14 @@ bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
 
     fwrite( &packedVertices[0], sizeof(PackedVertex) * numVertices, 1, file );
 
-    /*
     uint16_t * optimizedIndices = reorderForsyth( indices, numTriangles, numVertices );
 
     fwrite( &optimizedIndices[0], 2 * numTriangles * 3, 1, file );
-    */
-    fwrite( &indices[0], 2 * numTriangles * 3, 1, file );
 
     fclose( file );
 
     delete [] packedVertices;
-    //delete [] optimizedIndices;
+    delete [] optimizedIndices;
 
     return true;
 }

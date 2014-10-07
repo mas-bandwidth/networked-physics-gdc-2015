@@ -1,3 +1,15 @@
+Tuesday Afternoon, October 7th, 2014:
+-------------------------------------
+
+    Implement instanced render for go stones
+
+    http://ogldev.atspace.co.uk/www/tutorial33/tutorial33.html
+
+    Is it faster?
+
+    No it's not. It seems the bottleneck is vertex processing not drawcalls.
+
+
 Tuesday Morning, October 7th, 2014:
 -----------------------------------
 

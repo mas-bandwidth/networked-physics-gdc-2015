@@ -120,9 +120,7 @@ void RenderStone( MeshData & mesh )
 }
 
 void RenderStones( MeshData & mesh )
-{   
-    // setup shader
-
+{
     GLuint shader = global.shaderManager->GetShader( "Stone" );
     if ( !shader )
         return;
@@ -131,35 +129,12 @@ void RenderStones( MeshData & mesh )
 
     mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
      
-    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 150.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 50.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
     int location = glGetUniformLocation( shader, "MVP" );
 
     glBindVertexArray( mesh.vao );
 
-    for ( int i = 0; i < 100; ++i )
-    {
-        for ( int j = 0; j < 100; ++j )
-        {  
-            const float x = -50*2.2f + 2.2f * i;
-            const float y = -50*2.2f + 2.2f * j;
-
-            mat4 modelMatrix = glm::translate( mat4(1), vec3( x, y, 0.0f ) );
-
-            mat4 rotation = glm::rotate( mat4(1), -(float)global.timeBase.time * 20, glm::vec3(0.0f,0.0f,1.0f));
-
-            mat4 MVP = projectionMatrix * viewMatrix * rotation * modelMatrix;
-
-            if ( location < 0 )
-                return;
-
-            glUniformMatrix4fv( location, 1, GL_FALSE, &MVP[0][0] );
-
-            glDrawElements( GL_TRIANGLES, mesh.numTriangles * 3, GL_UNSIGNED_SHORT, nullptr );
-        }
-    }
-
-    /*
     for ( int i = 0; i < 19; ++i )
     {
         for ( int j = 0; j < 19; ++j )
@@ -181,8 +156,78 @@ void RenderStones( MeshData & mesh )
             glDrawElements( GL_TRIANGLES, mesh.numTriangles * 3, GL_UNSIGNED_SHORT, nullptr );
         }
     }
-    */
 
     glBindVertexArray( 0 );
 }
     
+static int initialized_stone_render = false;
+static GLuint stone_instance_buffer = 0;
+
+void RenderStonesInstanced( MeshData & mesh )
+{
+    GLuint shader = global.shaderManager->GetShader( "StoneInstanced" );
+    if ( !shader )
+        return;
+
+    glUseProgram( shader );
+
+    int location = glGetAttribLocation( shader, "MVP" );
+    if ( location < 0 )
+        return;
+
+    printf( "location = %d\n", location );
+
+    glBindVertexArray( mesh.vao );
+
+    if ( !initialized_stone_render )
+    {
+        glGenBuffers( 1, &stone_instance_buffer );
+
+        glBindBuffer( GL_ARRAY_BUFFER, stone_instance_buffer );
+
+        for ( unsigned int i = 0; i < 4 ; ++i )
+        {
+            glEnableVertexAttribArray( location + i );
+            glVertexAttribPointer( location + i, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (void*) ( sizeof(float) * 4 * i ) );
+            glVertexAttribDivisor( location + i, 1 );
+
+            check_opengl_error( "iteration" );
+        }
+
+        initialized_stone_render = true;
+    }
+
+    mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
+     
+    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 50.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+    const int NumInstances = 19 * 19;
+
+    mat4 MVP[NumInstances];
+
+    int instance = 0;
+
+    for ( int i = 0; i < 19; ++i )
+    {
+        for ( int j = 0; j < 19; ++j )
+        {  
+            const float x = -19.8f + 2.2f * i;
+            const float y = -19.8f + 2.2f * j;
+
+            mat4 modelMatrix = glm::translate( mat4(1), vec3( x, y, 0.0f ) );
+
+            mat4 rotation = glm::rotate( mat4(1), -(float)global.timeBase.time * 20, glm::vec3(0.0f,0.0f,1.0f));
+
+            MVP[instance] = projectionMatrix * viewMatrix * rotation * modelMatrix;
+
+            instance++;
+        }
+    }
+
+    glBindBuffer( GL_ARRAY_BUFFER, stone_instance_buffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 16 * NumInstances, MVP, GL_STREAM_DRAW );
+
+    glDrawElementsInstanced( GL_TRIANGLES, mesh.numTriangles * 3, GL_UNSIGNED_SHORT, nullptr, NumInstances );
+    
+    glBindVertexArray( 0 );
+}
