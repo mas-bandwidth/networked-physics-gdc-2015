@@ -17,7 +17,7 @@ using namespace vectorial;
 struct MeshVertex
 {
     float x,y,z;
-    //float nx,ny,nz;
+    uint32_t normal;
 };
 
 template <class T> bool ReadObject( FILE * file, const T & object )
@@ -80,14 +80,14 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
     glEnableVertexAttribArray( 0 );
-//    glEnableVertexAttribArray( 1 );
+    glEnableVertexAttribArray( 1 );
 
     GLuint vbo;
     glGenBuffers( 1, &vbo );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
     glBufferData( GL_ARRAY_BUFFER, meshData->numTriangles * sizeof(MeshVertex), vertices, GL_STATIC_DRAW );
     glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
-    //glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)(3*4) );
+    glVertexAttribPointer( 1, 4, GL_INT_2_10_10_10_REV, GL_FALSE, sizeof(MeshVertex), (GLubyte*)(3*4) );
 
     GLuint ibo;
     glGenBuffers( 1, &ibo );

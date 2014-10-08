@@ -464,8 +464,28 @@ bool WriteObjFile( Mesh<Vertex> & mesh, const char filename[] )
 struct PackedVertex
 {
     float x,y,z;
-//    float nx,ny,nz;
+    uint32_t n;
 };
+
+static uint32_t float_to_signed_10( float value )
+{
+    const int x = (int) ( value * 511 );
+    if ( x >= 0 )
+        return x;
+    uint32_t bits = -x;
+    bits = ~bits;
+    bits &= ( (1<<10) - 1 );
+    bits += 1;
+    return bits;
+}
+
+static uint32_t convert_normal_to_2_10_10_10( const vec3f & normal )
+{
+    uint32_t x = float_to_signed_10( normal.x() );
+    uint32_t y = float_to_signed_10( normal.y() );
+    uint32_t z = float_to_signed_10( normal.z() );
+    return ( z << 20 ) | ( y << 10 ) | x;
+}
 
 bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
 {
@@ -491,12 +511,10 @@ bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
         packedVertices[i].x = vertices[i].position.x();
         packedVertices[i].y = vertices[i].position.y();
         packedVertices[i].z = vertices[i].position.z();
-//        packedVertices[i].nx = vertices[i].normal.x();
-//        packedVertices[i].ny = vertices[i].normal.y();
-//        packedVertices[i].nz = vertices[i].normal.z();
+        packedVertices[i].n = convert_normal_to_2_10_10_10( vertices[i].normal );
     }
 
-    fwrite( &packedVertices[0], sizeof(PackedVertex) * numVertices, 1, file );
+    fwrite( &packedVertices[0], sizeof( PackedVertex ) * numVertices, 1, file );
 
     uint16_t * optimizedIndices = reorderForsyth( indices, numTriangles, numVertices );
 

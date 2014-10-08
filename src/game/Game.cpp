@@ -51,19 +51,8 @@ static void game_init()
     const StoneData * stoneData = global.stoneManager->GetStoneData( stone_size );
     if ( stoneData )
     {
-        printf( "stone data:\n" );
-        printf( " + width = %.2f\n", stoneData->width );
-        printf( " + height = %.2f\n", stoneData->height );
-        printf( " + bevel = %.6f\n", stoneData->bevel );
-        printf( " + mass = %.2f\n", stoneData->mass );
-        printf( " + inertia_x = %.6f\n", stoneData->inertia_x );
-        printf( " + inertia_y = %.6f\n", stoneData->inertia_y );
-        printf( " + inertia_z = %.6f\n", stoneData->inertia_z );
-        printf( " + mesh_filename = \"%s\"\n", stoneData->mesh_filename );
-
-        global.meshManager->LoadMesh( stoneData->mesh_filename );
-
         strcpy( stone_mesh_filename, stoneData->mesh_filename );
+        global.meshManager->LoadMesh( stone_mesh_filename );
     }
 
     client = CreateGameClient( core::memory::default_allocator() );
@@ -91,15 +80,11 @@ static void game_init()
 
     glFrontFace( GL_CW );
 
-//    glEnable( GL_DEPTH_TEST );
-
     check_opengl_error( "after game_init" );
 }
 
 static void game_update()
 {
-    // todo: proper timing
-
     client->Update( global.timeBase );
 
     global.timeBase.time += global.timeBase.deltaTime;
@@ -170,16 +155,22 @@ static void game_render()
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+    /*
     if ( ( rand() % 100 ) == 0 )
     {
         global.fontManager->Reload();
         global.shaderManager->Reload();
         global.stoneManager->Reload();
     }
+    */
+
+    glEnable( GL_DEPTH_TEST );
 
     MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
     if ( stoneMesh )
-        RenderStonesInstanced( *stoneMesh );
+        RenderStonesInstanced( *stoneMesh );        
+
+    glDisable( GL_DEPTH_TEST );
 
     Font * font = global.fontManager->GetFont( "Console" );
     if ( font )
@@ -242,9 +233,11 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
     glfwWindowHint( GLFW_SAMPLES, 8 );
 
-    GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
+    //GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
     
-    //GLFWwindow* window = glfwCreateWindow(800, 600, "Client", glfwGetPrimaryMonitor(), nullptr); // Fullscreen    
+    const GLFWvidmode * mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
+
+    GLFWwindow * window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr ); // Fullscreen    
 
     glfwGetFramebufferSize( window, &global.displayWidth, &global.displayHeight );
 

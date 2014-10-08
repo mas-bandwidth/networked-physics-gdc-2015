@@ -175,8 +175,6 @@ void RenderStonesInstanced( MeshData & mesh )
     if ( location < 0 )
         return;
 
-    printf( "location = %d\n", location );
-
     glBindVertexArray( mesh.vao );
 
     if ( !initialized_stone_render )
@@ -199,7 +197,7 @@ void RenderStonesInstanced( MeshData & mesh )
 
     mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
      
-    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 50.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 15.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
     const int NumInstances = 19 * 19;
 

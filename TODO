@@ -1,12 +1,22 @@
 DONE:
 
+    Setup tool mesh and vertex buffer in runtime to use GL_INT_2_10_10_10_REV for normals.
+
+    Visualize the normals as rgb color so I can see they are working.
+
+    To convert a signed integer value, invert bits and add one (then mask off to 10 bits)
+
+    So multiply the float by 511
+
+    If it is less than zero, abs, then invert bits and normalize.
+
+    Mask the value to 10 bits (for invert), and it's ready to move into place.
+
 TODO:
+    
+    For some reason the vertex normals are coming through weird.
 
-    Fix stone shader so it works and renders some very basic lighting (no uniforms)
-
-    Pack the normals into 32bits using: GL_INT_2_10_10_10_REV. 
-
-    Verify shading still works.
+    I don't think my conversion function is wrong. I think it's the OpenGL vbo setup?
 
     ----------------------------
 
@@ -38,6 +48,10 @@ TODO:
 
     Mesh manager should support a reload method, which just reloads
     all meshes it currently has loaded.
+
+    If a mesh is reloaded it should destroy the instance VBO
+
+    It would be nice if I could count the # of VBOs and print it, to verify I'm not leaking.
 
     ------------------------------
 
