@@ -1,3 +1,106 @@
+#include "ToolMesh.h"
+
+bool WriteObjFile( Mesh<Vertex> & mesh, const char filename[] )
+{
+    FILE * file = fopen( filename, "w" );
+    if ( !file )
+        return false;
+
+    const int numVertices = mesh.GetNumVertices();
+    const int numTriangles = mesh.GetNumTriangles();
+    const Vertex * vertices = mesh.GetVertexBuffer();
+    const uint16_t * indices = mesh.GetIndexBuffer();
+
+    for ( int i = 0; i < numVertices; ++i )
+    {
+        fprintf( file, "v %f %f %f\n", 
+            vertices[i].position.x(),
+            vertices[i].position.y(),
+            vertices[i].position.z() );
+    }
+
+    for ( int i = 0; i < numVertices; ++i )
+    {
+        fprintf( file, "vn %f %f %f\n", 
+            vertices[i].normal.x(),
+            vertices[i].normal.y(),
+            vertices[i].normal.z() );
+    }
+
+    for ( int i = 0; i < numTriangles; ++i )
+        fprintf( file, "f %d %d %d\n", indices[i*3] + 1, indices[i*3+1] + 1, indices[i*3+2] + 1 );
+
+    fclose( file );
+
+    return true;
+}
+
+struct PackedVertex
+{
+    float x,y,z;
+    uint32_t n;
+};
+
+static uint32_t float_to_signed_10( float value )
+{
+    const int x = (int) ( value * 511 );
+    CORE_ASSERT( x >= -511 && x <= 511 );
+    return ( x >= 0 ) ? x : (1<<10) + x;
+}
+
+static uint32_t convert_normal_to_2_10_10_10( const vec3f & normal )
+{
+    uint32_t x = float_to_signed_10( normal.x() );
+    uint32_t y = float_to_signed_10( normal.y() );
+    uint32_t z = float_to_signed_10( normal.z() );
+    return ( z << 20 ) | ( y << 10 ) | x;
+}
+
+uint16_t * reorderForsyth( const uint16_t * indices, int numTriangles, int numVertices );
+
+bool WriteMeshFile( Mesh<Vertex> & mesh, const char filename[] )
+{
+    FILE * file = fopen( filename, "wb" );
+    if ( !file )
+        return false;
+
+    const int numVertices = mesh.GetNumVertices();
+    const int numTriangles = mesh.GetNumTriangles();
+    const Vertex * vertices = mesh.GetVertexBuffer();
+    const uint16_t * indices = mesh.GetIndexBuffer();
+
+    fwrite( "MESH", 4, 1, file );
+
+    core::WriteObject( file, numVertices );
+
+    core::WriteObject( file, numTriangles );
+
+    PackedVertex * packedVertices = new PackedVertex[numVertices];
+
+    for ( int i = 0; i < numVertices; ++i )
+    {
+        packedVertices[i].x = vertices[i].position.x();
+        packedVertices[i].y = vertices[i].position.y();
+        packedVertices[i].z = vertices[i].position.z();
+        packedVertices[i].n = convert_normal_to_2_10_10_10( vertices[i].normal );
+    }
+
+    fwrite( &packedVertices[0], sizeof( PackedVertex ) * numVertices, 1, file );
+
+    uint16_t * optimizedIndices = reorderForsyth( indices, numTriangles, numVertices );
+
+    fwrite( &optimizedIndices[0], 2 * numTriangles * 3, 1, file );
+
+    fclose( file );
+
+    delete [] packedVertices;
+    delete [] optimizedIndices;
+
+    return true;
+}
+
+// =================================================================================================
+
 /*
   Copyright (C) 2008 Martin Storsjo
 
@@ -119,8 +222,7 @@ ScoreType findVertexScore(int numActiveTris,
     return score;
 }
 
-// The main reordering function
-VertexIndexType* reorderForsyth( const VertexIndexType* indices, int nTriangles, int nVertices )
+VertexIndexType * reorderForsyth( const VertexIndexType * indices, int nTriangles, int nVertices )
 {
     // The tables need not be inited every time this function
     // is used. Either call initForsyth from the calling process,

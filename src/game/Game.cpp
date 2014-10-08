@@ -4,14 +4,16 @@
 #include <time.h>
 #include <stdlib.h>
 
-const float TickRate = 60;
-const int ServerPort = 10000;
+static const float TickRate = 60;
+static const int ServerPort = 10000;
 
 #ifdef CLIENT
 
 // ===================================================================================================================
 //                                                       CLIENT
 // ===================================================================================================================
+
+static const bool fullscreen = true;
 
 #include "Font.h"
 #include "Render.h"
@@ -230,14 +232,16 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
     glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
-    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
     glfwWindowHint( GLFW_SAMPLES, 8 );
+//    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
 
-    //GLFWwindow * window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
-    
     const GLFWvidmode * mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
 
-    GLFWwindow * window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr ); // Fullscreen    
+    GLFWwindow * window = nullptr;
+    if ( fullscreen )
+        window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr );
+    else
+        window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
 
     glfwGetFramebufferSize( window, &global.displayWidth, &global.displayHeight );
 

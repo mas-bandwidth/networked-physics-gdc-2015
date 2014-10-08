@@ -1,22 +1,6 @@
 DONE:
 
-    Setup tool mesh and vertex buffer in runtime to use GL_INT_2_10_10_10_REV for normals.
-
-    Visualize the normals as rgb color so I can see they are working.
-
-    To convert a signed integer value, invert bits and add one (then mask off to 10 bits)
-
-    So multiply the float by 511
-
-    If it is less than zero, abs, then invert bits and normalize.
-
-    Mask the value to 10 bits (for invert), and it's ready to move into place.
-
 TODO:
-    
-    For some reason the vertex normals are coming through weird.
-
-    I don't think my conversion function is wrong. I think it's the OpenGL vbo setup?
 
     ----------------------------
 
@@ -27,16 +11,7 @@ TODO:
 
     Split tool mesh into .h and .cpp
 
-    Ideally, tools would not be built all the time but would be built
-    and then checked in somewhere that is not cleaned with "pm clean"
-
-    This way building tools is never a bottleneck, and I don't care if tools use STL
-
-    This is important. Tools must not take any time to build away from iteration time.
-
-    Where should built tools go? Can't be under bin because bin itself is completely blown away on clean.
-
-    Make sure tools are in path and helper scripts exist, eg: makestones, makefonts
+    Make sure tool common is not built when building the game runtime.
 
     ----------------------------
 

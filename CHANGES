@@ -1,3 +1,45 @@
+Wednesday Morning, October 8th, 2014:
+-------------------------------------
+
+    Double checked conversion to 10 bit signed. It is 100% correct.
+
+    Something in OpenGL or the shader is quantizing the normal to 0,1
+
+    What is it?
+
+    Passing GL_TRUE to normalize the normal value seems to fix it.
+
+    But why is this necessary?!
+
+    WTF. The data is being passed in as signed 10 bit integers,
+    But... when it arrives in the shader it is values in range [0,1023!]
+    (eg. unsigned integer... WHY OPENGL WHY?!)
+
+    This is dumb...
+
+    Moving on.
+
+
+Tuesday Night, October 7th, 2014:
+---------------------------------
+
+    Setup tool mesh and vertex buffer in runtime to use GL_INT_2_10_10_10_REV for normals.
+
+    Visualize the normals as rgb color so I can see they are working.
+
+    To convert a signed integer value, invert bits and add one (then mask off to 10 bits)
+
+    So multiply the float by 511
+
+    If it is less than zero, abs, then invert bits and normalize.
+
+    Mask the value to 10 bits (for invert), and it's ready to move into place.
+
+    For some reason the vertex normals are coming through weird.
+
+    I don't think my conversion function is wrong. I think it's the OpenGL vbo setup?
+
+
 Tuesday Afternoon, October 7th, 2014:
 -------------------------------------
 
