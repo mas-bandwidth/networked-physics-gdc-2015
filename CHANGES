@@ -31,6 +31,55 @@ Wednesday Evening, October 8th, 2014:
 
     There is some seriously weird shit happening with the text rendering.
 
+    Seem to be two separate issues:
+
+        1. Somehow the two different fonts being rendered shit on each other
+
+        2. Something strange with the commandString values causing only the first character to be drawn (even with fps disabled)
+
+    I don't really know what is going on here... it seems completely mysterious!
+
+    It's something to do with the instanced rendering.
+
+    When the instance rendering is disabled the issue stops happening.
+
+    I think there is still a bad vertex buffer bound somewhere...
+
+    Confirmed. If I render a normal stone without instancing, the problem doesn't occur.
+
+    It's something happening that is triggered by instanced rendering the stones.
+
+    What state is getting stuck on?
+
+    For the moment, I am ignoring this so I can complete work on the console.
+
+    Add another function for ENTER, eg. execute, which calls a callback with the current command string and clears the chars
+
+    Implement backspace.
+
+    Text entry seems sluggish. I think it is caused by lack of a cursor.
+
+    Also seems less sluggish in fullscreen. I think double/triple buffering is kicking in there.
+
+    There is still some weird interaction between the FPS display and the console text. I don't understand it. Fucking OpenGL
+
+    It seems that the interaction occurs when you type text *before* the FPS font is first used. I think the FPS
+    initialization kicks in and does something to the previous font VBO or something. FUCK ME DEAD
+
+    Can't seem to get CTRL-C selected. It seems eaten by the OS.
+
+    Opting to "ESCAPE" to cancel the current command, and using APPLE-Q to quit (more deliberate, but not as nice as plain ESCAPE)
+
+    Implemented ` detection to enable/disable the console.
+
+    Added some code to each the ` char after the console was just turned on.
+
+    Probably need to add some code to eat the ` after the console was just disabled.
+
+    Make sure that the console renders ON TOP OF the FPS display and everything else.
+
+    Fixed backspace key so it respected both press and repeat actions
+
 
 Wednesday Lunch, October 8th, 2014:
 -----------------------------------
