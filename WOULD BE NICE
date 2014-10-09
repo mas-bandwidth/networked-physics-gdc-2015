@@ -1,15 +1,94 @@
 WOULD BE NICE:
 
-    ---------------------------
+    ----------------------------
 
-    Seems that what we really want when generating go stones is to
-    find the best fit stone that at edge the bevel, has correct width.
+    Consider using flatbuffers to communicate between tools and runtime.
 
-    Right now, the width is the actual invisible biconvex solid.
+    Would save on implementing annoying file IO and stuff, and maintaining binary compat.
 
-    This is more important with the thinner stones (eg. 22, 25)
-    because these stones lose so much more of the biconvex when
-    the bevel rounds it off.
+    Probably fast enough for anything too.
+    
+    ----------------------------
+
+    Mesh needs to own the concept of the instance vbo, and track whether or not one has been created for it.
+
+    This way when a mesh is passed in to RenderStonesIntanced it knows if it needs to setup a VBO for the
+    matrices if one doesn't exist yet. It seems that not all meshes want this concept, so probably best
+    not to create one on mesh load automatically?
+
+    Mesh manager should support a reload method, which just reloads
+    all meshes it currently has loaded.
+
+    If a mesh is reloaded it should destroy the instance VBO
+
+    It would be nice if I could count the # of VBOs and print it, to verify I'm not leaking.
+
+    ------------------------------
+
+    Get the virtual go tests running and passing, eg. TestVirtualGo.cpp
+
+    Restructure the virtual go code so it's simple and compiles quickly without exposing too much impl in headers.
+
+    Clean up awful shader loader code iostream and std::string bullshit
+
+    ------------------------------
+
+    Fix up the creation of the game client so it's not stupid.
+
+    Fix up the game client memory leaks on shutdown. 
+
+    It's important to detect leaks as soon as they happen!
+
+    ------------------------------
+
+    Explore physically based shading with go stones. I want a level that is an array 
+    of go stones with varying physically based properties changing in a grid, like
+    the typical physically based shading tests with spheres.
+
+    Talk to Steve Marton at work to determine where to get started.
+
+    ------------------------------
+
+    I would like a JSON scene language that describes what objects to create and where to place them.
+
+    This will allow me to create demo scenes for go board and work on renders without writing C++ code
+    to place the objects.
+
+    Alternatively, I could embed a scripting language and use that to set up scenes.
+
+    ------------------------------
+
+    I would like a texture manager (seems that OpenGL does most of this, but could make it a bit easier...)
+
+    By tracking all the textures loaded from disk, we can reload them as required, eg. reload textures.
+
+    ------------------------------
+
+    Implement gaussian blur for shadow
+
+    Good article here:
+
+    http://www.roxlu.com/2014/045/fast-opengl-blur-shader
+
+    ------------------------------
+
+    Need to clean up the way I read and write to files.
+
+    The binary read/write using ad-hoc stuff is a bit ugly.
+
+    It would be nice to have a standardized file wrapper to do this,
+    with a bit less effort, eg. File class.
+
+    ----------------------------
+
+    Create a new "tool" library (or tools/common) and put the mesh code in there.
+
+    This lets me write non-trivial code that is not suitable for runtime,
+    but is available across multiple tools, eg. the "ToolMesh"
+
+    Split tool mesh into .h and .cpp
+
+    Make sure tool common is not built when building the game runtime.
 
     ---------------------------
 

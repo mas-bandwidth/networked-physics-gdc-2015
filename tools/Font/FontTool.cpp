@@ -1,5 +1,5 @@
 /*
-    Font Builder Tool
+    Font Tool
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */  
 

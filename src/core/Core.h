@@ -19,6 +19,9 @@ extern "C"
     extern int rand();
     extern void srand( unsigned int seed );
     extern int atoi( const char * string );
+    extern size_t strlen( const char * string );
+    extern int strcmp ( const char * str1, const char * str2 );
+    extern char * strcpy( char * destination, const char * source );
     extern int printf( const char * format, ... );
     extern int sprintf( char * str, const char * format, ... );
     extern int snprintf( char * str, size_t size, const char * format, ... );

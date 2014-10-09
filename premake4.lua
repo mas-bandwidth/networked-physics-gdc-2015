@@ -67,16 +67,16 @@ project "ProfileClientServer"
     targetdir "bin"
     location "build"
 
-project "FontBuilder"
+project "FontTool"
     kind "ConsoleApp"
-    files { "tools/FontBuilder/*.cpp" }
+    files { "tools/Font/*.cpp" }
     links { "core", "freetype", "jansson" }
     location "build"
     targetdir "bin"
 
-project "StoneGenerator"
+project "StoneTool"
     kind "ConsoleApp"
-    files { "tools/StoneGenerator/*.cpp" }
+    files { "tools/Stone/*.cpp" }
     links { "core", "virtualgo", "jansson" }
     location "build"
     targetdir "bin"
@@ -217,8 +217,8 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 FontBuilder" == 0 then
-                if os.execute "bin/FontBuilder data/fonts/Fonts.json" ~= 0 then
+            if os.execute "make -j32 FontTool" == 0 then
+                if os.execute "bin/FontTool data/fonts/Fonts.json" ~= 0 then
                     os.exit(1)
                 end
             end
@@ -234,8 +234,8 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 StoneGenerator" == 0 then
-                if os.execute "rm -rf data/stones; mkdir -p data/stones; bin/StoneGenerator" ~= 0 then
+            if os.execute "make -j32 StoneTool" == 0 then
+                if os.execute "rm -rf data/stones; mkdir -p data/stones; bin/StoneTool" ~= 0 then
                     os.exit(1)
                 end
             end

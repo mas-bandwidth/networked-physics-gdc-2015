@@ -42,6 +42,8 @@ namespace virtualgo
         float GetBevelTorusMajorRadius() const { return bevelTorusMajorRadius; }
         float GetBevelTorusMinorRadius() const { return bevelTorusMinorRadius; }
 
+        float GetRealWidth() const { return realWidth; }
+
     private:
 
         float width;                            // width of biconvex solid
@@ -61,6 +63,8 @@ namespace virtualgo
         float bevelCircleRadius;                // radius of circle on sphere at start of bevel. if no bevel then equal to circle radius
         float bevelTorusMajorRadius;            // the major radius of the torus generating the bevel
         float bevelTorusMinorRadius;            // the minor radius of the torus generating the bevel
+
+        float realWidth;                        // the real width of the biconvex, taking the bevel into consideration.
     };
 
     bool PointInsideBiconvex_LocalSpace( vec3f point, const Biconvex & biconvex, float epsilon = 0.001f );

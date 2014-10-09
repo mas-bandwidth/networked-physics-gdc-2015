@@ -89,7 +89,7 @@ void FontManager::Unload()
     for ( auto itor = core::hash::begin( m_fonts ); itor != core::hash::end( m_fonts ); ++itor )
     {
         Font * font = itor->value;
-        printf( "%.3f: Delete font %p\n", global.timeBase.time, font );
+//        printf( "%.3f: Delete font %p\n", global.timeBase.time, font );
         CORE_DELETE( *m_allocator, Font, font );
     }
  

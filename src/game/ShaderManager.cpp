@@ -97,7 +97,7 @@ void ShaderManager::Unload()
     for ( auto itor = core::hash::begin( m_shaders ); itor != core::hash::end( m_shaders ); ++itor )
     {
         const uint32_t shader = itor->value;
-        printf( "%.3f: Delete shader %u\n", global.timeBase.time, shader );
+//        printf( "%.3f: Delete shader %u\n", global.timeBase.time, shader );
         delete_shader( shader );
     }
  

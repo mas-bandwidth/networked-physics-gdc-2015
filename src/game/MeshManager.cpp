@@ -138,7 +138,7 @@ void MeshManager::Clear()
     for ( auto itor = core::hash::begin( m_meshes ); itor != core::hash::end( m_meshes ); ++itor )
     {
         MeshData * meshData = itor->value;
-        printf( "%.3f: Delete mesh %p\n", global.timeBase.time, meshData );
+//        printf( "%.3f: Delete mesh %p\n", global.timeBase.time, meshData );
         destroy_mesh_data( *m_allocator, meshData );
     }
  

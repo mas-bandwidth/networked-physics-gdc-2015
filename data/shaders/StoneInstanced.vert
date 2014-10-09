@@ -8,6 +8,6 @@ layout (location = 2) in mat4 MVP;
 
 void main()
 {
-    Normal = VertexNormal;
+    Normal = VertexNormal / 1023 + 0.5;
     gl_Position = MVP * vec4( VertexPosition, 1.0 );
 }

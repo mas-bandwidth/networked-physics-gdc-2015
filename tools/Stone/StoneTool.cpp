@@ -1,5 +1,5 @@
 /*
-    Stone Generator Tool
+    Stone Tool
     Copyright (c) 2014, The Network Protocol Company, Inc.
 */  
 
@@ -80,7 +80,7 @@ const float StoneHeight[]
 
 const float StoneBevel[]
 {
-    0.06f,      // 22
+    0.08f,      // 22
     0.08f,      // 25
     0.08f,      // 28
     0.10f,      // 30
@@ -244,7 +244,7 @@ void SubdivideBiconvexMesh( Mesh<Vertex> & mesh,
     }
 }
 
-void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & biconvex, int subdivisions = 5, int numTriangles = 5, float epsilon = 0.001f )
+void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & biconvex, int subdivisions = 5, int numTriangles = 5, int numBevelRings = 8, float epsilon = 0.001f )
 {
     const float bevelCircleRadius = biconvex.GetBevelCircleRadius();
 
@@ -296,8 +296,6 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
         std::sort( circleAngles.begin(), circleAngles.end() );
 
         // tesselate the bevel
-
-        const int numBevelRings = 8;
 
         const float torusMajorRadius = biconvex.GetBevelTorusMajorRadius();
         const float torusMinorRadius = biconvex.GetBevelTorusMinorRadius();
@@ -387,10 +385,62 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
     CORE_ASSERT( numIndices <= 65535 );
 }
 
+void FindBiconvexWithRealWidth( virtualgo::Biconvex & biconvex, float real_width, float height, float bevel, float threshold = 0.0001f )
+{
+    if ( bevel < 0.0001f )
+    {
+        biconvex = virtualgo::Biconvex( real_width, height, bevel );
+        return;
+    }
+
+    float width_a = real_width;
+    float width_b = real_width * 2;
+
+    Biconvex biconvex_a;
+    Biconvex biconvex_b;
+
+    int iteration = 0;
+
+    while ( true )
+    {
+        biconvex_a = Biconvex( width_a, height, bevel );
+        biconvex_b = Biconvex( width_b, height, bevel );
+
+        const float real_width_a = biconvex_a.GetRealWidth();
+        const float real_width_b = biconvex_b.GetRealWidth();
+
+        const float delta_a = fabs( real_width - real_width_a );
+        const float delta_b = fabs( real_width - real_width_b );
+
+        if ( delta_a < delta_b )
+        {
+            if ( delta_a < threshold )
+            {
+                biconvex = biconvex_a;
+                return;
+            }
+
+            width_b = ( width_a + width_b ) / 2;
+        }
+        else
+        {
+            if ( delta_b < threshold )
+            {
+                biconvex = biconvex_b;
+                return;
+            }
+
+            width_a = ( width_a + width_b ) / 2;
+        }
+
+        iteration++;
+    }
+}
+
 int main( int argc, char * argv[] )
 {
     const char * stoneDirectory = "data/stones";
-        
+
     // setup stone definitions for black and white stones of all sizes
 
     struct StoneDefinition
@@ -433,9 +483,11 @@ int main( int argc, char * argv[] )
         const float width = GetStoneWidth( size, color );
         const float height = GetStoneHeight( size );
         const float bevel = GetStoneBevel( size );
-        const int subdivisions = 5;
 
-        virtualgo::Biconvex biconvex( width, height, bevel );
+        virtualgo::Biconvex biconvex;
+        FindBiconvexWithRealWidth( biconvex, width, height, bevel );
+
+        const int subdivisions = 5;
 
         const float mass = 1.0f;
         vec3f inertia;

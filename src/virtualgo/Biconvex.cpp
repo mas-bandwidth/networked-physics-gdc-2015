@@ -33,6 +33,8 @@ namespace virtualgo
         bevelCircleRadius = sqrt( sphereRadiusSquared - z*z );
         bevelTorusMajorRadius = ( sphereOffset * bevelCircleRadius ) / ( sphereOffset + bevel/2 );
         bevelTorusMinorRadius = length( vec3f( bevelCircleRadius, 0, bevel/2 ) - vec3f( bevelTorusMajorRadius, 0, 0 ) );
+
+        realWidth = ( bevelTorusMajorRadius + bevelTorusMinorRadius ) * 2;
     }
 
     bool PointInsideBiconvex_LocalSpace( vec3f point, const Biconvex & biconvex, float epsilon )

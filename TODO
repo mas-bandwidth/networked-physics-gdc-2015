@@ -1,92 +1,108 @@
 DONE:
 
+    Seem to be two separate issues:
+
+        1. Somehow the two different fonts being rendered shit on each other
+
+        2. Something strange with the commandString values causing only the first character to be drawn (even with fps disabled)
+
+    I don't really know what is going on here... it seems completely mysterious!
+
+    It's something to do with the instanced rendering.
+
+    When the instance rendering is disabled the issue stops happening.
+
+    I think there is still a bad vertex buffer bound somewhere...
+
+    Confirmed. If I render a normal stone without instancing, the problem doesn't occur.
+
+    It's something happening that is triggered by instanced rendering the stones.
+
+    What state is getting stuck on?
+
+    For the moment, I am ignoring this so I can complete work on the console.
+
+    Add another function for ENTER, eg. execute, which calls a callback with the current command string and clears the chars
+
+    Implement backspace.
+
+    Text entry seems sluggish. I think it is caused by lack of a cursor.
+
+    Also seems less sluggish in fullscreen. I think double/triple buffering is kicking in there.
+
+    There is still some weird interaction between the FPS display and the console text. I don't understand it. Fucking OpenGL
+
+    It seems that the interaction occurs when you type text *before* the FPS font is first used. I think the FPS
+    initialization kicks in and does something to the previous font VBO or something. FUCK ME DEAD
+
+    Can't seem to get CTRL-C selected. It seems eaten by the OS.
+
+    Opting to "ESCAPE" to cancel the current command, and using APPLE-Q to quit (more deliberate, but not as nice as plain ESCAPE)
+
+    Implemented ` detection to enable/disable the console.
+
+    Added some code to each the ` char after the console was just turned on.
+
+    Probably need to add some code to eat the ` after the console was just disabled.
+
+    Make sure that the console renders ON TOP OF the FPS display and everything else.
+
 TODO:
 
-    ----------------------------
+    Render a grey quad where the console should be (for now just one line)
 
-    Create a new "tool" library (or tools/common) and put the mesh code in there.
+    Implement a cursor and a concept of current cursor position left/right
 
-    This lets me write non-trivial code that is not suitable for runtime,
-    but is available across multiple tools, eg. the "ToolMesh"
+    Don't bother implementing selection it's not worth it.
 
-    Split tool mesh into .h and .cpp
+    Add command to command history on enter, even if it doesn't match anything.
 
-    Make sure tool common is not built when building the game runtime.
+    Implement command history, pressing UP/DOWN selects between command history in the command buffer.
 
-    ----------------------------
+    ------------------
 
-    Mesh needs to own the concept of the instance vbo, and track whether or not one has been created for it.
+    Implement console class (Console.cpp) and add to globals
 
-    This way when a mesh is passed in to RenderStonesIntanced it knows if it needs to setup a VBO for the
-    matrices if one doesn't exist yet. It seems that not all meshes want this concept, so probably best
-    not to create one on mesh load automatically?
+    Implement an update and render method, as well as keyboard input handler function.
 
-    Mesh manager should support a reload method, which just reloads
-    all meshes it currently has loaded.
+    When keys are pressed add to string.
 
-    If a mesh is reloaded it should destroy the instance VBO
+    When enter is pressed clear the string.
 
-    It would be nice if I could count the # of VBOs and print it, to verify I'm not leaking.
+    Render the string
 
-    ------------------------------
+    ------------------
 
-    Need to clean up the way I read and write to files.
+    Determine size of the console (height) in characters. 
 
-    The binary read/write using ad-hoc stuff is a bit ugly.
+    Determine # of characters wide depending on screen resolution.
 
-    It would be nice to have a standardized file wrapper to do this,
-    with a bit less effort, eg. File class.
+    Implement a data structure for the console, eg. # of lines. Each line
+    is an array of text up to 1024 chars wide?
 
-    ------------------------------
+    It's a ring buffer. Text is initially just set to "" per-line
 
-    Implement gaussian blur for shadow
+    Empty lines mean don't render anything (Eg. skip, entirely, no newline even...)
 
-    Good article here:
+    Per-line should note if it's an error or a message or a command (red/white/blue)
 
-    http://www.roxlu.com/2014/045/fast-opengl-blur-shader
+    Dummy up some console text and render it.
 
-    ------------------------------
+    ------------------
 
-    Get the virtual go tests running and passing, eg. TestVirtualGo.cpp
+    Render a quad for where the console should be. Console should take full screen width, like visor.
 
-    Restructure the virtual go code so it's simple and compiles quickly without exposing too much impl in headers.
+    Now render the text on top of the alpha quad.
 
-    Clean up awful shader loader code iostream and std::string bullshit
+    Bonus points, render a little extra drop-shadow at the bottom
 
-    ------------------------------
+    ------------------
 
-    Fix up the creation of the game client so it's not stupid.
+    Should I redirect stdout to the console, or just implement my own logging functions
+    that redirect to console instead? It's probably easier to just redirect, *but*
+    it's nice to have the output go to stdout as well.
 
-    Fix up the game client memory leaks on shutdown. 
-
-    It's important to detect leaks as soon as they happen!
-
-    ------------------------------
-
-    I would like a texture manager (seems that OpenGL does most of this, but could make it a bit easier...)
-
-    By tracking all the textures loaded from disk, we can reload them as required, eg. reload textures.
-
-    ------------------------------
-
-    I would like a JSON scene language that describes what objects to create and where to place them.
-
-    This will allow me to create demo scenes for go board and work on renders without writing C++ code
-    to place the objects.
-
-    Alternatively, I could embed a scripting language and use that to set up scenes.
-
-    ------------------------------
-
-    Explore physically based shading with go stones. I want a level that is an array 
-    of go stones with varying physically based properties changing in a grid, like
-    the typical physically based shading tests with spheres.
-
-    Talk to Steve Marton at work to determine where to get started.
-
-    ------------------------------
-
-    Implement a quake style console.
+    ------------------
 
     The console should have its own JSON file, eg. Console.json
 
@@ -96,30 +112,11 @@ TODO:
 
     Redirect stdout and stderr output to the console.
 
-    Implement keyboard input to type text into this console.
-
     ------------------
 
-    Implement some sort of key binding system, eg. bind a key to an action
-
-    Use this key binding system to bind keys to pageup, pagedown, ctrl-up, ctrl-down
-    and so on to control the console. Don't hardcode it!
-
-    This probably requires implementing the concept of "FOCUS"
-
-    eg. the game has focus, vs. the console having focus.
-
-    We need a window manager or a focus manager or something. The game needs to have
-    it's own interface on the client that implements input focus so it is passed
-    inputs when the console doesn't have focus.
-
-    ------------------
-
-    Have console off by default (previous was on)
+    Have console off by default
 
     Implement key binding "~" to toggle the console on off
-
-    Implement escape to quit the game (maybe with yes/no prompt, with enter/escape as cancel?)
 
     Implement command history buffer, eg. up-down
 

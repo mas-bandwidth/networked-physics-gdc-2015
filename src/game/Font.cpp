@@ -44,7 +44,7 @@ struct FontGlyph
 
 struct FontAtlas
 {
-    FontAtlas()
+     FontAtlas()
     {
         glyphs = nullptr;
         num_glyphs = 0;
@@ -68,8 +68,8 @@ struct FontAtlas
 void DestroyFontAtlas( core::Allocator & allocator, FontAtlas * atlas )
 {
     CORE_ASSERT( atlas );
-    CORE_ASSERT( atlas->texture );
-    glDeleteTextures( 1, &atlas->texture );
+    if ( atlas->texture != 0 )
+        glDeleteTextures( 1, &atlas->texture );
     CORE_DELETE_ARRAY( allocator, atlas->glyphs, atlas->num_glyphs );
     atlas->glyphs = nullptr;
     atlas->texture = 0;
@@ -169,10 +169,14 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
     }
 
     glGenTextures( 1, &atlas->texture );
+
     glBindTexture( GL_TEXTURE_2D, atlas->texture );
+
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
     glTexImage2D( GL_TEXTURE_2D, 0, GL_R8, atlas->width, atlas->height, 0, GL_RED, GL_UNSIGNED_BYTE, tex_data );
+
+    glBindTexture( GL_TEXTURE_2D, 0 );
 
     CORE_DELETE_ARRAY( allocator, tex_data, buffer_size );
 
@@ -181,7 +185,7 @@ FontAtlas * LoadFontAtlas( core::Allocator & allocator, const char * filename )
     return atlas;
 }
 
-const int MaxFontVertices = 4 * 1024;
+const int MaxFontVertices = 10 * 1024;
 
 struct FontVertex
 {
@@ -260,8 +264,7 @@ void Font::Begin()
     CORE_ASSERT( !m_render->active );
    
     m_render->active = true;
-
-    glBindTexture( GL_TEXTURE_2D, m_atlas->texture );
+    m_render->currentFontVertex = 0;
 
     GLuint shader_program = global.shaderManager->GetShader( "Font" );
     if ( !shader_program )
@@ -273,29 +276,30 @@ void Font::Begin()
     int location = glGetUniformLocation( shader_program, "ModelViewProjection" );
     if ( location < 0 )
         return;
+
     glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
 
     if ( m_render->vao == 0 )
     {
-        glGenBuffers( 1, &m_render->vbo );
         glGenVertexArrays( 1, &m_render->vao );
         glBindVertexArray( m_render->vao );
         glEnableVertexAttribArray( 0 );
         glEnableVertexAttribArray( 1 );
         glEnableVertexAttribArray( 2 );
+        glGenBuffers( 1, &m_render->vbo );
         glBindBuffer( GL_ARRAY_BUFFER, m_render->vbo );
         glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)0 );
         glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(3*4) );
         glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(7*4) );
     }
-    else
-    {
-        glBindVertexArray( m_render->vao );
-    }
 
     glEnable( GL_BLEND );
 
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glBindVertexArray( m_render->vao );
+
+    glBindTexture( GL_TEXTURE_2D, m_atlas->texture );
 }
 
 void Font::DrawAtlas( float x, float y, const Color & color )
@@ -374,9 +378,9 @@ void Font::DrawText( float x, float y, const char * text, const Color & color )
 
     while ( *p != '\0' )
     {
-        int character = *p++;
+        char character = *p++;
 
-        FontGlyph * glyph = m_atlas->table[character];
+        FontGlyph * glyph = m_atlas->table[(int)character];
 
         // a b
         // d c
@@ -451,6 +455,8 @@ void Font::End()
 
     m_render->active = false;
     m_render->currentFontVertex = 0;
+
+    glBindTexture( GL_TEXTURE_2D, 0 );
 
     glBindVertexArray( 0 );
 

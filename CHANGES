@@ -1,3 +1,51 @@
+Wednesday Evening, October 8th, 2014:
+-------------------------------------
+
+    Add input manager.
+
+    Print out key info.
+
+    Redirect pressed key info to input manager
+
+    Implement mapping from key enum to chars to add to console
+
+    (must be mod zero, *and* press or repeat action)
+
+    Print out chars as typed.
+
+    Create console class.
+
+    Redirect key and char callbacks to console to handle.
+
+    Return true from event handler if processed, false if not processed (will allow unhandled key events to pass through...)
+
+    Implement console render method that draws text.
+
+    NOTE: There seems to be a large discrepancy between fullscreen resolution and display res when windowed.
+
+    I think fullscreen resolution is not retina, therefore it is faster (less fill rate)
+
+    Maybe if I doubled the resolution requested it would give me retina fullscreen for consistency?
+
+    Add chars to console rendered string (but only if there is room)
+
+    There is some seriously weird shit happening with the text rendering.
+
+
+Wednesday Lunch, October 8th, 2014:
+-----------------------------------
+
+    Extend biconvex to get "real width" of visual shape, vs. biconvex shape width.
+
+    Done.
+
+    Now I need to retune the stone bevels.
+
+    Especially the small size stones need an adjustment. Large stones seem fine.
+
+    Only the 22 needed adjustment. The rest seem fine.
+
+
 Wednesday Morning, October 8th, 2014:
 -------------------------------------
 

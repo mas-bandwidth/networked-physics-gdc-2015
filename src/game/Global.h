@@ -8,11 +8,15 @@ class ShaderManager;
 class TextureManager;
 class MeshManager;
 class StoneManager;
+class InputManager;
+class Console;
 
 struct Global
 {
     core::TimeBase timeBase;
     
+    bool quit = false;
+
     #ifdef CLIENT
 
     int displayWidth;
@@ -22,6 +26,8 @@ struct Global
     ShaderManager * shaderManager = nullptr;
     TextureManager * textureManager = nullptr;
     MeshManager * meshManager = nullptr;
+    InputManager * inputManager = nullptr;
+    Console * console = nullptr;
 
     #endif // #ifdef CLIENT
 

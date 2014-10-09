@@ -23,6 +23,8 @@ static const bool fullscreen = true;
 #include "MeshManager.h"
 #include "StoneManager.h"
 #include "StoneRender.h"
+#include "InputManager.h"
+#include "Console.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
@@ -43,12 +45,11 @@ static void game_init()
     auto & allocator = core::memory::default_allocator();
 
     global.fontManager = CORE_NEW( allocator, FontManager, allocator );
-
     global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
-
     global.meshManager = CORE_NEW( allocator, MeshManager, allocator );
-
     global.stoneManager = CORE_NEW( allocator, StoneManager, allocator );
+    global.inputManager = CORE_NEW( allocator, InputManager, allocator );
+    global.console = CORE_NEW( allocator, Console, allocator );
 
     const StoneData * stoneData = global.stoneManager->GetStoneData( stone_size );
     if ( stoneData )
@@ -149,6 +150,31 @@ static void render_fps()
     }
 }
 
+static void render_scene()
+{
+    MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
+    if ( stoneMesh )
+    {
+        RenderStone( *stoneMesh );
+        //RenderStonesInstanced( *stoneMesh );
+    }
+}
+
+static void render_ui()
+{
+    // ...
+}
+
+static void render_debug()
+{
+    render_fps();
+}
+
+static void render_console()
+{
+    global.console->Render();
+}
+
 static void game_render()
 {
     check_opengl_error( "before render" );
@@ -168,24 +194,17 @@ static void game_render()
 
     glEnable( GL_DEPTH_TEST );
 
-    MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
-    if ( stoneMesh )
-        RenderStonesInstanced( *stoneMesh );        
+    render_scene();
 
     glDisable( GL_DEPTH_TEST );
 
-    Font * font = global.fontManager->GetFont( "Console" );
-    if ( font )
-    {
-        font->Begin();
-        font->DrawAtlas( 0, 0 );
-        font->DrawText( 100, 1500, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", Color(0.0,0.0,0.25,1.0) );
-        font->End();
-    }
+    render_ui();
+
+    render_debug();
+
+    render_console();
 
     check_opengl_error( "after render" );
-
-    render_fps();
 }
 
 static void game_shutdown()
@@ -198,16 +217,29 @@ static void game_shutdown()
     CORE_DELETE( allocator, ShaderManager, global.shaderManager );
     CORE_DELETE( allocator, MeshManager, global.meshManager );
     CORE_DELETE( allocator, StoneManager, global.stoneManager );
+    CORE_DELETE( allocator, InputManager, global.inputManager );
+    CORE_DELETE( allocator, Console, global.console );
 
     global = Global();
 }
 
-void framebuffer_size_callback( GLFWwindow* window, int width, int height )
+void framebuffer_size_callback( GLFWwindow * window, int width, int height )
 {
     global.displayWidth = width;
     global.displayHeight = height;
 
     glViewport( 0, 0, width, height );
+}
+
+
+void key_callback( GLFWwindow * window, int key, int scancode, int action, int mods )
+{
+    global.inputManager->KeyEvent( key, scancode, action, mods );
+}
+
+void char_callback( GLFWwindow * window, unsigned int code )
+{
+    global.inputManager->CharEvent( code );
 }
 
 int main( int argc, char * argv[] )
@@ -233,7 +265,7 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
     glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
     glfwWindowHint( GLFW_SAMPLES, 8 );
-//    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
+    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
 
     const GLFWvidmode * mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
 
@@ -249,6 +281,9 @@ int main( int argc, char * argv[] )
 
     glfwMakeContextCurrent( window );
 
+    glfwSetKeyCallback( window, key_callback );
+    glfwSetCharCallback( window, char_callback );
+
     glewExperimental = GL_TRUE;
     glewInit();
 
@@ -262,20 +297,17 @@ int main( int argc, char * argv[] )
 
     game_init();
 
-    while ( !glfwWindowShouldClose( window ) )
+    while ( !global.quit && !glfwWindowShouldClose( window ) )
     {
         update_fps();
 
         glfwPollEvents();
 
-        if ( glfwGetKey( window, GLFW_KEY_ESCAPE ) == GLFW_PRESS )
-            glfwSetWindowShouldClose( window, GL_TRUE );
-
         game_update();
 
-        game_render();
+        glfwPollEvents();
 
-        render_fps();
+        game_render();
 
         glfwSwapBuffers( window );
     }

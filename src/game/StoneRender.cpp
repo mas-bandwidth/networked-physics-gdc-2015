@@ -117,6 +117,8 @@ void RenderStone( MeshData & mesh )
     glDrawElements( GL_TRIANGLES, mesh.numTriangles * 3, GL_UNSIGNED_SHORT, nullptr );
 
     glBindVertexArray( 0 );
+
+    glUseProgram( 0 );
 }
 
 void RenderStones( MeshData & mesh )
@@ -158,6 +160,8 @@ void RenderStones( MeshData & mesh )
     }
 
     glBindVertexArray( 0 );
+
+    glUseProgram( 0 );
 }
     
 static int initialized_stone_render = false;
@@ -197,7 +201,7 @@ void RenderStonesInstanced( MeshData & mesh )
 
     mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
      
-    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 15.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+    mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 10.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
     const int NumInstances = 19 * 19;
 
@@ -223,9 +227,14 @@ void RenderStonesInstanced( MeshData & mesh )
     }
 
     glBindBuffer( GL_ARRAY_BUFFER, stone_instance_buffer );
+    
     glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 16 * NumInstances, MVP, GL_STREAM_DRAW );
 
     glDrawElementsInstanced( GL_TRIANGLES, mesh.numTriangles * 3, GL_UNSIGNED_SHORT, nullptr, NumInstances );
     
     glBindVertexArray( 0 );
+
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+    glUseProgram( 0 );
 }

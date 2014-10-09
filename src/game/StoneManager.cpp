@@ -13,19 +13,19 @@ static StoneData * LoadStoneData( core::Allocator & allocator, const char * file
 {
     CORE_ASSERT( filename );
 
-    printf( "%.3f: Loading stone data: \"%s\"\n", global.timeBase.time, filename );
+//    printf( "%.3f: Loading stone data: \"%s\"\n", global.timeBase.time, filename );
 
     FILE * file = fopen( filename, "rb" );
     if ( !file )
     {
-        printf( "%.3f: error: failed to load font file \"%s\"\n", global.timeBase.time, filename );
+        printf( "%.3f: error: failed to load stone file \"%s\"\n", global.timeBase.time, filename );
         return nullptr;
     }
 
     char header[5];
     if ( fread( header, 5, 1, file ) != 1 || header[0] != 'S' || header[1] != 'T' || header[2] != 'O' || header[3] != 'N' || header[4] != 'E' )
     {
-        printf( "%.3f: error: not a valid stone file\n", global.timeBase.time );
+        printf( "%.3f: error: not a valid stone file: \"%s\"\n", global.timeBase.time, filename );
         fclose( file );
         return nullptr;
     }
@@ -118,7 +118,7 @@ void StoneManager::Unload()
     for ( auto itor = core::hash::begin( m_stones ); itor != core::hash::end( m_stones ); ++itor )
     {
         StoneData * stoneData = itor->value;
-        printf( "%.3f: Delete stone %p\n", global.timeBase.time, stoneData );
+//        printf( "%.3f: Delete stone %p\n", global.timeBase.time, stoneData );
         CORE_DELETE( *m_allocator, StoneData, stoneData );
     }
  
