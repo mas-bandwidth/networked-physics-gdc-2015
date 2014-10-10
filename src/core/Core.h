@@ -22,6 +22,8 @@ extern "C"
     extern size_t strlen( const char * string );
     extern int strcmp ( const char * str1, const char * str2 );
     extern char * strcpy( char * destination, const char * source );
+    extern char * strncpy( char * destination, const char * source, size_t size );
+    extern char * strncpy_safe( char * destination, const char * source, size_t size );
     extern int printf( const char * format, ... );
     extern int sprintf( char * str, const char * format, ... );
     extern int snprintf( char * str, size_t size, const char * format, ... );

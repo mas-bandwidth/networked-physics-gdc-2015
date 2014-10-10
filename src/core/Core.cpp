@@ -12,6 +12,14 @@
 #include <windows.h>
 #endif
 
+char * strncpy_safe( char * destination, const char * source, size_t size    )
+{
+    // IMPORTANT: Make sure the string is always null terminated even if source is longer than dest
+    char * result = strncpy( destination, source, size );
+    destination[size-1] = '\0';
+    return result;
+}
+
 namespace core
 {
     void DefaultAssertHandler( const char * condition, 

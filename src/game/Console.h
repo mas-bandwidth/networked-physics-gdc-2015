@@ -3,6 +3,8 @@
 
 namespace core { class Allocator; }
 
+struct ConsoleInternal;
+
 class Console
 {
 public:
@@ -19,20 +21,13 @@ public:
 
     void ExecuteCommand( const char * string );
 
-    bool IsActive() const { return m_active; }
+    bool IsActive() const;
 
 private:
 
-    void ClearCommandString();
-
-    void Backspace();
-
     core::Allocator * m_allocator;
-    bool m_active;
-    bool m_justActivated;
-    bool m_justDeactivated;
-    int m_commandLength;
-    char m_commandString[1024];
+
+    ConsoleInternal * m_internal;
 };
 
 #endif // #ifndef GAME_CONSOLE_H

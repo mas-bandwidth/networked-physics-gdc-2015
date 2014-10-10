@@ -1,28 +1,36 @@
 DONE:
 
-TODO:
-
-    Render a grey quad where the console should be (for now just one line)
-
-    Implement a cursor and a concept of current cursor position left/right
-
-    Don't bother implementing selection it's not worth it.
-
     Add command to command history on enter, even if it doesn't match anything.
+
+    Add command selection index, -1 means no selection.
+
+    Add bool which is true if command history is empty.
+
+    Implement function to find next command in buffer.
+
+    Implement function to find previous command in buffer.
+
+    Both can return null if the command history is empty, otherwise should always cycle.
 
     Implement command history, pressing UP/DOWN selects between command history in the command buffer.
 
+    Works great.
+
+TODO:
+
+    Implement and render a flashing cursor at the text entry point.
+
+    Add the concept of current cursor position left/right
+
+    Don't bother adding selection, it's not worth it.
+
     ------------------
 
-    Implement console class (Console.cpp) and add to globals
+    Render a black alpha quad where the console should be (for now just one line of text)
 
-    Implement an update and render method, as well as keyboard input handler function.
+    ------------------
 
-    When keys are pressed add to string.
-
-    When enter is pressed clear the string.
-
-    Render the string
+    Need to do something so text is the same size between retina (windowed) and non-retina display (fullscreen)
 
     ------------------
 
