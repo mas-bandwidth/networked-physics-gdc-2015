@@ -1,22 +1,28 @@
 DONE:
 
-TODO:
-
     Add the concept of current cursor position left/right within the buffer
 
-    When you insert text with the cursor position not at end, shift the text to the right
+    When inserting text with the cursor position not at end, shift the text to the right
     before inserting the new character.
 
     When deleting text, do it at the cursor position, delete one char to the left of cursor,
     and shift left any remaining text at or right of the cursor position left.
 
+    Fix issue with the vertex buffers affecting each other.
+
+    It was just a VBO being left bound, or not rebinding before putting in new data.
+
+    Add a "_" to the font charset.
+
+    Fix bug in the backspace mid-buffer
+
+    Implement seek to beginning and end of buffer, eg. command-left, command-right
+
+TODO:
+
     ------------------
 
     Make the cursor blink
-
-    ------------------
-
-    Fix issue with the vertex buffers affecting each other.
 
     ------------------
 
@@ -53,8 +59,7 @@ TODO:
 
     Implement pageup pagedown within this buffer somehow (scroll events?)
 
-    Implement scrolling in this console buffer, eg. page-up page-down, ctrl-up, ctrl-down,
-    command-up, command-down.
+    (Sublime text uses function up/down for scrolling, apple up/down for top/bottom of buffer -- this is nice!)
 
     ------------------
 

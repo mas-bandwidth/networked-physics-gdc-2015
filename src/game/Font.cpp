@@ -291,6 +291,7 @@ void Font::Begin()
         glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)0 );
         glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(3*4) );
         glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof(FontVertex), (GLubyte*)(7*4) );
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
     }
 
     glEnable( GL_BLEND );
@@ -298,6 +299,8 @@ void Font::Begin()
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     glBindVertexArray( m_render->vao );
+
+    glBindBuffer( GL_ARRAY_BUFFER, m_render->vbo );
 
     glBindTexture( GL_TEXTURE_2D, m_atlas->texture );
 }

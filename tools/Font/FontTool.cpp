@@ -12,8 +12,8 @@
 
 char charset[] = { "abcdefghijklmnopqrstuvwxyz"
                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                   "1234567890~!@#$%^&*()-=+;:"
-                   "'\",./?[]|\\ <>`\xFF" };
+                   "1234567890~!@#$%^&*()-_=+;:"
+                   "'\",./?[]|\\ <>`{}\xFF" };
 
 struct GlyphEntry
 {
@@ -39,7 +39,7 @@ void CreateFont( const char * fontfile, const char * outfile, int font_size )
     printf( "%s -> %s (%d)\n", fontfile, outfile, font_size );
 
     // Margins around characters to prevent them from 'bleeding' into each other.
-    const int margin = 2;
+    const int margin = 1;
     int image_height = 0, image_width = 256;            // todo: needs to determine appropriate image width based on point size!
 
     // Load the font

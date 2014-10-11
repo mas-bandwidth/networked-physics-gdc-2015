@@ -155,8 +155,8 @@ static void render_scene()
     MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
     if ( stoneMesh )
     {
-        RenderStone( *stoneMesh );
-        //RenderStonesInstanced( *stoneMesh );
+        //RenderStone( *stoneMesh );
+        RenderStonesInstanced( *stoneMesh );
     }
 }
 

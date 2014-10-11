@@ -14,7 +14,7 @@ using glm::mat4;
 using glm::vec3;
 using glm::vec4;
 
-static const int MaxLine = 1024;
+static const int MaxLine = 256;
 static const int CommandHistorySize = 256;
 
 struct ConsoleInternal
@@ -66,6 +66,18 @@ struct ConsoleInternal
     char commandString[MaxLine];
     char commandHistory[CommandHistorySize][MaxLine];
 
+    void Activate( bool eatNextKey = false )
+    {
+        active = true;
+        justActivated = eatNextKey;
+    }
+
+    void Deactivate( bool eatNextKey = false )
+    {
+        active = false;
+        justDeactivated = eatNextKey;
+    }
+
     void ClearCommandString()
     {
         commandLength = 0;
@@ -74,11 +86,63 @@ struct ConsoleInternal
         commandHistorySelection = -1;
     }
 
+    void CharacterTyped( char c )
+    {
+        if ( commandLength < sizeof( commandString ) - 1 )
+        {
+            if ( commandCursorPosition < commandLength )
+            {
+                for ( int i = commandLength; i > commandCursorPosition; --i )
+                    commandString[i] = commandString[i-1];
+            }
+
+            commandString[commandCursorPosition] = c;
+
+            commandCursorPosition++;
+            commandLength++;
+        }
+    }
+
     void Backspace()
     {
-        // todo: handle cursor position here
-        if ( commandLength > 0 )
-            commandString[--commandLength] = '\0';
+        if ( commandLength == 0 )
+            return;
+
+        if ( commandCursorPosition == 0 )
+            return;
+
+        if ( commandCursorPosition < commandLength )
+        {
+            for ( int i = commandCursorPosition; i < commandLength; ++i )
+                commandString[i-1] = commandString[i];
+        }
+
+        commandString[commandLength-1] = '\0';
+
+        --commandLength;
+        --commandCursorPosition;
+    }
+
+    void CursorLeft()
+    {
+        if ( commandCursorPosition > 0 )
+            commandCursorPosition--;
+    }
+
+    void CursorRight()
+    {
+        if ( commandCursorPosition < commandLength )
+            commandCursorPosition++;
+    }
+
+    void CursorBegin()
+    {
+        commandCursorPosition = 0;
+    }
+
+    void CursorEnd()
+    {
+        commandCursorPosition = commandLength;
     }
 
     void AddToCommandHistory( const char * string )
@@ -102,7 +166,10 @@ struct ConsoleInternal
             return;
 
         if ( commandHistorySelection == -1 )
+        {
             commandHistorySelection = commandHistoryIndex;
+            AddToCommandHistory( commandString );
+        }
 
         for ( int i = 0; i < CommandHistorySize; ++i )
         {
@@ -115,6 +182,7 @@ struct ConsoleInternal
                 memset( commandString, 0, sizeof( commandString ) );
                 strncpy_safe( commandString, command, MaxLine );
                 commandLength = strlen( commandString );
+                CursorEnd();
                 return;
             }
         }
@@ -126,7 +194,10 @@ struct ConsoleInternal
             return;
 
         if ( commandHistorySelection == -1 )
+        {
             commandHistorySelection = commandHistoryIndex;
+            AddToCommandHistory( commandString );
+        }
 
         for ( int i = 0; i < CommandHistorySize; ++i )
         {
@@ -140,6 +211,7 @@ struct ConsoleInternal
                 memset( commandString, 0, sizeof( commandString ) );
                 strncpy_safe( commandString, command, MaxLine );
                 commandLength = strlen( commandString );
+                CursorEnd();
                 return;
             }
         }
@@ -161,10 +233,9 @@ bool Console::KeyEvent( int key, int scancode, int action, int mods )
 {
     if ( !IsActive() )
     {
-        if ( key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS )
+        if ( key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS && mods == 0 )
         {
-            m_internal->active = true;
-            m_internal->justActivated = true;
+            m_internal->Activate( true );
             return true;
         }
 
@@ -172,33 +243,49 @@ bool Console::KeyEvent( int key, int scancode, int action, int mods )
     }
     else
     {
-        if ( ( key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER ) && action == GLFW_PRESS )
+        if ( ( key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER ) && action == GLFW_PRESS && mods == 0 )
         {
             ExecuteCommand( m_internal->commandString );
             m_internal->AddToCommandHistory( m_internal->commandString );
             m_internal->ClearCommandString();
+            m_internal->Deactivate( false );
         }
-        else if ( key == GLFW_KEY_ESCAPE && action == GLFW_PRESS )
+        else if ( key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && mods == 0 )
         {
             m_internal->ClearCommandString();
         }
-        else if ( key == GLFW_KEY_BACKSPACE && ( action == GLFW_PRESS || action == GLFW_REPEAT ) )
+        else if ( key == GLFW_KEY_BACKSPACE && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == 0 )
         {
             m_internal->Backspace();
         }
-        else if ( key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS )
+        else if ( key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS && mods == 0 )
         {
             m_internal->ClearCommandString();
-            m_internal->active = false;
-            m_internal->justDeactivated = true;
+            m_internal->Deactivate( true );
         }
-        else if ( key == GLFW_KEY_UP && ( action == GLFW_PRESS || action == GLFW_REPEAT ) )
+        else if ( key == GLFW_KEY_UP && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == 0 )
         {
             m_internal->PrevCommandInHistory();
         }
-        else if ( key == GLFW_KEY_DOWN && ( action == GLFW_PRESS || action == GLFW_REPEAT ) )
+        else if ( key == GLFW_KEY_DOWN && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == 0 )
         {
             m_internal->NextCommandInHistory();
+        }
+        else if ( key == GLFW_KEY_LEFT && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == 0 )
+        {
+            m_internal->CursorLeft();
+        }
+        else if ( key == GLFW_KEY_RIGHT && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == 0 )
+        {
+            m_internal->CursorRight();
+        }
+        else if ( key == GLFW_KEY_LEFT && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == GLFW_MOD_SUPER )
+        {
+            m_internal->CursorBegin();
+        }
+        else if ( key == GLFW_KEY_RIGHT && ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == GLFW_MOD_SUPER )
+        {
+            m_internal->CursorEnd();
         }
     }
 
@@ -210,7 +297,8 @@ bool Console::CharEvent( unsigned int code )
     if ( m_internal->justDeactivated )
     {
         m_internal->justDeactivated = false;
-        return true;
+        if ( code == '`' )
+            return true;
     }
 
     if ( !IsActive() )
@@ -222,11 +310,11 @@ bool Console::CharEvent( unsigned int code )
     if ( m_internal->justActivated )
     {
         m_internal->justActivated = false;
-        return true;
+        if ( code == '`' )
+            return true;
     }
 
-    if ( m_internal->commandLength < sizeof( m_internal->commandString ) - 1 )
-        m_internal->commandString[m_internal->commandLength++] = (char) code;
+    m_internal->CharacterTyped( (char) code );
 
     return true;
 }
@@ -264,6 +352,7 @@ static void InitRender( ConsoleInternal & internal )
     glBindBuffer( GL_ARRAY_BUFFER, internal.vbo );
     glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(ConsoleVertex), (GLubyte*)0 );
     glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, sizeof(ConsoleVertex), (GLubyte*)(3*4) );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 static void RenderTriangles( ConsoleInternal & internal, const ConsoleVertex * vertices, int numTriangles )
@@ -290,7 +379,9 @@ static void RenderTriangles( ConsoleInternal & internal, const ConsoleVertex * v
 
     glBindVertexArray( internal.vao );
 
+    glBindBuffer( GL_ARRAY_BUFFER, internal.vbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( ConsoleVertex ) * numTriangles * 3, vertices, GL_STREAM_DRAW );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     glDrawArrays( GL_TRIANGLES, 0, numTriangles * 3 );
 
@@ -376,13 +467,13 @@ void Console::Render()
 
     if ( m_internal->commandString[0] != '\0' )
     {
-//        font->Begin();
-//        font->DrawText( command_origin_x, command_origin_y, m_internal->commandString, Color(0,0,0,1.0) );
-//        font->End();
+        font->Begin();
+        font->DrawText( command_origin_x, command_origin_y, m_internal->commandString, Color(0,0,0,1.0) );
+        font->End();
     }
 
     const float font_width = font->GetCharWidth( 'a' );
     const float font_height = font->GetLineHeight();
 
-    RenderCursor( *m_internal, command_origin_x + m_internal->commandLength * font_width, command_origin_y, font_width, font_height );
+    RenderCursor( *m_internal, command_origin_x + m_internal->commandCursorPosition * font_width, command_origin_y, font_width, font_height );
 }
