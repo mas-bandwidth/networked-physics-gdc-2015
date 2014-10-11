@@ -1,23 +1,5 @@
 DONE:
 
-    Add the concept of current cursor position left/right within the buffer
-
-    When inserting text with the cursor position not at end, shift the text to the right
-    before inserting the new character.
-
-    When deleting text, do it at the cursor position, delete one char to the left of cursor,
-    and shift left any remaining text at or right of the cursor position left.
-
-    Fix issue with the vertex buffers affecting each other.
-
-    It was just a VBO being left bound, or not rebinding before putting in new data.
-
-    Add a "_" to the font charset.
-
-    Fix bug in the backspace mid-buffer
-
-    Implement seek to beginning and end of buffer, eg. command-left, command-right
-
 TODO:
 
     ------------------
