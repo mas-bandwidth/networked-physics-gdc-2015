@@ -17,11 +17,11 @@ public:
 
     bool CharEvent( unsigned int code );
 
-    void Render();
-
     void ExecuteCommand( const char * string );
 
     bool IsActive() const;
+
+    void Render();
 
 private:
 

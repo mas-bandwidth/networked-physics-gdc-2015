@@ -1,32 +1,30 @@
 DONE:
 
-    Add command to command history on enter, even if it doesn't match anything.
-
-    Add command selection index, -1 means no selection.
-
-    Add bool which is true if command history is empty.
-
-    Implement function to find next command in buffer.
-
-    Implement function to find previous command in buffer.
-
-    Both can return null if the command history is empty, otherwise should always cycle.
-
-    Implement command history, pressing UP/DOWN selects between command history in the command buffer.
-
-    Works great.
-
 TODO:
 
-    Implement and render a flashing cursor at the text entry point.
+    Add the concept of current cursor position left/right within the buffer
 
-    Add the concept of current cursor position left/right
+    When you insert text with the cursor position not at end, shift the text to the right
+    before inserting the new character.
 
-    Don't bother adding selection, it's not worth it.
+    When deleting text, do it at the cursor position, delete one char to the left of cursor,
+    and shift left any remaining text at or right of the cursor position left.
 
     ------------------
 
-    Render a black alpha quad where the console should be (for now just one line of text)
+    Make the cursor blink
+
+    ------------------
+
+    Fix issue with the vertex buffers affecting each other.
+
+    ------------------
+
+    Implement two modes of console:
+
+        1. Quick entry mode, ~, type in command and then enter to execute. esc or ~ cancels
+
+        2. Full console mode -- black alpha quad, text history of command execution (double ~~ or alt-~)
 
     ------------------
 
@@ -51,35 +49,9 @@ TODO:
 
     ------------------
 
-    Render a quad for where the console should be. Console should take full screen width, like visor.
+    Implement console text buffer.
 
-    Now render the text on top of the alpha quad.
-
-    Bonus points, render a little extra drop-shadow at the bottom
-
-    ------------------
-
-    Should I redirect stdout to the console, or just implement my own logging functions
-    that redirect to console instead? It's probably easier to just redirect, *but*
-    it's nice to have the output go to stdout as well.
-
-    ------------------
-
-    The console should have its own JSON file, eg. Console.json
-
-    Inside this it should specify the fonts to be used by the console.
-
-    The console should be capable of reloading its settings on the fly.
-
-    Redirect stdout and stderr output to the console.
-
-    ------------------
-
-    Have console off by default
-
-    Implement key binding "~" to toggle the console on off
-
-    Implement command history buffer, eg. up-down
+    Implement pageup pagedown within this buffer somehow (scroll events?)
 
     Implement scrolling in this console buffer, eg. page-up page-down, ctrl-up, ctrl-down,
     command-up, command-down.

@@ -1,3 +1,41 @@
+Friday Afternoon
+----------------
+
+    If the previous command is identical to the new command, don't add it to history. It's annoying.
+
+    Updated "pm loc" to work again and recursively find all *.h and *.cpp files
+
+    Add framework for rendering quads in the console cpp (eg. vao, vbo etc.)
+
+    Implement a cursor at the text entry point.
+
+    Seems that cursor and font vertices are interacting, much like the FPS verts were interacting.
+
+    There is something very wrong with how I'm interfacing with OpenGL here. Need to work out what it is.
+
+    Added console shader that doesn't have texture uv.
+
+
+Friday Morning
+--------------
+
+    Add command to command history on enter, even if it doesn't match anything.
+
+    Add command selection index, -1 means no selection.
+
+    Add bool which is true if command history is empty.
+
+    Implement function to find next command in buffer.
+
+    Implement function to find previous command in buffer.
+
+    Both can return null if the command history is empty, otherwise should always cycle.
+
+    Implement command history, pressing UP/DOWN selects between command history in the command buffer.
+
+    Works great.
+
+
 Wednesday Evening, October 8th, 2014:
 -------------------------------------
 

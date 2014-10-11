@@ -122,7 +122,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
 
         execute = function ()
-            os.execute "wc -l src/*.cpp tests/*.h tests/*.cpp include/*.h"
+            os.execute "find . -name *.h -o -name *.cpp | xargs wc -l"
         end
     }
 
