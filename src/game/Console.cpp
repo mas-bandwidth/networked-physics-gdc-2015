@@ -1,5 +1,6 @@
 #include "Console.h"
 #include "Global.h"
+#include "Common.h"
 #include "Font.h"
 #include "FontManager.h"
 #include "ShaderManager.h"
@@ -35,6 +36,10 @@ struct ConsoleInternal
         commandHistorySelection = -1;
         memset( commandString, 0, sizeof( commandString ) );
         memset( commandHistory, 0, sizeof( commandHistory ) );
+
+        cursorBlinkTime = 0.0f;
+        cursorBlinkState = 0;
+        cursorAlpha = 0.0f;
     }
 
     ~ConsoleInternal()
@@ -66,10 +71,17 @@ struct ConsoleInternal
     char commandString[MaxLine];
     char commandHistory[CommandHistorySize][MaxLine];
 
+    int cursorBlinkState;
+    float cursorBlinkTime;
+    float cursorAlpha;
+
     void Activate( bool eatNextKey = false )
     {
         active = true;
         justActivated = eatNextKey;
+        cursorBlinkTime = 0.0f;
+        cursorBlinkState = 0;
+        cursorAlpha = 0.0f;
     }
 
     void Deactivate( bool eatNextKey = false )
@@ -100,6 +112,10 @@ struct ConsoleInternal
 
             commandCursorPosition++;
             commandLength++;
+    
+            // make sure the cursor is set ON each time a char is pressed 
+            cursorBlinkState = 0;
+            cursorBlinkTime = 0.0f;    
         }
     }
 
@@ -411,6 +427,28 @@ static void RenderBackground( ConsoleInternal & internal )
 
 static void RenderCursor( ConsoleInternal & internal, float x, float y, float width, float height )
 {
+    internal.cursorBlinkTime += global.timeBase.deltaTime;
+
+    const float CursorOnTime = 0.75f;
+    const float CursorOffTime = 0.5f;
+
+    if ( internal.cursorBlinkState == 0 && internal.cursorBlinkTime >= CursorOnTime )
+    {
+        internal.cursorBlinkState = 1;
+        internal.cursorBlinkTime -= CursorOnTime;
+    }
+    else if ( internal.cursorBlinkState == 1 && internal.cursorBlinkTime > CursorOffTime )
+    {
+        internal.cursorBlinkState = 0;
+        internal.cursorBlinkTime -= CursorOffTime;
+    }
+
+    const float targetAlpha = ( internal.cursorBlinkState == 0 ) ? 0.5f : 0.0f;
+
+    const bool up = targetAlpha > internal.cursorAlpha;
+
+    internal.cursorAlpha += ( targetAlpha - internal.cursorAlpha ) * ( up ? 0.3 : 0.2f );
+
     ConsoleVertex a,b,c,d;
 
     a.x = x;
@@ -419,7 +457,7 @@ static void RenderCursor( ConsoleInternal & internal, float x, float y, float wi
     a.r = 0;
     a.g = 0;
     a.b = 0;
-    a.a = 0.5f;
+    a.a = internal.cursorAlpha;
 
     b.x = x + width;
     b.y = y;
@@ -427,7 +465,7 @@ static void RenderCursor( ConsoleInternal & internal, float x, float y, float wi
     b.r = 0;
     b.g = 0;
     b.b = 0;
-    b.a = 0.5f;
+    b.a = internal.cursorAlpha;
 
     c.x = x + width;
     c.y = y + height;
@@ -435,7 +473,7 @@ static void RenderCursor( ConsoleInternal & internal, float x, float y, float wi
     c.r = 0;
     c.g = 0;
     c.b = 0;
-    c.a = 0.5f;
+    c.a = internal.cursorAlpha;
 
     d.x = x;
     d.y = y + height;
@@ -443,7 +481,7 @@ static void RenderCursor( ConsoleInternal & internal, float x, float y, float wi
     d.r = 0;
     d.g = 0;
     d.b = 0;
-    d.a = 0.5f;
+    d.a = internal.cursorAlpha;
 
     RenderQuad( internal, a, b, c, d );
 }

@@ -4,10 +4,6 @@ TODO:
 
     ------------------
 
-    Make the cursor blink
-
-    ------------------
-
     Implement two modes of console:
 
         1. Quick entry mode, ~, type in command and then enter to execute. esc or ~ cancels
