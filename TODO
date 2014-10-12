@@ -2,6 +2,41 @@ DONE:
 
 TODO:
 
+    Implement a macro or some way of registering functions statically before the manager is created.
+
+    Eg. should be trivial to just define:
+
+        CONSOLE_FUNCTION( "quit", const char * args )
+        {
+            // ...
+        }
+
+    Perhaps the entire mapping could be static, existing before the console manager does.
+
+    Eg. the function definition, and registering of functions is static, and simply called from the macro.
+
+    ------------------
+
+    Implement "connect" function with arguments (eg. server name)
+
+    Implement "disconnect" function
+
+    ------------------
+
+    Implement function auto complete, eg. press tab and it matches the exact function name if exists
+
+    If multiple functions exist, complete only up to the shared characters between all functions
+
+    Implement a drop list UI that displays all the matches
+
+    Selection while the droplist is up can be performed via up/down
+
+    Escape while the droplist is up removes it.
+
+    ------------------
+
+    What other functions shou
+
     ------------------
 
     Implement two modes of console:

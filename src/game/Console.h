@@ -5,6 +5,8 @@ namespace core { class Allocator; }
 
 struct ConsoleInternal;
 
+typedef void (*ConsoleFunction)( const char * args );
+
 class Console
 {
 public:
@@ -20,6 +22,8 @@ public:
     void ExecuteCommand( const char * string );
 
     bool IsActive() const;
+
+    void RegisterFunction( const char * name, ConsoleFunction function );
 
     void Render();
 

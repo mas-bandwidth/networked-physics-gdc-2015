@@ -5,6 +5,8 @@
 #include "FontManager.h"
 #include "ShaderManager.h"
 #include "core/Core.h"
+#include "core/Types.h"
+#include "core/Hash.h"
 #include "core/Memory.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -20,7 +22,8 @@ static const int CommandHistorySize = 256;
 
 struct ConsoleInternal
 {
-    ConsoleInternal()
+    ConsoleInternal( core::Allocator & allocator )
+        : functions( allocator )
     {
         vao = 0;
         vbo = 0;
@@ -74,6 +77,8 @@ struct ConsoleInternal
     int cursorBlinkState;
     float cursorBlinkTime;
     float cursorAlpha;
+
+    core::Hash<ConsoleFunction> functions;
 
     void Activate( bool eatNextKey = false )
     {
@@ -232,12 +237,18 @@ struct ConsoleInternal
             }
         }
     }
+
+    ConsoleFunction FindConsoleFunction( const char * name )
+    {
+        const uint32_t key = core::hash_string( name );
+        return core::hash::get( functions, key, ConsoleFunction(nullptr) );
+    }
 };
 
 Console::Console( core::Allocator & allocator )
 {
     m_allocator = &allocator;
-    m_internal = CORE_NEW( allocator, ConsoleInternal );
+    m_internal = CORE_NEW( allocator, ConsoleInternal, allocator );
 }
 
 Console::~Console()
@@ -337,10 +348,29 @@ bool Console::CharEvent( unsigned int code )
 
 void Console::ExecuteCommand( const char * string )
 {
-    if ( strcmp( string, "quit" ) == 0 || strcmp( string, "exit" ) == 0 )
-        global.quit = true;
+    CORE_ASSERT( string );
 
-    // ...
+    const char * ptr = string;
+    do { ++ptr; } while ( *ptr != ' ' && *ptr != '\0' );
+    if ( *ptr != '\0' )
+    {
+        char functionName[MaxLine];
+        const int len = (int) ( ptr - string );
+        memcpy( functionName, string, ptr - string );
+        functionName[len] = '\0';
+        const char * args = ptr + 1;
+        auto function = m_internal->FindConsoleFunction( functionName );
+        if ( function )
+            function( args );
+    }
+    else
+    {
+        const char * functionName = string;
+        const char * args = "";
+        auto function = m_internal->FindConsoleFunction( functionName );
+        if ( function )
+            function( args );
+    }
 }
 
 bool Console::IsActive() const
@@ -484,6 +514,13 @@ static void RenderCursor( ConsoleInternal & internal, float x, float y, float wi
     d.a = internal.cursorAlpha;
 
     RenderQuad( internal, a, b, c, d );
+}
+
+void Console::RegisterFunction( const char * name, ConsoleFunction function )
+{
+    uint32_t key = core::hash_string( name );
+
+    core::hash::set( m_internal->functions, key, function );
 }
 
 void Console::Render()
