@@ -1,3 +1,20 @@
+Monday Morning
+--------------
+
+    Console function made static so in future I can make it a macro
+
+    Implement a macro or some way of registering functions statically before the manager is created.
+
+    Eg. should be trivial to just define:
+
+        CONSOLE_FUNCTION( quit )
+        {
+            // ...
+        }
+
+    Implemented quit console function to make sure it's working.
+    
+
 Sunday Morning
 --------------
 

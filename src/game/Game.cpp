@@ -40,7 +40,7 @@ const char * stone_size = "White-40";
 
 char stone_mesh_filename[256] = { '0' };
 
-static void quit( const char * args )
+CONSOLE_FUNCTION( quit )
 {
     global.quit = true;    
 }
@@ -89,9 +89,6 @@ static void game_init()
     glFrontFace( GL_CW );
 
     check_opengl_error( "after game_init" );
-
-    global.console->RegisterFunction( "quit", quit );
-    global.console->RegisterFunction( "exit", quit );
 }
 
 static void game_update()

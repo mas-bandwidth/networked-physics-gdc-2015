@@ -19,6 +19,25 @@ using glm::vec4;
 
 static const int MaxLine = 256;
 static const int CommandHistorySize = 256;
+static const int MaxConsoleFunctions = 1024;
+
+struct ConsoleFunctionEntry
+{
+    const char * name;
+    ConsoleFunction function;
+};
+
+static int g_numFunctions = 0;
+static ConsoleFunctionEntry g_functions[MaxConsoleFunctions];
+
+void RegisterConsoleFunction( const char * name, ConsoleFunction function )
+{
+    CORE_ASSERT( name );
+    CORE_ASSERT( g_numFunctions < MaxConsoleFunctions );
+    ConsoleFunctionEntry & entry = g_functions[g_numFunctions++];
+    entry.name = name;
+    entry.function = function;
+}
 
 struct ConsoleInternal
 {
@@ -43,6 +62,9 @@ struct ConsoleInternal
         cursorBlinkTime = 0.0f;
         cursorBlinkState = 0;
         cursorAlpha = 0.0f;
+
+        for ( int i = 0; i < g_numFunctions; ++i )
+            RegisterFunction( g_functions[i].name, g_functions[i].function );
     }
 
     ~ConsoleInternal()
@@ -236,6 +258,13 @@ struct ConsoleInternal
                 return;
             }
         }
+    }
+
+    void RegisterFunction( const char * name, ConsoleFunction function )
+    {
+        uint32_t key = core::hash_string( name );
+
+        core::hash::set( functions, key, function );
     }
 
     ConsoleFunction FindConsoleFunction( const char * name )
@@ -514,13 +543,6 @@ static void RenderCursor( ConsoleInternal & internal, float x, float y, float wi
     d.a = internal.cursorAlpha;
 
     RenderQuad( internal, a, b, c, d );
-}
-
-void Console::RegisterFunction( const char * name, ConsoleFunction function )
-{
-    uint32_t key = core::hash_string( name );
-
-    core::hash::set( m_internal->functions, key, function );
 }
 
 void Console::Render()

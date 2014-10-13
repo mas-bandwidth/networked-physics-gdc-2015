@@ -2,21 +2,6 @@ DONE:
 
 TODO:
 
-    Implement a macro or some way of registering functions statically before the manager is created.
-
-    Eg. should be trivial to just define:
-
-        CONSOLE_FUNCTION( "quit", const char * args )
-        {
-            // ...
-        }
-
-    Perhaps the entire mapping could be static, existing before the console manager does.
-
-    Eg. the function definition, and registering of functions is static, and simply called from the macro.
-
-    ------------------
-
     Implement "connect" function with arguments (eg. server name)
 
     Implement "disconnect" function
