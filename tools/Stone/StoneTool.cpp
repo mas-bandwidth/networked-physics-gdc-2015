@@ -237,7 +237,7 @@ void SubdivideBiconvexMesh( Mesh<Vertex> & mesh,
         v3.position = c;
         v3.normal = cn;
 
-        if ( !clockwise )
+        if ( clockwise )
             mesh.AddTriangle( v1, v3, v2 );
         else
             mesh.AddTriangle( v1, v2, v3 );
@@ -344,7 +344,7 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
                 v3.position = b;
                 v3.normal = bn;
 
-                mesh.AddTriangle( v1, v3, v2 );
+                mesh.AddTriangle( v1, v2, v3 );
 
                 v1.position = a;
                 v1.normal = an;
@@ -355,7 +355,7 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
                 v3.position = c;
                 v3.normal = cn;
 
-                mesh.AddTriangle( v1, v3, v2 );
+                mesh.AddTriangle( v1, v2, v3 );
             }
         }
     }

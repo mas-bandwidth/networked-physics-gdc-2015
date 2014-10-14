@@ -4,9 +4,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-static const float TickRate = 60;
-static const int ServerPort = 10000;
-
 #ifdef CLIENT
 
 // ===================================================================================================================
@@ -24,59 +21,46 @@ static const bool fullscreen = true;
 #include "StoneManager.h"
 #include "StoneRender.h"
 #include "InputManager.h"
+#include "DemoManager.h"
 #include "Console.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
-using glm::mat4;
-using glm::vec3;
-using glm::vec4;
-
-GameClient * client = nullptr;
-
-const char * stone_size = "White-40";
-
-char stone_mesh_filename[256] = { '0' };
 
 CONSOLE_FUNCTION( quit )
 {
     global.quit = true;    
 }
 
+CONSOLE_FUNCTION( reload )
+{
+    global.fontManager->Reload();
+    global.shaderManager->Reload();
+    global.meshManager->Reload();
+    global.stoneManager->Reload();  
+
+    // todo: maybe inform demo manager that stuff was reloaded
+}
+
 static void game_init()
 {
     auto & allocator = core::memory::default_allocator();
+
+    global.console = CORE_NEW( allocator, Console, allocator );
 
     global.fontManager = CORE_NEW( allocator, FontManager, allocator );
     global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
     global.meshManager = CORE_NEW( allocator, MeshManager, allocator );
     global.stoneManager = CORE_NEW( allocator, StoneManager, allocator );
     global.inputManager = CORE_NEW( allocator, InputManager, allocator );
-    global.console = CORE_NEW( allocator, Console, allocator );
+    global.demoManager = CORE_NEW( allocator, DemoManager, allocator );
 
-    const StoneData * stoneData = global.stoneManager->GetStoneData( stone_size );
-    if ( stoneData )
-    {
-        strcpy( stone_mesh_filename, stoneData->mesh_filename );
-        global.meshManager->LoadMesh( stone_mesh_filename );
-    }
+    global.client = CreateGameClient( core::memory::default_allocator() );
 
-    client = CreateGameClient( core::memory::default_allocator() );
-
-    if ( !client )
+    if ( !global.client )
     {
         printf( "%.3f: error: failed to create game client!\n", global.timeBase.time );
         exit( 1 );
     }
-
-    printf( "%.3f: Started game client on port %d\n", global.timeBase.time, client->GetPort() );
-
-    network::Address address( "::1" );
-    address.SetPort( ServerPort );
-
-    client->Connect( address );
 
     global.timeBase.deltaTime = 1.0 / TickRate;
 
@@ -89,11 +73,17 @@ static void game_init()
     glFrontFace( GL_CW );
 
     check_opengl_error( "after game_init" );
+
+    global.demoManager->LoadDemo( "stone" );
 }
 
 static void game_update()
 {
-    client->Update( global.timeBase );
+    global.client->Update( global.timeBase );
+
+    Demo * demo = global.demoManager->GetDemo();
+    if ( demo )
+        demo->Update();
 
     global.timeBase.time += global.timeBase.deltaTime;
 }
@@ -157,12 +147,9 @@ static void render_fps()
 
 static void render_scene()
 {
-    MeshData * stoneMesh = global.meshManager->GetMeshData( stone_mesh_filename );
-    if ( stoneMesh )
-    {
-        //RenderStone( *stoneMesh );
-        RenderStonesInstanced( *stoneMesh );
-    }
+    Demo * demo = global.demoManager->GetDemo();
+    if ( demo )
+        demo->Render();
 }
 
 static void render_ui()
@@ -184,18 +171,7 @@ static void game_render()
 {
     check_opengl_error( "before render" );
 
-    client->Update( global.timeBase );
-
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-    /*
-    if ( ( rand() % 100 ) == 0 )
-    {
-        global.fontManager->Reload();
-        global.shaderManager->Reload();
-        global.stoneManager->Reload();
-    }
-    */
 
     glEnable( GL_DEPTH_TEST );
 
@@ -216,13 +192,15 @@ static void game_shutdown()
 {
     auto & allocator = core::memory::default_allocator();
 
-    DestroyGameClient( allocator, client );
+    DestroyGameClient( allocator, global.client );
 
     CORE_DELETE( allocator, FontManager, global.fontManager );
     CORE_DELETE( allocator, ShaderManager, global.shaderManager );
     CORE_DELETE( allocator, MeshManager, global.meshManager );
     CORE_DELETE( allocator, StoneManager, global.stoneManager );
     CORE_DELETE( allocator, InputManager, global.inputManager );
+    CORE_DELETE( allocator, DemoManager, global.demoManager );
+
     CORE_DELETE( allocator, Console, global.console );
 
     global = Global();
@@ -338,8 +316,6 @@ int main( int argc, char * argv[] )
 // ===================================================================================================================
 
 #include "GameServer.h"
-
-const int MaxClients = 16;
 
 int main( int argc, char ** argv )
 {

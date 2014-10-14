@@ -1,13 +1,16 @@
 #include "Console.h"
 #include "Global.h"
 #include "Common.h"
-#include "Font.h"
-#include "FontManager.h"
-#include "ShaderManager.h"
 #include "core/Core.h"
 #include "core/Types.h"
 #include "core/Hash.h"
 #include "core/Memory.h"
+
+#ifdef CLIENT
+
+#include "Font.h"
+#include "FontManager.h"
+#include "ShaderManager.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -16,6 +19,8 @@
 using glm::mat4;
 using glm::vec3;
 using glm::vec4;
+
+#endif // #ifdef CLIENT
 
 static const int MaxLine = 256;
 static const int CommandHistorySize = 256;
@@ -69,20 +74,23 @@ struct ConsoleInternal
 
     ~ConsoleInternal()
     {
+        #ifdef CLIENT
         if ( vao )
         {
             glDeleteBuffers( 1, &vao );
             vao = 0;
         }
-
         if ( vbo )
         {
             glDeleteBuffers( 1, &vbo );
             vbo = 0;
         }
+        #endif // #ifdef CLIENT
     }
 
+    #ifdef CLIENT
     GLuint vao, vbo;
+    #endif // #ifdef CLIENT
 
     bool active;
     bool justActivated;
@@ -140,9 +148,9 @@ struct ConsoleInternal
             commandCursorPosition++;
             commandLength++;
     
-            // make sure the cursor is set ON each time a char is pressed 
+            // make sure the cursor is set to be briefly ON each time a char is pressed 
             cursorBlinkState = 0;
-            cursorBlinkTime = 0.0f;    
+            cursorBlinkTime = 0.375f;    
         }
     }
 
@@ -407,6 +415,8 @@ bool Console::IsActive() const
     return m_internal->active;
 }
 
+#ifdef CLIENT
+
 const int MaxConsoleVertices = 1024;
 
 struct ConsoleVertex
@@ -574,3 +584,6 @@ void Console::Render()
 
     RenderCursor( *m_internal, command_origin_x + m_internal->commandCursorPosition * font_width, command_origin_y, font_width, font_height );
 }
+
+#endif // #ifdef CLIENT
+

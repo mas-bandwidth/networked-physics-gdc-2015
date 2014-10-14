@@ -1,4 +1,5 @@
 #include "InputManager.h"
+#include "DemoManager.h"
 #include "Console.h"
 #include "Global.h"
 
@@ -17,12 +18,18 @@ void InputManager::KeyEvent( int key, int scancode, int action, int mods )
     if ( global.console->KeyEvent( key, scancode, action, mods ) )
         return;
 
+    if ( global.demoManager->KeyEvent( key, scancode, action, mods ) )
+        return;
+
     // ...
 }
 
 void InputManager::CharEvent( unsigned int code )
 {
     if ( global.console->CharEvent( code ) )
+        return;
+
+    if ( global.demoManager->CharEvent( code ) )
         return;
 
     // ...

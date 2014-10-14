@@ -1,3 +1,62 @@
+Tuesday Afternoon
+-----------------
+
+    Implement demo concept.
+
+    When client goes "load stone" a demo object should be created which then knows
+    to create a bunch of stuff related to virtualgo, and knows how to render that stuff
+    and so on.
+
+    This keeps the main Game.cpp reasonably clean, eg. just setting up the basic stuff
+    shared across the different demos, shaders, consoles, fonts, textures, meshes and so on.
+
+    This is a good first step towards a general system that lets me have multiple different
+    demos running outside the same framework, where each demo may respond to input differently
+    and have different simulation update and rendering.
+
+    Demos are meant to be very simple and orthogonal to networking, eg. they should mostly
+    be clientside.
+
+    Port across the single go stone into a demo.
+
+    Extend the demo framework to handle keyboard events.
+
+    Use up/down to increase/decrease go stone size. Start at 40 default.
+
+    Use left/right to switch between black and white stones.
+
+    Fix mesh data so it properly cleans up vao and vbo when destroyed
+
+    Fix bug where RenderStones is not performing proper instance setup
+    for different meshes. It's not static!
+
+    For now, setup an instance buffer per-mesh created.
+
+    This may be overkill but lets start here.
+
+    It seems that the stone mesh *might* have the wrong winding order!
+
+    Yes it does! Fix it!
+
+
+Tuesday Morning
+---------------
+
+    Implement "connect" function with arguments (eg. server name)
+
+    Implement "disconnect" function
+
+    Implement command to reload_fonts
+
+    Implement command to reload_meshes
+
+    Implement command to reload_stones
+
+    Implement command to reload_shaders
+
+    Implement global reload command
+
+
 Monday Morning
 --------------
 

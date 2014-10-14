@@ -1,9 +1,10 @@
 #include "StoneManager.h"
+#include "Global.h"
+#include "Console.h"
 #include "core/Core.h"
 #include "core/File.h"
 #include "core/Hash.h"
 #include "core/Memory.h"
-#include "Global.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
@@ -66,6 +67,7 @@ const StoneData * StoneManager::GetStoneData( const char * name ) const
 
 void StoneManager::Reload()
 {
+    printf( "%.3f: Reloading stones\n", global.timeBase.time );
     Unload();
     Load();
 }
@@ -123,4 +125,11 @@ void StoneManager::Unload()
     }
  
     core::hash::clear( m_stones );
+}
+
+CONSOLE_FUNCTION( reload_stones )
+{
+    CORE_ASSERT( global.stoneManager );
+
+    global.stoneManager->Reload();
 }

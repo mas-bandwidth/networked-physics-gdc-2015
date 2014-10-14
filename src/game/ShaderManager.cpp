@@ -1,11 +1,12 @@
 #include "ShaderManager.h"
-#include "Render.h"
 
 #ifdef CLIENT
 
+#include "Render.h"
+#include "Global.h"
+#include "Console.h"
 #include "core/Core.h"
 #include "core/Hash.h"
-#include "Global.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
@@ -25,6 +26,7 @@ ShaderManager::~ShaderManager()
 
 void ShaderManager::Reload()
 {
+    printf( "%.3f: Reloading shaders\n", global.timeBase.time );
     Unload();
     Load();
 }
@@ -102,6 +104,13 @@ void ShaderManager::Unload()
     }
  
     core::hash::clear( m_shaders );
+}
+
+CONSOLE_FUNCTION( reload_shaders )
+{
+    CORE_ASSERT( global.fontManager );
+
+    global.shaderManager->Reload();
 }
 
 #endif // #ifdef CLIENT

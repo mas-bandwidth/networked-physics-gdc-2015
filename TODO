@@ -2,107 +2,48 @@ DONE:
 
 TODO:
 
-    Implement "connect" function with arguments (eg. server name)
+    ------------------
 
-    Implement "disconnect" function
+    Standardize on single shader for stones, eg. always use instanced codepath
+
+    Make render stones take as input everything that determines how it works,
+    eg. shader, mesh, array of MVP per-stone.
+
+    Rework the demo to always use the instanced codepath.
 
     ------------------
 
-    Implement function auto complete, eg. press tab and it matches the exact function name if exists
+    Rotating stone demo becomes STONE_NORMALS
 
-    If multiple functions exist, complete only up to the shared characters between all functions
-
-    Implement a drop list UI that displays all the matches
-
-    Selection while the droplist is up can be performed via up/down
-
-    Escape while the droplist is up removes it.
+    Keep the current demo to show the normals of the stones, copy the shaders off
+    to StoneNormals.vert, StoneNormals.frag or something.
 
     ------------------
 
-    What other functions shou
+    Extend stone shader to support black vs. white stones (color uniform?)
+
+    Create a new demo BLACK_AND_WHITE_STONES in a checkerboard pattern
+
+    Use one drawcall to render black stones, and another drawcall to render 
+    white stones. This will match how they are actually done because they will
+    probably have different shaders.
 
     ------------------
 
-    Implement two modes of console:
+    I'm not sure if I like the different sizes for black and white stones.
 
-        1. Quick entry mode, ~, type in command and then enter to execute. esc or ~ cancels
-
-        2. Full console mode -- black alpha quad, text history of command execution (double ~~ or alt-~)
-
-    ------------------
-
-    Need to do something so text is the same size between retina (windowed) and non-retina display (fullscreen)
+    It might be best to keep them the same size for now, and when an optical
+    illusion becomes apparent that white stones are bigger, tune experimentally 
+    to make it this illusion go away.
 
     ------------------
 
-    Determine size of the console (height) in characters. 
+    When stones are reloaded we need to detect this, and potentially load the new stone mesh if it is different.
 
-    Determine # of characters wide depending on screen resolution.
+    Currently there is no code that will delete the old stone mesh
 
-    Implement a data structure for the console, eg. # of lines. Each line
-    is an array of text up to 1024 chars wide?
-
-    It's a ring buffer. Text is initially just set to "" per-line
-
-    Empty lines mean don't render anything (Eg. skip, entirely, no newline even...)
-
-    Per-line should note if it's an error or a message or a command (red/white/blue)
-
-    Dummy up some console text and render it.
+    Make sure that within the demo framework there are reload callbacks that identify to the demo when
+    types of assets were reloaded, so the demo can do any demo specific work it needs to do, eg. unloading
+    all existing meshes and invalidating cached meshes if they were reloaded.
 
     ------------------
-
-    Implement console text buffer.
-
-    Implement pageup pagedown within this buffer somehow (scroll events?)
-
-    (Sublime text uses function up/down for scrolling, apple up/down for top/bottom of buffer -- this is nice!)
-
-    ------------------
-
-    Implement console commands on client
-
-    Implement quit console command, connect console command and disconnect.
-
-    Should be able to connect to a server, disconnect from it, reconnect, then quit.
-
-    ------------------
-
-    Color the commands nicely so errors are colored, commands are colored,
-    output from the game log is colored and so on.
-
-    Put these color configurations inside config json files, eg. data/config/Console.json
-
-    ------------------
-
-    Add a log as well, output to client.log on server.log with append.
-
-    Make sure that when a new instance of the program runs it puts a new
-    header in there, or =========================== or something similar.
-
-    ------------------
-
-    Learn how to use chef/knife to setup the linux server properly with all
-    the stuff I want automatically, vs. manually configuring it. eg. git,
-    GCC and all that.
-
-    Get the server loop setup properly. Server needs to update game and then sleep
-    until time has elapsed for next frame. I think I have this code available
-    from previous projects. Resurrect it.
-
-    Find a nifty way with scripts to update the server on request, or automatically
-    when git is checked in.
-
-    Get the client/server workflow really tight!
-
-    ------------------------------
-
-    Add concept of console commands and console variables
-
-    Hook up concept of client and server side console commands / convars
-
-    Work out how to transmit these to the client on initial connect
-    and then on each change.
-
-    ------------------------------

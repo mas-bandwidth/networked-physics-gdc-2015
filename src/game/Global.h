@@ -3,12 +3,24 @@
 
 #include "core/Core.h"
 
+#ifdef SERVER
+const int MaxClients = 16;
+#endif // #ifdef SERVER
+
+static const float TickRate = 60;
+static const int ServerPort = 10000;
+
+#ifdef CLIENT
+class GameClient;
 class FontManager;
 class ShaderManager;
 class TextureManager;
 class MeshManager;
 class StoneManager;
 class InputManager;
+class DemoManager;
+#endif // #ifdef CLIENT
+
 class Console;
 
 struct Global
@@ -22,14 +34,18 @@ struct Global
     int displayWidth;
     int displayHeight;
 
+    GameClient * client = nullptr;
+
     FontManager * fontManager = nullptr;
     ShaderManager * shaderManager = nullptr;
     TextureManager * textureManager = nullptr;
     MeshManager * meshManager = nullptr;
     InputManager * inputManager = nullptr;
-    Console * console = nullptr;
+    DemoManager * demoManager = nullptr;
 
     #endif // #ifdef CLIENT
+
+    Console * console = nullptr;
 
     StoneManager * stoneManager = nullptr;
 };

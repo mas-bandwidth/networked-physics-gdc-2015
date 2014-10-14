@@ -3,10 +3,11 @@
 
 #ifdef CLIENT
 
+#include "Global.h"
+#include "Console.h"
 #include "core/Core.h"
 #include "core/Hash.h"
 #include "core/Memory.h"
-#include "Global.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
@@ -29,6 +30,7 @@ FontManager::~FontManager()
 
 void FontManager::Reload()
 {
+    printf( "%.3f: Reloading fonts\n", global.timeBase.time );
     Unload();
     Load();
 }
@@ -94,6 +96,13 @@ void FontManager::Unload()
     }
  
     core::hash::clear( m_fonts );
+}
+
+CONSOLE_FUNCTION( reload_fonts )
+{
+    CORE_ASSERT( global.fontManager );
+
+    global.fontManager->Reload();        
 }
 
 #endif // #ifdef CLIENT

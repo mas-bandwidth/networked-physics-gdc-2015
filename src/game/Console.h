@@ -35,12 +35,13 @@ public:
 
     bool IsActive() const;
 
+    #ifdef CLIENT
     void Render();
+    #endif // #ifdef CLIENT
 
 private:
 
     core::Allocator * m_allocator;
-
     ConsoleInternal * m_internal;
 };
 

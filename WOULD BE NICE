@@ -1,5 +1,87 @@
 WOULD BE NICE:
 
+    ------------------
+
+    Implement two modes of console:
+
+        1. Quick entry mode, ~, type in command and then enter to execute. esc or ~ cancels
+
+        2. Full console mode -- black alpha quad, text history of command execution (double ~~ or alt-~)
+
+    ------------------
+
+    Implement console text buffer.
+
+    Implement proper log, warning, error functions (printf style)
+
+    Color the commands, logs, warning, errors differently so they are easy to read in the console buffer
+
+    Implement pageup pagedown within this buffer somehow (scroll events?)
+
+    (Sublime text uses function up/down for scrolling, apple up/down for top/bottom of buffer -- this is nice!)
+
+    ------------------
+
+    Actually implement proper args parser.
+
+    Should strip pre/post whitespace, handle "" open/close quoting (and remove the quotes to form an argument),
+    after this should tokenize on 
+
+    Ideally args should be parsed *before* executing the command, that way they could work in-place in the command buffer
+    and just pass a nice array of strings ptrs to the client, with appropriate '\0' added to string to make it work.
+
+    ------------------
+
+    Implement +command args and -something args parser for command line arguments.
+
+    This will let me run the game like "Client +demo stones" while iterating on a particular demo.
+
+    ------------------
+
+    Perhaps instead of having a really general stone render function,
+    it would be much better to have a general mesh render function
+    that accepts a mesh, a shader and so on.
+    
+    ------------------
+
+    Need to do something so text is the same size between retina (windowed) and non-retina display (fullscreen)
+
+    -------------------
+
+    Would be really nice if each demo had its own memory heap to work within, eg. allocator for the demo
+
+    -------------------
+
+    Is it possible to switch between fullscreen and windowed dynamically with glfw?
+
+    It would be really nice if this was possible, and I could type "fullscreen"
+    and "windowed" as console commands.
+
+    It's not possible without recreating the window fully.
+
+    This invalidates all shaders, textures, meshes and such, meaning that they all
+    must be recreated.
+
+    This is *probably* a worthhile exercise to do once the demo is working,
+    make sure it is resilient to completely having window and context destroyed
+    and recreated.
+
+    It is important for the demos to be designed to support this, eg. the reload
+    functionality, so I think that switching windowed/fullscreen like this should
+    be no additional work beyond what should be implemented for that.
+
+    ------------------
+
+    Implement function auto complete, eg. press tab and it matches the exact function name if exists
+
+    If multiple functions exist, complete only up to the shared characters between all functions
+
+    Implement a drop list UI that displays all the matches
+
+    Selection while the droplist is up can be performed via up/down
+
+    Escape while the droplist is up removes it.
+
     ----------------------------
 
     Consider using flatbuffers to communicate between tools and runtime.
@@ -8,21 +90,6 @@ WOULD BE NICE:
 
     Probably fast enough for anything too.
     
-    ----------------------------
-
-    Mesh needs to own the concept of the instance vbo, and track whether or not one has been created for it.
-
-    This way when a mesh is passed in to RenderStonesIntanced it knows if it needs to setup a VBO for the
-    matrices if one doesn't exist yet. It seems that not all meshes want this concept, so probably best
-    not to create one on mesh load automatically?
-
-    Mesh manager should support a reload method, which just reloads
-    all meshes it currently has loaded.
-
-    If a mesh is reloaded it should destroy the instance VBO
-
-    It would be nice if I could count the # of VBOs and print it, to verify I'm not leaking.
-
     ------------------------------
 
     Get the virtual go tests running and passing, eg. TestVirtualGo.cpp
@@ -89,13 +156,6 @@ WOULD BE NICE:
     Split tool mesh into .h and .cpp
 
     Make sure tool common is not built when building the game runtime.
-
-    ---------------------------
-
-    There seem some aethetic consideration about choosing
-    the bevel size relative to the go stone size.
-
-    How can this be quantified?
 
     ---------------------------
 
@@ -325,3 +385,18 @@ WOULD BE NICE:
     Bonus: Provide an optional functor to sort the unreliable messages in order of importance.
 
     ----------------
+
+    Learn how to use chef/knife to setup the linux server properly with all
+    the stuff I want automatically, vs. manually configuring it. eg. git,
+    GCC and all that.
+
+    Get the server loop setup properly. Server needs to update game and then sleep
+    until time has elapsed for next frame. I think I have this code available
+    from previous projects. Resurrect it.
+
+    Find a nifty way with scripts to update the server on request, or automatically
+    when git is checked in.
+
+    Get the client/server workflow really tight!
+
+    ------------------------------

@@ -3,11 +3,12 @@
 
 #ifdef CLIENT
 
+#include "Global.h"
+#include "Console.h"
 #include "core/Core.h"
 #include "core/Hash.h"
 #include "core/File.h"
 #include "core/Memory.h"
-#include "Global.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "vectorial/vec3f.h"
@@ -76,6 +77,10 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
         return nullptr;
     }
 
+    const int VERTEX_POSITION_LOCATION = 0;
+    const int VERTEX_NORMAL_LOCATION = 1;
+    const int VERTEX_MVP_LOCATION = 2;
+
     GLuint vao;
     glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
@@ -86,8 +91,8 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     glGenBuffers( 1, &vbo );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
     glBufferData( GL_ARRAY_BUFFER, meshData->numTriangles * sizeof(MeshVertex), vertices, GL_STATIC_DRAW );
-    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
-    glVertexAttribPointer( 1, 4, GL_INT_2_10_10_10_REV, GL_TRUE, sizeof(MeshVertex), (GLubyte*)(3*4) );
+    glVertexAttribPointer( VERTEX_POSITION_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
+    glVertexAttribPointer( VERTEX_NORMAL_LOCATION, 4, GL_INT_2_10_10_10_REV, GL_TRUE, sizeof(MeshVertex), (GLubyte*)(3*4) );
  
     GLuint ibo;
     glGenBuffers( 1, &ibo );
@@ -95,7 +100,20 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, 2*numIndices, indices, GL_STATIC_DRAW );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
 
-    meshData->vao = vao;
+    GLuint instance_buffer;
+    glGenBuffers( 1, &instance_buffer );
+    glBindBuffer( GL_ARRAY_BUFFER, instance_buffer );
+    for ( unsigned int i = 0; i < 4 ; ++i )
+    {
+        glEnableVertexAttribArray( VERTEX_MVP_LOCATION + i );
+        glVertexAttribPointer( VERTEX_MVP_LOCATION + i, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (void*) ( sizeof(float) * 4 * i ) );
+        glVertexAttribDivisor( VERTEX_MVP_LOCATION + i, 1 );
+    }
+
+    meshData->vertex_array_object = vao;
+    meshData->vertex_buffer = vbo;
+    meshData->index_buffer = ibo;
+    meshData->instance_buffer = instance_buffer;
 
     glBindVertexArray( 0 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -103,9 +121,6 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
 
     CORE_DELETE_ARRAY( core::memory::scratch_allocator(), vertices, meshData->numVertices );
     CORE_DELETE_ARRAY( core::memory::scratch_allocator(), indices, numIndices );
-
-    glDeleteBuffers( 1, &vbo );
-    glDeleteBuffers( 1, &ibo );
 
     fclose( file );
 
@@ -116,7 +131,10 @@ void destroy_mesh_data( core::Allocator & allocator, MeshData * mesh )
 {
     CORE_ASSERT( mesh );
 
-    glDeleteVertexArrays( 1, &mesh->vao );
+    glDeleteVertexArrays( 1, &mesh->vertex_array_object );
+    glDeleteBuffers( 1, &mesh->vertex_buffer );
+    glDeleteBuffers( 1, &mesh->index_buffer );
+    glDeleteBuffers( 1, &mesh->instance_buffer );
 
     CORE_DELETE( allocator, MeshData, mesh );
 }
@@ -147,7 +165,9 @@ void MeshManager::Clear()
 
 void MeshManager::Reload()
 {
-    // ...
+    printf( "%.3f: Reloading meshes\n", global.timeBase.time );
+
+    // todo: reload currently loaded meshes from disk
 }
 
 void MeshManager::LoadMesh( const char * filename )
@@ -169,6 +189,13 @@ MeshData * MeshManager::GetMeshData( const char * filename )
 {
     const uint64_t key = core::hash_string( filename );
     return core::hash::get( m_meshes, key, (MeshData*)nullptr );
+}
+
+CONSOLE_FUNCTION( reload_meshes )
+{
+    CORE_ASSERT( global.meshManager );
+
+    global.meshManager->Reload();
 }
 
 #endif // #ifdef CLIENT

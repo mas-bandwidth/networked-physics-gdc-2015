@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"mesh",
+				"mesh_filename"
+			],
+			[
+				"command",
+				"CommandHistorySize"
+			],
+			[
+				"commandHistory",
+				"commandHistoryIsEmpty"
+			],
+			[
 				"Stone",
 				"stoneSizeNames"
 			],
@@ -446,133 +458,133 @@
 	"file_history":
 	[
 		"/Users/gaffer/git/protocol/src/game/MeshManager.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Stone.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/StoneGenerator.cpp",
-		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/src/game/StoneRender.cpp",
-		"/Users/gaffer/git/protocol/src/game/Game.cpp",
-		"/Users/gaffer/git/protocol/data/stones/Black-22.mesh",
-		"/Users/gaffer/git/protocol/src/protocol/Stream.h",
-		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
-		"/Users/gaffer/git/protocol/src/game/ShaderManager.h",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/Mesh.h",
-		"/Users/gaffer/git/protocol/build/StoneGenerator.make",
-		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
-		"/Users/gaffer/git/protocol/src/vectorial/vec3f.h",
-		"/Users/gaffer/git/protocol/src/game/Font.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
-		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/MeshManager.d",
-		"/Users/gaffer/git/protocol/src/game/Render.h",
-		"/Users/gaffer/git/protocol/src/game/StoneRender.h",
-		"/Users/gaffer/git/protocol/premake4.lua",
-		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
-		"/Users/gaffer/git/protocol/src/game/FontManager.cpp",
-		"/Users/gaffer/git/protocol/src/game/Render.cpp",
-		"/Users/gaffer/git/protocol/src/game/FontManager.h",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Font.d",
-		"/Users/gaffer/git/protocol/build/FontBuilder.make",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/README.txt",
-		"/Users/gaffer/git/protocol/src/game/GameServer.h",
-		"/Users/gaffer/git/protocol/src/game/GameClient.h",
-		"/Users/gaffer/git/protocol/src/game/StoneManager.cpp",
-		"/Users/gaffer/git/protocol/src/game/MeshManager.h",
 		"/Users/gaffer/git/protocol/src/game/ShaderManager.cpp",
-		"/Users/gaffer/git/protocol/src/vectorial/vec2f.h",
-		"/Users/gaffer/git/protocol/data/shaders/Triangle.vert",
-		"/Users/gaffer/git/protocol/virtualgo.make",
-		"/Users/gaffer/git/protocol/src/protocol/Message.h",
-		"/Users/gaffer/git/protocol/src/core/Memory.cpp",
+		"/Users/gaffer/git/protocol/src/game/Font.h",
+		"/Users/gaffer/git/protocol/src/game/GameClient.h",
+		"/Users/gaffer/git/protocol/src/game/GameClient.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Client.cpp",
+		"/Users/gaffer/git/protocol/src/game/Global.h",
+		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/src/game/Demo.h",
+		"/Users/gaffer/git/protocol/src/game/StoneDemo.cpp",
+		"/Users/gaffer/git/protocol/src/game/ShaderManager.h",
+		"/Users/gaffer/git/protocol/src/game/MeshManager.h",
+		"/Users/gaffer/git/protocol/src/game/DemoManager.cpp",
+		"/Users/gaffer/git/protocol/src/game/DemoManager.h",
+		"/Users/gaffer/git/protocol/src/game/Console.h",
+		"/Users/gaffer/git/protocol/src/game/Console.cpp",
+		"/Users/gaffer/git/protocol/src/game/Game.cpp",
+		"/Users/gaffer/git/protocol/src/game/StoneManager.cpp",
 		"/Users/gaffer/git/protocol/src/game/StoneManager.h",
+		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
+		"/Users/gaffer/git/protocol/src/game/StoneDemo.h",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.frag",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.h",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/StoneInstanced.vert",
+		"/Users/gaffer/git/protocol/data/shaders/StoneInstanced.frag",
+		"/Users/gaffer/git/protocol/src/core/Config.h",
+		"/Users/gaffer/git/protocol/src/core/Core.h",
+		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.h",
+		"/Users/gaffer/git/protocol/tools/Stone/StoneTool.cpp",
+		"/Users/gaffer/git/protocol/WOULD BE NICE",
+		"/Users/gaffer/git/protocol/src/game/StonesDemo.cpp",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousProMinus/OFL.txt",
+		"/Users/gaffer/git/protocol/data/shaders/Gouraud.vert",
+		"/Users/gaffer/git/protocol/GOALS",
+		"/Users/gaffer/git/protocol/src/game/GamePackets.h",
+		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.h",
+		"/Users/gaffer/git/protocol/src/core/Memory.cpp",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/src/game/FontManager.cpp",
+		"/Users/gaffer/git/protocol/src/game/FontManager.h",
+		"/Users/gaffer/git/protocol/src/protocol/Stream.h",
+		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
+		"/Users/gaffer/git/protocol/src/game/GameContext.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Game.d",
+		"/Users/gaffer/git/protocol/src/game/GameChannelStructure.h",
+		"/Users/gaffer/git/protocol/src/protocol/Client.h",
+		"/Users/gaffer/git/protocol/src/game/ConsoleFunctions.cpp",
+		"/Users/gaffer/git/protocol/src/game/Common.h",
+		"/Users/gaffer/git/protocol/src/game/Render.h",
+		"/Users/gaffer/git/protocol/src/game/StoneRender.cpp",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/src/game/Render.cpp",
+		"/Users/gaffer/git/protocol/tools/Font/FontTool.cpp",
+		"/Users/gaffer/git/protocol/src/core/Core.cpp",
+		"/Users/gaffer/git/protocol/src/game/InputManager.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Console.frag",
+		"/Users/gaffer/git/protocol/data/shaders/Console.vert",
+		"/Users/gaffer/git/protocol/src/game/Font.cpp",
+		"/Users/gaffer/git/protocol/build/FontTool.make",
+		"/Users/gaffer/git/protocol/bin/FontTool",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/FontTool/FontTool.d",
+		"/Users/gaffer/git/protocol/src/game/StoneRender.h",
+		"/Users/gaffer/git/protocol/build/StoneTool.make",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
+		"/Users/gaffer/git/protocol/data/fonts/Fonts.json",
+		"/Users/gaffer/git/protocol/src/protocol/Packet.h",
+		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
+		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/src/virtualgo/CollisionResponse.h",
+		"/Users/gaffer/git/protocol/core.make",
+		"/Users/gaffer/git/protocol/src/protocol/ClientServerContext.cpp",
+		"/Users/gaffer/git/protocol/src/network/DNSResolver.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/SlidingWindow.h",
 		"/Users/gaffer/git/protocol/tests/TestDataBlockSendAndReceive.cpp",
 		"/Users/gaffer/git/protocol/src/core/Log.h",
 		"/Users/gaffer/git/protocol/LICENCE",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/FONTLOG.txt",
-		"/Users/gaffer/git/protocol/data/fonts/Inconsolata/Inconsolata.otf",
-		"/Users/gaffer/git/protocol/src/virtualgo/InertiaTensor.h",
-		"/Users/gaffer/git/protocol/src/game/Global.h",
-		"/Users/gaffer/git/protocol/src/protocol/Channel.h",
-		"/Users/gaffer/git/protocol/src/core/Core.cpp",
-		"/Users/gaffer/git/protocol/src/network/Interface.h",
-		"/Users/gaffer/git/protocol/src/game/Global.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Stones.h",
-		"/Users/gaffer/git/protocol/src/core/Types.h",
-		"/Users/gaffer/git/protocol/src/game/GameChannelStructure.h",
-		"/Users/gaffer/git/cubes/shared/Game.cpp",
-		"/Users/gaffer/git/cubes/resources/ode-0.11.1/GIMPACT/GIMPACT-LICENSE-BSD.TXT",
-		"/Users/gaffer/git/protocol/src/game/GameMessages.h",
-		"/Users/gaffer/git/protocol/src/core/Memory.h",
-		"/Users/gaffer/git/protocol/src/core/File.h",
-		"/Users/gaffer/git/protocol/data/stones/Stone-Black-22.mesh",
-		"/Users/gaffer/git/protocol/data/stones/Stones.bin",
-		"/Users/gaffer/git/protocol/src/virtualgo/Stone.h",
-		"/Users/gaffer/git/protocol/src/core/Core.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.h",
-		"/Users/gaffer/git/protocol/src/core/File.cpp",
-		"/Users/gaffer/experiments/datablock/net_datablock.cpp",
-		"/Users/gaffer/git/cubes/resources/ode-0.11.1/OPCODE/OPC_TreeBuilders.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Board.h",
-		"/Users/gaffer/git/cubes/resources/ode-0.11.1/OPCODE/OPC_SphereTriOverlap.h",
-		"/Users/gaffer/git/cubes/resources/ode-0.11.1/tests/UnitTest++/src/Posix/SignalTranslator.cpp",
-		"/Users/gaffer/git/cubes/shared/Simulation.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.cpp",
-		"/Users/gaffer/git/protocol/Makefile",
-		"/Users/gaffer/git/protocol/data/stones/Stones.json",
-		"/Users/gaffer/git/virtualgo/Stone.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Common.h",
-		"/Users/gaffer/git/protocol/tests/UnitTest.cpp",
-		"/Users/gaffer/git/cubes/vectorial/vec3f.h",
+		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
+		"/Users/gaffer/git/protocol/src/game/InputManager.h",
+		"/Users/gaffer/git/protocol/data/shaders/Diffuse.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Default.vert",
+		"/Users/gaffer/git/protocol/src/vectorial/vec3f.h",
+		"/Users/gaffer/git/protocol/bin/StoneTool",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/StoneBuilder.cpp",
+		"/Users/gaffer/git/protocol/data/stones/Black-22.mesh",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/StoneGenerator.cpp",
 		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.cpp",
-		"/Users/gaffer/git/protocol/src/vectorial/mat4f.h",
-		"/Users/gaffer/git/protocol/src/game/Util.cpp",
-		"/Users/gaffer/git/protocol/src/game/Util.h",
-		"/Users/gaffer/git/cubes/Makefile",
-		"/Users/gaffer/git/protocol/src/virtualgo/Board.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Mesh.h",
-		"/Users/gaffer/git/cubes/resources/ode-0.11.1/OPCODE/OPC_BoxBoxOverlap.h",
-		"/Users/gaffer/git/virtualgo/Biconvex.h",
-		"/Users/gaffer/git/cubes/resources/ode-0.11.1/ode/src/collision_trimesh_opcode.cpp",
-		"/Users/gaffer/git/cubes/vectorial/vec2f.h",
-		"/Users/gaffer/git/cubes/client/View.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Support.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Generate.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Collision.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/CollisionDetection.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/CollisionResponse.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Config.h",
+		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.h",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/ToolMesh.h",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/ToolMesh.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Block.h",
+		"/Users/gaffer/git/protocol/output.txt",
+		"/Users/gaffer/git/protocol/src/protocol/BitPacker.h",
+		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/src/protocol/MessageChannel.h",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/Forsyth.h",
 		"/Users/gaffer/git/protocol/src/virtualgo/Intersection.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Platform.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Render.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/RigidBody.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Platform.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Tessellation.cpp",
-		"/Users/gaffer/git/protocol/tests/TestCore.cpp",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Render.d",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/OFL.txt",
-		"/Users/gaffer/git/protocol/data/fonts/Fonts.json",
-		"/Users/gaffer/git/protocol/src/protocol/Object.h",
-		"/Users/gaffer/git/protocol/src/game/Font.h",
-		"/Users/gaffer/git/protocol/src/game/GameContext.h",
-		"/Users/gaffer/git/protocol/src/game/GamePackets.h",
-		"/Users/gaffer/git/protocol/src/game/Globals.cpp",
+		"/Users/gaffer/git/protocol/src/vectorial/config.h",
+		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
+		"/Users/gaffer/git/protocol/src/vectorial/vec2f.h",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/MeshOptimize.h",
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/Mesh.h",
+		"/Users/gaffer/git/protocol/data/shaders/Phong.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Font.vert",
 		"/Users/gaffer/git/protocol/data/shaders/Flat.vert",
-		"/Users/gaffer/git/protocol/data/shaders/Flat.frag",
-		"/Users/gaffer/git/protocol/src/core/Allocator.h",
-		"/Users/gaffer/git/protocol/src/core/Array.h",
-		"/Users/gaffer/git/protocol/data/shaders/Diffuse.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Diffuse.vert",
-		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/obj/x64/Debug/protocol/ReliableMessageChannel.d",
-		"/Users/gaffer/git/protocol/obj/x64/Debug/protocol/Client.d",
-		"/Users/gaffer/git/protocol/obj/x64/Debug/protocol/BitPacker.d",
-		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.h",
-		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
-		"/Users/gaffer/git/protocol/tests/ProfileClientServer.cpp",
-		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp"
+		"/Users/gaffer/git/protocol/src/virtualgo/CollisionDetection.h",
+		"/Users/gaffer/git/protocol/src/network/Interface.h",
+		"/Users/gaffer/git/protocol/data/shaders/Gouraud.frag",
+		"/Users/gaffer/git/protocol/build/StoneGenerator.make",
+		"/Users/gaffer/git/protocol/src/protocol/Object.h",
+		"/Users/gaffer/git/protocol/data/stones/Black-22.stone",
+		"/Users/gaffer/git/protocol/data/shaders/Triangle.vert",
+		"/Users/gaffer/git/protocol/src/virtualgo/InertiaTensor.h",
+		"/Users/gaffer/git/protocol/tests/TestStream.cpp",
+		"/Users/gaffer/git/protocol/tests/TestBlock.cpp",
+		"/Users/gaffer/git/protocol/tests/TestChannelStructure.h",
+		"/Users/gaffer/git/protocol/tools/FontBuilder/FontBuilder.cpp",
+		"/Users/gaffer/git/protocol/bin/data/fonts/Console.font",
+		"/Users/gaffer/git/protocol/src/game/GameServer.h",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/MeshManager.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Font.d",
+		"/Users/gaffer/git/protocol/build/FontBuilder.make",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/README.txt",
+		"/Users/gaffer/git/protocol/virtualgo.make",
+		"/Users/gaffer/git/protocol/src/protocol/Message.h",
+		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/FONTLOG.txt",
+		"/Users/gaffer/git/protocol/data/fonts/Inconsolata/Inconsolata.otf"
 	],
 	"find":
 	{
@@ -616,6 +628,62 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"StoneManager.h",
+			"CORE_DELENTE",
+			"client->",
+			"game_update",
+			"client, ",
+			"Render",
+			"override",
+			"overrie",
+			"functions[",
+			"Execute",
+			"m_funcion",
+			"Render",
+			"justActivated",
+			"Backspace(",
+			"Deactivate",
+			"Deactivated",
+			"justActivated",
+			"`",
+			"BindVertex",
+			"commandSize",
+			"Cursor(",
+			"FPS",
+			"_FALSE",
+			"Char( ",
+			"Delete",
+			"commandLength",
+			"Shader",
+			"vbo",
+			"&vbo",
+			"commandHistorySelection = ",
+			"strncpy(",
+			"strncpy",
+			"history",
+			"m_data.",
+			"fps()",
+			"DestroyFontAtlas",
+			"Loading stone",
+			"Delete mesh",
+			"Delete stone",
+			"Delete shader",
+			"Delete font",
+			"fps",
+			"vao",
+			"currentFontVertex = ",
+			"render_fps",
+			"CORE_NEW",
+			"Builder",
+			"Create",
+			"glEnableVertexAttribArray",
+			"RenderStones",
+			"60",
+			"fps = ",
+			"glFinish",
+			"update_fps",
+			"%.3f:",
+			"CLOCKID",
 			"bevel",
 			"_",
 			"vao",
@@ -687,63 +755,7 @@
 			"fontManager",
 			"memory_global.",
 			"globals.",
-			"Globals.h",
-			"->Get",
-			"font",
-			"Loading shader:",
-			"new Font",
-			"shader_prgor",
-			"::get",
-			"hash",
-			"hash_string",
-			"new ShaderManager",
-			"Loading shader",
-			"MaxPath",
-			"MAX_PATH",
-			"global",
-			"m_global",
-			"shader_program",
-			"hash_string",
-			"hash",
-			"Loaded font",
-			"Loaded",
-			"print",
-			"timeBase",
-			"timeBAse",
-			"rm -f",
-			"shutdown",
-			"not a valid font file",
-			"timeBase",
-			"Client",
-			"CheckErr",
-			"print",
-			"BLEND",
-			"ALPHA",
-			"new Font",
-			"short",
-			"size_tint",
-			"new",
-			"size_t",
-			"\"client\"",
-			"CreateFont",
-			"fstream",
-			"max",
-			"chars",
-			"charschar",
-			"chars",
-			"ProcessFragment(",
-			".state = ",
-			"m_state = ",
-			"SetError",
-			"m_state = ",
-			"\"::1",
-			"NumClients",
-			"serverData",
-			", Client,",
-			"Client",
-			"MeasureStream",
-			"random_int(",
-			"ReceiveCompleted"
+			"Globals.h"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -836,83 +848,91 @@
 		"selected_items":
 		[
 			[
-				"stonegenerator.cpp",
-				"tools/StoneGenerator/StoneGenerator.cpp"
+				"stonemanager.h",
+				"src/game/StoneManager.h"
 			],
 			[
-				"game.cpp",
-				"src/game/Game.cpp"
+				"console.cpp",
+				"src/game/Console.cpp"
 			],
 			[
-				"changes",
-				"CHANGES"
+				"stonedemo.h",
+				"src/game/StoneDemo.h"
+			],
+			[
+				"meshmanager.h",
+				"src/game/MeshManager.h"
 			],
 			[
 				"todo",
 				"TODO"
 			],
 			[
-				"stone.frag",
-				"data/shaders/Stone.frag"
+				"stonedemo.cpp",
+				"src/game/StoneDemo.cpp"
 			],
 			[
-				"meshmanager.cpp",
-				"src/game/MeshManager.cpp"
+				"demo.cpp",
+				"src/game/StoneDemo.cpp"
 			],
 			[
-				"stone.vert",
-				"data/shaders/Stone.vert"
+				"demo.h",
+				"src/game/Demo.h"
 			],
 			[
-				"font.cpp",
-				"src/game/Font.cpp"
+				"demomanager.cpp",
+				"src/game/DemoManager.cpp"
 			],
 			[
-				"meshmanager.h",
-				"src/game/ShaderManager.h"
+				"demomanager.h",
+				"src/game/DemoManager.h"
 			],
 			[
-				"stonerender.h",
-				"src/game/StoneRender.h"
-			],
-			[
-				"render.h",
-				"src/game/Render.h"
-			],
-			[
-				"phong.frag",
-				"data/shaders/Phong.frag"
-			],
-			[
-				"phong.vert",
-				"data/shaders/Phong.vert"
-			],
-			[
-				"stonemanager.h",
-				"src/game/StoneManager.h"
+				"console.h",
+				"src/game/Console.h"
 			],
 			[
 				"would",
 				"WOULD BE NICE"
 			],
 			[
-				"render.cpp",
-				"src/game/Render.cpp"
+				"game.cpp",
+				"src/game/Game.cpp"
+			],
+			[
+				"global.h",
+				"src/game/Global.h"
+			],
+			[
+				"shadermanager.h",
+				"src/game/ShaderManager.h"
+			],
+			[
+				"shadermanager.cpp",
+				"src/game/ShaderManager.cpp"
+			],
+			[
+				"fontmanager.h",
+				"src/game/FontManager.h"
+			],
+			[
+				"changes",
+				"CHANGES"
+			],
+			[
+				"stonemanager.cpp",
+				"src/game/StoneManager.cpp"
+			],
+			[
+				"meshmanager.cpp",
+				"src/game/MeshManager.cpp"
 			],
 			[
 				"fontmanager.cpp",
 				"src/game/FontManager.cpp"
 			],
 			[
-				"vec3f",
-				"src/vectorial/vec3f.h"
-			],
-			[
-				"mesh.h",
-				"tools/StoneGenerator/Mesh.h"
-			],
-			[
-				"stonemanager.cpp",
+				"stone",
 				"src/game/StoneManager.cpp"
 			],
 			[
@@ -920,28 +940,224 @@
 				"src/game/ShaderManager.cpp"
 			],
 			[
-				"shadermanager.cpp",
-				"src/game/ShaderManager.cpp"
+				"game",
+				"src/game/Game.cpp"
 			],
 			[
-				"shadermanager.h",
+				"wouldbenice",
+				"WOULD BE NICE"
+			],
+			[
+				"gameclient.cpp",
+				"src/game/GameClient.cpp"
+			],
+			[
+				"gamecontext.h",
+				"src/game/GameContext.h"
+			],
+			[
+				"gameclient.h",
+				"src/game/GameClient.h"
+			],
+			[
+				"gameclient",
+				"src/game/GameClient.h"
+			],
+			[
+				"client.cpp",
+				"src/protocol/Client.cpp"
+			],
+			[
+				"consolefunctions.cpp",
+				"src/game/ConsoleFunctions.cpp"
+			],
+			[
+				"font.h",
+				"src/game/Font.h"
+			],
+			[
+				"shader.h",
 				"src/game/ShaderManager.h"
 			],
 			[
-				"inertiatensor.h",
-				"src/virtualgo/InertiaTensor.h"
+				"fonttool.cpp",
+				"tools/Font/FontTool.cpp"
 			],
 			[
-				"fontmanager.h",
-				"src/game/FontManager.h"
+				"console.cp",
+				"src/game/Console.cpp"
 			],
 			[
-				"global.h",
-				"src/game/Global.h"
+				"stonerender.cpp",
+				"src/game/StoneRender.cpp"
+			],
+			[
+				"font.cpp",
+				"src/game/Font.cpp"
+			],
+			[
+				"stoneinstanced.vert",
+				"data/shaders/StoneInstanced.vert"
+			],
+			[
+				"stone.frag",
+				"data/shaders/Stone.frag"
+			],
+			[
+				"stone.vert",
+				"data/shaders/Stone.vert"
+			],
+			[
+				"stonefrag",
+				"data/shaders/StoneInstanced.frag"
+			],
+			[
+				"stoneinstanced.frag",
+				"data/shaders/StoneInstanced.frag"
+			],
+			[
+				"mesh.h",
+				"tools/Stone/ToolMesh.h"
+			],
+			[
+				"stones.cpp",
+				"tools/Stone/StoneTool.cpp"
+			],
+			[
+				"font.frag",
+				"data/shaders/Font.frag"
+			],
+			[
+				"font.vert",
+				"data/shaders/Font.vert"
+			],
+			[
+				"render.cpp",
+				"src/game/Render.cpp"
 			],
 			[
 				"premake4.lua",
 				"premake4.lua"
+			],
+			[
+				"core.h",
+				"src/core/Core.h"
+			],
+			[
+				"core.cpp",
+				"src/core/Core.cpp"
+			],
+			[
+				"input.cpp",
+				"src/game/InputManager.cpp"
+			],
+			[
+				"stoneinstanced",
+				"data/shaders/StoneInstanced.frag"
+			],
+			[
+				"inputmanager.h",
+				"src/game/InputManager.h"
+			],
+			[
+				"stonetool.cpp",
+				"tools/Stone/StoneTool.cpp"
+			],
+			[
+				"stonegenerator.cpp",
+				"tools/StoneGenerator/StoneGenerator.cpp"
+			],
+			[
+				"biconvex.cpp",
+				"src/virtualgo/Biconvex.cpp"
+			],
+			[
+				"biconvex.h",
+				"src/virtualgo/Biconvex.h"
+			],
+			[
+				"output.txt",
+				"output.txt"
+			],
+			[
+				"toolmesh.h",
+				"tools/StoneGenerator/ToolMesh.h"
+			],
+			[
+				"toolmesh.cpp",
+				"tools/StoneGenerator/ToolMesh.cpp"
+			],
+			[
+				"vec2f.h",
+				"src/vectorial/vec2f.h"
+			],
+			[
+				"forsyth.h",
+				"tools/StoneGenerator/Forsyth.h"
+			],
+			[
+				"mesh.cpp",
+				"src/game/MeshManager.cpp"
+			],
+			[
+				"stoneinstance",
+				"data/shaders/StoneInstanced.frag"
+			],
+			[
+				"mesh.c",
+				"src/game/MeshManager.cpp"
+			],
+			[
+				"phong.frag",
+				"data/shaders/Phong.frag"
+			],
+			[
+				".vert",
+				"data/shaders/Diffuse.vert"
+			],
+			[
+				"inst",
+				"data/shaders/StoneInstanced.vert"
+			],
+			[
+				"gouraud.vert",
+				"data/shaders/Gouraud.vert"
+			],
+			[
+				"render.h",
+				"src/game/Render.h"
+			],
+			[
+				"stonerender.h",
+				"src/game/StoneRender.h"
+			],
+			[
+				"op",
+				"tools/StoneGenerator/MeshOptimize.h"
+			],
+			[
+				"meshoptimize.h",
+				"tools/StoneGenerator/MeshOptimize.h"
+			],
+			[
+				"stonegen",
+				"tools/StoneGenerator/StoneGenerator.cpp"
+			],
+			[
+				"fonts.json",
+				"data/fonts/Fonts.json"
+			],
+			[
+				"phong.vert",
+				"data/shaders/Phong.vert"
+			],
+			[
+				"vec3f",
+				"src/vectorial/vec3f.h"
+			],
+			[
+				"inertiatensor.h",
+				"src/virtualgo/InertiaTensor.h"
 			],
 			[
 				"fontbuilder.cpp",
@@ -954,10 +1170,6 @@
 			[
 				"stonegene",
 				"tools/StoneGenerator/StoneGenerator.cpp"
-			],
-			[
-				"stones.cpp",
-				"src/virtualgo/Stones.cpp"
 			],
 			[
 				"stones.h",
@@ -980,20 +1192,8 @@
 				"protocol/data/stones/Stones.bin"
 			],
 			[
-				"biconvex.h",
-				"protocol/src/virtualgo/Biconvex.h"
-			],
-			[
 				"vec3f.h",
 				"cubes/vectorial/vec3f.h"
-			],
-			[
-				"core.h",
-				"protocol/src/core/Core.h"
-			],
-			[
-				"biconvex.cpp",
-				"protocol/src/virtualgo/Biconvex.cpp"
 			],
 			[
 				"board.h",
@@ -1008,22 +1208,6 @@
 				"data/shaders/Flat.frag"
 			],
 			[
-				"font.frag",
-				"data/shaders/Font.frag"
-			],
-			[
-				"font.vert",
-				"data/shaders/Font.vert"
-			],
-			[
-				"fonts.json",
-				"data/fonts/Fonts.json"
-			],
-			[
-				"font.h",
-				"src/game/Font.h"
-			],
-			[
 				"allocator.h",
 				"src/core/Allocator.h"
 			],
@@ -1034,10 +1218,6 @@
 			[
 				"diffuse.frag",
 				"data/shaders/Diffuse.frag"
-			],
-			[
-				"gameclient.h",
-				"src/game/GameClient.h"
 			],
 			[
 				"gamechannel",
@@ -1062,10 +1242,6 @@
 			[
 				"soak",
 				"tests/SoakProtocol.cpp"
-			],
-			[
-				"core.cpp",
-				"src/core/Core.cpp"
 			],
 			[
 				"testconnection.cpp",
@@ -1104,10 +1280,6 @@
 				"tests/UnitTest.cpp"
 			],
 			[
-				"wouldbenice",
-				"WOULD BE NICE"
-			],
-			[
 				"cilentserverdatablock.cpp",
 				"src/protocol/ClientServerDataBlock.cpp"
 			],
@@ -1122,10 +1294,6 @@
 			[
 				"reliable",
 				"src/protocol/ReliableMessageChannel.cpp"
-			],
-			[
-				"client.cpp",
-				"src/protocol/Client.cpp"
 			],
 			[
 				"datablockreceiver.cpp",
@@ -1190,162 +1358,6 @@
 			[
 				"block.h",
 				"src/protocol/Block.h"
-			],
-			[
-				"steram.h",
-				"src/protocol/Stream.h"
-			],
-			[
-				"bsdsocket.h",
-				"src/network/BSDSocket.h"
-			],
-			[
-				"packetfactory.h",
-				"src/protocol/PacketFactory.h"
-			],
-			[
-				"simulator.h",
-				"src/network/Simulator.h"
-			],
-			[
-				"packet.h",
-				"src/protocol/Packet.h"
-			],
-			[
-				"stream.h",
-				"src/protocol/Stream.h"
-			],
-			[
-				"bitpacker.h",
-				"src/protocol/BitPacker.h"
-			],
-			[
-				"interfaec.h",
-				"src/network/Interface.h"
-			],
-			[
-				"address.h",
-				"src/network/Address.h"
-			],
-			[
-				"address.cpp",
-				"src/network/Address.cpp"
-			],
-			[
-				"simulator.cpp",
-				"src/network/Simulator.cpp"
-			],
-			[
-				"interface.h",
-				"src/network/Interface.h"
-			],
-			[
-				"hash.h",
-				"src/core/Hash.h"
-			],
-			[
-				"enums.h",
-				"src/protocol/Enums.h"
-			],
-			[
-				"premake4",
-				"premake4.lua"
-			],
-			[
-				"premake",
-				"premake4.lua"
-			],
-			[
-				"font.",
-				"data/shaders/Font.frag"
-			],
-			[
-				"globals.h",
-				"game/Globals.h"
-			],
-			[
-				"spe",
-				"data/shaders/Specular.vert"
-			],
-			[
-				"spec",
-				"data/shaders/Specular.frag"
-			],
-			[
-				"specular.vert",
-				"data/shaders/Specular.vert"
-			],
-			[
-				"triangle.vert",
-				"data/shaders/Triangle.vert"
-			],
-			[
-				"default.vert",
-				"data/shaders/Default.vert"
-			],
-			[
-				"triangle.frag",
-				"data/shaders/Triangle.frag"
-			],
-			[
-				"fonts",
-				"data/fonts/Fonts.json-old"
-			],
-			[
-				"tyeps.h",
-				"include/Types.h"
-			],
-			[
-				"testfoundation.cpp",
-				"tests/TestFoundation.cpp"
-			],
-			[
-				"default.frag",
-				"data/shaders/Default.frag"
-			],
-			[
-				"fonts.h",
-				"game/Fonts.h"
-			],
-			[
-				"frag",
-				"data/shaders/Triangle.frag"
-			],
-			[
-				"ver",
-				"data/shaders/Triangle.vert"
-			],
-			[
-				"vert",
-				"data/shaders/Triangle.vert"
-			],
-			[
-				"fonts.cpp",
-				"game/Fonts.cpp"
-			],
-			[
-				"premake4.lau",
-				"premake4.lua"
-			],
-			[
-				"font",
-				"tools/FontBuilder/FontBuilder.cpp"
-			],
-			[
-				"shaders.h",
-				"game/Shaders.h"
-			],
-			[
-				"glewinfo.txt",
-				"glewinfo.txt"
-			],
-			[
-				"fontbuildercpp",
-				"tools/FontBuilder/FontBuilder.cpp"
-			],
-			[
-				"makefont",
-				"tools/makefont/makefont.cpp"
 			]
 		],
 		"width": 0.0
