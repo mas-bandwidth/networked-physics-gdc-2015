@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     ------------------
 
+    Provide a way for the demo to render some debug overlay,
+
+    eg. text "Size 40" for the go stone, bottom right.
+
+    ------------------
+
     Implement two modes of console:
 
         1. Quick entry mode, ~, type in command and then enter to execute. esc or ~ cancels
