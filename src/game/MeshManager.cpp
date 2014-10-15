@@ -3,6 +3,7 @@
 
 #ifdef CLIENT
 
+#include "Mesh.h"
 #include "Global.h"
 #include "Console.h"
 #include "core/Core.h"
@@ -11,15 +12,6 @@
 #include "core/Memory.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "vectorial/vec3f.h"
-
-using namespace vectorial;
-
-struct MeshVertex
-{
-    float x,y,z;
-    uint32_t normal;
-};
 
 template <class T> bool ReadObject( FILE * file, const T & object )
 {

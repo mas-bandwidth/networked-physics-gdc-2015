@@ -1,3 +1,34 @@
+Wednesday Morning
+-----------------
+
+    Start research into physically based rendering (PBR)
+
+    Study trip through the graphics pipeline series to loosely understand modern hardware.
+
+    (Got up to part 7, will continue reading later -- my brain is full)
+
+
+Tuesday Night
+-------------
+
+    I'm not sure if I like the different sizes for black and white stones.
+
+    It might be best to keep them the same size for now, and when an optical
+    illusion becomes apparent that white stones are bigger, tune experimentally 
+    to make it this illusion go away.
+
+    Make render stones take as input everything that determines how it works,
+    eg. shader, mesh, array of MVP per-stone.
+
+    Generalize mesh instance data into a struct.
+
+    Standardize on single shader for stones, eg. always use instanced codepath
+
+    Rework the stone demo to always use the instanced codepath.
+
+    Remove code and shaders for non-instanced stone rendering.
+
+
 Tuesday Afternoon
 -----------------
 

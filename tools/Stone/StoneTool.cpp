@@ -98,7 +98,7 @@ const float StoneBevel[]
 
 inline float GetStoneWidth( StoneSize size, StoneColor color )
 {
-    return 2.2f + ( color == STONE_COLOR_BLACK ? 0.1f : 0.0f );
+    return 2.2f;// + ( color == STONE_COLOR_BLACK ? 0.1f : 0.0f );
 }
 
 inline float GetStoneHeight( StoneSize size )

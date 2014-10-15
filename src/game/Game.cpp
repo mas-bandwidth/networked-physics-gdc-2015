@@ -19,7 +19,6 @@ static const bool fullscreen = true;
 #include "FontManager.h"
 #include "MeshManager.h"
 #include "StoneManager.h"
-#include "StoneRender.h"
 #include "InputManager.h"
 #include "DemoManager.h"
 #include "Console.h"

@@ -3,17 +3,13 @@
 #ifdef CLIENT
 
 #include "Global.h"
-#include "StoneRender.h"
+#include "Mesh.h"
 #include "MeshManager.h"
 #include "StoneManager.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "ShaderManager.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
-using glm::mat4;
-using glm::vec3;
-using glm::vec4;
+#include <glm/gtc/matrix_transform.hpp>
 
 const int NumStoneSizes = 14;
 
@@ -105,14 +101,60 @@ void StoneDemo::Render()
             return;
     }
 
+    GLuint shader = global.shaderManager->GetShader( "Stone" );
+    if ( !shader )
+        return;
+
     switch ( stoneMode )
     {
         case SINGLE_STONE:        
-            RenderStone( *stoneMesh );
-            break;
+        {
+            mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
+             
+            mat4 modelViewMatrix = glm::lookAt( glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
+
+            const int NumInstances = 1;
+
+            MeshInstanceData instanceData[NumInstances];
+
+            instanceData[0].mvp = projectionMatrix * modelViewMatrix;
+
+            DrawMeshInstances( *stoneMesh, shader, NumInstances, instanceData );
+        }
+        break;
 
         case ROTATING_STONES:
-            RenderStones( *stoneMesh );
+        {
+            mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
+             
+            mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 10.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+            const int NumInstances = 19 * 19;
+
+            MeshInstanceData instanceData[NumInstances];
+
+            int instance = 0;
+
+            for ( int i = 0; i < 19; ++i )
+            {
+                for ( int j = 0; j < 19; ++j )
+                {  
+                    const float x = -19.8f + 2.2f * i;
+                    const float y = -19.8f + 2.2f * j;
+
+                    mat4 modelMatrix = glm::translate( mat4(1), vec3( x, y, 0.0f ) );
+
+                    mat4 rotation = glm::rotate( mat4(1), -(float)global.timeBase.time * 20, glm::vec3(0.0f,0.0f,1.0f));
+
+                    instanceData[instance].mvp = projectionMatrix * viewMatrix * rotation * modelMatrix;
+
+                    instance++;
+                }
+            }
+
+            DrawMeshInstances( *stoneMesh, shader, NumInstances, instanceData );
+        }
+        break;
     }
 }
 

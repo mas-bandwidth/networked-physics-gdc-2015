@@ -2,48 +2,27 @@ DONE:
 
 TODO:
 
-    ------------------
+    Get gouraud shading working for the go stone with per-instance color and shading settings.
 
-    Standardize on single shader for stones, eg. always use instanced codepath
+    Setup go stones with black and white checker board to be rendered.
 
-    Make render stones take as input everything that determines how it works,
-    eg. shader, mesh, array of MVP per-stone.
+    Implement a feature selection for the shader so I can switch at runtime between
+    rendering normal visualization and rendering the gouraud shading.
 
-    Rework the demo to always use the instanced codepath.
+    ----------------------------------
 
-    ------------------
+    Continue studying PBR documents collected.
 
-    Rotating stone demo becomes STONE_NORMALS
+    There is a lot to go through.
 
-    Keep the current demo to show the normals of the stones, copy the shaders off
-    to StoneNormals.vert, StoneNormals.frag or something.
+    Identify areas where my math is weak and work to study those parts.
 
-    ------------------
+    ----------------------------------
 
-    Extend stone shader to support black vs. white stones (color uniform?)
+    Aim to get a grid of stones showing a gradient of different PBR settings
 
-    Create a new demo BLACK_AND_WHITE_STONES in a checkerboard pattern
+    ----------------------------------
 
-    Use one drawcall to render black stones, and another drawcall to render 
-    white stones. This will match how they are actually done because they will
-    probably have different shaders.
+    Research raytracing signed distance fields for shadows
 
-    ------------------
-
-    I'm not sure if I like the different sizes for black and white stones.
-
-    It might be best to keep them the same size for now, and when an optical
-    illusion becomes apparent that white stones are bigger, tune experimentally 
-    to make it this illusion go away.
-
-    ------------------
-
-    When stones are reloaded we need to detect this, and potentially load the new stone mesh if it is different.
-
-    Currently there is no code that will delete the old stone mesh
-
-    Make sure that within the demo framework there are reload callbacks that identify to the demo when
-    types of assets were reloaded, so the demo can do any demo specific work it needs to do, eg. unloading
-    all existing meshes and invalidating cached meshes if they were reloaded.
-
-    ------------------
+    ----------------------------------

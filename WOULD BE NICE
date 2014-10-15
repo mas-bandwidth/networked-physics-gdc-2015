@@ -2,6 +2,16 @@ WOULD BE NICE:
 
     ------------------
 
+    When stones are reloaded we need to detect this, and potentially load the new stone mesh if it is different.
+
+    Currently there is no code that will delete the old stone mesh
+
+    Make sure that within the demo framework there are reload callbacks that identify to the demo when
+    types of assets were reloaded, so the demo can do any demo specific work it needs to do, eg. unloading
+    all existing meshes and invalidating cached meshes if they were reloaded.
+
+    ------------------
+
     Provide a way for the demo to render some debug overlay,
 
     eg. text "Size 40" for the go stone, bottom right.
