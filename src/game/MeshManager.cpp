@@ -72,10 +72,8 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
 
     const int LOCATION_VERTEX_POSITION = 0;
     const int LOCATION_VERTEX_NORMAL = 1;
-    const int LOCATION_VERTEX_MVP = 2;
-    const int LOCATION_VERTEX_NORMAL_MATRIX = 6;
-    const int LOCATION_VERTEX_MODEL_VIEW_MATRIX = 10;
-    const int LOCATION_VERTEX_LIGHT_POSITION = 14;
+    const int LOCATION_VERTEX_MODEL_VIEW = 2;
+    const int LOCATION_VERTEX_MODEL_VIEW_PROJECTION = 6;
 
     GLuint vao;
     glGenVertexArrays( 1, &vao );
@@ -108,24 +106,17 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     GLuint instance_buffer;
     glGenBuffers( 1, &instance_buffer );
     glBindBuffer( GL_ARRAY_BUFFER, instance_buffer );
-
+    
     for ( unsigned int i = 0; i < 4 ; ++i )
     {
-        glEnableVertexAttribArray( LOCATION_VERTEX_MVP + i );
-        glVertexAttribPointer( LOCATION_VERTEX_MVP + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, mvp ) + ( sizeof(float) * 4 * i ) ) );
-        glVertexAttribDivisor( LOCATION_VERTEX_MVP + i, 1 );
-    }
+        glEnableVertexAttribArray( LOCATION_VERTEX_MODEL_VIEW + i );
+        glVertexAttribPointer( LOCATION_VERTEX_MODEL_VIEW + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, modelView ) + ( sizeof(float) * 4 * i ) ) );
+        glVertexAttribDivisor( LOCATION_VERTEX_MODEL_VIEW + i, 1 );
 
-    for ( unsigned int i = 0; i < 4 ; ++i )
-    {
-        glEnableVertexAttribArray( LOCATION_VERTEX_MODEL_VIEW_MATRIX + i );
-        glVertexAttribPointer( LOCATION_VERTEX_MODEL_VIEW_MATRIX + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, modelViewMatrix ) + ( sizeof(float) * 4 * i ) ) );
-        glVertexAttribDivisor( LOCATION_VERTEX_MODEL_VIEW_MATRIX + i, 1 );
+        glEnableVertexAttribArray( LOCATION_VERTEX_MODEL_VIEW_PROJECTION + i );
+        glVertexAttribPointer( LOCATION_VERTEX_MODEL_VIEW_PROJECTION + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, modelViewProjection ) + ( sizeof(float) * 4 * i ) ) );
+        glVertexAttribDivisor( LOCATION_VERTEX_MODEL_VIEW_PROJECTION + i, 1 );
     }
-
-    glEnableVertexAttribArray( LOCATION_VERTEX_LIGHT_POSITION );
-    glVertexAttribPointer( LOCATION_VERTEX_LIGHT_POSITION, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) offsetof( MeshInstanceData, lightPosition ) );
-    glVertexAttribDivisor( LOCATION_VERTEX_LIGHT_POSITION, 1 );
 
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 

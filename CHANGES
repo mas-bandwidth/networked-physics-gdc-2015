@@ -17,6 +17,40 @@ Wednesday Evening
 
     This matches the expected behavior, which is that the stones are rotating, not the camera.
 
+    Get the light vector working for the single stone render. Seems to not be working.
+
+    Seems that since the light position is in eye coordinates, the light position needs to be
+    specified per-instance, eg. in MeshInstanceData
+
+    Done. But there are still problems...
+
+    Seems like there is some problem with the math... Yes. The normal matrix should be the transpose of the inverse,
+    or for uniform scale, just the 3x3 submatrix of the model view will do.
+
+    Removed the separate concept of normal matrix. I don't need it because I will only have uniform scaling.
+
+    The idea that the light position is per-instance is wrong.
+
+    It actually just needs to be transformed by the view matrix, not the model view matrix.
+
+    Make the light position a uniform again.
+
+    There seems to be something strange with the y coordinate for lighting.
+
+    The y coordinate in inverted from what I expect it to be.
+
+    eg. a lookat from (0,-5,0) -> (0,0,0) you would expect that a light placed at (0,-5,0) should be where the eye is
+
+    Except it is on the opposite side.
+
+    The values for x and z seem to be correct though.
+
+    This is probably consequence of me thinking left handed when the coordinate system is actually left handed.
+
+    Still doesn't make a lot of sense that the y coordinate should be flipped like this.
+
+    Fucking hell. I was using model view projection for the normal instead of modelview. Dumbass.
+
 
 Wednesday Morning
 -----------------

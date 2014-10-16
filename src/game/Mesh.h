@@ -38,12 +38,10 @@ struct MeshData
 
 struct MeshInstanceData
 {
-    mat4 mvp;
-    mat4 modelViewMatrix;
-    mat4 projectionMatrix;
-    vec4 lightPosition;
+    mat4 modelView;
+    mat4 modelViewProjection;
 };
 
-extern void DrawMeshInstances( MeshData & mesh, uint32_t shader, int numInstances, const MeshInstanceData * instanceData );
+extern void DrawMeshInstances( MeshData & mesh, int numInstances, const MeshInstanceData * instanceData );
 
 #endif // #ifndef MESH_H

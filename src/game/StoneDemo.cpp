@@ -105,27 +105,32 @@ void StoneDemo::Render()
     if ( !shader )
         return;
 
+    glUseProgram( shader );
+
     switch ( stoneMode )
     {
         case SINGLE_STONE:        
         {
             mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
-             
-            mat4 viewMatrix = glm::lookAt( glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
 
+            mat4 viewMatrix = glm::lookAt( vec3(0.0f, -5.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
+            
             mat4 modelMatrix(1);
+
+            vec4 lightPosition = viewMatrix * vec4(0,0,5,1);
+
+            int location = glGetUniformLocation( shader, "LightPosition" );
+            if ( location >= 0 )
+                glUniform4fv( location, 1, &lightPosition[0] );
 
             const int NumInstances = 1;
 
             MeshInstanceData instanceData[NumInstances];
 
-            vec4 lightPosition = vec4(0,0,10,1);
+            instanceData[0].modelView = viewMatrix * modelMatrix;
+            instanceData[0].modelViewProjection = projectionMatrix * viewMatrix * modelMatrix;
 
-            instanceData[0].mvp = projectionMatrix * viewMatrix * modelMatrix;
-            instanceData[0].modelViewMatrix = viewMatrix * modelMatrix;
-            instanceData[0].lightPosition = viewMatrix * lightPosition;
-
-            DrawMeshInstances( *stoneMesh, shader, NumInstances, instanceData );
+            DrawMeshInstances( *stoneMesh, NumInstances, instanceData );
         }
         break;
 
@@ -133,15 +138,19 @@ void StoneDemo::Render()
         {
             mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
              
-            mat4 viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 10.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
-
+            mat4 viewMatrix = glm::lookAt( vec3( 0.0f, 0.0f, 10.0f ), vec3( 0.0f, 0.0f, 0.0f ), vec3( 0.0f, 1.0f, 0.0f ) );
+            
             const int NumInstances = 19 * 19;
 
             MeshInstanceData instanceData[NumInstances];
 
             int instance = 0;
 
-            vec4 lightPosition = vec4(-10,0,10,1);
+            vec4 lightPosition = viewMatrix * vec4(0,0,10,1);
+
+            int location = glGetUniformLocation( shader, "LightPosition" );
+            if ( location >= 0 )
+                glUniform4fv( location, 1, &lightPosition[0] );
 
             for ( int i = 0; i < 19; ++i )
             {
@@ -150,24 +159,25 @@ void StoneDemo::Render()
                     const float x = -19.8f + 2.2f * i;
                     const float y = -19.8f + 2.2f * j;
 
-                    mat4 rotation = glm::rotate( mat4(1), -(float)global.timeBase.time * 20, glm::vec3(0.0f,0.0f,1.0f));
+                    mat4 rotation = glm::rotate( mat4(1), -(float)global.timeBase.time * 20, vec3(0.0f,0.0f,1.0f));
 
                     mat4 modelMatrix = rotation * glm::translate( mat4(1), vec3( x, y, 0.0f ) );
 
                     mat4 modelViewMatrix = viewMatrix * modelMatrix;
 
-                    instanceData[instance].mvp = projectionMatrix * modelViewMatrix;
-                    instanceData[instance].modelViewMatrix = modelViewMatrix;
-                    instanceData[instance].lightPosition = viewMatrix * lightPosition;
+                    instanceData[instance].modelView = modelViewMatrix;
+                    instanceData[instance].modelViewProjection = projectionMatrix * modelViewMatrix;
 
                     instance++;
                 }
             }
 
-            DrawMeshInstances( *stoneMesh, shader, NumInstances, instanceData );
+            DrawMeshInstances( *stoneMesh, NumInstances, instanceData );
         }
         break;
     }
+
+    glUseProgram( 0 );
 }
 
 bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )

@@ -67,9 +67,8 @@ static void game_init()
 
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
-    glEnable( GL_CULL_FACE );
-
-    glFrontFace( GL_CW );
+    //glEnable( GL_CULL_FACE );
+    //glFrontFace( GL_CW );
 
     check_opengl_error( "after game_init" );
 
