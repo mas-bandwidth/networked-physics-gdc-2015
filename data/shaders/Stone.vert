@@ -14,7 +14,7 @@ uniform vec3 Ambient = vec3( 0.25, 0.25, 1.0 );
 
 void main()
 {
-    vec3 Normal = normalize( mat3( ModelView ) * VertexNormal );
+    vec3 Normal = mat3( ModelView ) * VertexNormal;
     
     vec4 Position = ModelView * vec4( VertexPosition, 1.0 );
     
