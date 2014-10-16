@@ -12,6 +12,7 @@
 #include "core/Memory.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <stddef.h>
 
 template <class T> bool ReadObject( FILE * file, const T & object )
 {
@@ -69,9 +70,12 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
         return nullptr;
     }
 
-    const int VERTEX_POSITION_LOCATION = 0;
-    const int VERTEX_NORMAL_LOCATION = 1;
-    const int VERTEX_MVP_LOCATION = 2;
+    const int LOCATION_VERTEX_POSITION = 0;
+    const int LOCATION_VERTEX_NORMAL = 1;
+    const int LOCATION_VERTEX_MVP = 2;
+    const int LOCATION_VERTEX_NORMAL_MATRIX = 6;
+    const int LOCATION_VERTEX_MODEL_VIEW_MATRIX = 10;
+    const int LOCATION_VERTEX_LIGHT_POSITION = 14;
 
     GLuint vao;
     glGenVertexArrays( 1, &vao );
@@ -83,32 +87,55 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     glGenBuffers( 1, &vbo );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
     glBufferData( GL_ARRAY_BUFFER, meshData->numTriangles * sizeof(MeshVertex), vertices, GL_STATIC_DRAW );
-    glVertexAttribPointer( VERTEX_POSITION_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
-    glVertexAttribPointer( VERTEX_NORMAL_LOCATION, 4, GL_INT_2_10_10_10_REV, GL_TRUE, sizeof(MeshVertex), (GLubyte*)(3*4) );
+    glVertexAttribPointer( LOCATION_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
+    glVertexAttribPointer( LOCATION_VERTEX_NORMAL, 4, GL_INT_2_10_10_10_REV, GL_TRUE, sizeof(MeshVertex), (GLubyte*)(3*4) );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
  
     GLuint ibo;
     glGenBuffers( 1, &ibo );
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, 2*numIndices, indices, GL_STATIC_DRAW );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+
+    meshData->vertex_buffer = vbo;
+    meshData->index_buffer = ibo;
+
+    // ============================================================================================
+
+    // todo: mesh should probably just be the vbo and ibo, and perhaps include a mesh type
+    // eg. specifying if it has texture coordinates per-vertex or not. the actual binding
+    // of vertex
 
     GLuint instance_buffer;
     glGenBuffers( 1, &instance_buffer );
     glBindBuffer( GL_ARRAY_BUFFER, instance_buffer );
+
     for ( unsigned int i = 0; i < 4 ; ++i )
     {
-        glEnableVertexAttribArray( VERTEX_MVP_LOCATION + i );
-        glVertexAttribPointer( VERTEX_MVP_LOCATION + i, 4, GL_FLOAT, GL_FALSE, 16 * sizeof(float), (void*) ( sizeof(float) * 4 * i ) );
-        glVertexAttribDivisor( VERTEX_MVP_LOCATION + i, 1 );
+        glEnableVertexAttribArray( LOCATION_VERTEX_MVP + i );
+        glVertexAttribPointer( LOCATION_VERTEX_MVP + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, mvp ) + ( sizeof(float) * 4 * i ) ) );
+        glVertexAttribDivisor( LOCATION_VERTEX_MVP + i, 1 );
     }
 
+    for ( unsigned int i = 0; i < 4 ; ++i )
+    {
+        glEnableVertexAttribArray( LOCATION_VERTEX_MODEL_VIEW_MATRIX + i );
+        glVertexAttribPointer( LOCATION_VERTEX_MODEL_VIEW_MATRIX + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, modelViewMatrix ) + ( sizeof(float) * 4 * i ) ) );
+        glVertexAttribDivisor( LOCATION_VERTEX_MODEL_VIEW_MATRIX + i, 1 );
+    }
+
+    glEnableVertexAttribArray( LOCATION_VERTEX_LIGHT_POSITION );
+    glVertexAttribPointer( LOCATION_VERTEX_LIGHT_POSITION, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) offsetof( MeshInstanceData, lightPosition ) );
+    glVertexAttribDivisor( LOCATION_VERTEX_LIGHT_POSITION, 1 );
+
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
     meshData->vertex_array_object = vao;
-    meshData->vertex_buffer = vbo;
-    meshData->index_buffer = ibo;
     meshData->instance_buffer = instance_buffer;
 
+    // ============================================================================================
+
     glBindVertexArray( 0 );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 
     CORE_DELETE_ARRAY( core::memory::scratch_allocator(), vertices, meshData->numVertices );

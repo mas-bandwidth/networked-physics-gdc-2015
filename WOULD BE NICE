@@ -1,5 +1,27 @@
 WOULD BE NICE:
 
+    -----------------
+
+    Seems that in fact the ibo/vbo should be owned by the mesh.
+
+    But vao itself the way to render it, the shader to use, and the bindings for all the vert data, 
+    instance data to the vao should perhaps be a higher level concept, eg. like a "model"
+
+    This would allow the same mesh to be loaded, but multiple VAOs could be setup referring to it.
+
+    This would allow greater flexibility with different shaders and different ways to render meshes.
+
+    But it would create difficulties with dependencies, eg. the model would need to know if the mesh
+    has changed that it needs to destroy the vao and recreate it.
+
+    This is probably not too hard though.
+
+    ^---- I think this is really the key thing. The mesh corresponds to the IBO/VBO only. The rest is "per-model"
+          that is a thing created referencing the mesh, but is not the mesh itself.
+
+    ^---- The model could also reference a material, which itself is a model like concept on top of a texture,
+          eg. information to interpret how to setup the texture and so on.
+
     ------------------
 
     When stones are reloaded we need to detect this, and potentially load the new stone mesh if it is different.

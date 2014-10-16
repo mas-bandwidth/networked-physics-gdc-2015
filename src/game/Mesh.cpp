@@ -4,16 +4,8 @@
 
 #include "core/Core.h"
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <stdio.h>
 #include <stdlib.h>
-
-using glm::mat3;
-using glm::mat4;
-using glm::vec3;
-using glm::vec4;
 
 void DrawMeshInstances( MeshData & mesh, uint32_t shader, int numInstances, const MeshInstanceData * instanceData )
 {

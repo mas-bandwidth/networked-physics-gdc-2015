@@ -1,13 +1,35 @@
 DONE:
 
+    Get the light vector working for the single stone render. Seems to not be working.
+
+    Seems that since the light position is in eye coordinates, the light position needs to be
+    specified per-instance, eg. in MeshInstanceData
+
+    Done. But there are still problems...
+
+    Seems like there is some problem with the math... Yes. The normal matrix should be the transpose of the inverse,
+    or for uniform scale, just the 3x3 submatrix of the model view will do.
+
+    Removed the separate concept of normal matrix. I don't need it because I will only have uniform scaling.
+
+    The idea that the light position is per-instance is wrong.
+
+    It actually just needs to be transformed by the view matrix, not the model view matrix.
+
 TODO:
 
-    Get gouraud shading working for the go stone with per-instance color and shading settings.
+    Make the light position a uniform again.
 
-    Setup go stones with black and white checker board to be rendered.
+    ----------------------------------
 
-    Implement a feature selection for the shader so I can switch at runtime between
-    rendering normal visualization and rendering the gouraud shading.
+    Pass in lighting uniforms for rendering.
+
+    Implement different rendering for white and black stones via uniforms.
+
+    Alternatively, implement black vs. white stones as per-instance data.
+
+    This makes more sense because I'm going to want to vary this data per-instance
+    to do the gradient between roughness / metal for the stones with PBR.
 
     ----------------------------------
 

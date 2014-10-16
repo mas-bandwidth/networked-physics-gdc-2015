@@ -1,3 +1,23 @@
+Wednesday Evening
+-----------------
+
+    Ported across the diffuse shader for the stone.
+
+    Extended mesh instance data to include the normal matrix and modelview matrix.
+
+    Extended the setup for the vao so that it sets up the new instance data.
+
+    Properly pass in the values for modelview matrix and normal matrix.
+
+    Added ambient term to the stone shader 0.25 so it doesn't go to black at the edges.
+
+    Setup the correct transformed light vector uniform in eye space when rendering.
+
+    Verify that the light does not change as the objects rotate.
+
+    This matches the expected behavior, which is that the stones are rotating, not the camera.
+
+
 Wednesday Morning
 -----------------
 
