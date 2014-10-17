@@ -1,0 +1,40 @@
+
+// Approximation for unreal engine environment BRDF used on mobile
+// https://www.unrealengine.com/blog/physically-based-shading-on-mobile
+
+half3 EnvBRDFApprox( half3 SpecularColor, half Roughness, half NoV )
+{
+    const half4 c0 = { -1, -0.0275, -0.572, 0.022 };
+    const half4 c1 = { 1, 0.0425, 1.04, -0.04 };
+    half4 r = Roughness * c0 + c1;
+    half a004 = min( r.x * r.x, exp2( -9.28 * NoV ) ) * r.x + r.y;
+    half2 AB = half2( -1.04, 1.04 ) * a004 + r.zw;
+    return SpecularColor * AB.x + AB.y;
+}
+
+// Blinn is then approximated with a radially symmetric phong lobe.
+// Phong is approximated with a spherical gaussian xn ≈ e ^ (n+0.775)( x − 1 )
+// http://seblagarde.wordpress.com/2012/06/03/spherical-gaussien-approximation-for-blinn-phong-phong-and-fresnel/
+
+half D_Approx( half Roughness, half RoL )
+{
+    half a = Roughness * Roughness;
+    half a2 = a * a;
+    float rcp_a2 = rcp(a2);
+    // 0.5 / ln(2), 0.275 / ln(2)
+    half c = 0.72134752 * rcp_a2 + 0.39674113;
+    return rcp_a2 * exp2( c * RoL - c );
+}
+
+// Black Ops 2 approximation for environment BRDF
+// http://blog.selfshadow.com/publications/s2013-shading-course/lazarov/s2013_pbs_black_ops_2_notes.pdf
+
+float3 EnvironmentBRDF( float g, float NoV, float3 rf0 )
+{
+    float4 t = float4( 1/0.96, 0.475, (0.0275 - 0.25 * 0.04)/0.96, 0.25 );
+    t *= float4( g, g, g, g );
+    t += float4( 0, 0, (0.015 - 0.75 * 0.04)/0.96, 0.75 );
+    float a0 = t.x * min( t.y, exp2( -9.28 * NoV ) ) + t.z;
+    float a1 = t.w;
+    return saturate( a0 + rf0 * ( a1 - a0 ) );
+}

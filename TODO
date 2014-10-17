@@ -4,26 +4,29 @@ TODO:
 
     ----------------------------------
 
-    Pass in lighting uniforms for rendering.
+    I need to get an environment map and run it through AMD CubeMapGen
 
-    Implement different rendering for white and black stones via uniforms.
+    This tool creates a cubemap with mip levels that have different blurs.
 
-    Alternatively, implement black vs. white stones as per-instance data.
+    The blurs are then sampled with trilinear interpolation using the roughness 
+    parameter as an index between mip levels.
 
-    This makes more sense because I'm going to want to vary this data per-instance
-    to do the gradient between roughness / metal for the stones with PBR.
+    This tools runs in windows so I should just run it in my emulated Win8
+    and then take the output files and put inside data so they can be loaded.
+
+    Adding new cubemaps should be rare so this is OK.
 
     ----------------------------------
 
-    Continue studying PBR documents collected.
+    Research how to work in linear space and then convert to RGB at the end with tonemapping.
 
-    There is a lot to go through.
+    ----------------------------------
+
+    Continue studying trip through the graphics pipeline.
+
+    ----------------------------------
 
     Identify areas where my math is weak and work to study those parts.
-
-    ----------------------------------
-
-    Aim to get a grid of stones showing a gradient of different PBR settings
 
     ----------------------------------
 

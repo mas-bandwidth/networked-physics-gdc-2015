@@ -1,3 +1,58 @@
+Friday Morning
+--------------
+
+    Continue studying PBR documents collected.
+
+    This one was particularly excellent as an overview:
+
+    https://www.unrealengine.com/blog/physically-based-shading-on-mobile
+
+    Created a file with snippets of shaders for PBR that I've found so far with links.
+
+    Thinking about dependencies for moving to PBR...
+
+    Seems that I need to get an environment map for specular reflections,
+    and then run that through AMD's open source "CubeMapGen" tool such that
+    it has blurs applied to different mipmap levels.
+
+    Then I need to index those mip levels via the roughness parameter.
+
+    This is how you get that cool roughness shading look out of PBR.
+
+    Study how the metalness parameter of the PBR shaders work.
+
+    What does it do fundamentally what does it change?
+
+    It seems the metalness is the thing that brings in the indirect
+    specalur, eg. the reflection. More metal = more reflection. loosly speaking.
+
+    Seems like I should be able to get the diffuse and specular components
+    from the PBR model such that they do the shading I want, but it's not
+    going to look great until I have that cool indirect specular from the
+    cubemap.
+
+    Seems I should start with this cubemap. 
+
+    I could then implement reflection added to the crap directional
+    specular I currently have, and then show a bunch of stones with
+    different roughness levels, = first step towards awesome.
+
+    I need to determine if my color space for working is the standard RGB
+    or if I need to move into linear space and then convert to sRGB at the
+    end.
+
+    How do I convert to linear color space?
+
+    What about tone mapping and post-processing for HDR?
+
+    Are these things related?
+
+    Does my environment specular reflection need to be in HDR space or not?
+
+    All my friends say that I should do the work in linear space and then
+    convert it back to sRGB at the end with tonemapping. This seems definitive.
+
+
 Wednesday Evening
 -----------------
 
@@ -50,6 +105,10 @@ Wednesday Evening
     Still doesn't make a lot of sense that the y coordinate should be flipped like this.
 
     Fucking hell. I was using model view projection for the normal instead of modelview. Dumbass.
+
+    Got the specular model working at the per-vertex level. Looks good!
+
+    Bump it up and get specular at the per-pixel level.
 
 
 Wednesday Morning

@@ -113,11 +113,11 @@ void StoneDemo::Render()
         {
             mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
 
-            mat4 viewMatrix = glm::lookAt( vec3(0.0f, -5.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
+            mat4 viewMatrix = glm::lookAt( vec3(0.0f, -2.5f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
             
             mat4 modelMatrix(1);
 
-            vec4 lightPosition = viewMatrix * vec4(0,0,5,1);
+            vec4 lightPosition = viewMatrix * vec4(0,0,10,1);
 
             int location = glGetUniformLocation( shader, "LightPosition" );
             if ( location >= 0 )
@@ -146,7 +146,7 @@ void StoneDemo::Render()
 
             int instance = 0;
 
-            vec4 lightPosition = viewMatrix * vec4(0,0,10,1);
+            vec4 lightPosition = viewMatrix * vec4(0,0,100,1);
 
             int location = glGetUniformLocation( shader, "LightPosition" );
             if ( location >= 0 )

@@ -1,5 +1,33 @@
 WOULD BE NICE:
 
+    ----------------------------------
+
+    Create a separation between the mesh and the concept of a "model"
+
+    A model is a higher level concept that wraps up the concepts specific
+    to types of models, eg. VAO setup. Shader specific setup, and so on.
+
+    A mesh is just the VBO and IBO.
+
+    This is important to establish early on so the pattern for rendering is clear
+    and a bunch of code is not written is an overly specific fashion just for go stones.
+
+    ----------------------------------
+
+    Implement different rendering for white and black stones via per-instance data
+
+    For example, the base ambient color and diffuse color and shininess should be
+    passed in via vertex attributes (per-instance).
+
+    This makes more sense vs. uniforms because I'm going to want to vary this data 
+    per-instance to do the gradient between roughness / metal for the stones with PBR.
+
+    ----------------------------------
+
+    Code a tool that actually compiles the shaders to check that they compile before going fullscreen.
+
+    It's annoying to work on shaders and continually have them not compile properly and having to quit out of the app.
+
     -----------------
 
     Seems that in fact the ibo/vbo should be owned by the mesh.

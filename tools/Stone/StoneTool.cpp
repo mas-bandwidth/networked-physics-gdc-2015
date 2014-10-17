@@ -487,7 +487,7 @@ int main( int argc, char * argv[] )
         virtualgo::Biconvex biconvex;
         FindBiconvexWithRealWidth( biconvex, width, height, bevel );
 
-        const int subdivisions = 5;
+        const int subdivisions = 4;
 
         const float mass = 1.0f;
         vec3f inertia;
