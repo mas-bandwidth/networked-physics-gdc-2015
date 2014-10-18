@@ -1,3 +1,25 @@
+Friday Night
+------------
+
+    I need to get an environment map and run it through AMD CubeMapGen
+
+    This tool creates a cubemap with mip levels that have different blurs.
+
+    The blurs are then sampled with trilinear interpolation using the roughness 
+    parameter as an index between mip levels.
+
+    This tools runs in windows so I should just run it in my emulated Win8
+    and then take the output files and put inside data so they can be loaded.
+
+    Adding new cubemaps should be rare so this is OK.
+
+    Got cubemap gen running and created a few cubemaps with CubeMapGen for testing.
+
+    Implement 'pm cubemaps' using the same ln -s trick used for shaders.
+
+    Cubemaps should now be linked across under bin/data dir and ready for loading.
+
+
 Friday Morning
 --------------
 

@@ -259,6 +259,21 @@ if not os.is "windows" then
 
     newaction
     {
+        trigger     = "cubemaps",
+        description = "Build cubemaps",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "mkdir -p bin/data; rm -f bin/data/cubemaps; ln -s ~/git/protocol/data/cubemaps bin/data/cubemaps" ~= 0 then
+                os.exit(1)
+            end
+        end
+    }
+
+    newaction
+    {
         trigger     = "data",
         description = "Build game data",
         valid_kinds = premake.action.get("gmake").valid_kinds,
@@ -268,6 +283,7 @@ if not os.is "windows" then
         execute = function ()
             premake.action.call( "fonts" )
             premake.action.call( "shaders" )
+            premake.action.call( "cubemaps" )
             os.execute "mkdir -p bin/data; rm -f bin/data/stones; ln -s ~/git/protocol/data/stones bin/data/stones"
         end
     }

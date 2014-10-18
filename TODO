@@ -1,20 +1,10 @@
 DONE:
 
 TODO:
+    
+    Load the cubemaps, initially just inside the StoneDemo.
 
-    ----------------------------------
-
-    I need to get an environment map and run it through AMD CubeMapGen
-
-    This tool creates a cubemap with mip levels that have different blurs.
-
-    The blurs are then sampled with trilinear interpolation using the roughness 
-    parameter as an index between mip levels.
-
-    This tools runs in windows so I should just run it in my emulated Win8
-    and then take the output files and put inside data so they can be loaded.
-
-    Adding new cubemaps should be rare so this is OK.
+    Get the cubemap rendering as part of the stone shader, eg. I want to see cubemap reflection
 
     ----------------------------------
 
