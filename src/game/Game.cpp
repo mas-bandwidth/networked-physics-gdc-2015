@@ -129,7 +129,7 @@ static void render_fps()
     if ( font )
     {
         const float text_x = global.displayWidth - font->GetTextWidth( fps_string ) - 5;
-        const float text_y = 10;
+        const float text_y = 5;
 
         const Color bad_fps_color = Color(0.6f,0,0);              // red
         const Color good_fps_color = Color( 0.27f,0.81f,1.0f);    // blue

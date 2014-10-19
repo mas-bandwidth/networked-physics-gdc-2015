@@ -184,20 +184,27 @@ void StoneDemo::Render()
         {
             mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
 
-            mat4 viewMatrix = glm::lookAt( vec3(0.0f, -2.5f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
+            vec3 eyePosition( 0.0f, -2.5f, 0.0f );
+
+            mat4 viewMatrix = glm::lookAt( eyePosition, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f) );
             
             mat4 modelMatrix(1);
 
-            vec4 lightPosition = viewMatrix * vec4(0,0,10,1);
+            vec4 lightPosition = vec4(0,0,10,1);
 
-            int location = glGetUniformLocation( shader, "LightPosition" );
+            int location = glGetUniformLocation( shader, "EyePosition" );
             if ( location >= 0 )
-                glUniform4fv( location, 1, &lightPosition[0] );
+                glUniform3fv( location, 1, &eyePosition[0] );
+
+            location = glGetUniformLocation( shader, "LightPosition" );
+            if ( location >= 0 )
+                glUniform3fv( location, 1, &lightPosition[0] );
 
             const int NumInstances = 1;
 
             MeshInstanceData instanceData[NumInstances];
 
+            instanceData[0].model = modelMatrix;
             instanceData[0].modelView = viewMatrix * modelMatrix;
             instanceData[0].modelViewProjection = projectionMatrix * viewMatrix * modelMatrix;
 
@@ -209,7 +216,10 @@ void StoneDemo::Render()
         {
             mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
              
-            mat4 viewMatrix = glm::lookAt( vec3( 0.0f, 0.0f, 10.0f ), vec3( 0.0f, 0.0f, 0.0f ), vec3( 0.0f, 1.0f, 0.0f ) );
+            //vec3 eyePosition( 0.0f, 0.0f, 10.0f );
+            vec3 eyePosition( 0.0f, -40.0f, 7.0f );
+
+            mat4 viewMatrix = glm::lookAt( eyePosition, vec3( 0.0f, 0.0f, 0.0f ), vec3( 0.0f, 1.0f, 0.0f ) );
             
             const int NumInstances = 19 * 19;
 
@@ -217,11 +227,15 @@ void StoneDemo::Render()
 
             int instance = 0;
 
-            vec4 lightPosition = viewMatrix * vec4(0,0,100,1);
+            vec4 lightPosition = vec4(0,0,100,1);
 
-            int location = glGetUniformLocation( shader, "LightPosition" );
+            int location = glGetUniformLocation( shader, "EyePosition" );
             if ( location >= 0 )
-                glUniform4fv( location, 1, &lightPosition[0] );
+                glUniform3fv( location, 1, &eyePosition[0] );
+
+            location = glGetUniformLocation( shader, "LightPosition" );
+            if ( location >= 0 )
+                glUniform3fv( location, 1, &lightPosition[0] );
 
             for ( int i = 0; i < 19; ++i )
             {
@@ -236,6 +250,7 @@ void StoneDemo::Render()
 
                     mat4 modelViewMatrix = viewMatrix * modelMatrix;
 
+                    instanceData[instance].model = modelMatrix;
                     instanceData[instance].modelView = modelViewMatrix;
                     instanceData[instance].modelViewProjection = projectionMatrix * modelViewMatrix;
 

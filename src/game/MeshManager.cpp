@@ -72,8 +72,9 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
 
     const int LOCATION_VERTEX_POSITION = 0;
     const int LOCATION_VERTEX_NORMAL = 1;
-    const int LOCATION_VERTEX_MODEL_VIEW = 2;
-    const int LOCATION_VERTEX_MODEL_VIEW_PROJECTION = 6;
+    const int LOCATION_VERTEX_MODEL = 2;
+    const int LOCATION_VERTEX_MODEL_VIEW = 6;
+    const int LOCATION_VERTEX_MODEL_VIEW_PROJECTION = 10;
 
     GLuint vao;
     glGenVertexArrays( 1, &vao );
@@ -109,6 +110,10 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
     
     for ( unsigned int i = 0; i < 4 ; ++i )
     {
+        glEnableVertexAttribArray( LOCATION_VERTEX_MODEL + i );
+        glVertexAttribPointer( LOCATION_VERTEX_MODEL + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, model ) + ( sizeof(float) * 4 * i ) ) );
+        glVertexAttribDivisor( LOCATION_VERTEX_MODEL + i, 1 );
+
         glEnableVertexAttribArray( LOCATION_VERTEX_MODEL_VIEW + i );
         glVertexAttribPointer( LOCATION_VERTEX_MODEL_VIEW + i, 4, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, modelView ) + ( sizeof(float) * 4 * i ) ) );
         glVertexAttribDivisor( LOCATION_VERTEX_MODEL_VIEW + i, 1 );

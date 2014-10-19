@@ -1,3 +1,58 @@
+Saturday Evening - October 18th, 2014
+-------------------------------------
+
+    Seems the reflection vector needs to be transformed from eye space into world space?
+
+    Seems like I need to do the vertex position and normal in *world* space instead
+    of eye space in order to do the cubemap, eg. I want the cubemap up to be up,
+    no matter where the eye is.
+
+    Is it better to do the calculation for the lighting in eye space or world space?
+
+    Eric says world space.
+
+    Convert lighting calculations to world space.
+
+    I need to do the following:
+
+        a) Light position in world space
+        b) Eye position in world space
+        c) Model matrix passed in to shader to transform point/normal into world coords,
+           instead of ModelView
+
+    Done. That was reasonably painless.
+
+    Convert the rest of the simple diffuse/specular over to use world space coords.
+
+    Seems to be some issue with specifying the LightPosition uniform. Why?    
+
+    It's because I switched it from vec4 to vec3. Fixed.
+
+    There seems to be a discontinuity of the normal where the bevel and sphere meets.
+
+    Normals should not be discontinuous here. They should match!
+
+    Check the normal generation for something obvious here.
+
+    Nothing obvious.
+
+    Inside the stone generation tool, try printing out the normal at the bevel point
+    on the sphere vs. on the bevel and see if it differs
+
+    Inside the stone generation tool, try printing out the normal at the bevel point
+    on the sphere vs. on the bevel and see if it differs
+
+    If the normal doesn't differ, it may be a tesselation issue, eg. we are not tesselating
+    down to the bevel correctly?
+
+    Seems the normals match, as expected from the construction of the bevel.
+
+    It could be a second order thing, eg. although the normals match at the point,
+    the gradient on either side leading up to it is discontinuous.
+
+    Maybe the normals need some blending in/out at the transition. 
+
+
 Saturday Morning
 ----------------
 

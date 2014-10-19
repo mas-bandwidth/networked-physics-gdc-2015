@@ -83,22 +83,22 @@ const float StoneBevel[]
     0.08f,      // 22
     0.08f,      // 25
     0.08f,      // 28
-    0.10f,      // 30
-    0.11f,      // 31
-    0.11f,      // 32
-    0.1125f,    // 33
-    0.1130f,    // 34
-    0.1150f,    // 35
-    0.1200f,    // 36
-    0.1200f,    // 37
-    0.1200f,    // 38
-    0.1450f,    // 39
-    0.15f       // 40
+    0.08f,      // 30
+    0.08f,      // 31
+    0.08f,      // 32
+    0.08f,      // 33
+    0.08f,      // 34
+    0.08f,      // 35
+    0.08f,      // 36
+    0.08f,      // 37
+    0.08f,      // 38
+    0.08f,      // 39
+    0.08f       // 40
 };
 
 inline float GetStoneWidth( StoneSize size, StoneColor color )
 {
-    return 2.2f;// + ( color == STONE_COLOR_BLACK ? 0.1f : 0.0f );
+    return 2.2f;
 }
 
 inline float GetStoneHeight( StoneSize size )
@@ -148,8 +148,7 @@ void SubdivideBiconvexMesh( Mesh<Vertex> & mesh,
                             vec3f an, vec3f bn, vec3f cn,
                             vec3f sphereCenter,
                             bool clockwise,
-                            float h, int depth, int subdivisions,
-                            float texture_a, float texture_b )
+                            float h, int depth, int subdivisions )
 {
     // edges: i = c -> a
     //        j = a -> b
@@ -219,10 +218,10 @@ void SubdivideBiconvexMesh( Mesh<Vertex> & mesh,
         //
         //  b     f     c
 
-        SubdivideBiconvexMesh( mesh, biconvex, i, j, false, a, e, d, an, en, dn, sphereCenter, clockwise, h, depth, subdivisions, texture_a, texture_b );
-        SubdivideBiconvexMesh( mesh, biconvex, false, j, k, e, b, f, en, bn, fn, sphereCenter, clockwise, h, depth, subdivisions, texture_a, texture_b );
-        SubdivideBiconvexMesh( mesh, biconvex, i, false, k, d, f, c, dn, fn, cn, sphereCenter, clockwise, h, depth, subdivisions, texture_a, texture_b );
-        SubdivideBiconvexMesh( mesh, biconvex, false, false, false, d, e, f, dn, en, fn, sphereCenter, clockwise, h, depth, subdivisions, texture_a, texture_b );
+        SubdivideBiconvexMesh( mesh, biconvex, i, j, false, a, e, d, an, en, dn, sphereCenter, clockwise, h, depth, subdivisions );
+        SubdivideBiconvexMesh( mesh, biconvex, false, j, k, e, b, f, en, bn, fn, sphereCenter, clockwise, h, depth, subdivisions );
+        SubdivideBiconvexMesh( mesh, biconvex, i, false, k, d, f, c, dn, fn, cn, sphereCenter, clockwise, h, depth, subdivisions );
+        SubdivideBiconvexMesh( mesh, biconvex, false, false, false, d, e, f, dn, en, fn, sphereCenter, clockwise, h, depth, subdivisions );
     }
     else
     {
@@ -252,9 +251,6 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
 
     const float h = biconvex.GetBevel() / 2;
 
-    const float texture_a = 1 / biconvex.GetWidth();
-    const float texture_b = 0.5f;
-
     // top
 
     for ( int i = 0; i < numTriangles; ++i )
@@ -272,14 +268,14 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
         vec3f bn = normalize( b - sphereCenter );
         vec3f cn = normalize( c - sphereCenter );
 
-        SubdivideBiconvexMesh( mesh, biconvex, false, false, true, a, b, c, an, bn, cn, sphereCenter, true, h, 0, subdivisions, texture_a, texture_b);
+        SubdivideBiconvexMesh( mesh, biconvex, false, false, true, a, b, c, an, bn, cn, sphereCenter, true, h, 0, subdivisions );
     }
 
     // bevel
 
     const float bevel = biconvex.GetBevel();
 
-    if ( bevel > 0.001f )
+    if ( bevel > 0.0001f )
     {
         // find bottom circle edge of biconvex top
 
@@ -322,6 +318,9 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
 
                 const float circleX1 = sqrt( torusMinorRadius*torusMinorRadius - z1*z1 );
                 const float circleX2 = sqrt( torusMinorRadius*torusMinorRadius - z2*z2 );
+
+                // a d
+                // b c
 
                 vec3f a = circleCenter1 + circleX1 * circleRight1 + z1 * circleUp;
                 vec3f b = circleCenter1 + circleX2 * circleRight1 + z2 * circleUp;
@@ -377,7 +376,7 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
         vec3f bn = normalize( b - sphereCenter );
         vec3f cn = normalize( c - sphereCenter );
 
-        SubdivideBiconvexMesh( mesh, biconvex, false, false, true, a, b, c, an, bn, cn, sphereCenter, false, -h, 0, subdivisions, texture_a, texture_b );//0, 0 );
+        SubdivideBiconvexMesh( mesh, biconvex, false, false, true, a, b, c, an, bn, cn, sphereCenter, false, -h, 0, subdivisions );
     }
 
     // IMPORTANT: Make sure we haven't blown past 16 bit indices
@@ -486,6 +485,25 @@ int main( int argc, char * argv[] )
 
         virtualgo::Biconvex biconvex;
         FindBiconvexWithRealWidth( biconvex, width, height, bevel );
+
+        /*
+        // ===============================
+        {
+            const float h = biconvex.GetBevel() / 2;
+
+            vec3f bevel_center = vec3f( biconvex.GetBevelTorusMajorRadius(), 0, 0 );
+            vec3f bevel_point = vec3f( biconvex.GetBevelCircleRadius(), 0, h );
+            vec3f bevel_normal = normalize( bevel_point - bevel_center );
+
+            printf( "bevel normal: %f,%f,%f\n", bevel_normal.x(), bevel_normal.y(), bevel_normal.z() );
+
+            vec3f sphere_center = vec3f( 0, 0, -biconvex.GetSphereOffset() );
+            vec3f sphere_normal = normalize( bevel_point - sphere_center );
+
+            printf( "sphere normal: %f,%f,%f\n", sphere_normal.x(), sphere_normal.y(), sphere_normal.z() );
+        }
+        // ===============================
+        */
 
         const int subdivisions = 4;
 

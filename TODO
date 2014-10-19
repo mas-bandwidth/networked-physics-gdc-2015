@@ -2,11 +2,15 @@ DONE:
 
 TODO:
 
-    Seems the reflection vector needs to be transformed from eye space into world space?
-
     ----------------------------------
 
+    Time to stop and take a break from this project for a while.
+
+    I need to do a lot of reading and studying before I can come back to it.
+
     Continue studying PBR. I don't understand enough to implement yet.
+
+    Identify areas where my math is weak and work to study those parts.
 
     ----------------------------------
 
@@ -15,10 +19,6 @@ TODO:
     ----------------------------------
 
     Continue studying trip through the graphics pipeline.
-
-    ----------------------------------
-
-    Identify areas where my math is weak and work to study those parts.
 
     ----------------------------------
 

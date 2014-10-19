@@ -38,6 +38,7 @@ struct MeshData
 
 struct MeshInstanceData
 {
+    mat4 model;
     mat4 modelView;
     mat4 modelViewProjection;
 };
