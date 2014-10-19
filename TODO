@@ -1,10 +1,12 @@
 DONE:
 
 TODO:
-    
-    Load the cubemaps, initially just inside the StoneDemo.
 
-    Get the cubemap rendering as part of the stone shader, eg. I want to see cubemap reflection
+    Seems the reflection vector needs to be transformed from eye space into world space?
+
+    ----------------------------------
+
+    Continue studying PBR. I don't understand enough to implement yet.
 
     ----------------------------------
 

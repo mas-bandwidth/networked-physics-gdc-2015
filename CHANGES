@@ -1,3 +1,40 @@
+Saturday Morning
+----------------
+
+    Integrated NVIDIA dds loading public domain source code: nv_dds.cpp
+
+    Compiles fine with a few small changes. Needs to be fixed not to use exceptions
+    or C++ bullshit like iostream and string class =p
+
+    Load the cubemaps, initially just inside the StoneDemo.
+
+    Generate the OpenGL cubemap without errors.
+
+    Seems to be crashing OpenGL with invalid enumerant?
+
+    Seems the format was incorrect. Hardcoded to GL_RGB for now.
+
+    Setup the filtering for the cubemap. min filter set to linear_mipmap_linear, max to linear.
+
+    Get the cubemap rendering as part of the stone shader, eg. I want to see cubemap reflection
+
+    So far the cubemap output is black. Not sure why, it seems I'm setting it up correctly for rendering.
+
+    The actual vector for getting the cubemap should not just be the normal on the stone, it should be
+    a reflection of the eye to point vector out to the environment. This way the cubemap should move
+    as the stone moves in the world relative to cube at infinity.
+
+    Debug why the cubemap is showing up black.
+
+    It was because I was not specifying correct width/height per-mip level.
+
+    Found an example Uffizi.dds from BGFX that I can use. This avoids buying HDRShop.
+
+    Converted to CubeMap.dds that I can import in game.
+
+    Some trouble importing but got something basic going. Doesn't look that great!
+
+
 Friday Night
 ------------
 
