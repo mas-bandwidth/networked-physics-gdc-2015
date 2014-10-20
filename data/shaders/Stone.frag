@@ -14,6 +14,11 @@ uniform float Shininess = 50.0;
 
 layout( location = 0 ) out vec4 FragColor;
 
+layout ( location = 14 ) in vec4 BaseColor;
+layout ( location = 15 ) in float Metallic;
+layout ( location = 16 ) in float Specular;
+layout ( location = 17 ) in float Roughness;
+
 uniform samplerCube CubeMap;
 
 void main()

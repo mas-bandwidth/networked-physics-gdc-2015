@@ -123,6 +123,21 @@ MeshData * load_mesh_data( core::Allocator & allocator, const char * filename )
         glVertexAttribDivisor( LOCATION_VERTEX_MODEL_VIEW_PROJECTION + i, 1 );
     }
 
+    /*
+    int location = glGetAttribLocation( shader, "BaseColor" );
+    if ( location >= 0 )
+    {
+        glEnableVertexAttribArray( location );
+        glVertexAttribPointer( location, 1, GL_FLOAT, GL_FALSE, sizeof( MeshInstanceData ), (void*) ( offsetof( MeshInstanceData, baseColor ) );
+    }
+    */
+
+    /*
+layout ( location = 15 ) in float Metallic;
+layout ( location = 16 ) in float Specular;
+layout ( location = 17 ) in float Roughness;
+    */
+
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     meshData->vertex_array_object = vao;

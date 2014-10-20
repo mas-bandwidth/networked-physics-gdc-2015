@@ -41,6 +41,10 @@ struct MeshInstanceData
     mat4 model;
     mat4 modelView;
     mat4 modelViewProjection;
+    vec4 baseColor;
+    float metallic;
+    float specular; 
+    float roughness;
 };
 
 extern void DrawMeshInstances( MeshData & mesh, int numInstances, const MeshInstanceData * instanceData );
