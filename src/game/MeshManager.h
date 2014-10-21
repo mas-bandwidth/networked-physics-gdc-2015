@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "core/Types.h"
 
-struct MeshData;
+struct Mesh;
 
 class MeshManager
 {
@@ -22,11 +22,11 @@ public:
 
     void LoadMesh( const char * filename );
 
-    MeshData * GetMeshData( const char * filename );
+    Mesh * GetMesh( const char * filename );
 
 private:
 
-    core::Hash<MeshData*> m_meshes;
+    core::Hash<Mesh*> m_meshes;
     core::Allocator * m_allocator;
 };
 

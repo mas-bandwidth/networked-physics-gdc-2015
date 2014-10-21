@@ -4,6 +4,7 @@
 
 #include "Global.h"
 #include "Mesh.h"
+#include "Model.h"
 #include "Render.h"
 #include "MeshManager.h"
 #include "StoneManager.h"
@@ -12,6 +13,11 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "nv_dds.h"
+
+using glm::mat3;
+using glm::mat4;
+using glm::vec3;
+using glm::vec4;
 
 using namespace nv_dds;
 
@@ -155,11 +161,11 @@ void StoneDemo::Render()
     if ( !stoneData )
         return;
 
-    MeshData * stoneMesh = global.meshManager->GetMeshData( stoneData->mesh_filename );
+    Mesh * stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
     if ( !stoneMesh )
     {
         global.meshManager->LoadMesh( stoneData->mesh_filename );
-        stoneMesh = global.meshManager->GetMeshData( stoneData->mesh_filename );
+        stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
         if ( !stoneMesh )
             return;
     }
@@ -202,13 +208,13 @@ void StoneDemo::Render()
 
             const int NumInstances = 1;
 
-            MeshInstanceData instanceData[NumInstances];
+            ModelInstanceData instanceData[NumInstances];
 
             instanceData[0].model = modelMatrix;
             instanceData[0].modelView = viewMatrix * modelMatrix;
             instanceData[0].modelViewProjection = projectionMatrix * viewMatrix * modelMatrix;
 
-            DrawMeshInstances( *stoneMesh, NumInstances, instanceData );
+//            DrawModels( *stoneMesh, NumInstances, instanceData );
         }
         break;
 
@@ -223,7 +229,7 @@ void StoneDemo::Render()
             
             const int NumInstances = 19 * 19;
 
-            MeshInstanceData instanceData[NumInstances];
+            ModelInstanceData instanceData[NumInstances];
 
             int instance = 0;
 
@@ -258,7 +264,7 @@ void StoneDemo::Render()
                 }
             }
 
-            DrawMeshInstances( *stoneMesh, NumInstances, instanceData );
+//            DrawModels( *stoneMesh, NumInstances, instanceData );
         }
         break;
     }

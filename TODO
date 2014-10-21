@@ -11,8 +11,6 @@ DONE:
 
     Need to split out the concept of "Model" from "Mesh" and make the mesh only the IBO/VBO.
 
-TODO:
-
     To create a model you must pass in both a shader *and* a mesh.
 
     For the moment models will be just one type, the stone model, but eventually
@@ -27,6 +25,38 @@ TODO:
     and would need to be setup to access those coordinates from there,
     while the stone will generate texture coordinates in the vertex shader.
 
+    Added new model class.
+
+    Brought across the code to create the VAO and the instance buffer.
+
+TODO:
+
+    Get the model created in the stone demo.
+
+    If the model changes for any reason (up/down/left/right), set a dirty flag, destroy the model and then recreate it (dumb)
+
+    ----------------------------------
+
+    Implement model manager and cache models as created.
+
+    How to identify models? They're really unique things without 1-1 mapping to filename.
+
+    I think I need a model handle concept.
+
+    Seems the model manager should be in charge, eg. it should drive loading of models
+    and shaders and textures.
+
+    You should ask to reload a model.
+
+    It's probably not reasonable to just reload shaders, or just reload models.
+
+    If you reload shaders or models, any models must be marked dirty that reference
+    these shaders.
+
+    This means these managers must track references.
+
+    This could get a bit tricky. Need to design something smart.
+
     ----------------------------------
 
     Model manager should detect when either shader, or mesh is dirty and
@@ -40,25 +70,21 @@ TODO:
 
     ----------------------------------
 
-    Continue implementation hooking up base color, specular, roughness etc.
-
-    Setup roughness parameter. What range is it in the UE4 model?
-
-    Work out how to sample the cubemap with roughness indexing into the mipmap trilinear filtering.
-
-    Setup an array of stones with roughness parameter increasing with x coordinate across range
-
-    ----------------------------------
-
     Study UE4 shader model to understand the inputs and controls. What range each is. How they work.
 
     http://blog.selfshadow.com/publications/s2013-shading-course/
+
+    Actually, I want to follow the seb legard model, which has separate diffuse and specular colors.
+
+    http://seblagarde.wordpress.com/2011/08/17/hello-world/
 
     ----------------------------------
 
     Try to get my own basic model working
 
-    Implement a scale from non-metal to metal on the y axis.
+    Implement a scale from non-metal (left) to metal (right) on the x axis.
+
+    Implement a scale from roughness 0 (front) to totally rough (back) on the y axis. (z is up?)
 
     ----------------------------------
 

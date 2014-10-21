@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    Don't need separate black and white stone models.
+
+    Save some memory and load time by just having one mesh per stone size.
+
+    ----------------------------------
+
     Create a separation between the mesh and the concept of a "model"
 
     A model is a higher level concept that wraps up the concepts specific

@@ -1,0 +1,25 @@
+Notes
+
+The disney model has two colors: diffuse and specular, and it interpolates between them first with the metalness, and then uses that for shading.
+
+The other model, sebastian legrand, has diffuse and specular calculated separately so it blends between between the two, eg. separate specular and diffuse contributions blended, vs. blending the color first.
+
+Seems the second model would be better for what I want to do.
+
+The cubemap as an input must be HDR because with diffuse reflections, this is how the highlights show through
+
+Linear space should be used for framebuffer and textures.
+
+The roughness in the shader is exponentiated, but input from designers is [0,1]
+
+Everything is [0,1] externally.
+
+Normalization factor just ensures that the direct specular, eg. analytical specular lobe, normalizes out to less bright as it becomes more diffuse. It does *not* mix specular and diffuse so they are perfectly energy conserving.
+
+Can import cross textures from debevec into modified cubemapgen without having hdrshop installed.
+
+Diffuse cubemap is typically a lower res cubemap, eg. 8x8 cubemap, very blurred.
+
+Can create better, more accurate cubemap for my purposes by having a skybox, and the board, and then sampling within that to generate another cubemap which is then run through modified cubemapgen to get the indirect specular cubemap (blurred)
+
+Is possible to blend between multiple cubemaps, if you do it right, eg. consider the eye position relative to the cubemap, and blend between cubemaps while avoiding swimming. But I probably wont need to do this for my scene!
