@@ -80,6 +80,10 @@ static GLuint cubemap_texture = 0;
 static bool stoneDirty = true;
 static Model * stoneModel = nullptr;
 
+static bool rotating = false;
+static float rotationSpeed = 1.0f;
+static double rotationAngle = 0.0;
+
 StoneDemo::StoneDemo( core::Allocator & allocator )
 {
     stoneDirty = true;
@@ -161,7 +165,11 @@ bool StoneDemo::Initialize()
 
 void StoneDemo::Update()
 {
-    // ...
+    const float targetRotationSpeed = rotating ? 1.0f : 0.0f;
+
+    rotationSpeed += ( targetRotationSpeed - rotationSpeed ) * 0.999f;
+
+    rotationAngle += global.timeBase.deltaTime * rotationSpeed * 20;
 }
 
 void StoneDemo::Render()
@@ -243,7 +251,7 @@ void StoneDemo::Render()
             instanceData[0].baseColor = vec3( 0.18f, 0.18f, 0.9f );               // blue
             instanceData[0].specularColor = vec3( 1.0f, 0.765557, 0.336057 );     // gold
             instanceData[0].roughness = 0.5f;
-            instanceData[0].metallic = 0.5f;
+            instanceData[0].metallic = 1.0f;
             instanceData[0].gloss = 0.5f;
 
             DrawModels( *stoneModel, NumInstances, instanceData );
@@ -252,14 +260,17 @@ void StoneDemo::Render()
 
         case ROTATING_STONES:
         {
-            mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
+            mat4 projectionMatrix = glm::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
              
             //vec3 eyePosition( 0.0f, 0.0f, 10.0f );
-            vec3 eyePosition( 0.0f, -40.0f, 7.0f );
+            //vec3 eyePosition( 0.0f, -40.0f, 7.0f );
+            vec3 eyePosition( 0.0f, -25.0f, 7.0f );
 
-            mat4 viewMatrix = glm::lookAt( eyePosition, vec3( 0.0f, 0.0f, 0.0f ), vec3( 0.0f, 1.0f, 0.0f ) );
+            mat4 viewMatrix = glm::lookAt( eyePosition, vec3( 0.0f, -2.0f, 0.0f ), vec3( 0.0f, 1.0f, 0.0f ) );
             
-            const int NumInstances = 19 * 19;
+            const int Size = 9;
+
+            const int NumInstances = Size * Size;
 
             ModelInstanceData instanceData[NumInstances];
 
@@ -275,18 +286,18 @@ void StoneDemo::Render()
             if ( location >= 0 )
                 glUniform3fv( location, 1, &lightPosition[0] );
 
-            float roughness = 0.0f;
+            float metallic = 0.0f;
 
-            for ( int i = 0; i < 19; ++i )
+            for ( int i = 0; i < Size; ++i )
             {
-                float metallic = 0.0f;
+                float roughness = 0.0f;
 
-                for ( int j = 0; j < 19; ++j )
+                for ( int j = 0; j < Size; ++j )
                 {  
-                    const float x = -19.8f + 2.2f * i;
-                    const float y = -19.8f + 2.2f * j;
+                    const float x = -( (Size-1)/2.0 * 2.2f ) + 2.2f * i;
+                    const float y = -( (Size-1)/2.0 * 2.2f ) + 2.2f * j;
 
-                    mat4 rotation = glm::rotate( mat4(1), -(float)global.timeBase.time * 20, vec3(0.0f,0.0f,1.0f));
+                    mat4 rotation = glm::rotate( mat4(1), -(float)rotationAngle, vec3(0.0f,0.0f,1.0f));
 
                     mat4 modelMatrix = rotation * glm::translate( mat4(1), vec3( x, y, 0.0f ) );
 
@@ -303,10 +314,10 @@ void StoneDemo::Render()
 
                     instance++;
 
-                    metallic += 1.0f / 19.0f;
+                    roughness += 1.0f / float(Size);
                 }
 
-                roughness += 1.0f / 19.0f;
+                metallic += 1.0f / float(Size);
             }
 
             DrawModels( *stoneModel, NumInstances, instanceData );
@@ -366,7 +377,11 @@ bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )
 
 bool StoneDemo::CharEvent( unsigned int code )
 {
-    // ...
+    if ( code == GLFW_KEY_SPACE )
+    {
+        rotating = !rotating;
+        return true;
+    }
 
     return false;
 }

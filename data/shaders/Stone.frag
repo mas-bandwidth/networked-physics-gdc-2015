@@ -43,11 +43,14 @@ void main()
 
     vec3 r = reflect( s, n );
 
-    vec4 CubeMapColor = texture( CubeMap, vec3( t.x, -t.z, t.y ) );
-
-    vec3 DiffuseColor = BaseColor * ( LightIntensity * ( Ka + Kd * max( dot(s,n), 0.0 ) ) );
-
     float SpecularIntensity = pow( max( dot(r,v), 0.0 ), SpecularPower );
 
-    FragColor = /*vec4(DiffuseColor,0) +*/ /*CubeMapColor * vec4( SpecularColor, 1 )*/ + vec4( SpecularIntensity * SpecularColor, 1 );
+    vec3 CubeMapColor = texture( CubeMap, vec3( t.x, -t.z, t.y ) ).rgb;
+
+    vec3 NonMetalColor = BaseColor * ( LightIntensity * ( Ka + Kd * max( dot(s,n), 0.0 ) ) )
+                          + LightIntensity * SpecularIntensity;
+
+    vec3 MetalColor = SpecularColor * ( SpecularIntensity + CubeMapColor );
+
+    FragColor = vec4( mix( NonMetalColor, MetalColor, Metallic ), 1 );
 }

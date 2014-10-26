@@ -1,3 +1,27 @@
+Sunday Afternoon, October 26th, 2014
+------------------------------------
+
+    Implement a very simple lerp between pure non-metal, eg. diffuse with white specular highlight,
+    and metal, eg. no diffuse with metal colored specular highlight.
+
+    It seems to be working well.
+
+    The clear thing that is missing here is that the input texture is not in a HDR format,
+    so we don't get the cool specular indirect reflections on top of the shiny diffuse surface,
+    eg. it just drops to phong.
+
+    Also, roughness is not used to index into the cubemap in any way, so it has no effect.
+
+    Also, it seems roughness should have some impact on the direct phong highlight, and it currently doesn't.
+    
+    (because I'm not using a microfacet BRDF model yet?)
+
+    Also, missing fresnel component, which makes diffuse surfaces look cool by having more
+    reflection at grazing angles. How is fresnel calculated and input to the shader?
+
+    Need to study the existing PBR docs to understand this better.
+
+
 Sunday Morning, October 26th, 2014
 ----------------------------------
 
