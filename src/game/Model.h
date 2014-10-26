@@ -8,16 +8,11 @@
 
 namespace core { class Allocator; }
 
-enum ModelType
-{
-    MODEL_STONE
-};
-
 struct Model
 {
-    ModelType type;
     int numVertices;
     int numTriangles;
+    uint32_t shader;
     uint32_t vertexArrayObject;
     uint32_t instanceBuffer;
 };
@@ -33,10 +28,11 @@ struct ModelInstanceData
     glm::mat4 model;
     glm::mat4 modelView;
     glm::mat4 modelViewProjection;
-    glm::vec4 baseColor;
+    glm::vec3 baseColor;
+    glm::vec3 specularColor;
     float metallic;
-    float specular; 
     float roughness;
+    float gloss;
 };
 
 extern void DrawModels( Model & model, int numInstances, const ModelInstanceData * instanceData );

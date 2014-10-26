@@ -457,33 +457,49 @@
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
-		"/Users/gaffer/git/protocol/src/game/MeshManager.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Stone.frag",
-		"/Users/gaffer/git/protocol/src/game/Mesh.h",
-		"/Users/gaffer/git/protocol/src/game/StoneDemo.cpp",
 		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/PBR",
+		"/Users/gaffer/git/protocol/WOULD BE NICE",
+		"/Users/gaffer/git/protocol/src/core/Core.h",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/src/game/StoneDemo.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.frag",
+		"/Users/gaffer/git/protocol/src/game/DemoManager.cpp",
+		"/Users/gaffer/git/protocol/src/game/Render.h",
+		"/Users/gaffer/git/protocol/src/game/Model.cpp",
+		"/Users/gaffer/git/protocol/src/game/Model.h",
+		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
 		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.cpp",
 		"/Users/gaffer/git/protocol/src/game/StoneDemo.h",
 		"/Users/gaffer/git/protocol/src/game/StoneManager.cpp",
-		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
+		"/Users/gaffer/git/protocol/src/game/Demo.h",
+		"/Users/gaffer/git/protocol/src/game/MeshManager.cpp",
 		"/Users/gaffer/git/protocol/src/game/MeshManager.h",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Mesh.d",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/MeshManager.d",
+		"/Users/gaffer/git/protocol/src/game/Mesh.h",
+		"/Users/gaffer/git/protocol/virtualgo.make",
+		"/Users/gaffer/git/protocol/src/vectorial/vec3f.h",
 		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.h",
+		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.cpp",
+		"/Users/gaffer/git/protocol/build/StoneTool.make",
+		"/Users/gaffer/git/protocol/src/virtualgo/InertiaTensor.h",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
+		"/Users/gaffer/git/protocol/src/game/DemoManager.h",
+		"/Users/gaffer/git/protocol/src/network/Enums.h",
+		"/Users/gaffer/git/protocol/src/game/GameServer.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/MeshManager.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Mesh.d",
 		"/Users/gaffer/git/protocol/tools/Stone/StoneTool.cpp",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/src/core/Core.h",
+		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.h",
+		"/Users/gaffer/git/protocol/src/protocol/Message.h",
+		"/Users/gaffer/git/protocol/src/game/Mesh.cpp",
+		"/Users/gaffer/git/protocol/src/protocol/Model.h",
+		"/Users/gaffer/git/protocol/src/protocol/Model.cpp",
+		"/Users/gaffer/git/protocol/PBR",
+		"/Users/gaffer/git/protocol/data/shaders/Phong.vert",
 		"/Users/gaffer/git/protocol/src/protocol/Object.h",
 		"/Users/gaffer/git/protocol/src/game/nv_dds.h",
-		"/Users/gaffer/git/protocol/src/game/Mesh.cpp",
 		"/Users/gaffer/git/protocol/src/game/Game.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Phong.vert",
-		"/Users/gaffer/git/protocol/build/StoneTool.make",
 		"/Users/gaffer/git/protocol/src/game/nv_dds.cpp",
-		"/Users/gaffer/git/protocol/src/vectorial/vec3f.h",
-		"/Users/gaffer/git/protocol/src/game/Render.h",
 		"/Users/gaffer/git/protocol/data/cubemaps/Uffizi-Diffuse.hdr",
 		"/Users/gaffer/git/protocol/NOTES",
 		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
@@ -492,7 +508,6 @@
 		"/Users/gaffer/git/protocol/premake4.lua",
 		"/Users/gaffer/git/protocol/data/shaders/PBR.snippets",
 		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
 		"/Users/gaffer/git/protocol/src/vectorial/simd4f_common.h",
 		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
 		"/Users/gaffer/git/protocol/src/protocol/MessageChannel.h",
@@ -504,15 +519,12 @@
 		"/Users/gaffer/git/protocol/data/shaders/Triangle.frag",
 		"/Users/gaffer/git/protocol/src/core/Hash.h",
 		"/Users/gaffer/git/protocol/Makefile",
-		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
 		"/Users/gaffer/git/protocol/src/game/InputManager.cpp",
 		"/Users/gaffer/git/protocol/data/shaders/Subroutine.frag",
-		"/Users/gaffer/git/protocol/src/virtualgo/InertiaTensor.h",
 		"/Users/gaffer/git/protocol/data/shaders/Gouraud.vert",
 		"/Users/gaffer/git/protocol/tests/TestDNSResolver.cpp",
 		"/Users/gaffer/git/protocol/data/shaders/Diffuse.vert",
 		"/Users/gaffer/git/protocol/src/game/Console.cpp",
-		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.h",
 		"/Users/gaffer/git/protocol/src/game/StoneRender.h",
 		"/Users/gaffer/git/protocol/src/game/StoneRender.cpp",
 		"/Users/gaffer/git/protocol/build/obj/x64/Debug/StoneTool/ToolMesh.d",
@@ -526,9 +538,6 @@
 		"/Users/gaffer/git/protocol/src/game/GameClient.h",
 		"/Users/gaffer/git/protocol/src/game/GameClient.cpp",
 		"/Users/gaffer/git/protocol/src/protocol/Client.cpp",
-		"/Users/gaffer/git/protocol/src/game/Demo.h",
-		"/Users/gaffer/git/protocol/src/game/DemoManager.cpp",
-		"/Users/gaffer/git/protocol/src/game/DemoManager.h",
 		"/Users/gaffer/git/protocol/src/game/Console.h",
 		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.h",
 		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.cpp",
@@ -575,16 +584,7 @@
 		"/Users/gaffer/git/protocol/data/stones/Black-22.mesh",
 		"/Users/gaffer/git/protocol/tools/StoneGenerator/StoneGenerator.cpp",
 		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.cpp",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/ToolMesh.h",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/ToolMesh.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/Block.h",
-		"/Users/gaffer/git/protocol/output.txt",
-		"/Users/gaffer/git/protocol/src/protocol/BitPacker.h",
-		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.h",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/Forsyth.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Intersection.h",
-		"/Users/gaffer/git/protocol/src/vectorial/config.h",
-		"/Users/gaffer/git/protocol/src/vectorial/vec2f.h"
+		"/Users/gaffer/git/protocol/tools/StoneGenerator/ToolMesh.h"
 	],
 	"find":
 	{
@@ -628,6 +628,13 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"StoneDemo",
+			"meshData",
+			"MeshData",
+			"struct MeshData",
+			"MESH_H",
+			"numVertices = ",
+			"MODEL_H",
 			"texture_a",
 			"LightPosition",
 			"_fps",
@@ -748,14 +755,7 @@
 			"BACK",
 			"FRONT",
 			"max",
-			"// todo: need to ",
-			"using namespace protocol;",
-			"use namespace protocol;",
-			"ADDRESS_IPV4",
-			"PROTOCOL_CHECK",
-			"PROTOCOL_ARRAY_NEW",
-			"PROTOCOL_NEW_ARRAY",
-			"PROTOCOL_DELETE_ARRAY"
+			"// todo: need to "
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -848,6 +848,14 @@
 		"selected_items":
 		[
 			[
+				"wouldbe",
+				"WOULD BE NICE"
+			],
+			[
+				"changes",
+				"CHANGES"
+			],
+			[
 				"todo",
 				"TODO"
 			],
@@ -856,36 +864,72 @@
 				"src/game/StoneDemo.cpp"
 			],
 			[
+				"model.cpp",
+				"src/game/Model.cpp"
+			],
+			[
 				"meshmanager.cpp",
 				"src/game/MeshManager.cpp"
 			],
 			[
-				"stone.vert",
-				"data/shaders/Stone.vert"
+				"mesh.cpp",
+				"tools/Stone/ToolMesh.cpp"
+			],
+			[
+				"render.h",
+				"src/game/Render.h"
+			],
+			[
+				"model.h",
+				"src/game/Model.h"
 			],
 			[
 				"stone.frag",
 				"data/shaders/Stone.frag"
 			],
 			[
+				"stone.vert",
+				"data/shaders/Stone.vert"
+			],
+			[
+				"demomanager.cpp",
+				"src/game/DemoManager.cpp"
+			],
+			[
+				"stonedemo.h",
+				"src/game/StoneDemo.h"
+			],
+			[
+				"demo.h",
+				"src/game/Demo.h"
+			],
+			[
+				"would",
+				"WOULD BE NICE"
+			],
+			[
 				"mesh.h",
 				"src/game/Mesh.h"
+			],
+			[
+				"meshmanager.h",
+				"src/game/MeshManager.h"
+			],
+			[
+				"model",
+				"src/game/Model.h"
+			],
+			[
+				"pbr",
+				"PBR"
 			],
 			[
 				"stonetool.cpp",
 				"tools/Stone/StoneTool.cpp"
 			],
 			[
-				"changes",
-				"CHANGES"
-			],
-			[
 				"biconvex.h",
 				"src/virtualgo/Biconvex.h"
-			],
-			[
-				"mesh.cpp",
-				"src/game/Mesh.cpp"
 			],
 			[
 				"game.cpp",
@@ -902,10 +946,6 @@
 			[
 				"nv_dds.h",
 				"src/game/nv_dds.h"
-			],
-			[
-				"render.h",
-				"src/game/Render.h"
 			],
 			[
 				"nv_dds.cpp",
@@ -936,10 +976,6 @@
 				"src/game/StoneManager.h"
 			],
 			[
-				"would",
-				"WOULD BE NICE"
-			],
-			[
 				"gouraud.vert",
 				"data/shaders/Gouraud.vert"
 			],
@@ -950,10 +986,6 @@
 			[
 				"stonerender.h",
 				"src/game/StoneRender.h"
-			],
-			[
-				"meshmanager.h",
-				"src/game/MeshManager.h"
 			],
 			[
 				"meshmnager.h",
@@ -976,20 +1008,8 @@
 				"src/game/Console.cpp"
 			],
 			[
-				"stonedemo.h",
-				"src/game/StoneDemo.h"
-			],
-			[
 				"demo.cpp",
 				"src/game/StoneDemo.cpp"
-			],
-			[
-				"demo.h",
-				"src/game/Demo.h"
-			],
-			[
-				"demomanager.cpp",
-				"src/game/DemoManager.cpp"
 			],
 			[
 				"demomanager.h",
@@ -1338,26 +1358,6 @@
 			[
 				"client.h",
 				"src/protocol/Client.h"
-			],
-			[
-				"connection.h",
-				"src/protocol/Connection.h"
-			],
-			[
-				"channel.h",
-				"src/protocol/Channel.h"
-			],
-			[
-				"memory.cpp",
-				"src/core/Memory.cpp"
-			],
-			[
-				"common.cpp",
-				"src/core/Common.cpp"
-			],
-			[
-				"common.h",
-				"src/core/Common.h"
 			]
 		],
 		"width": 0.0

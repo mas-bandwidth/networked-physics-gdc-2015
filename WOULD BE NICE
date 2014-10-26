@@ -2,21 +2,69 @@ WOULD BE NICE:
 
     ----------------------------------
 
-    Don't need separate black and white stone models.
-
-    Save some memory and load time by just having one mesh per stone size.
+    A nice script or program that automatically converts all out of data
+    cubemap data from assets, but only as needed (as they are expensive)
 
     ----------------------------------
 
-    Create a separation between the mesh and the concept of a "model"
+    Convert the cherry blossoms to a .dds cubemap cross format.
 
-    A model is a higher level concept that wraps up the concepts specific
-    to types of models, eg. VAO setup. Shader specific setup, and so on.
+    Try out the cherry blossoms cubemap in game
 
-    A mesh is just the VBO and IBO.
+    ----------------------------------
 
-    This is important to establish early on so the pattern for rendering is clear
-    and a bunch of code is not written is an overly specific fashion just for go stones.
+    Implement nice model "ModelBegin" and "ModelEnd" functions (select shader, VAO etc.)
+
+    Implement nice helper functions for model to bind shader locations etc.
+
+    eg. for vector type, matrix4 type, matrix3 type, vec4, vec3, float, integer...
+
+    Convert existing shader location setup to use helper functions.
+
+    ----------------------------------
+
+    Implement model manager and cache models as created.
+
+    How to identify models? They're really unique things without 1-1 mapping to filename.
+
+    I think I need a general resource handle concept.
+
+    Models tend to refer to other resources. Models should know when any of their
+    dependencies have changed, so they know to recreate themselves.
+
+    This means I think that handles should be built with dirty flags in them,
+    or at least sequence numbers per-resource flag, so when you get that resource
+    you can ask "is it the same as when I got this handle". If the answer is no,
+    you can reload it.
+
+    In fact this reloading could be made automatic.
+
+    ----------------------------------
+
+    Seems the model manager should be in charge, eg. it should drive loading of models
+    and shaders and textures.
+
+    You should ask to reload a model.
+
+    It's probably not reasonable to just reload shaders, or just reload models.
+
+    If you reload shaders or models, any models must be marked dirty that reference
+    these shaders.
+
+    This means these managers must track references.
+
+    This could get a bit tricky. Need to design something smart.
+
+    ----------------------------------
+
+    Model manager should detect when either shader, or mesh is dirty and
+    recreate all of the stuff on top (eg. instance buffer, VAO and all its setup)
+    at will.
+
+    This will allow the code to easily handle dynamically reloading mesh data,
+    texture data, shaders...
+
+    Must be coded this way from the beginning so the code is designed to handle this.
 
     ----------------------------------
 
@@ -33,28 +81,6 @@ WOULD BE NICE:
     Code a tool that actually compiles the shaders to check that they compile before going fullscreen.
 
     It's annoying to work on shaders and continually have them not compile properly and having to quit out of the app.
-
-    -----------------
-
-    Seems that in fact the ibo/vbo should be owned by the mesh.
-
-    But vao itself the way to render it, the shader to use, and the bindings for all the vert data, 
-    instance data to the vao should perhaps be a higher level concept, eg. like a "model"
-
-    This would allow the same mesh to be loaded, but multiple VAOs could be setup referring to it.
-
-    This would allow greater flexibility with different shaders and different ways to render meshes.
-
-    But it would create difficulties with dependencies, eg. the model would need to know if the mesh
-    has changed that it needs to destroy the vao and recreate it.
-
-    This is probably not too hard though.
-
-    ^---- I think this is really the key thing. The mesh corresponds to the IBO/VBO only. The rest is "per-model"
-          that is a thing created referencing the mesh, but is not the mesh itself.
-
-    ^---- The model could also reference a material, which itself is a model like concept on top of a texture,
-          eg. information to interpret how to setup the texture and so on.
 
     ------------------
 
@@ -108,12 +134,6 @@ WOULD BE NICE:
 
     This will let me run the game like "Client +demo stones" while iterating on a particular demo.
 
-    ------------------
-
-    Perhaps instead of having a really general stone render function,
-    it would be much better to have a general mesh render function
-    that accepts a mesh, a shader and so on.
-    
     ------------------
 
     Need to do something so text is the same size between retina (windowed) and non-retina display (fullscreen)
@@ -177,14 +197,6 @@ WOULD BE NICE:
     Fix up the game client memory leaks on shutdown. 
 
     It's important to detect leaks as soon as they happen!
-
-    ------------------------------
-
-    Explore physically based shading with go stones. I want a level that is an array 
-    of go stones with varying physically based properties changing in a grid, like
-    the typical physically based shading tests with spheres.
-
-    Talk to Steve Marton at work to determine where to get started.
 
     ------------------------------
 

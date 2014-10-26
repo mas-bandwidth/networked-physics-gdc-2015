@@ -1,3 +1,127 @@
+Sunday Morning, October 26th, 2014
+----------------------------------
+
+    Make sure the cubemap tool does the right thing with blurring mip levels for roughness.    
+
+    Reading the output, it appears that it does. Seems to be derived from cubegen actually.
+
+    Tried out cmft with the supplied tga. Seems like it has some bugs/issues?
+
+    Hook up code to bind the basecolor, specular, roughness, etc. by finding the shader position
+
+    I want to follow the seb legard model, which has separate diffuse and specular colors.
+
+    Study this model and try to wrap my head around it
+
+    http://seblagarde.wordpress.com/2011/08/17/hello-world/
+
+    Work out the inputs to the shader.
+
+    They seem to be:
+
+        BaseColor
+        SpecularColor
+        Roughness [0,1] (picks mip level for specular shader)
+        Metallic [0,1]
+        Gloss [0,1] -> SpecularPower[0,~8k]
+
+    Setup the shader so the per-vertex (per instance actually) inputs above
+    are transformed and passed to the fragment shader.
+
+    Setup base color and specular color for stones. Try something silly, like "Blue"
+    base color to gold (as per-demos I've seen...)
+
+    Implement a scale from non-metal (left) to metal (right) on the x axis.
+
+    Implement a scale from roughness 0 (front) to totally rough (back) on the y axis. (z is up?)
+
+    Hack up with the existing model to see diffuse color, specular color, specular from cubemap.
+
+    It seems that my phong light has the light position in the wrong space somehow.
+
+    Direct phong illumination is inverted. Error in calculation? Seems that the world
+    space coordinate for my light is correct! Fixed by avoiding "-s" in the reflection.
+
+
+Saturday Evening, October 25th, 2014
+------------------------------------
+
+    It's getting annoying having data being deleted and using simlinks
+
+    There should be a separation of "assets" (source inputs that are processed
+    to become in-game data, and the in-game data itself).
+
+    Processing of in-game data should be done directly from the data directory
+
+    It seems that data should be a directory that lives in git, and should contain
+    assets that shouldn't be cleaned when you go "pm clean".
+
+    Then update the rest of the code to look for data under "../data" and everything is fine.
+
+    Grab a bunch of cubemap assets to run through the cmft and stick them in "assets/cubemaps"
+
+    Install cmft somewhere local (eg. /usr/local/bin) for now
+
+    Manually convert the cubemaps from assets -> data form for now.
+
+    If this becomes annoying, implement a tool or script to do it for me, eg. ruby script,
+    or even a C++ tool like the fonttool that checks dependencies and avoids doing work
+    if the data cubemaps are up to date with the assets. 
+
+
+Tuesday Morning, October 21nd, 2014
+-----------------------------------
+
+    Get the model created in the stone demo.
+
+    If the model changes for any reason (up/down/left/right), set a dirty flag, destroy the model and then recreate it (dumb)
+
+    Some problems with rendering now. Stupid OpenGL -- hard to track down errors =p
+
+    Some mixup with VAO creation between mesh/model. Fixed but still having problems.
+
+    Another problem with not binding the IBO to the VAO. Stupid inconsistent OpenGL =p
+
+    After this refactor, I can reuse VBO and IBO across multiple different models
+    with different shaders and per-instance data setup. This is really flexible.
+
+
+Monday Evening - October 20st, 2014
+-----------------------------------
+
+    Setup per-instance properties for go stone rendering:
+
+        1. BaseColor
+        2. Metallic
+        3. Specular
+        4. Roughness
+
+    Can't add these to the vertex attribute yet, because they are not used by the shader.
+
+    Need to split out the concept of "Model" from "Mesh" and make the mesh only the IBO/VBO.
+
+    To create a model you must pass in both a shader *and* a mesh.
+
+    For the moment models will be just one type, the stone model, but eventually
+    there could be different model types with different vertex setups.
+
+    For the moment do everything specific to the stone in the model,
+    but eventually there could be multiple model types with different
+    shaders and different per-instance data that needs setup in different
+    ways.
+
+    For example, some models would have texture coordinates in the mesh
+    and would need to be setup to access those coordinates from there,
+    while the stone will generate texture coordinates in the vertex shader.
+
+    Added new model class.
+
+    Brought across the code to create the VAO and the instance buffer.
+
+
+*** RESPAWN 2 WEEK BREAK ENDS :( ***
+
+
 Saturday Evening - October 18th, 2014
 -------------------------------------
 
@@ -837,7 +961,10 @@ Friday Night, October 3rd, 2014:
     Now have text rendering with color per-strings!
     
 
-Wednesday Night, October 2nd, 2014:
+*** RESPAWN 2 WEEK BREAK BEGINS ***
+
+
+Wednesday Night, October 1st, 2014:
 -----------------------------------
 
     Fixed the shader compilation so it prints errors out compilation properly

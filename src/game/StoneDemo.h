@@ -9,7 +9,7 @@ class StoneDemo : public Demo
 {
 public:
 
-    StoneDemo();
+    StoneDemo( core::Allocator & allocator );
 
     ~StoneDemo();
 
@@ -22,6 +22,10 @@ public:
     virtual bool KeyEvent( int key, int scancode, int action, int mods ) override;
 
     virtual bool CharEvent( unsigned int code ) override;
+
+private:
+
+    core::Allocator * m_allocator;
 };
 
 #endif // #ifdef CLIENT

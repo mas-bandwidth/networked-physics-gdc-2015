@@ -1,102 +1,19 @@
 DONE:
 
-    Setup per-instance properties for go stone rendering:
-
-        1. BaseColor
-        2. Metallic
-        3. Specular
-        4. Roughness
-
-    Can't add these to the vertex attribute yet, because they are not used by the shader.
-
-    Need to split out the concept of "Model" from "Mesh" and make the mesh only the IBO/VBO.
-
-    To create a model you must pass in both a shader *and* a mesh.
-
-    For the moment models will be just one type, the stone model, but eventually
-    there could be different model types with different vertex setups.
-
-    For the moment do everything specific to the stone in the model,
-    but eventually there could be multiple model types with different
-    shaders and different per-instance data that needs setup in different
-    ways.
-
-    For example, some models would have texture coordinates in the mesh
-    and would need to be setup to access those coordinates from there,
-    while the stone will generate texture coordinates in the vertex shader.
-
-    Added new model class.
-
-    Brought across the code to create the VAO and the instance buffer.
-
 TODO:
 
-    Get the model created in the stone demo.
-
-    If the model changes for any reason (up/down/left/right), set a dirty flag, destroy the model and then recreate it (dumb)
-
     ----------------------------------
 
-    Implement model manager and cache models as created.
-
-    How to identify models? They're really unique things without 1-1 mapping to filename.
-
-    I think I need a model handle concept.
-
-    Seems the model manager should be in charge, eg. it should drive loading of models
-    and shaders and textures.
-
-    You should ask to reload a model.
-
-    It's probably not reasonable to just reload shaders, or just reload models.
-
-    If you reload shaders or models, any models must be marked dirty that reference
-    these shaders.
-
-    This means these managers must track references.
-
-    This could get a bit tricky. Need to design something smart.
-
-    ----------------------------------
-
-    Model manager should detect when either shader, or mesh is dirty and
-    recreate all of the stuff on top (eg. instance buffer, VAO and all its setup)
-    at will.
-
-    This will allow the code to easily handle dynamically reloading mesh data,
-    texture data, shaders...
-
-    Must be coded this way from the beginning so the code is designed to handle this.
-
-    ----------------------------------
-
-    Study UE4 shader model to understand the inputs and controls. What range each is. How they work.
-
-    http://blog.selfshadow.com/publications/s2013-shading-course/
-
-    Actually, I want to follow the seb legard model, which has separate diffuse and specular colors.
+    Reread Seb Legarde stuff again start to finish.
 
     http://seblagarde.wordpress.com/2011/08/17/hello-world/
 
-    ----------------------------------
+    Dig in a bit deeper into the source material (especially Naty's siggraph talks)
+    and understand the math and physical reasoning behind it.
 
-    Try to get my own basic model working
+    Start here:
 
-    Implement a scale from non-metal (left) to metal (right) on the x axis.
-
-    Implement a scale from roughness 0 (front) to totally rough (back) on the y axis. (z is up?)
-
-    ----------------------------------
-
-    Implement base color black/white and allow switching between black and white.
-
-    ----------------------------------
-
-    Identify areas where my math is weak and work to study those parts.
-
-    ----------------------------------
-
-    Research how to work in linear space and then convert to RGB at the end with tonemapping.
+    http://renderwonk.com/publications/s2010-shading-course/hoffman/s2010_physically_based_shading_hoffman_a_notes.pdf
 
     ----------------------------------
 
@@ -104,7 +21,27 @@ TODO:
 
     ----------------------------------
 
-    Get go board rendering working.
+    Identify areas where my math is weak and work to study those parts.
+
+    Khan Academy? Probably the best bet to start.
+
+    Get a desk so I can study.
+
+    ----------------------------------
+
+    Research how to work in linear space and then convert to RGB at the end with tonemapping.
+
+    ----------------------------------
+
+    Get go board rendering working
+
+    ----------------------------------
+
+    Render skybox and then in-game, render a cubemap from the center of a stone (size 35?)
+
+    Make sure this cubemap is captured in HDR, eg. pre-tonemapping.
+
+    This cubemap can then be input
 
     ----------------------------------
 

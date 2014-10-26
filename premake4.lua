@@ -218,7 +218,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 FontTool" == 0 then
-                if os.execute "bin/FontTool data/fonts/Fonts.json" ~= 0 then
+                if os.execute "bin/FontTool assets/fonts/Fonts.json" ~= 0 then
                     os.exit(1)
                 end
             end
@@ -244,52 +244,6 @@ if not os.is "windows" then
 
     newaction
     {
-        trigger     = "shaders",
-        description = "Build shaders",
-        valid_kinds = premake.action.get("gmake").valid_kinds,
-        valid_languages = premake.action.get("gmake").valid_languages,
-        valid_tools = premake.action.get("gmake").valid_tools,
-     
-        execute = function ()
-            if os.execute "mkdir -p bin/data; rm -f bin/data/shaders; ln -s ~/git/protocol/data/shaders bin/data/shaders" ~= 0 then
-                os.exit(1)
-            end
-        end
-    }
-
-    newaction
-    {
-        trigger     = "cubemaps",
-        description = "Build cubemaps",
-        valid_kinds = premake.action.get("gmake").valid_kinds,
-        valid_languages = premake.action.get("gmake").valid_languages,
-        valid_tools = premake.action.get("gmake").valid_tools,
-     
-        execute = function ()
-            if os.execute "mkdir -p bin/data; rm -f bin/data/cubemaps; ln -s ~/git/protocol/data/cubemaps bin/data/cubemaps" ~= 0 then
-                os.exit(1)
-            end
-        end
-    }
-
-    newaction
-    {
-        trigger     = "data",
-        description = "Build game data",
-        valid_kinds = premake.action.get("gmake").valid_kinds,
-        valid_languages = premake.action.get("gmake").valid_languages,
-        valid_tools = premake.action.get("gmake").valid_tools,
-     
-        execute = function ()
-            premake.action.call( "fonts" )
-            premake.action.call( "shaders" )
-            premake.action.call( "cubemaps" )
-            os.execute "mkdir -p bin/data; rm -f bin/data/stones; ln -s ~/git/protocol/data/stones bin/data/stones"
-        end
-    }
-
-    newaction
-    {
         trigger     = "client",
         description = "Build and run game client",
         valid_kinds = premake.action.get("gmake").valid_kinds,
@@ -300,8 +254,7 @@ if not os.is "windows" then
             if os.execute "make -j32 Client" ~= 0 then
                 os.exit(1)
             end
-            premake.action.call( "data" )
-            os.execute "cd bin; ./Client"
+            os.execute "bin/Client"
         end
     }
 
@@ -315,7 +268,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 Server" == 0 then
-                os.execute "cd bin; ./Server"
+                os.execute "bin/Server"
             end
         end
     }
@@ -330,7 +283,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 SoakProtocol" == 0 then
-                os.execute "cd bin; ./SoakProtocol"
+                os.execute "bin/SoakProtocol"
             end
         end
     }
@@ -345,7 +298,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 SoakClientServer" == 0 then
-                os.execute "cd bin; ./SoakClientServer"
+                os.execute "bin/SoakClientServer"
             end
         end
     }
@@ -360,7 +313,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 ProfileProtocol" == 0 then
-                os.execute "cd bin; ./ProfileProtocol"
+                os.execute "bin/ProfileProtocol"
             end
         end
     }
@@ -375,7 +328,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j32 ProfileClientServer" == 0 then
-                os.execute "cd bin; ./ProfileClientServer"
+                os.execute "bin/ProfileClientServer"
             end
         end
     }

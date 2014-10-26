@@ -3,6 +3,8 @@
 
 #ifdef CLIENT
 
+namespace core { class Allocator; }
+
 class Demo
 {
 public:

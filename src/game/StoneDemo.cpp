@@ -77,13 +77,23 @@ static int stoneMode = SINGLE_STONE;
 
 static GLuint cubemap_texture = 0;
 
-StoneDemo::StoneDemo()
+static bool stoneDirty = true;
+static Model * stoneModel = nullptr;
+
+StoneDemo::StoneDemo( core::Allocator & allocator )
 {
-    // ...
+    stoneDirty = true;
+    m_allocator = &allocator;
 }
 
 StoneDemo::~StoneDemo()
 {
+    if ( stoneModel )
+    {
+        DestroyModel( *m_allocator, stoneModel );
+        stoneModel = nullptr;
+    }
+
     if ( cubemap_texture )
     {
         glDeleteTextures( 1, &cubemap_texture );
@@ -156,31 +166,48 @@ void StoneDemo::Update()
 
 void StoneDemo::Render()
 {
-    const char * stoneName = ( stoneColor == WHITE ) ? white_stones[stoneSize] : black_stones[stoneSize];
-    const StoneData * stoneData = global.stoneManager->GetStoneData( stoneName );
-    if ( !stoneData )
-        return;
-
-    Mesh * stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
-    if ( !stoneMesh )
+    if ( stoneDirty )
     {
-        global.meshManager->LoadMesh( stoneData->mesh_filename );
-        stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
-        if ( !stoneMesh )
+        if ( stoneModel )
+        {
+            DestroyModel( *m_allocator, stoneModel );
+            stoneModel = nullptr;
+        }
+
+        const char * stoneName = ( stoneColor == WHITE ) ? white_stones[stoneSize] : black_stones[stoneSize];
+        const StoneData * stoneData = global.stoneManager->GetStoneData( stoneName );
+        if ( !stoneData )
             return;
+
+        Mesh * stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
+        if ( !stoneMesh )
+        {
+            global.meshManager->LoadMesh( stoneData->mesh_filename );
+            stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
+            if ( !stoneMesh )
+                return;
+        }
+
+        GLuint shader = global.shaderManager->GetShader( "Stone" );
+        if ( !shader )
+            return;
+
+        stoneModel = CreateModel( *m_allocator, shader, stoneMesh );
+
+        if ( stoneModel )
+            stoneDirty = false;
     }
 
-    GLuint shader = global.shaderManager->GetShader( "Stone" );
-    if ( !shader )
+    if ( !stoneModel )
         return;
 
-    glUseProgram( shader );
+    glUseProgram( stoneModel->shader );
 
     glActiveTexture( GL_TEXTURE0 );
 
     glBindTexture( GL_TEXTURE_CUBE_MAP, cubemap_texture );
 
-    int location = glGetUniformLocation( shader, "CubeMap" );
+    int location = glGetUniformLocation( stoneModel->shader, "CubeMap" );
     if ( location >= 0 )
         glUniform1i( location, 0 );
 
@@ -198,11 +225,11 @@ void StoneDemo::Render()
 
             vec4 lightPosition = vec4(0,0,10,1);
 
-            int location = glGetUniformLocation( shader, "EyePosition" );
+            int location = glGetUniformLocation( stoneModel->shader, "EyePosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &eyePosition[0] );
 
-            location = glGetUniformLocation( shader, "LightPosition" );
+            location = glGetUniformLocation( stoneModel->shader, "LightPosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &lightPosition[0] );
 
@@ -213,8 +240,13 @@ void StoneDemo::Render()
             instanceData[0].model = modelMatrix;
             instanceData[0].modelView = viewMatrix * modelMatrix;
             instanceData[0].modelViewProjection = projectionMatrix * viewMatrix * modelMatrix;
+            instanceData[0].baseColor = vec3( 0.18f, 0.18f, 0.9f );               // blue
+            instanceData[0].specularColor = vec3( 1.0f, 0.765557, 0.336057 );     // gold
+            instanceData[0].roughness = 0.5f;
+            instanceData[0].metallic = 0.5f;
+            instanceData[0].gloss = 0.5f;
 
-//            DrawModels( *stoneMesh, NumInstances, instanceData );
+            DrawModels( *stoneModel, NumInstances, instanceData );
         }
         break;
 
@@ -235,16 +267,20 @@ void StoneDemo::Render()
 
             vec4 lightPosition = vec4(0,0,100,1);
 
-            int location = glGetUniformLocation( shader, "EyePosition" );
+            int location = glGetUniformLocation( stoneModel->shader, "EyePosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &eyePosition[0] );
 
-            location = glGetUniformLocation( shader, "LightPosition" );
+            location = glGetUniformLocation( stoneModel->shader, "LightPosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &lightPosition[0] );
 
+            float roughness = 0.0f;
+
             for ( int i = 0; i < 19; ++i )
             {
+                float metallic = 0.0f;
+
                 for ( int j = 0; j < 19; ++j )
                 {  
                     const float x = -19.8f + 2.2f * i;
@@ -259,12 +295,21 @@ void StoneDemo::Render()
                     instanceData[instance].model = modelMatrix;
                     instanceData[instance].modelView = modelViewMatrix;
                     instanceData[instance].modelViewProjection = projectionMatrix * modelViewMatrix;
+                    instanceData[instance].baseColor = vec3( 0.18f, 0.18f, 0.9f );             // blue
+                    instanceData[instance].specularColor = vec3( 1.0f, 0.765557, 0.336057 );   // gold
+                    instanceData[instance].roughness = roughness;
+                    instanceData[instance].metallic = metallic;
+                    instanceData[instance].gloss = 0.5f;
 
                     instance++;
+
+                    metallic += 1.0f / 19.0f;
                 }
+
+                roughness += 1.0f / 19.0f;
             }
 
-//            DrawModels( *stoneMesh, NumInstances, instanceData );
+            DrawModels( *stoneModel, NumInstances, instanceData );
         }
         break;
     }
@@ -283,6 +328,7 @@ bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )
             stoneSize++;
             if ( stoneSize > NumStoneSizes - 1 )
                 stoneSize = NumStoneSizes - 1;
+            stoneDirty = true;
             return true;
         }        
         else if ( key == GLFW_KEY_DOWN )
@@ -290,14 +336,20 @@ bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )
             stoneSize--;
             if ( stoneSize < 0 )
                 stoneSize = 0;
+            stoneDirty = true;
+            return true;
         }
         else if ( key == GLFW_KEY_LEFT )
         {
             stoneColor = BLACK;
+            stoneDirty = true;
+            return true;
         }
         else if ( key == GLFW_KEY_RIGHT )
         {
             stoneColor = WHITE;
+            stoneDirty = true;
+            return true;
         }
         else if ( key == GLFW_KEY_1 )
         {

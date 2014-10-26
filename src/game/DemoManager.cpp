@@ -33,7 +33,7 @@ bool DemoManager::LoadDemo( const char * name )
 
     if ( strcmp( name, "stone" ) == 0 )
     {
-        m_demo = CORE_NEW( *m_allocator, StoneDemo );
+        m_demo = CORE_NEW( *m_allocator, StoneDemo, *m_allocator );
     }
     else
     {

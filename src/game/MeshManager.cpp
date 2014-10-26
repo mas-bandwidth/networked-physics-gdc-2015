@@ -72,33 +72,14 @@ Mesh * LoadMesh( core::Allocator & allocator, const char * filename )
         return nullptr;
     }
 
-    const int LOCATION_VERTEX_POSITION = 0;
-    const int LOCATION_VERTEX_NORMAL = 1;
-
-    GLuint vao;
-    glGenVertexArrays( 1, &vao );
-    glBindVertexArray( vao );
-    glEnableVertexAttribArray( 0 );
-    glEnableVertexAttribArray( 1 );
-
-    GLuint vbo;
-    glGenBuffers( 1, &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
+    glGenBuffers( 1, &mesh->vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, mesh->vbo );
     glBufferData( GL_ARRAY_BUFFER, mesh->numTriangles * sizeof(MeshVertex), vertices, GL_STATIC_DRAW );
-    glVertexAttribPointer( LOCATION_VERTEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (GLubyte*)0 );
-    glVertexAttribPointer( LOCATION_VERTEX_NORMAL, 4, GL_INT_2_10_10_10_REV, GL_TRUE, sizeof(MeshVertex), (GLubyte*)(3*4) );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
  
-    GLuint ibo;
-    glGenBuffers( 1, &ibo );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+    glGenBuffers( 1, &mesh->ibo );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, mesh->ibo );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, 2*numIndices, indices, GL_STATIC_DRAW );
-
-    mesh->vbo = vbo;
-    mesh->ibo = ibo;
-
-    glBindVertexArray( 0 );
-
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 
     CORE_DELETE_ARRAY( core::memory::scratch_allocator(), vertices, mesh->numVertices );
