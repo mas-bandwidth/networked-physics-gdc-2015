@@ -107,7 +107,7 @@ StoneDemo::~StoneDemo()
 
 bool StoneDemo::Initialize()
 {
-    const char * filename = "data/cubemaps/Output.dds";
+    const char * filename = "data/cubemaps/uffizi.dds";
 
     // todo: check if the filename doesn't exist. if not don't try to load it
 
@@ -119,7 +119,6 @@ bool StoneDemo::Initialize()
         return false;
     }
 
-    /*
     printf( "is_compressed = %d\n", image.is_compressed() );
     printf( "is_cubemap = %d\n", image.is_cubemap() );
     printf( "is_valid = %d\n", image.is_valid() );
@@ -127,7 +126,6 @@ bool StoneDemo::Initialize()
     printf( "height = %d\n", image.get_height() );
     printf( "depth = %d\n", image.get_depth() );
     printf( "num_mipmaps = %d\n", image.get_num_mipmaps() );
-    */
 
     glGenTextures( 1, &cubemap_texture );
 

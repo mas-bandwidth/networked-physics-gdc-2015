@@ -517,12 +517,11 @@ void CDDSImage::load(istream& is, bool flipImage) {
     char filecode[4];
     is.read(filecode, 4);
 
-    // FUCK YOU
-    /*
-    if (strncmp(filecode, "DDS ", 4) != 0) {
-        throw runtime_error("not a DDS file");
+    if (strncmp(filecode, "DDS ", 4) != 0) 
+    {
+        printf( "NOT A DDS FILE\n" );
+        return;
     }
-    */
 
     // read in DDS header
     DDS_HEADER ddsh;
@@ -555,6 +554,7 @@ void CDDSImage::load(istream& is, bool flipImage) {
             m_components = 4;
             break;
         default:
+            printf( "UNKNOWN TEXTURE COMPRESSION\n" );
             break;
             // FUCK YOU
             /*
@@ -591,6 +591,7 @@ void CDDSImage::load(istream& is, bool flipImage) {
         m_format = GL_LUMINANCE;
         m_components = 1;
     } else {
+        printf( "UNKNOWN TEXTURE FORMAT\n" );
         // FUCK YOU
         /*
         throw runtime_error("unknow texture format");
@@ -602,6 +603,8 @@ void CDDSImage::load(istream& is, bool flipImage) {
     width = ddsh.dwWidth;
     height = ddsh.dwHeight;
     depth = clamp_size(ddsh.dwDepth);   // set to 1 if 0
+
+    printf( "width = %d, height = %d, depth = %d\n", width, height, depth );
 
     // use correct size calculation function depending on whether image is 
     // compressed

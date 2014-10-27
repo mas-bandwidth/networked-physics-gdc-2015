@@ -2,18 +2,22 @@ DONE:
 
 TODO:
 
+    Need to find a replacement for nv_dds.cpp that can handle HDR cubemaps (eg. float32 format)
+
+    Once this is working, load in a HDR cubemap instead of the LDR for radiance.
+
+    Implement some small amount of reflection on the go stone even when pure non-metal (small scale factor)
+
     ----------------------------------
 
-    Consensus seems to be that I should convert to linear colorspace now before going any further.
+    Get roughness working with this HDR cubemap, eg. use roughness to index the mip chain.
 
-    Research how to work in linear space and then convert to sRGB at the end with tonemapping.
+    Look into a normalized BRDF function that accepts roughness, eg. microfacet model.
 
-    Also, should my font textures be sRGB or linear space? Which are they? Linear I assume?
+    ----------------------------------
 
-    Study that article/GDC talk that Wolfgang recommended to understand what should be linear
-    and what should be in sRGB.
-
-    Study tonemapping.
+    Get fresnel working so some reflection is visible even on the diffuse stone and more 
+    reflection is visible at grazing angles (quite important for realistic go stone visuals)
 
     ----------------------------------
 

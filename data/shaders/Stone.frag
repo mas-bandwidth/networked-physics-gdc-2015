@@ -29,6 +29,18 @@ float3 FresnelSchlick(float3 SpecularColor,float3 E,float3 H)
 FresnelSchlick(SpecularColor, L, H) * ((SpecularPower + 2) / 8 ) * pow(saturate(dot(N, H)), SpecularPower) * dotNL;
 */
 
+vec4 tonemap_none( vec3 color )
+{
+    return vec4( color, 1 );
+}
+
+vec4 tonemap_reinhardt( vec3 color )
+{
+    color *= 16.0;
+    color = color / ( vec3(1,1,1) + color );
+    return vec4( color, 1 );
+}
+
 void main()
 {
     vec3 n = normalize( Normal );
@@ -52,5 +64,5 @@ void main()
 
     vec3 MetalColor = SpecularColor * ( SpecularIntensity + CubeMapColor );
 
-    FragColor = vec4( mix( NonMetalColor, MetalColor, Metallic ), 1 );
+    FragColor = tonemap_none( mix( NonMetalColor, MetalColor, Metallic ) );
 }

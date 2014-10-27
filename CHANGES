@@ -1,3 +1,24 @@
+Sunday Evening, October 27th, 2014
+----------------------------------
+
+    Consensus seems to be that I should convert to linear colorspace now before going any further.
+
+    Research how to work in linear space and then convert to sRGB at the end with tonemapping.
+
+    Also, should my font textures be sRGB or linear space? Which are they? Linear I assume?
+
+    Study that article/GDC talk that Wolfgang recommended to understand what should be linear
+    and what should be in sRGB.
+
+    Study tonemapping.
+
+    Hooked up simple Reinhardt tonemapping. Don't really see the point of it yet.
+
+    Can't use the other filmic one, because it's got gamma correction built in, and I'm using sRGB framebuffer ext.
+
+    Blocked now that the stupid nv_dds source doesn't support float texture formats. Fucking piece of shit.
+
+
 Sunday Afternoon, October 26th, 2014
 ------------------------------------
 
