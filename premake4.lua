@@ -1,7 +1,7 @@
 solution "Protocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
-    includedirs { "src", "." }
+    includedirs { "src", "external", "tools", "." }
     platforms { "x64", "x32" }
     configurations { "Debug", "Release" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
@@ -30,6 +30,11 @@ project "virtualgo"
     kind "StaticLib"
     files { "src/virtualgo/*.h", "src/virtualgo/*.cpp" }
     links { "core" }
+    targetdir "lib"
+
+project "nvImage"
+    kind "StaticLib"
+    files { "external/nvImage/*.h", "external/nvImage/*.cpp" }
     targetdir "lib"
 
 project "UnitTest"
@@ -84,7 +89,7 @@ project "StoneTool"
 project "Client"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol", "virtualgo", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    links { "core", "network", "protocol", "virtualgo", "nvImage", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
@@ -97,13 +102,13 @@ project "Server"
     targetdir "bin"
 
 if _ACTION == "clean" then
-    os.execute "rm -rf bin"     -- IMPORTANT: LUA os.rmdif follows symlinks and we don't want that!!!
+    os.rmdir "bin"
     os.rmdir "lib"
     os.rmdir "obj"
     os.rmdir "build"
     if not os.is "windows" then
         os.execute "rm -f Protocol.zip"
-        os.execute "rm -f p*.txt"
+        os.execute "rm -f *.txt"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"

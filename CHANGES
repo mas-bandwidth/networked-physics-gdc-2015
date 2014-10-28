@@ -1,3 +1,25 @@
+Monday Evening, October 28th, 2014
+----------------------------------
+
+    Need to find a replacement for nv_dds.cpp that can handle HDR cubemaps (eg. float32 format)
+
+    One option to explore is a library called soil2. Stupid name.
+
+    Loosely built and installed this to evaluate.
+
+    Nope. Don't like it.
+
+    Found a better bunch of source based on some samples in the NVidia SDK. "nvImage"
+
+    Created an "external" directory for external libraries, eg. nvImage
+
+    Should probably put the forsyth code in there too, eg. misc
+
+    Got nvImage compiling warning free.
+
+    Removed nv_dds.cpp and code usage (#ifdef'd out)
+
+
 Sunday Evening, October 27th, 2014
 ----------------------------------
 

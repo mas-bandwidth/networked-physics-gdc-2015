@@ -12,14 +12,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include "nv_dds.h"
+#include "nvImage/nvImage.h"
 
 using glm::mat3;
 using glm::mat4;
 using glm::vec3;
 using glm::vec4;
-
-using namespace nv_dds;
 
 const int NumStoneSizes = 14;
 
@@ -107,6 +105,7 @@ StoneDemo::~StoneDemo()
 
 bool StoneDemo::Initialize()
 {
+#if 0
     const char * filename = "data/cubemaps/uffizi.dds";
 
     // todo: check if the filename doesn't exist. if not don't try to load it
@@ -157,6 +156,8 @@ bool StoneDemo::Initialize()
     glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
 
     check_opengl_error( "after load cubemap dds" );
+
+#endif
 
     return true;
 }
@@ -312,10 +313,10 @@ void StoneDemo::Render()
 
                     instance++;
 
-                    roughness += 1.0f / float(Size);
+                    roughness += 1.0f / float(Size-1);
                 }
 
-                metallic += 1.0f / float(Size);
+                metallic += 1.0f / float(Size-1);
             }
 
             DrawModels( *stoneModel, NumInstances, instanceData );

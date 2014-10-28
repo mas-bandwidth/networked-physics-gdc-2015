@@ -2,11 +2,9 @@ DONE:
 
 TODO:
 
-    Need to find a replacement for nv_dds.cpp that can handle HDR cubemaps (eg. float32 format)
+    Convert DDS loading to use nvImage to load HDR uffizi cubemap.
 
-    Once this is working, load in a HDR cubemap instead of the LDR for radiance.
-
-    Implement some small amount of reflection on the go stone even when pure non-metal (small scale factor)
+    Work on exposure and get the scene looking good with HDR, may need to bump up direct light intensity?
 
     ----------------------------------
 
@@ -54,7 +52,8 @@ TODO:
 
     Make sure this cubemap is captured in HDR, eg. pre-tonemapping.
 
-    This cubemap can then be input as 
+    This cubemap can then be input into CubeMapGen or cmft to get a correct radiance 
+    and irradiance cubemap including the go board in the scene, eg. reflected color of the wood.
 
     ----------------------------------
 

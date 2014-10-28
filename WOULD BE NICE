@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    nvImage uses std::vector. Fix it so it doesn't.
+
+    Also clean up the code.
+
+    ----------------------------------
+
     A nice script or program that automatically converts all out of data
     cubemap data from assets, but only as needed (as they are expensive)
 
