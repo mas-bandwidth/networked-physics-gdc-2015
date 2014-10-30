@@ -2,6 +2,42 @@ DONE:
 
 TODO:
 
+    --------------------------------------------------------------
+
+    Convert the cube demo to run inside the new engine.
+
+    Do this as prep for USC game networking talk
+
+    Try to get both the basic singleplayer cube, 
+    and the side-by-side splitscreen demo working if possible.
+
+    --------------------------------------------------------------
+
+    Implement an "interpolation" demo for Nathan Lazur.
+
+    Explore various different interpolation strategies to use for 2D linear motion.
+
+    --------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ----------------------------------
+
     Convert DDS loading to use nvImage to load HDR uffizi cubemap.
 
     Work on exposure and get the scene looking good with HDR, may need to bump up direct light intensity?
