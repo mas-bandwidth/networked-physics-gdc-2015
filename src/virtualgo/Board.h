@@ -62,7 +62,7 @@ namespace virtualgo
             halfHeight = 0;
         }
 
-        void Initialize( int size, const BoardConfig & config = BoardConfig() )
+        Board( int size, const BoardConfig & config = BoardConfig() )
         {
             this->size = size;
             this->config = config;

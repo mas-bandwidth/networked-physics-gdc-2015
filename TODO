@@ -1,21 +1,54 @@
 DONE:
 
-TODO:
-
-    --------------------------------------------------------------
-
     Convert the cube demo to run inside the new engine.
 
     Do this as prep for USC game networking talk
 
-    Try to get both the basic singleplayer cube, 
-    and the side-by-side splitscreen demo working if possible.
+    First bring across as much of the cube demo engine as possible into "cubes" library.
+
+    Moved protocol related tests into tests/protocol so there can be separate tests per-library.
+
+    Tried to get UnitTest++ working for cubes tests, but it requires exceptions, which is a no-go.
+
+    Convert cubes tests from UnitTest++ to normal C++ functions with CORE_ASSERT, CORE_ASSERT_CLOSE
+
+    Split protocol tests into protocol tests and core tests, eg. "test_core"
+
+    Split out test_network from test_protocol
+
+    Implement unified tests via "pm test"
+
+    Bring across virtual go tests (convert from UnitTest++)
+
+TODO:
+
+    Fix virtualgo tests so they all pass. Seems that I need to update the tests to +z is up! OUCH!!! =p
+
+    ---------------------------------------------------------------
+
+    Fix sublime text build systems so ../external is an include directory.
+
+    ---------------------------------------------------------------
+
+    Add new "cubes" demo, eg. "load cubes"
+
+    Add command line parsing to pass into console, eg. "+demo cubes" should load cubes demo
+
+    Implement premake rules: "pm cubes" and "pm stones" so I can iterate quickly on demos.
+
+    Get the singleplayer cube working with updated rendering
 
     --------------------------------------------------------------
 
-    Implement an "interpolation" demo for Nathan Lazur.
+    Implement an "interpolation" demo for Nathan Lazur, eg: "load interpolation"
+
+    Add a premake shortcut, eg: "pm interpolation" or "pm lerp" for fast iteration.
 
     Explore various different interpolation strategies to use for 2D linear motion.
+
+    --------------------------------------------------------------
+
+    Return to PBR rendering
 
     --------------------------------------------------------------
 

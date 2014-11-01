@@ -32,42 +32,76 @@ project "virtualgo"
     links { "core" }
     targetdir "lib"
 
+project "cubes"
+    kind "StaticLib"
+    files { "src/cubes/*.h", "src/cubes/*.cpp" }
+    links { "core" }
+    targetdir "lib"
+
 project "nvImage"
     kind "StaticLib"
     files { "external/nvImage/*.h", "external/nvImage/*.cpp" }
     targetdir "lib"
 
-project "UnitTest"
+project "TestCore"
     kind "ConsoleApp"
-    files { "tests/UnitTest.cpp", "tests/Test*.cpp" }
+    files { "tests/core/*.cpp" }
+    links { "core" }
+    location "build"
+    targetdir "bin"
+
+project "TestNetwork"
+    kind "ConsoleApp"
+    files { "tests/network/UnitTest.cpp", "tests/network/Test*.cpp" }
     links { "core", "network", "protocol" }
+    location "build"
+    targetdir "bin"
+
+project "TestProtocol"
+    kind "ConsoleApp"
+    files { "tests/protocol/UnitTest.cpp", "tests/protocol/Test*.cpp" }
+    links { "core", "network", "protocol" }
+    location "build"
+    targetdir "bin"
+
+project "TestCubes"
+    kind "ConsoleApp"
+    files { "tests/cubes/*.cpp" }
+    links { "core", "cubes", "ode" }
+    location "build"
+    targetdir "bin"
+
+project "TestVirtualGo"
+    kind "ConsoleApp"
+    files { "tests/virtualgo/*.cpp" }
+    links { "core", "virtualgo", "ode" }
     location "build"
     targetdir "bin"
 
 project "SoakProtocol"
     kind "ConsoleApp"
-    files { "tests/SoakProtocol.cpp" }
+    files { "tests/protocol/SoakProtocol.cpp" }
     links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
 project "SoakClientServer"
     kind "ConsoleApp"
-    files { "tests/SoakClientServer.cpp" }
+    files { "tests/protocol/SoakClientServer.cpp" }
     links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileProtocol"
     kind "ConsoleApp"
-    files { "tests/ProfileProtocol.cpp" }
+    files { "tests/protocol/ProfileProtocol.cpp" }
     links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileClientServer"
     kind "ConsoleApp"
-    files { "tests/ProfileClientServer.cpp" }
+    files { "tests/protocol/ProfileClientServer.cpp" }
     links { "core", "network", "protocol" }
     targetdir "bin"
     location "build"
@@ -89,7 +123,7 @@ project "StoneTool"
 project "Client"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol", "virtualgo", "nvImage", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework" }
+    links { "core", "network", "protocol", "virtualgo", "cubes", "nvImage", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "ode" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
@@ -97,7 +131,7 @@ project "Client"
 project "Server"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol", "virtualgo" }
+    links { "core", "network", "protocol", "virtualgo", "ode" }
     location "build"
     targetdir "bin"
 
@@ -155,7 +189,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j32 core"
+            os.execute "make -j4 core"
         end
     }
 
@@ -168,7 +202,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j32 network"
+            os.execute "make -j4 network"
         end
     }
 
@@ -181,7 +215,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j32 protocol"
+            os.execute "make -j4 protocol"
         end
     }
 
@@ -194,21 +228,96 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j32 virtualgo"
+            os.execute "make -j4 virtualgo"
         end
     }
 
     newaction
     {
         trigger     = "test",
-        description = "Build and run unit tests",
+        description = "Build and run all unit tests",
         valid_kinds = premake.action.get("gmake").valid_kinds,
         valid_languages = premake.action.get("gmake").valid_languages,
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 UnitTest" == 0 then
-                os.execute "cd bin; ./UnitTest"
+            if os.execute "make -j4 TestCore; make -j4 TestNetwork; make -j4 TestProtocol; make -j4 TestCubes; make -j4 TestVirtualGo" == 0 then
+                os.execute "cd bin; ./TestCore; ./TestNetwork; ./TestProtocol; ./TestCubes; ./TestVirtualGo"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "test_core",
+        description = "Build and run core unit tests",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 TestCore" == 0 then
+                os.execute "cd bin; ./TestCore"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "test_network",
+        description = "Build and run network unit tests",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 TestNetwork" == 0 then
+                os.execute "cd bin; ./TestNetwork"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "test_protocol",
+        description = "Build and run protocol unit tests",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 TestProtocol" == 0 then
+                os.execute "cd bin; ./TestProtocol"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "test_cubes",
+        description = "Build and run cubes unit tests",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 TestCubes" == 0 then
+                os.execute "cd bin; ./TestCubes"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "test_virtualgo",
+        description = "Build and run virtualgo unit tests",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 TestVirtualGo" == 0 then
+                os.execute "cd bin; ./TestVirtualGo"
             end
         end
     }
@@ -222,7 +331,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 FontTool" == 0 then
+            if os.execute "make -j4 FontTool" == 0 then
                 if os.execute "bin/FontTool assets/fonts/Fonts.json" ~= 0 then
                     os.exit(1)
                 end
@@ -239,7 +348,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 StoneTool" == 0 then
+            if os.execute "make -j4 StoneTool" == 0 then
                 if os.execute "rm -rf data/stones; mkdir -p data/stones; bin/StoneTool" ~= 0 then
                     os.exit(1)
                 end
@@ -256,7 +365,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 Client" ~= 0 then
+            if os.execute "make -j4 Client" ~= 0 then
                 os.exit(1)
             end
             os.execute "bin/Client"
@@ -272,7 +381,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 Server" == 0 then
+            if os.execute "make -j4 Server" == 0 then
                 os.execute "bin/Server"
             end
         end
@@ -287,7 +396,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 SoakProtocol" == 0 then
+            if os.execute "make -j4 SoakProtocol" == 0 then
                 os.execute "bin/SoakProtocol"
             end
         end
@@ -302,7 +411,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 SoakClientServer" == 0 then
+            if os.execute "make -j4 SoakClientServer" == 0 then
                 os.execute "bin/SoakClientServer"
             end
         end
@@ -317,7 +426,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 ProfileProtocol" == 0 then
+            if os.execute "make -j4 ProfileProtocol" == 0 then
                 os.execute "bin/ProfileProtocol"
             end
         end
@@ -332,7 +441,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j32 ProfileClientServer" == 0 then
+            if os.execute "make -j4 ProfileClientServer" == 0 then
                 os.execute "bin/ProfileClientServer"
             end
         end

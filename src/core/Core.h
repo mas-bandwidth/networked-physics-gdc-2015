@@ -52,8 +52,17 @@ do                                                                              
         core::DefaultAssertHandler( #condition, __FUNCTION__, __FILE__, __LINE__ );         \
     }                                                                                       \
 } while(0)
+#define CORE_ASSERT_CLOSE( a, b, tolerance )                                                \
+do                                                                                          \
+{                                                                                           \
+    if ( fabs(a-b) > tolerance )                                                            \
+    {                                                                                       \
+        core::DefaultAssertHandler( #a " vs. " #b " is outside tolerance " #tolerance, __FUNCTION__, __FILE__, __LINE__ );         \
+    }                                                                                       \
+} while(0)
 #else
 #define CORE_ASSERT( condition ) do {} while(0)
+#define CORE_ASSERT_CLOSE( a, b, tolerance ) do {} while(0)
 #endif
 
 #define CORE_CHECK( condition )                                                             \
@@ -167,6 +176,11 @@ namespace core
     inline bool is_power_of_two( uint32_t x )
     {
         return ( x != 0 ) && ( ( x & ( x - 1 ) ) == 0 );
+    }
+
+    template <typename T> const T & min( const T & a, const T & b )
+    {
+        return ( a > b ) ? a : b;
     }
 
     template <typename T> const T & max( const T & a, const T & b )

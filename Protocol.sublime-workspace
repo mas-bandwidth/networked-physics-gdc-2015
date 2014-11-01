@@ -453,59 +453,112 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/gaffer/git/protocol"
+		"/Users/gaffer/git/protocol",
+		"/Users/gaffer/git/protocol/external",
+		"/Users/gaffer/git/protocol/external"
 	],
 	"file_history":
 	[
 		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
-		"/Users/gaffer/git/protocol/src/core/Core.h",
+		"/Users/gaffer/git/protocol/src/cubes/Engine.cpp",
+		"/Users/gaffer/git/protocol/src/cubes/Activation.cpp",
+		"/Users/gaffer/git/protocol/src/cubes/Mathematics.h",
+		"/Users/gaffer/git/protocol/src/cubes/Activation.h",
+		"/Users/gaffer/git/protocol/src/cubes/Config.h",
+		"/Users/gaffer/git/protocol/src/cubes/Cubes.h",
+		"/Users/gaffer/git/protocol/src/cubes/Game.h",
+		"/Users/gaffer/git/protocol/src/game/GameMessages.h",
+		"/Users/gaffer/git/protocol/GOALS",
+		"/Users/gaffer/git/protocol/src/cubes/Hypercube.h",
+		"/Users/gaffer/git/protocol/src/cubes/Simulation.h",
+		"/Users/gaffer/git/protocol/src/cubes/ViewObject.h",
+		"/Users/gaffer/git/protocol/virtualgo.make",
+		"/Users/gaffer/git/protocol/src/cubes/Engine.h",
+		"/Users/gaffer/git/protocol/src/cubes/Simulation.cpp",
+		"/Users/gaffer/git/cubes/shared/Engine.cpp",
+		"/Users/gaffer/git/cubes/shared/Activation.cpp",
+		"/Users/gaffer/git/cubes/shared/ViewObject.h",
+		"/Users/gaffer/git/cubes/shared/Simulation.h",
+		"/Users/gaffer/git/cubes/shared/Mathematics.h",
+		"/Users/gaffer/git/cubes/shared/Hypercube.h",
+		"/Users/gaffer/git/cubes/shared/Game.h",
+		"/Users/gaffer/git/cubes/shared/Cubes.h",
+		"/Users/gaffer/git/cubes/shared/Engine.h",
+		"/Users/gaffer/git/cubes/shared/Config.h",
+		"/Users/gaffer/git/cubes/shared/Activation.h",
+		"/Users/gaffer/git/protocol/assets/cubemaps/ennis.hdr",
+		"/Users/gaffer/git/cubes/shared/Game.cpp",
+		"/Users/gaffer/git/cubes/shared/Simulation.cpp",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/external/vectorial/simd4f.h",
+		"/Users/gaffer/git/protocol/build/Server.make",
 		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/cubes.make",
+		"/Users/gaffer/git/protocol/PBR",
 		"/Users/gaffer/git/protocol/src/game/StoneDemo.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
-		"/Users/gaffer/git/protocol/data/shaders/Stone.frag",
-		"/Users/gaffer/git/protocol/src/game/DemoManager.cpp",
-		"/Users/gaffer/git/protocol/src/game/Render.h",
-		"/Users/gaffer/git/protocol/src/game/Model.cpp",
-		"/Users/gaffer/git/protocol/src/game/Model.h",
+		"/Users/gaffer/git/protocol/src/game/StoneDemo.h",
+		"/Users/gaffer/git/protocol/external/nvImage/nvImage.cpp",
+		"/Users/gaffer/git/protocol/external/nvImage/nvImageDDS.cpp",
+		"/Users/gaffer/git/protocol/external/nvimage/nvImagePng.cpp",
+		"/Users/gaffer/git/protocol/external/nvimage/nvImage.h",
+		"/Users/gaffer/git/protocol/WOULD BE NICE",
+		"/Users/gaffer/git/protocol/nvImage.make",
+		"/Users/gaffer/git/protocol/NOTES",
+		"/Users/gaffer/git/protocol/src/game/nv_dds.h",
+		"/Users/gaffer/git/protocol/src/game/StoneManager.cpp",
 		"/Users/gaffer/git/protocol/tests/SoakProtocol.cpp",
 		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.cpp",
-		"/Users/gaffer/git/protocol/src/game/StoneDemo.h",
-		"/Users/gaffer/git/protocol/src/game/StoneManager.cpp",
+		"/Users/gaffer/soil2/make/macosx/soil2-test.make",
+		"/Users/gaffer/soil2/make/macosx/soil2-static-lib.make",
+		"/Users/gaffer/soil2/make/macosx/soil2-perf-test.make",
+		"/Users/gaffer/soil2/make/macosx/Makefile",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.frag",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
+		"/Users/gaffer/git/protocol/cmft.sh",
+		"/Users/gaffer/git/protocol/src/game/Model.cpp",
+		"/Users/gaffer/git/protocol/src/game/Model.h",
+		"/Users/gaffer/git/protocol/src/game/nv_dds.cpp",
+		"/Users/gaffer/git/protocol/src/core/Core.h",
+		"/Users/gaffer/git/protocol/tools/Stone/StoneTool.cpp",
+		"/Users/gaffer/git/protocol/bin/StoneTool",
+		"/Users/gaffer/git/protocol/src/virtualgo/InertiaTensor.h",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.frag",
+		"/Users/gaffer/git/protocol/src/game/Font.h",
+		"/Users/gaffer/git/protocol/assets/fonts/AnonymousPro/README.txt",
+		"/Users/gaffer/git/protocol/data/shaders/Console.frag",
+		"/Users/gaffer/git/protocol/output.txt",
+		"/Users/gaffer/git/protocol/src/game/FontManager.cpp",
+		"/Users/gaffer/git/protocol/src/game/ShaderManager.cpp",
+		"/Users/gaffer/git/protocol/assets/fonts/Fonts.json",
+		"/Users/gaffer/git/protocol/assets/Fonts.json",
+		"/Users/gaffer/git/protocol/src/game/DemoManager.cpp",
+		"/Users/gaffer/git/protocol/src/game/Render.h",
 		"/Users/gaffer/git/protocol/src/game/Demo.h",
 		"/Users/gaffer/git/protocol/src/game/MeshManager.cpp",
 		"/Users/gaffer/git/protocol/src/game/MeshManager.h",
 		"/Users/gaffer/git/protocol/src/game/Mesh.h",
-		"/Users/gaffer/git/protocol/virtualgo.make",
 		"/Users/gaffer/git/protocol/src/vectorial/vec3f.h",
 		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.h",
 		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.cpp",
 		"/Users/gaffer/git/protocol/build/StoneTool.make",
-		"/Users/gaffer/git/protocol/src/virtualgo/InertiaTensor.h",
 		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
 		"/Users/gaffer/git/protocol/src/game/DemoManager.h",
 		"/Users/gaffer/git/protocol/src/network/Enums.h",
 		"/Users/gaffer/git/protocol/src/game/GameServer.h",
 		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/MeshManager.d",
 		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Mesh.d",
-		"/Users/gaffer/git/protocol/tools/Stone/StoneTool.cpp",
 		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.h",
 		"/Users/gaffer/git/protocol/src/protocol/Message.h",
 		"/Users/gaffer/git/protocol/src/game/Mesh.cpp",
 		"/Users/gaffer/git/protocol/src/protocol/Model.h",
 		"/Users/gaffer/git/protocol/src/protocol/Model.cpp",
-		"/Users/gaffer/git/protocol/PBR",
 		"/Users/gaffer/git/protocol/data/shaders/Phong.vert",
 		"/Users/gaffer/git/protocol/src/protocol/Object.h",
-		"/Users/gaffer/git/protocol/src/game/nv_dds.h",
 		"/Users/gaffer/git/protocol/src/game/Game.cpp",
-		"/Users/gaffer/git/protocol/src/game/nv_dds.cpp",
 		"/Users/gaffer/git/protocol/data/cubemaps/Uffizi-Diffuse.hdr",
-		"/Users/gaffer/git/protocol/NOTES",
 		"/Users/gaffer/git/protocol/tests/TestReliableMessageChannel.cpp",
 		"/Users/gaffer/git/protocol/src/core/Types.h",
 		"/Users/gaffer/git/protocol/src/game/dv_dds.h",
-		"/Users/gaffer/git/protocol/premake4.lua",
 		"/Users/gaffer/git/protocol/data/shaders/PBR.snippets",
 		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
 		"/Users/gaffer/git/protocol/src/vectorial/simd4f_common.h",
@@ -514,13 +567,11 @@
 		"/Users/gaffer/git/protocol/data/shaders/Flat.vert",
 		"/Users/gaffer/git/protocol/src/game/StoneManager.h",
 		"/Users/gaffer/git/protocol/src/game/ShaderManager.h",
-		"/Users/gaffer/git/protocol/src/game/ShaderManager.cpp",
 		"/Users/gaffer/git/protocol/data/stones/White-22.stone",
 		"/Users/gaffer/git/protocol/data/shaders/Triangle.frag",
 		"/Users/gaffer/git/protocol/src/core/Hash.h",
 		"/Users/gaffer/git/protocol/Makefile",
 		"/Users/gaffer/git/protocol/src/game/InputManager.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Subroutine.frag",
 		"/Users/gaffer/git/protocol/data/shaders/Gouraud.vert",
 		"/Users/gaffer/git/protocol/tests/TestDNSResolver.cpp",
 		"/Users/gaffer/git/protocol/data/shaders/Diffuse.vert",
@@ -529,62 +580,13 @@
 		"/Users/gaffer/git/protocol/src/game/StoneRender.cpp",
 		"/Users/gaffer/git/protocol/build/obj/x64/Debug/StoneTool/ToolMesh.d",
 		"/Users/gaffer/git/protocol/src/game/Global.h",
-		"/Users/gaffer/git/protocol/GOALS",
 		"/Users/gaffer/git/protocol/data/fonts/AnonymousPro/OFL-FAQ.txt",
 		"/Users/gaffer/git/protocol/data/shaders/StoneInstanced.vert",
 		"/Users/gaffer/git/protocol/data/shaders/StoneInstanced.frag",
 		"/Users/gaffer/git/protocol/src/game/InputManager.h",
-		"/Users/gaffer/git/protocol/src/game/Font.h",
 		"/Users/gaffer/git/protocol/src/game/GameClient.h",
 		"/Users/gaffer/git/protocol/src/game/GameClient.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/Client.cpp",
-		"/Users/gaffer/git/protocol/src/game/Console.h",
-		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.h",
-		"/Users/gaffer/git/protocol/src/protocol/ClientServerDataBlock.cpp",
-		"/Users/gaffer/git/protocol/src/core/Config.h",
-		"/Users/gaffer/git/protocol/src/game/StonesDemo.cpp",
-		"/Users/gaffer/git/protocol/data/fonts/AnonymousProMinus/OFL.txt",
-		"/Users/gaffer/git/protocol/src/game/GamePackets.h",
-		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.h",
-		"/Users/gaffer/git/protocol/src/core/Memory.cpp",
-		"/Users/gaffer/git/protocol/src/game/FontManager.cpp",
-		"/Users/gaffer/git/protocol/src/game/FontManager.h",
-		"/Users/gaffer/git/protocol/src/protocol/Stream.h",
-		"/Users/gaffer/git/protocol/tests/TestClientServer.cpp",
-		"/Users/gaffer/git/protocol/src/game/GameContext.h",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Game.d",
-		"/Users/gaffer/git/protocol/src/game/GameChannelStructure.h",
-		"/Users/gaffer/git/protocol/src/protocol/Client.h",
-		"/Users/gaffer/git/protocol/src/game/ConsoleFunctions.cpp",
-		"/Users/gaffer/git/protocol/src/game/Common.h",
-		"/Users/gaffer/git/protocol/src/game/Render.cpp",
-		"/Users/gaffer/git/protocol/tools/Font/FontTool.cpp",
-		"/Users/gaffer/git/protocol/src/core/Core.cpp",
-		"/Users/gaffer/git/protocol/data/shaders/Console.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Console.vert",
-		"/Users/gaffer/git/protocol/src/game/Font.cpp",
-		"/Users/gaffer/git/protocol/build/FontTool.make",
-		"/Users/gaffer/git/protocol/bin/FontTool",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/FontTool/FontTool.d",
-		"/Users/gaffer/git/protocol/data/fonts/Fonts.json",
-		"/Users/gaffer/git/protocol/src/protocol/Packet.h",
-		"/Users/gaffer/git/protocol/src/protocol/ReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/CollisionResponse.h",
-		"/Users/gaffer/git/protocol/core.make",
-		"/Users/gaffer/git/protocol/src/protocol/ClientServerContext.cpp",
-		"/Users/gaffer/git/protocol/src/network/DNSResolver.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/SlidingWindow.h",
-		"/Users/gaffer/git/protocol/tests/TestDataBlockSendAndReceive.cpp",
-		"/Users/gaffer/git/protocol/src/core/Log.h",
-		"/Users/gaffer/git/protocol/LICENCE",
-		"/Users/gaffer/git/protocol/data/shaders/Font.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Default.vert",
-		"/Users/gaffer/git/protocol/bin/StoneTool",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/StoneBuilder.cpp",
-		"/Users/gaffer/git/protocol/data/stones/Black-22.mesh",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/StoneGenerator.cpp",
-		"/Users/gaffer/git/protocol/src/virtualgo/Biconvex.cpp",
-		"/Users/gaffer/git/protocol/tools/StoneGenerator/ToolMesh.h"
+		"/Users/gaffer/git/protocol/src/protocol/Client.cpp"
 	],
 	"find":
 	{
@@ -628,6 +630,16 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"ActiveObject",
+			"nv_dds",
+			"TranslateDX10Format",
+			"readPng",
+			"readPing",
+			"\"../data",
+			"\"data/",
+			"Output.dds",
+			"output.dds",
+			"data\"",
 			"StoneDemo",
 			"meshData",
 			"MeshData",
@@ -745,17 +757,7 @@
 			"magic",
 			"error:",
 			"todo",
-			"Glyph",
-			"Glyph_Buffer",
-			"GlyphBuffer",
-			"fontAtlas->",
-			"unsigned chan",
-			"DrawString",
-			"glDeleteBuffers",
-			"BACK",
-			"FRONT",
-			"max",
-			"// todo: need to "
+			"Glyph"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -848,24 +850,108 @@
 		"selected_items":
 		[
 			[
-				"wouldbe",
-				"WOULD BE NICE"
+				"todo",
+				"protocol/TODO"
+			],
+			[
+				"game.h",
+				"protocol/src/cubes/Game.h"
+			],
+			[
+				"viewobject.h",
+				"protocol/src/cubes/ViewObject.h"
+			],
+			[
+				"engine.h",
+				"protocol/src/cubes/Engine.h"
+			],
+			[
+				"simulation.h",
+				"protocol/src/cubes/Simulation.h"
+			],
+			[
+				"simulation.cpp",
+				"protocol/src/cubes/Simulation.cpp"
+			],
+			[
+				"premake4.lua",
+				"protocol/premake4.lua"
 			],
 			[
 				"changes",
-				"CHANGES"
+				"protocol/CHANGES"
 			],
 			[
-				"todo",
-				"TODO"
+				"nvimage.h",
+				"external/nvImage/nvImage.h"
+			],
+			[
+				"would",
+				"protocol/WOULD BE NICE"
+			],
+			[
+				"nvimagedds.cpp",
+				"external/nvImage/nvImageDDS.cpp"
+			],
+			[
+				"nvimage.cpp",
+				"external/nvImage/nvImage.cpp"
+			],
+			[
+				"nvimagepng.cpp",
+				"external/nvimage/nvImagePng.cpp"
 			],
 			[
 				"stonedemo.cpp",
 				"src/game/StoneDemo.cpp"
 			],
 			[
+				"stonedemo.h",
+				"src/game/StoneDemo.h"
+			],
+			[
+				"stone.frag",
+				"data/shaders/Stone.frag"
+			],
+			[
+				"nv_dds.cpp",
+				"src/game/nv_dds.cpp"
+			],
+			[
+				"cmft.sh",
+				"cmft.sh"
+			],
+			[
+				"stone.vert",
+				"data/shaders/Stone.vert"
+			],
+			[
+				"model.h",
+				"src/game/Model.h"
+			],
+			[
 				"model.cpp",
 				"src/game/Model.cpp"
+			],
+			[
+				"wouldbe",
+				"WOULD BE NICE"
+			],
+			[
+				"stone.cpp",
+				"src/game/StoneDemo.cpp"
+			],
+			[
+				"wouldbenice",
+				"WOULD BE NICE"
+			],
+			[
+				"stonetool.cpp",
+				"tools/Stone/StoneTool.cpp"
+			],
+			[
+				"fonts.json",
+				"assets/fonts/Fonts.json"
 			],
 			[
 				"meshmanager.cpp",
@@ -880,32 +966,12 @@
 				"src/game/Render.h"
 			],
 			[
-				"model.h",
-				"src/game/Model.h"
-			],
-			[
-				"stone.frag",
-				"data/shaders/Stone.frag"
-			],
-			[
-				"stone.vert",
-				"data/shaders/Stone.vert"
-			],
-			[
 				"demomanager.cpp",
 				"src/game/DemoManager.cpp"
 			],
 			[
-				"stonedemo.h",
-				"src/game/StoneDemo.h"
-			],
-			[
 				"demo.h",
 				"src/game/Demo.h"
-			],
-			[
-				"would",
-				"WOULD BE NICE"
 			],
 			[
 				"mesh.h",
@@ -922,10 +988,6 @@
 			[
 				"pbr",
 				"PBR"
-			],
-			[
-				"stonetool.cpp",
-				"tools/Stone/StoneTool.cpp"
 			],
 			[
 				"biconvex.h",
@@ -946,18 +1008,6 @@
 			[
 				"nv_dds.h",
 				"src/game/nv_dds.h"
-			],
-			[
-				"nv_dds.cpp",
-				"src/game/nv_dds.cpp"
-			],
-			[
-				"premake4.lua",
-				"premake4.lua"
-			],
-			[
-				"wouldbenice",
-				"WOULD BE NICE"
 			],
 			[
 				"stones.cpp",
@@ -1196,10 +1246,6 @@
 				"tools/StoneGenerator/StoneGenerator.cpp"
 			],
 			[
-				"fonts.json",
-				"data/fonts/Fonts.json"
-			],
-			[
 				"vec3f",
 				"src/vectorial/vec3f.h"
 			],
@@ -1314,50 +1360,6 @@
 			[
 				"testchannel",
 				"tests/TestReliableMessageChannel.cpp"
-			],
-			[
-				"testaddress.cpp",
-				"tests/TestAddress.cpp"
-			],
-			[
-				"testblokc.cpp",
-				"tests/TestBlock.cpp"
-			],
-			[
-				"unittest.cpp",
-				"tests/UnitTest.cpp"
-			],
-			[
-				"cilentserverdatablock.cpp",
-				"src/protocol/ClientServerDataBlock.cpp"
-			],
-			[
-				"clientserevr",
-				"src/protocol/ClientServerContext.h"
-			],
-			[
-				"clientservercontext.cpp",
-				"src/protocol/ClientServerContext.cpp"
-			],
-			[
-				"reliable",
-				"src/protocol/ReliableMessageChannel.cpp"
-			],
-			[
-				"datablockreceiver.cpp",
-				"src/protocol/DataBlockReceiver.cpp"
-			],
-			[
-				"datablock",
-				"src/protocol/DataBlockReceiver.h"
-			],
-			[
-				"clientserverdatablock.h",
-				"src/protocol/ClientServerDataBlock.h"
-			],
-			[
-				"client.h",
-				"src/protocol/Client.h"
 			]
 		],
 		"width": 0.0

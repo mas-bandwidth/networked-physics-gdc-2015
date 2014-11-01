@@ -2,9 +2,36 @@ WOULD BE NICE:
 
     ----------------------------------
 
-    nvImage uses std::vector. Fix it so it doesn't.
+    Virtual go project has a lot of unneccessary implementation in headers.
 
-    Also clean up the code.
+    Fix it so it has better header leakage, eg. faster compilation for cpps.
+
+    ----------------------------------
+
+    Idea of a packet serializer/deserializer, eg. an interface to do this
+
+    Networking relies on this existing, but doesn't care about its implementation
+
+    Alternatively, rework network layer to only care about packets as blocks of data
+    and rely on protocol layer to perform the deserialization.
+
+    Frankly, this second option seems smarter and simpler!
+    
+    ----------------------------------
+
+    Split out client and server from protocol so protocol isn't bound to client/server implementation
+
+    ----------------------------------
+
+    Fix activation problem in cubes test, eg. object does not reactivate when moved, unless the activation point is set.
+
+    ----------------------------------
+
+    Cubes library uses STL. Fix this!
+
+    ----------------------------------
+
+    nvImage uses std::vector. Fix it so it doesn't.
 
     ----------------------------------
 
