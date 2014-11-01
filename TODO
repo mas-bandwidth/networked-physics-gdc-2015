@@ -1,16 +1,26 @@
 DONE:
 
-TODO:
+    Split client and server into their own library: "ClientServer"
 
-    Split client and server into their own libraries: "client" and "server"?
-
-    (Should client and server themselves be split up? I don't know...)
-
-    Potentially create new "shared" library (common to client and server)
+    Use proper casing from now on for projects so they don't need to be single word. (Grow up!)
 
     Move client/server tests out of protocol so they can be iterated on independently
 
-    eg: tests/client_server
+    Get "ClientServer" library building.
+
+    Make sure all client server stuff is removed from protocol.
+
+    protocol::MaxHostName should be in ClientServerConstants.h, not protocol.
+
+    Got game client / game server compiling again.
+
+TODO:
+
+    ---------------------------------------------------------------
+
+    Get "TestClientServer" working.
+
+    Get "SoakClientServer" working.
 
     ---------------------------------------------------------------
 

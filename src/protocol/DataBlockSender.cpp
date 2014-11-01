@@ -1,8 +1,8 @@
 // Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #include "protocol/DataBlockSender.h"
+#include "protocol/ProtocolConstants.h"
 #include "protocol/Block.h"
-#include "protocol/Constants.h"
 #include "core/Allocator.h"
 
 namespace protocol

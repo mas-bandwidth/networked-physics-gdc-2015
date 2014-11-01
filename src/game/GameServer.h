@@ -1,26 +1,23 @@
 #ifndef GAME_SERVER_H
 #define GAME_SERVER_H
 
-#include "Server.h"
-#include "Memory.h"
+#include "clientServer/Server.h"
 #include "GameContext.h"
 #include "GamePackets.h"
 #include "GameMessages.h"
 #include "GameChannelStructure.h"
-#include "BSDSocket.h"
-#include "NetworkSimulator.h"
+#include "network/BSDSocket.h"
+#include "network/Simulator.h"
 
-using namespace protocol;
-
-class GameServer : public Server
+class GameServer : public clientServer::Server
 {
 public:
 
-    GameServer( const ServerConfig & config ) : Server( config )
+    GameServer( const clientServer::ServerConfig & config ) : Server( config )
     {
         CORE_ASSERT( config.serverData );
 
-        SetContext( CONTEXT_USER, config.serverData->GetData() );
+        SetContext( clientServer::CONTEXT_USER, config.serverData->GetData() );
     }
 
     double GetTime() const
@@ -30,12 +27,12 @@ public:
 
 protected:
 
-    void OnClientStateChange( int clientIndex, ServerClientState previous, ServerClientState current ) override
+    void OnClientStateChange( int clientIndex, clientServer::ServerClientState previous, clientServer::ServerClientState current ) override
     {
         printf( "%.3f: Client %d state change: %s -> %s\n", GetTime(), clientIndex, GetServerClientStateName( previous ), GetServerClientStateName( current ) );
     }
 
-    void OnClientDataReceived( int clientIndex, const Block & block ) override
+    void OnClientDataReceived( int clientIndex, const protocol::Block & block ) override
     {
         printf( "%.3f: Client %d received client data: %d bytes\n", GetTime(), clientIndex, block.GetSize() );
     }
@@ -46,7 +43,7 @@ protected:
     }
 };
 
-GameServer * CreateGameServer( Allocator & allocator, int serverPort, int maxClients )
+GameServer * CreateGameServer( core::Allocator & allocator, int serverPort, int maxClients )
 {
     auto packetFactory = CORE_NEW( allocator, GamePacketFactory, allocator );
 
@@ -54,18 +51,18 @@ GameServer * CreateGameServer( Allocator & allocator, int serverPort, int maxCli
 
     auto channelStructure = CORE_NEW( allocator, GameChannelStructure, *messageFactory );
 
-    BSDSocketConfig bsdSocketConfig;
+    network::BSDSocketConfig bsdSocketConfig;
     bsdSocketConfig.port = serverPort;
     bsdSocketConfig.maxPacketSize = 1200;
     bsdSocketConfig.packetFactory = packetFactory;
-    auto networkInterface = CORE_NEW( allocator, BSDSocket, bsdSocketConfig );
+    auto networkInterface = CORE_NEW( allocator, network::BSDSocket, bsdSocketConfig );
 
-    NetworkSimulatorConfig networkSimulatorConfig;
+    network::SimulatorConfig networkSimulatorConfig;
     networkSimulatorConfig.packetFactory = packetFactory;
-    auto networkSimulator = CORE_NEW( allocator, NetworkSimulator, networkSimulatorConfig );
+    auto networkSimulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
 
     const int serverDataSize = sizeof(GameContext) + 10 * 1024 + 11;
-    auto serverData = CORE_NEW( allocator, Block, allocator, serverDataSize );
+    auto serverData = CORE_NEW( allocator, protocol::Block, allocator, serverDataSize );
     {
         uint8_t * data = serverData->GetData();
         for ( int i = 0; i < serverDataSize; ++i )
@@ -76,7 +73,7 @@ GameServer * CreateGameServer( Allocator & allocator, int serverPort, int maxCli
         gameContext->value_max = rand() % 1000000000;
     }
 
-    ServerConfig serverConfig;
+    clientServer::ServerConfig serverConfig;
     serverConfig.serverData = serverData;
     serverConfig.maxClients = maxClients;
     serverConfig.channelStructure = channelStructure;
@@ -86,11 +83,14 @@ GameServer * CreateGameServer( Allocator & allocator, int serverPort, int maxCli
     return CORE_NEW( allocator, GameServer, serverConfig );
 }
 
-void DestroyGameServer( Allocator & allocator, GameServer * server )
+void DestroyGameServer( core::Allocator & allocator, GameServer * server )
 {
     CORE_ASSERT( server );
 
-    ServerConfig config = server->GetConfig();
+    clientServer::ServerConfig config = server->GetConfig();
+
+    typedef network::Interface NetworkInterface;
+    typedef network::Simulator NetworkSimulator;
 
     CORE_DELETE( allocator, GameServer, server );
     CORE_DELETE( allocator, ChannelStructure, config.channelStructure );

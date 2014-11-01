@@ -1,9 +1,9 @@
-// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "protocol/ClientServerContext.h"
+#include "ClientServerContext.h"
 #include "core/Memory.h"
 
-namespace protocol
+namespace clientServer
 {
     void ClientServerContext::Initialize( core::Allocator & allocator, int numClients )
     {

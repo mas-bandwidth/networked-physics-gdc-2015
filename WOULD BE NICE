@@ -2,6 +2,43 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    Consider renaming "ChannelStructure" to "ConnectionContext"?
+
+    ----------------------------------
+
+    Remove extra "ClientServer" prefix and "CLIENT_SERVER_" prefix where they are redundant.
+
+    ----------------------------------
+
+    Clean up network and prefix all files with "Network*", eg: NetworkEnums.h, NetworkInterface.h, NetworkSimulator.h etc.
+
+    ----------------------------------
+
+    Channel should be renamed to "ConnectionChannel" (so its association is clear...)
+
+    Channel structure should be renamed to "ConnectionChannelStructure"
+    
+    ----------------------------------
+
+    If serialize was split out from protocol it would provide a nice serialization layer
+    without any protocol specific baggage.
+
+    eg. this would be nice for other people to use in their own protocols, if they didn't
+    quite want to use my protocol implementation.
+
+    ----------------------------------
+
+    Generally it's annoying having "Enums.h" across different directories.
+
+    Standardize and for things like this, prefix with the type, eg. "ProtocolEnums.h", "ClientServerEnums.h" etc.
+
+    ----------------------------------
+
+    Network simulator maybe is really a part of protocol. It doesn't really "work" as per-network
+    type send/recv should work, eg. blocks of packet data, it works on protocol packets.
+
+    ----------------------------------
+
     Prefix all tests with the module, eg. test_virtualgo_*, test_cubes_* and so on
 
     ----------------------------------

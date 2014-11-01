@@ -9,33 +9,39 @@ solution "Protocol"
         flags { "OptimizeSpeed" }
         defines { "NDEBUG" }
 
-project "core"
+project "Core"
     kind "StaticLib"
-    files { "src/core/*.h", "src/core/*.cpp" }
+    files { "src/Core/*.h", "src/Core/*.cpp" }
     targetdir "lib"
 
-project "network"
+project "Network"
     kind "StaticLib"
     files { "src/network/*.h", "src/network/*.cpp" }
-    links { "core" }
+    links { "Core" }
     targetdir "lib"
 
-project "protocol"
+project "Protocol"
     kind "StaticLib"
     files { "src/protocol/*.h", "src/protocol/*.cpp" }
-    links { "core", "network" }
+    links { "Core", "Network" }
     targetdir "lib"
 
-project "virtualgo"
+project "ClientServer"
     kind "StaticLib"
-    files { "src/virtualgo/*.h", "src/virtualgo/*.cpp" }
-    links { "core" }
+    files { "src/ClientServer/*.h", "src/ClientServer/*.cpp" }
+    links { "Core", "Network", "Protocol" }
     targetdir "lib"
 
-project "cubes"
+project "VirtualGo"
     kind "StaticLib"
-    files { "src/cubes/*.h", "src/cubes/*.cpp" }
-    links { "core" }
+    files { "src/VirtualGo/*.h", "src/VirtualGo/*.cpp" }
+    links { "Core" }
+    targetdir "lib"
+
+project "Cubes"
+    kind "StaticLib"
+    files { "src/Cubes/*.h", "src/Cubes/*.cpp" }
+    links { "Core" }
     targetdir "lib"
 
 project "nvImage"
@@ -45,85 +51,92 @@ project "nvImage"
 
 project "TestCore"
     kind "ConsoleApp"
-    files { "tests/core/*.cpp" }
-    links { "core" }
+    files { "tests/Core/*.cpp" }
+    links { "Core" }
     location "build"
     targetdir "bin"
 
 project "TestNetwork"
     kind "ConsoleApp"
-    files { "tests/network/UnitTest.cpp", "tests/network/Test*.cpp" }
-    links { "core", "network", "protocol" }
+    files { "tests/Network/UnitTest.cpp", "tests/Network/Test*.cpp" }
+    links { "Core", "Network", "Protocol" }     -- todo: ideally would not depend on protocol!!!
     location "build"
     targetdir "bin"
 
 project "TestProtocol"
     kind "ConsoleApp"
-    files { "tests/protocol/UnitTest.cpp", "tests/protocol/Test*.cpp" }
-    links { "core", "network", "protocol" }
+    files { "tests/Protocol/UnitTest.cpp", "tests/Protocol/Test*.cpp" }
+    links { "Core", "Network", "Protocol" }
+    location "build"
+    targetdir "bin"
+
+project "TestClientServer"
+    kind "ConsoleApp"
+    files { "tests/ClientServer/UnitTest.cpp", "tests/ClientServer/Test*.cpp" }
+    links { "Core", "Network", "Protocol" }
     location "build"
     targetdir "bin"
 
 project "TestCubes"
     kind "ConsoleApp"
-    files { "tests/cubes/*.cpp" }
-    links { "core", "cubes", "ode" }
+    files { "tests/Cubes/*.cpp" }
+    links { "Core", "Cubes", "ode" }
     location "build"
     targetdir "bin"
 
 project "TestVirtualGo"
     kind "ConsoleApp"
-    files { "tests/virtualgo/*.cpp" }
-    links { "core", "virtualgo", "ode" }
+    files { "tests/VirtualGo/*.cpp" }
+    links { "Core", "VirtualGo", "ode" }
     location "build"
     targetdir "bin"
 
 project "SoakProtocol"
     kind "ConsoleApp"
-    files { "tests/protocol/SoakProtocol.cpp" }
-    links { "core", "network", "protocol" }
+    files { "tests/Protocol/SoakProtocol.cpp" }
+    links { "Core", "Network", "Protocol" }
     targetdir "bin"
     location "build"
 
 project "SoakClientServer"
     kind "ConsoleApp"
-    files { "tests/protocol/SoakClientServer.cpp" }
-    links { "core", "network", "protocol" }
+    files { "tests/ClientServer/SoakClientServer.cpp" }
+    links { "Core", "Network", "Protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileProtocol"
     kind "ConsoleApp"
-    files { "tests/protocol/ProfileProtocol.cpp" }
-    links { "core", "network", "protocol" }
+    files { "tests/Protocol/ProfileProtocol.cpp" }
+    links { "Core", "Network", "Protocol" }
     targetdir "bin"
     location "build"
 
 project "ProfileClientServer"
     kind "ConsoleApp"
-    files { "tests/protocol/ProfileClientServer.cpp" }
-    links { "core", "network", "protocol" }
+    files { "tests/ClientServer/ProfileClientServer.cpp" }
+    links { "Core", "Network", "Protocol" }
     targetdir "bin"
     location "build"
 
 project "FontTool"
     kind "ConsoleApp"
     files { "tools/Font/*.cpp" }
-    links { "core", "freetype", "jansson" }
+    links { "Core", "Freetype", "Jansson" }
     location "build"
     targetdir "bin"
 
 project "StoneTool"
     kind "ConsoleApp"
     files { "tools/Stone/*.cpp" }
-    links { "core", "virtualgo", "jansson" }
+    links { "Core", "VirtualGo", "Jansson" }
     location "build"
     targetdir "bin"
 
 project "Client"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol", "virtualgo", "cubes", "nvImage", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "ode" }
+    links { "Core", "Network", "Protocol", "ClientServer", "VirtualGo", "Cubes", "nvImage", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "ode" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
@@ -131,7 +144,7 @@ project "Client"
 project "Server"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "core", "network", "protocol", "virtualgo", "ode" }
+    links { "Core", "Network", "Protocol", "VirtualGo", "ode" }
     location "build"
     targetdir "bin"
 
@@ -189,7 +202,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j4 core"
+            os.execute "make -j4 Core"
         end
     }
 
@@ -202,7 +215,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j4 network"
+            os.execute "make -j4 Network"
         end
     }
 
@@ -215,7 +228,20 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j4 protocol"
+            os.execute "make -j4 Protocol"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "client_server",
+        description = "Build client/server library",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            os.execute "make -j4 ClientServer"
         end
     }
 
@@ -228,7 +254,7 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            os.execute "make -j4 virtualgo"
+            os.execute "make -j4 VirtualGo"
         end
     }
 
@@ -288,6 +314,21 @@ if not os.is "windows" then
         execute = function ()
             if os.execute "make -j4 TestProtocol" == 0 then
                 os.execute "cd bin; ./TestProtocol"
+            end
+        end
+    }
+
+    newaction
+    {
+        trigger     = "test_client_server",
+        description = "Build and run client/server unit tests",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 TestClientServer" == 0 then
+                os.execute "cd bin; ./TestClientServer"
             end
         end
     }

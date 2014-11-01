@@ -1,7 +1,6 @@
 #include "GameClient.h"
 #include "Console.h"
 #include "Global.h"
-#include "protocol/Client.h"
 #include "network/BSDSocket.h"
 #include "network/Simulator.h"
 #include "GameMessages.h"
@@ -10,7 +9,7 @@
 #include "GameMessages.h"
 #include "GameChannelStructure.h"
 
-GameClient::GameClient( const protocol::ClientConfig & config ) : Client( config ) 
+GameClient::GameClient( const clientServer::ClientConfig & config ) : Client( config ) 
 {
     // ...
 }
@@ -47,7 +46,7 @@ void GameClient::OnConnect( const char * hostname )
     printf( "%.3f: Client connecting to %s\n", GetTime(), hostname );
 }
 
-void GameClient::OnStateChange( protocol::ClientState previous, protocol::ClientState current )
+void GameClient::OnStateChange( clientServer::ClientState previous, clientServer::ClientState current )
 {
     printf( "%.3f: Client state change: %s -> %s\n", GetTime(), GetClientStateName( previous ), GetClientStateName( current ) );
 }
@@ -57,7 +56,7 @@ void GameClient::OnDisconnect()
     printf( "%.3f: Client disconnect\n", GetTime() );
 }
 
-void GameClient::OnError( protocol::ClientError error, uint32_t extendedError )
+void GameClient::OnError( clientServer::ClientError error, uint32_t extendedError )
 {
     printf( "%.3f: Client error: %s [%d]\n", GetTime(), GetClientErrorString( error ), extendedError );
 }
@@ -66,7 +65,7 @@ void GameClient::OnServerDataReceived( const protocol::Block & block )
 {
     printf( "%.3f: Client received server data: %d bytes\n", GetTime(), block.GetSize() );
 
-    SetContext( protocol::CONTEXT_USER, block.GetData() );
+    SetContext( clientServer::CONTEXT_USER, block.GetData() );
 }
 
 GameClient * CreateGameClient( core::Allocator & allocator, int clientPort )
@@ -95,7 +94,7 @@ GameClient * CreateGameClient( core::Allocator & allocator, int clientPort )
             data[i] = ( 20 + i ) % 256;
     }
 
-    protocol::ClientConfig clientConfig;
+    clientServer::ClientConfig clientConfig;
     clientConfig.clientData = clientData;
     clientConfig.channelStructure = channelStructure;        
     clientConfig.networkInterface = networkInterface;
@@ -108,7 +107,7 @@ void DestroyGameClient( core::Allocator & allocator, GameClient * client )
 {
     CORE_ASSERT( client );
 
-    protocol::ClientConfig config = client->GetConfig();
+    clientServer::ClientConfig config = client->GetConfig();
 
     // todo: hack
     typedef network::Interface NetworkInterface;

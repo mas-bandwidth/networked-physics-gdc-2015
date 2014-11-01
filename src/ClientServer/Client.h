@@ -1,12 +1,13 @@
-// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_CLIENT_H
-#define PROTOCOL_CLIENT_H
+#ifndef CLIENT_SERVER_CLIENT_H
+#define CLIENT_SERVER_CLIENT_H
 
-#include "protocol/Packets.h"
-#include "protocol/Connection.h"
-#include "protocol/ClientServerContext.h"
-#include "protocol/ClientServerDataBlock.h"
+#include "ClientServerEnums.h"
+#include "ClientServerPackets.h"
+#include "ClientServerContext.h"
+#include "ClientServerDataBlock.h"
+#include "ClientServerConstants.h"
 
 namespace network
 {
@@ -16,6 +17,14 @@ namespace network
 }
 
 namespace protocol
+{
+    class Block;
+    class Connection;
+    class ChannelStructure;
+    class PacketFactory;
+}
+
+namespace clientServer
 {
     struct ClientConfig
     {
@@ -35,9 +44,9 @@ namespace protocol
         
         network::Interface * networkInterface = nullptr;        // network interface used to send and receive packets. required.
 
-        ChannelStructure * channelStructure = nullptr;          // channel structure for connections. required.
+        protocol::ChannelStructure * channelStructure = nullptr; // channel structure for connections. required.
 
-        Block * clientData = nullptr;                           // data sent from client to server on connect. must be constant. this block is not owned by us (we don't destroy it)
+        protocol::Block * clientData = nullptr;                 // data sent from client to server on connect. must be constant. this block is not owned by us (we don't destroy it)
         int maxServerDataSize = 256 * 1024;                     // maximum size for data received from server on connect. if the server data is larger than this then the connect will fail.
         int fragmentSize = 1024;                                // send client data in 1k fragments by default. a good size given that MTU is typically 1200 bytes.
         int fragmentsPerSecond = 60;                            // number of fragment packets to send per-second. set pretty high because we want the data to get across quickly.
@@ -53,8 +62,8 @@ namespace protocol
 
         core::TimeBase m_timeBase;
 
-        Connection * m_connection;
-        PacketFactory * m_packetFactory;                        // IMPORTANT: We don't own this pointer. It's owned by the network interface!
+        protocol::Connection * m_connection;
+        protocol::PacketFactory * m_packetFactory;        // IMPORTANT: We don't own this pointer. It's owned by the network interface!
 
         network::Address m_address;
         ClientState m_state = CLIENT_STATE_DISCONNECTED;
@@ -65,12 +74,12 @@ namespace protocol
         ClientError m_error = CLIENT_ERROR_NONE;
         uint32_t m_extendedError = 0;
 
-        ClientServerDataBlockSender * m_dataBlockSender = nullptr;
-        ClientServerDataBlockReceiver * m_dataBlockReceiver = nullptr;
+        DataBlockSender * m_dataBlockSender = nullptr;
+        DataBlockReceiver * m_dataBlockReceiver = nullptr;
 
         ClientServerContext m_clientServerContext;
 
-        const void * m_context[MaxContexts];
+        const void * m_context[protocol::MaxContexts];
 
         char m_hostname[MaxHostName];
 
@@ -111,9 +120,9 @@ namespace protocol
 
         network::Interface * GetNetworkInterface() const;
 
-        Connection * GetConnection() const;
+        protocol::Connection * GetConnection() const;
 
-        const Block * GetServerData() const;
+        const protocol::Block * GetServerData() const;
 
         void SetContext( int index, const void * ptr );
 
@@ -155,7 +164,7 @@ namespace protocol
 
         void ClearStateData();
 
-        void SendPacket( Packet * packet );
+        void SendPacket( protocol::Packet * packet );
 
         void SetClientState( ClientState state );
 
@@ -173,7 +182,7 @@ namespace protocol
 
         virtual void OnError( ClientError error, uint32_t extendedError ) {}
 
-        virtual void OnServerDataReceived( const Block & block ) {};
+        virtual void OnServerDataReceived( const protocol::Block & block ) {};
     };
 }
 

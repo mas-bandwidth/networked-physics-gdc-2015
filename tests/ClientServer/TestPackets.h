@@ -2,12 +2,11 @@
 #define TEST_PACKETS_H
 
 #include "protocol/Stream.h"
-#include "protocol/ConnectionPacket.h"
+#include "protocol/Packets.h"
+#include "protocol/PacketFactory.h"
 
 enum PacketTypes
 {
-    PACKET_CONNECTION = protocol::CONNECTION_PACKET,
-
     PACKET_CONNECT,
     PACKET_UPDATE,
     PACKET_DISCONNECT,
@@ -177,6 +176,20 @@ protected:
     {
         switch ( type )
         {
+            // todo: maybe remove the whole CLIENT_SERVER prefix. Just PACKET_ should do (protocol::)
+
+            case protocol::CLIENT_SERVER_PACKET_CONNECTION_REQUEST:       return CORE_NEW( *m_allocator, protocol::ConnectionRequestPacket );
+            case protocol::CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE:       return CORE_NEW( *m_allocator, protocol::ChallengeResponsePacket );
+
+            case protocol::CLIENT_SERVER_PACKET_CONNECTION_DENIED:        return CORE_NEW( *m_allocator, protocol::ConnectionDeniedPacket );
+            case protocol::CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE:     return CORE_NEW( *m_allocator, protocol::ConnectionChallengePacket );
+
+            case protocol::CLIENT_SERVER_PACKET_READY_FOR_CONNECTION:     return CORE_NEW( *m_allocator, protocol::ReadyForConnectionPacket );
+            case protocol::CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT:      return CORE_NEW( *m_allocator, protocol::DataBlockFragmentPacket );
+            case protocol::CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK:  return CORE_NEW( *m_allocator, protocol::DataBlockFragmentAckPacket );
+            case protocol::CLIENT_SERVER_PACKET_DISCONNECTED:             return CORE_NEW( *m_allocator, protocol::DisconnectedPacket );
+
+            // todo: don't like the aliasing here
             case PACKET_CONNECTION:     return CORE_NEW( *m_allocator, protocol::ConnectionPacket );
 
             case PACKET_CONNECT:        return CORE_NEW( *m_allocator, ConnectPacket );

@@ -1,5 +1,10 @@
-#include "protocol/Client.h"
-#include "protocol/Server.h"
+#include "core/Core.h"
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "clientServer/Client.h"
+#include "clientServer/Server.h"
 #include "protocol/Message.h"
 #include "protocol/Packets.h"
 #include "protocol/ReliableMessageChannel.h"
@@ -2469,4 +2474,19 @@ void test_client_server_user_context()
             timeBase.time += timeBase.deltaTime;
         }
     }
+}
+
+int main()
+{
+    srand( time( nullptr ) );
+
+    test_server_data();
+    test_client_data();
+    test_client_and_server_data();
+    test_client_and_server_data_reconnect();
+    test_client_and_server_data_multiple_clients();
+    test_server_data_too_large();
+    test_client_server_user_context();
+
+    return 0;
 }

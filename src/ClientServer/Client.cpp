@@ -1,11 +1,12 @@
-// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "protocol/Client.h"
+#include "clientServer/Client.h"
+#include "protocol/Connection.h"
 #include "network/Simulator.h"
 #include "network/Interface.h"
 #include "core/Memory.h"
 
-namespace protocol
+namespace clientServer
 {
     Client::Client( const ClientConfig & config )
         : m_config( config )
@@ -20,28 +21,28 @@ namespace protocol
         m_packetFactory = &m_config.networkInterface->GetPacketFactory();
 
         if ( m_config.maxServerDataSize > 0 )
-            m_dataBlockReceiver = CORE_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxServerDataSize );
+            m_dataBlockReceiver = CORE_NEW( *m_allocator, DataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxServerDataSize );
 
         if ( m_config.clientData )
-            m_dataBlockSender = CORE_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.clientData, m_config.fragmentSize, m_config.fragmentsPerSecond );
+            m_dataBlockSender = CORE_NEW( *m_allocator, DataBlockSender, *m_allocator, *m_config.clientData, m_config.fragmentSize, m_config.fragmentsPerSecond );
 
         memset( m_context, 0, sizeof(m_context) );
 
         m_clientServerContext.Initialize( *m_allocator, 1 );
 
-        m_context[CONTEXT_CHANNEL_STRUCTURE] = m_config.channelStructure;
+        m_context[CONTEXT_CONNECTION] = m_config.channelStructure;
         m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
 
         m_config.networkInterface->SetContext( m_context );
 
-        ConnectionConfig connectionConfig;
+        protocol::ConnectionConfig connectionConfig;
         connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
         connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;
         connectionConfig.context = m_context;
 
-        m_connection = CORE_NEW( *m_allocator, Connection, connectionConfig );
+        m_connection = CORE_NEW( *m_allocator, protocol::Connection, connectionConfig );
 
         ClearStateData();
     }
@@ -54,20 +55,20 @@ namespace protocol
 
         if ( m_dataBlockSender )
         {
-            CORE_DELETE( *m_allocator, ClientServerDataBlockSender, m_dataBlockSender );
+            CORE_DELETE( *m_allocator, DataBlockSender, m_dataBlockSender );
             m_dataBlockSender = nullptr;
         }
 
         if ( m_dataBlockReceiver )
         {
-            CORE_DELETE( *m_allocator, ClientServerDataBlockReceiver, m_dataBlockReceiver );
+            CORE_DELETE( *m_allocator, DataBlockReceiver, m_dataBlockReceiver );
             m_dataBlockReceiver = nullptr;
         }
 
         CORE_ASSERT( m_connection );
         CORE_ASSERT( m_packetFactory );
         CORE_ASSERT( m_config.fragmentSize >= 0 );
-        CORE_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
+        CORE_ASSERT( m_config.fragmentSize <= protocol::MaxFragmentSize );
 
         CORE_DELETE( *m_allocator, Connection, m_connection );
 
@@ -218,12 +219,12 @@ namespace protocol
         return m_config.networkInterface;
     }
 
-    Connection * Client::GetConnection() const
+    protocol::Connection * Client::GetConnection() const
     {
         return m_connection;
     }
 
-    const Block * Client::GetServerData() const
+    const protocol::Block * Client::GetServerData() const
     {
         return m_dataBlockReceiver ? m_dataBlockReceiver->GetBlock() : nullptr;
     }
@@ -231,7 +232,7 @@ namespace protocol
     void Client::SetContext( int index, const void * ptr )
     {
         CORE_ASSERT( index >= CONTEXT_USER );
-        CORE_ASSERT( index < MaxContexts );
+        CORE_ASSERT( index < protocol::MaxContexts );
         m_context[index] = ptr;
     }
 
@@ -322,7 +323,7 @@ namespace protocol
         {
             m_connection->Update( m_timeBase );
 
-            if ( m_connection->GetError() != CONNECTION_ERROR_NONE )
+            if ( m_connection->GetError() != protocol::CONNECTION_ERROR_NONE )
             {
                 DisconnectAndSetError( CLIENT_ERROR_CONNECTION_ERROR );
                 return;
@@ -505,7 +506,7 @@ namespace protocol
                     }
                     else if ( type == CLIENT_SERVER_PACKET_CONNECTION )
                     {
-                        auto connectionPacket = (ConnectionPacket*) packet;
+                        auto connectionPacket = (protocol::ConnectionPacket*) packet;
                         if ( connectionPacket->clientId == m_clientId && connectionPacket->serverId == m_serverId )
                         {
                             if ( m_state == CLIENT_STATE_READY_FOR_CONNECTION )
@@ -649,7 +650,7 @@ namespace protocol
         m_clientServerContext.RemoveClient( 0 );
     }
 
-    void Client::SendPacket( Packet * packet )
+    void Client::SendPacket( protocol::Packet * packet )
     {
         auto interface = m_config.networkSimulator ? m_config.networkSimulator : m_config.networkInterface;
         interface->SendPacket( m_address, packet );

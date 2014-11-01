@@ -4,6 +4,7 @@
 #include "protocol/Message.h"
 #include "protocol/BlockMessage.h"
 #include "protocol/MessageFactory.h"
+#include "clientServer/ClientServerEnums.h"
 #include "GameContext.h"
 
 enum MessageType
@@ -42,7 +43,7 @@ struct TestMessage : public protocol::Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        auto gameContext = (const GameContext*) stream.GetContext( protocol::CONTEXT_USER );
+        auto gameContext = (const GameContext*) stream.GetContext( clientServer::CONTEXT_USER );
         CORE_ASSERT( gameContext );
         serialize_int( stream, value, gameContext->value_min, gameContext->value_max );
 

@@ -19,7 +19,7 @@ void test_reliable_message_channel_messages()
 
         const void * context[protocol::MaxContexts];
         memset( context, 0, sizeof( context ) );
-        context[protocol::CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+        context[protocol::CONTEXT_CONNECTION] = &channelStructure;
 
         {
             const int MaxPacketSize = 256;
@@ -153,7 +153,7 @@ void test_reliable_message_channel_small_blocks()
         
         const void * context[protocol::MaxContexts];
         memset( context, 0, sizeof( context ) );
-        context[protocol::CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+        context[protocol::CONTEXT_CONNECTION] = &channelStructure;
 
         const int MaxPacketSize = 256;
 
@@ -289,7 +289,7 @@ void test_reliable_message_channel_large_blocks()
         
         const void * context[protocol::MaxContexts];
         memset( context, 0, sizeof( context ) );
-        context[protocol::CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+        context[protocol::CONTEXT_CONNECTION] = &channelStructure;
 
         const int MaxPacketSize = 256;
 
@@ -427,7 +427,7 @@ void test_reliable_message_channel_mixture()
         
         const void * context[protocol::MaxContexts];
         memset( context, 0, sizeof( context ) );
-        context[protocol::CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+        context[protocol::CONTEXT_CONNECTION] = &channelStructure;
 
         const int MaxPacketSize = 256;
 

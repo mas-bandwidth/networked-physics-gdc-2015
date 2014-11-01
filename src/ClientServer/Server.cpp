@@ -1,10 +1,10 @@
-// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "protocol/Server.h"
+#include "clientServer/Server.h"
 #include "network/Simulator.h"
 #include "core/Memory.h"
 
-namespace protocol
+namespace clientServer
 {
     Server::Server( const ServerConfig & config )
         : m_config( config )
@@ -13,7 +13,7 @@ namespace protocol
         CORE_ASSERT( m_config.channelStructure );
         CORE_ASSERT( m_config.maxClients >= 1 );
         CORE_ASSERT( m_config.fragmentSize >= 0 );
-        CORE_ASSERT( m_config.fragmentSize <= MaxFragmentSize );
+        CORE_ASSERT( m_config.fragmentSize <= protocol::MaxFragmentSize );
 
         m_allocator = m_config.allocator ? m_config.allocator : &core::memory::default_allocator();
 
@@ -27,12 +27,12 @@ namespace protocol
 
         memset( m_context, 0, sizeof( m_context ) );
 
-        m_context[CONTEXT_CHANNEL_STRUCTURE] = m_config.channelStructure;
+        m_context[CONTEXT_CONNECTION] = m_config.channelStructure;
         m_context[CONTEXT_CLIENT_SERVER] = &m_clientServerContext;
 
         m_config.networkInterface->SetContext( m_context );
 
-        ConnectionConfig connectionConfig;
+        protocol::ConnectionConfig connectionConfig;
         connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
         connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
         connectionConfig.channelStructure = m_config.channelStructure;
@@ -43,13 +43,13 @@ namespace protocol
 
         for ( int i = 0; i < m_numClients; ++i )
         {
-            m_clients[i].connection = CORE_NEW( *m_allocator, Connection, connectionConfig );
+            m_clients[i].connection = CORE_NEW( *m_allocator, protocol::Connection, connectionConfig );
 
             if ( m_config.serverData )
-                m_clients[i].dataBlockSender = CORE_NEW( *m_allocator, ClientServerDataBlockSender, *m_allocator, *m_config.serverData, m_config.fragmentSize, m_config.fragmentsPerSecond );
+                m_clients[i].dataBlockSender = CORE_NEW( *m_allocator, DataBlockSender, *m_allocator, *m_config.serverData, m_config.fragmentSize, m_config.fragmentsPerSecond );
 
             if ( m_config.maxClientDataSize > 0 )
-                m_clients[i].dataBlockReceiver = CORE_NEW( *m_allocator, ClientServerDataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxClientDataSize );
+                m_clients[i].dataBlockReceiver = CORE_NEW( *m_allocator, DataBlockReceiver, *m_allocator, m_config.fragmentSize, m_config.maxClientDataSize );
         }
     }
 
@@ -69,13 +69,13 @@ namespace protocol
 
             if ( m_clients[i].dataBlockSender )
             {
-                CORE_DELETE( *m_allocator, ClientServerDataBlockSender, m_clients[i].dataBlockSender );
+                CORE_DELETE( *m_allocator, DataBlockSender, m_clients[i].dataBlockSender );
                 m_clients[i].dataBlockSender = nullptr;
             }
 
             if ( m_clients[i].dataBlockReceiver )
             {
-                CORE_DELETE( *m_allocator, ClientServerDataBlockReceiver, m_clients[i].dataBlockReceiver );
+                CORE_DELETE( *m_allocator, DataBlockReceiver, m_clients[i].dataBlockReceiver );
                 m_clients[i].dataBlockReceiver = nullptr;
             }
         }
@@ -143,14 +143,14 @@ namespace protocol
         return m_clients[clientIndex].state;
     }
 
-    Connection * Server::GetClientConnection( int clientIndex )
+    protocol::Connection * Server::GetClientConnection( int clientIndex )
     {
         CORE_ASSERT( clientIndex >= 0 );
         CORE_ASSERT( clientIndex < m_numClients );
         return m_clients[clientIndex].connection;
     }
 
-    const Block * Server::GetClientData( int clientIndex ) const
+    const protocol::Block * Server::GetClientData( int clientIndex ) const
     {
         CORE_ASSERT( clientIndex >= 0 );
         CORE_ASSERT( clientIndex < m_numClients );
@@ -163,7 +163,7 @@ namespace protocol
     void Server::SetContext( int index, const void * ptr )
     {
         CORE_ASSERT( index >= CONTEXT_USER );
-        CORE_ASSERT( index < MaxContexts );
+        CORE_ASSERT( index < protocol::MaxContexts );
         m_context[index] = ptr;
     }
 
@@ -277,7 +277,7 @@ namespace protocol
 
         client.connection->Update( m_timeBase );
 
-        if ( client.connection->GetError() != CONNECTION_ERROR_NONE )
+        if ( client.connection->GetError() != protocol::CONNECTION_ERROR_NONE )
         {
 //            printf( "client connection is in error state\n" );
             ResetClientSlot( clientIndex );
@@ -378,7 +378,7 @@ namespace protocol
                     break;
 
                 case CLIENT_SERVER_PACKET_CONNECTION:
-                    ProcessConnectionPacket( static_cast<ConnectionPacket*>( packet ) );
+                    ProcessConnectionPacket( static_cast<protocol::ConnectionPacket*>( packet ) );
                     break;
 
                 default:
@@ -589,7 +589,7 @@ namespace protocol
         ResetClientSlot( clientIndex );
     }
 
-    void Server::ProcessConnectionPacket( ConnectionPacket * packet )
+    void Server::ProcessConnectionPacket( protocol::ConnectionPacket * packet )
     {
         CORE_ASSERT( packet );
 
@@ -651,7 +651,7 @@ namespace protocol
         m_clientServerContext.RemoveClient( clientIndex );
     }
 
-    void Server::SendPacket( const network::Address & address, Packet * packet )
+    void Server::SendPacket( const network::Address & address, protocol::Packet * packet )
     {
         auto interface = m_config.networkSimulator ? m_config.networkSimulator : m_config.networkInterface;
         interface->SendPacket( address, packet );

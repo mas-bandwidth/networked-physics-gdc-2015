@@ -1,12 +1,12 @@
-// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#include "protocol/ClientServerDataBlock.h"
-#include "protocol/Packets.h"
+#include "ClientServerDataBlock.h"
+#include "ClientServerPackets.h"
 #include "network/Interface.h"
 
-namespace protocol
+namespace clientServer
 {
-    void ClientServerDataBlockSender::SendFragment( int fragmentId, uint8_t * fragmentData, int fragmentBytes )
+    void DataBlockSender::SendFragment( int fragmentId, uint8_t * fragmentData, int fragmentBytes )
     {
         auto packet = (DataBlockFragmentPacket*) m_info.packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT );
 
@@ -23,7 +23,7 @@ namespace protocol
         m_info.networkInterface->SendPacket( m_info.address, packet );
     }
 
-    void ClientServerDataBlockReceiver::SendAck( int fragmentId )
+    void DataBlockReceiver::SendAck( int fragmentId )
     {
         auto packet = (DataBlockFragmentAckPacket*) m_info.packetFactory->Create( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK );
         if ( !packet )

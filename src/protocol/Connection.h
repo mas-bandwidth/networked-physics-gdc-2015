@@ -5,9 +5,9 @@
 
 #include "core/Core.h"
 #include "protocol/Stream.h"
-#include "protocol/Packets.h"
 #include "protocol/Channel.h"
 #include "protocol/SlidingWindow.h"
+#include "protocol/ConnectionPacket.h"
 
 namespace protocol
 {

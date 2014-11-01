@@ -9,8 +9,6 @@ namespace protocol
     const int MaxSmallBlockSize = 256;
     const int MaxChannels = 8;
     const int MaxSimulatorStates = 32;
-    const int MaxResolveAddresses = 8;
-    const int MaxHostName = 256;
     const int MaxChannelName = 64;
     const int MaxFragmentSize = 1024;
     const int MaxContexts = 16;

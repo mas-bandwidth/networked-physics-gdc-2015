@@ -5,8 +5,8 @@
 
 #include "core/Core.h"
 #include "core/Allocator.h"
-#include "protocol/Constants.h"
-#include "protocol/Enums.h"
+#include "protocol/ProtocolConstants.h"
+#include "protocol/ProtocolEnums.h"
 #include "protocol/Block.h"
 #include "protocol/BitPacker.h"
 

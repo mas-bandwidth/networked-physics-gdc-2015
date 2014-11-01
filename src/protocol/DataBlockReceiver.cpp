@@ -1,8 +1,8 @@
 // Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
 #include "protocol/DataBlockReceiver.h"
-#include "protocol/Constants.h"
-#include "protocol/Enums.h"
+#include "protocol/ProtocolConstants.h"
+#include "protocol/ProtocolEnums.h"
 #include "core/Allocator.h"
 
 namespace protocol

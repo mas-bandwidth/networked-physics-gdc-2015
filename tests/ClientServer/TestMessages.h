@@ -2,9 +2,11 @@
 #define TEST_MESSAGES_H
 
 #include "protocol/Message.h"
+#include "protocol/ProtocolEnums.h"
 #include "protocol/BlockMessage.h"
 #include "protocol/MessageFactory.h"
-#include "protocol/ProtocolEnums.h"
+
+const int CONTEXT_USER = protocol::CONTEXT_CONNECTION + 1;
 
 enum MessageType
 {
@@ -90,7 +92,7 @@ struct TestContextMessage : public protocol::Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        auto testContext = (const TestContext*) stream.GetContext( protocol::CONTEXT_CONNECTION );
+        auto testContext = (const TestContext*) stream.GetContext( CONTEXT_USER );
         CORE_ASSERT( testContext );
         serialize_int( stream, value, testContext->value_min, testContext->value_max );
 

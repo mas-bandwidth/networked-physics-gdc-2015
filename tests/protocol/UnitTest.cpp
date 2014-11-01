@@ -1,5 +1,4 @@
 #include "core/Core.h"
-#include "network/Network.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,14 +53,6 @@ int main()
 {
     srand( time( nullptr ) );
 
-    if ( !network::InitializeNetwork() )
-    {
-        printf( "failed to initialize network\n" );
-        return 1;
-    }
-
-    CORE_ASSERT( network::IsNetworkInitialized() );
-
     test_message_factory();
     test_packet_factory();
     test_bitpacker();
@@ -81,36 +72,6 @@ int main()
 
     test_data_block_send_and_receive();
     test_data_block_send_and_receive_packet_loss();
-
-    test_client_initial_state();
-#if NETWORK_USE_RESOLVER
-    test_client_resolve_hostname_failure();
-    test_client_resolve_hostname_timeout();
-    test_client_resolve_hostname_success();
-#endif
-    test_client_connection_request_timeout();
-    test_client_connection_request_denied();
-    test_client_connection_challenge();
-    test_client_connection_challenge_response();
-    test_client_connection_established();
-    test_client_connection_messages();
-    test_client_connection_disconnect();
-    test_client_connection_server_full();
-    test_client_connection_timeout();
-    test_client_connection_already_connected();
-    test_client_connection_reconnect();
-    test_client_side_disconnect();
-
-    test_server_data();
-    test_client_data();
-    test_client_and_server_data();
-    test_client_and_server_data_reconnect();
-    test_client_and_server_data_multiple_clients();
-    test_server_data_too_large();
-
-    test_client_server_user_context();
-
-    network::ShutdownNetwork();
 
     return 0;
 }

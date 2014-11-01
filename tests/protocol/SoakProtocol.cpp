@@ -66,7 +66,7 @@ void soak_test()
 
     const void * context[protocol::MaxContexts];
     memset( context, 0, sizeof( context ) );
-    context[protocol::CONTEXT_CHANNEL_STRUCTURE] = &channelStructure;
+    context[protocol::CONTEXT_CONNECTION] = &channelStructure;
 
     const int MaxPacketSize = 4096;
 
