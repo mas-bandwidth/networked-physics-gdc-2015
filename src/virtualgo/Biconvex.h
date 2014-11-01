@@ -86,6 +86,57 @@ namespace virtualgo
                                         vec3f lineDirection,
                                         vec3f & biconvexPoint,
                                         vec3f & linePoint );
+
+    #define TEST_BICONVEX_AXIS( name, axis )                                            \
+    {                                                                                   \
+        float s1,s2,t1,t2;                                                              \
+        BiconvexSupport_WorldSpace( biconvex, position_a, up_a, axis, s1, s2 );         \
+        BiconvexSupport_WorldSpace( biconvex, position_b, up_b, axis, t1, t2 );         \
+        if ( s2 + epsilon < t1 || t2 + epsilon < s1 )                                   \
+            return false;                                                               \
+    }
+
+    /*
+    #define TEST_BICONVEX_AXIS( name, axis )                                            \
+    {                                                                                   \
+        printf( "-----------------------------------\n" );                              \
+        printf( name ":\n" );                                                           \
+        printf( "-----------------------------------\n" );                              \
+        float s1,s2,t1,t2;                                                              \
+        BiconvexSupport_WorldSpace( biconvex, position_a, up_a, axis, s1, s2 );         \
+        BiconvexSupport_WorldSpace( biconvex, position_b, up_b, axis, t1, t2 );         \
+        printf( "(%f,%f) | (%f,%f)\n", s1, s2, t1, t2 );                                \
+        if ( s2 + epsilon < t1 || t2 + epsilon < s1 )                                   \
+        {                                                                               \
+            printf( "not intersecting\n" );                                             \
+            return false;                                                               \
+        }                                                                               \
+    }
+    */
+
+    inline bool Biconvex_SAT( const Biconvex & biconvex,
+                              vec3f position_a,
+                              vec3f position_b,
+                              vec3f up_a,
+                              vec3f up_b,
+                              float epsilon = 0.001f )
+    {
+        const float sphereOffset = biconvex.GetSphereOffset();
+
+        vec3f top_a = position_a + up_a * sphereOffset;
+        vec3f top_b = position_b + up_b * sphereOffset;
+
+        vec3f bottom_a = position_a - up_a * sphereOffset;
+        vec3f bottom_b = position_b - up_b * sphereOffset;
+
+        TEST_BICONVEX_AXIS( "primary", normalize( position_b - position_a ) );
+        TEST_BICONVEX_AXIS( "top_a|top_b", normalize( top_b - top_a ) );
+        TEST_BICONVEX_AXIS( "top_a|bottom_b", normalize( bottom_b - top_a ) );
+        TEST_BICONVEX_AXIS( "bottom_a|top_b", normalize( top_b - bottom_a ) );
+        TEST_BICONVEX_AXIS( "bottom_b|top_a", normalize( bottom_b - bottom_a ) );
+
+        return true;
+    }
 }
 
 #endif // #ifndef VIRTUALGO_BICONVEX_H

@@ -2,6 +2,25 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    Prefix all tests with the module, eg. test_virtualgo_*, test_cubes_* and so on
+
+    ----------------------------------
+
+    Finish implementing virtual go tests for each stone vs. board collision type
+
+    ----------------------------------
+
+    It's important that tests are able to be run in release, but currently they do checks via CORE_ASSERT
+    which is debug build only. This is wrong!!!
+
+    ----------------------------------
+
+    tests/common -- a place for stuff common to all tests, eg. so it is kept out of runtime code
+    
+    For example, CHECK, CHECK_CLOSE, CHECK_CLOSE_VEC3 and so on.
+
+    ----------------------------------
+
     Virtual go project has a lot of unneccessary implementation in headers.
 
     Fix it so it has better header leakage, eg. faster compilation for cpps.

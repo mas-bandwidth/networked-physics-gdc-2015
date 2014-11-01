@@ -1,3 +1,32 @@
+Saturday Morning, October 1st November, 2014
+--------------------------------------------
+
+    Convert the cube demo to run inside the new engine.
+
+    Do this as prep for USC game networking talk
+
+    First bring across as much of the cube demo engine as possible into "cubes" library.
+
+    Moved protocol related tests into tests/protocol so there can be separate tests per-library.
+
+    Tried to get UnitTest++ working for cubes tests, but it requires exceptions, which is a no-go.
+
+    Convert cubes tests from UnitTest++ to normal C++ functions with CORE_ASSERT, CORE_ASSERT_CLOSE
+
+    Split protocol tests into protocol tests and core tests, eg. "test_core"
+
+    Split out test_network from test_protocol
+
+    Implement unified tests via "pm test"
+
+    Bring across virtual go tests (convert from UnitTest++)
+
+    Fix sublime text build systems so ../external is an include directory.
+
+    Convert *essential* virtual go tests only, as quite a bit of work is required 
+    to convert tests to +z is up (right handed), rather than +y up (left handed).
+
+
 Monday Evening, October 28th, 2014
 ----------------------------------
 
