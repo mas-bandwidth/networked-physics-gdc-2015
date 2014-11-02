@@ -1,3 +1,14 @@
+Sunday Morning, November 2nd, 2014
+----------------------------------
+
+    Added tinycthread library. Looks promising. Will check it out.
+
+    Get the cubes demo building and functional, but not rendering (yet)
+
+    Hack up the Render.cpp so it just builds and cubes links.
+
+    It's now basically working but needs rendering hooked up with modern OpenGL
+
 
 Saturday Night, November 1st, 2014
 ----------------------------------
@@ -5,6 +16,40 @@ Saturday Night, November 1st, 2014
     Converted TestClientServer.cpp
 
     Fix profile and soak test client/server not compiling.
+
+    Getting this error when running any client/server related stuff:
+
+    Assert failed: ( value == magic ), function Check, file ../src/protocol/Stream.h, line 179
+
+    Seems that I have fucked something up!
+
+    Was just the order of packets. CONNECTION_PACKET must be 0 from now on.
+
+    All but one tests passes now.
+
+    Fix user context issue in client/server test.
+
+    Was just an incorrect redefinition of CONTEXT_USER
+
+    All tests pass.
+
+    Get "TestClientServer" working.
+
+    Get "SoakClientServer" working.
+
+    Add new "cubes" demo, eg. "load cubes"
+
+    Add stubbed out "interpolation" demo as well, eg. "load interpolation"
+
+    Add command line parsing to pass into console, eg. "+demo cubes" should load cubes demo
+
+    (It's hacked up not real, but the effect is the same for now...)
+
+    If no command line args passed to console, default to starting with console open
+
+    Implement premake rules: "pm cubes", "pm stone", "pm interpolation" so I can iterate quickly on demos.
+
+    Alright! Ready to go!
 
 
 Saturday Lunch, November 1st, 2014

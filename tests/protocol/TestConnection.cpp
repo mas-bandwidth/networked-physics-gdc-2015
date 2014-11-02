@@ -43,7 +43,6 @@ void test_connection()
         TestPacketFactory packetFactory( core::memory::default_allocator() );
 
         protocol::ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = 4 * 1024;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -144,8 +143,6 @@ void test_acks()
         TestPacketFactory packetFactory( core::memory::default_allocator() );
 
         protocol::ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
-        connectionConfig.maxPacketSize = 4 * 1024;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
 

@@ -109,7 +109,7 @@ namespace protocol
         if ( m_error != CONNECTION_ERROR_NONE )
             return nullptr;
 
-        auto packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( m_config.packetType ) );
+        auto packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( CONNECTION_PACKET ) );
 
         packet->sequence = m_sentPackets->GetSequence();
 
@@ -131,7 +131,7 @@ namespace protocol
             return false;
 
         CORE_ASSERT( packet );
-        CORE_ASSERT( packet->GetType() == m_config.packetType );
+        CORE_ASSERT( packet->GetType() == CONNECTION_PACKET );
 
 //            printf( "read packet %d\n", (int) packet->sequence );
 

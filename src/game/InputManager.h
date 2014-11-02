@@ -1,3 +1,5 @@
+#ifdef CLIENT
+
 #ifndef GAME_INPUT_MANAGER_H
 #define GAME_INPUT_MANAGER_H
 
@@ -21,3 +23,5 @@ private:
 };
 
 #endif // #ifndef GAME_INPUT_MANAGER_H
+
+#endif // #ifdef CLIENT

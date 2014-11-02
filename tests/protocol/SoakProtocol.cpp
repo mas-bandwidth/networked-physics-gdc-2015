@@ -87,7 +87,6 @@ void soak_test()
     network::Address address( "::1" );
 
     protocol::ConnectionConfig connectionConfig;
-    connectionConfig.packetType = PACKET_CONNECTION;
     connectionConfig.maxPacketSize = MaxPacketSize;
     connectionConfig.packetFactory = &packetFactory;
     connectionConfig.slidingWindowSize = 1024;

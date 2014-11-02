@@ -3,10 +3,7 @@
 
 #include "core/Core.h"
 
-#ifdef SERVER
-const int MaxClients = 16;
-#endif // #ifdef SERVER
-
+static const int MaxClients = 16;
 static const float TickRate = 60;
 static const int ServerPort = 10000;
 
@@ -42,12 +39,11 @@ struct Global
     MeshManager * meshManager = nullptr;
     InputManager * inputManager = nullptr;
     DemoManager * demoManager = nullptr;
+    StoneManager * stoneManager = nullptr;
 
     #endif // #ifdef CLIENT
 
     Console * console = nullptr;
-
-    StoneManager * stoneManager = nullptr;
 };
 
 extern Global global;

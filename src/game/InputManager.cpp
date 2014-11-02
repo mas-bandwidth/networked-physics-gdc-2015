@@ -1,4 +1,7 @@
 #include "InputManager.h"
+
+#ifdef CLIENT
+
 #include "DemoManager.h"
 #include "Console.h"
 #include "Global.h"
@@ -34,3 +37,5 @@ void InputManager::CharEvent( unsigned int code )
 
     // ...
 }
+
+#endif // #ifdef CLIENT

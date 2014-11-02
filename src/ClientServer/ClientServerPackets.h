@@ -7,12 +7,15 @@
 #include "protocol/Stream.h"
 #include "protocol/Channel.h"
 #include "protocol/PacketFactory.h"
+#include "protocol/ProtocolEnums.h"
 #include "core/Memory.h"
 
 namespace clientServer
 {
     enum Packets
     { 
+        CLIENT_SERVER_PACKET_CONNECTION = protocol::CONNECTION_PACKET,
+
         // client -> server
 
         CLIENT_SERVER_PACKET_CONNECTION_REQUEST,                // client is requesting a connection.
@@ -29,8 +32,6 @@ namespace clientServer
         CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT,               // a fragment of a data block being sent down.
         CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK,           // ack for a received data block fragment.
         CLIENT_SERVER_PACKET_DISCONNECTED,                      // courtesy packet sent in both directions to indicate that the client slot has been disconnected
-
-        CLIENT_SERVER_PACKET_CONNECTION,                        // connection packet send both directions once connection established (Connection.cpp)
 
         NUM_CLIENT_SERVER_NUM_PACKETS
     };

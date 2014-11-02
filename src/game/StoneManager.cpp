@@ -1,3 +1,5 @@
+#ifdef CLIENT
+
 #include "StoneManager.h"
 #include "Global.h"
 #include "Console.h"
@@ -133,3 +135,5 @@ CONSOLE_FUNCTION( reload_stones )
 
     global.stoneManager->Reload();
 }
+
+#endif // #ifdef CLIENT

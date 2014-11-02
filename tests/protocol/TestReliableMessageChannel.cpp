@@ -25,7 +25,6 @@ void test_reliable_message_channel_messages()
             const int MaxPacketSize = 256;
 
             protocol::ConnectionConfig connectionConfig;
-            connectionConfig.packetType = PACKET_CONNECTION;
             connectionConfig.maxPacketSize = MaxPacketSize;
             connectionConfig.packetFactory = &packetFactory;
             connectionConfig.channelStructure = &channelStructure;
@@ -158,7 +157,6 @@ void test_reliable_message_channel_small_blocks()
         const int MaxPacketSize = 256;
 
         protocol::ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -294,7 +292,6 @@ void test_reliable_message_channel_large_blocks()
         const int MaxPacketSize = 256;
 
         protocol::ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;
@@ -432,7 +429,6 @@ void test_reliable_message_channel_mixture()
         const int MaxPacketSize = 256;
 
         protocol::ConnectionConfig connectionConfig;
-        connectionConfig.packetType = PACKET_CONNECTION;
         connectionConfig.maxPacketSize = MaxPacketSize;
         connectionConfig.packetFactory = &packetFactory;
         connectionConfig.channelStructure = &channelStructure;

@@ -2,6 +2,18 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    Clean up all the excessive namespace usage inside cubes source code.
+
+    Everything should be uniformly inside "cubes" namespace. Nothing more.
+
+    ----------------------------------
+
+    "magic number" enums like 0 = block message, 0 = connection packet type, CONTEXT_USER and so on,
+
+    They're error prone and easy to fuck up. And hard to track down. Is there a better way?
+
+    ----------------------------------
+
     It's annoying having multiple "UnitTest.cpp"
 
     They should be uniquely named, eg. "TestNetwork.cpp", "TestProtocl.cpp" and so on.

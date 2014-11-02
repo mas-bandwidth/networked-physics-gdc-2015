@@ -36,7 +36,6 @@ namespace clientServer
         m_config.networkInterface->SetContext( m_context );
 
         protocol::ConnectionConfig connectionConfig;
-        connectionConfig.packetType = CLIENT_SERVER_PACKET_CONNECTION;
         connectionConfig.maxPacketSize = m_config.networkInterface->GetMaxPacketSize();
         connectionConfig.channelStructure = m_config.channelStructure;
         connectionConfig.packetFactory = m_packetFactory;

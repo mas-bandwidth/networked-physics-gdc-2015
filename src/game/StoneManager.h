@@ -1,3 +1,5 @@
+#ifdef CLIENT
+
 #ifndef STONE_MANAGER_H
 #define STONE_MANAGER_H
 
@@ -39,3 +41,5 @@ private:
 };
 
 #endif // #ifndef STONE_MANAGER_H
+
+#endif // #ifdef CLIENT

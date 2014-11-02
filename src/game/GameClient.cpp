@@ -1,3 +1,5 @@
+#ifdef CLIENT
+
 #include "GameClient.h"
 #include "Console.h"
 #include "Global.h"
@@ -153,3 +155,5 @@ CONSOLE_FUNCTION( disconnect )
 
     global.client->Disconnect();
 }
+
+#endif // #ifdef CLIENT

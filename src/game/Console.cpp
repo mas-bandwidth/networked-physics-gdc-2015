@@ -49,8 +49,10 @@ struct ConsoleInternal
     ConsoleInternal( core::Allocator & allocator )
         : functions( allocator )
     {
+        #ifdef CLIENT
         vao = 0;
         vbo = 0;
+        #endif // #ifdef CLIENT
 
         active = false;
         justActivated = false;
@@ -295,6 +297,8 @@ Console::~Console()
 
 bool Console::KeyEvent( int key, int scancode, int action, int mods )
 {
+#ifdef CLIENT
+
     if ( !IsActive() )
     {
         if ( key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS && mods == 0 )
@@ -353,11 +357,15 @@ bool Console::KeyEvent( int key, int scancode, int action, int mods )
         }
     }
 
+#endif // #ifdef CLIENT
+
     return true;
 }
 
 bool Console::CharEvent( unsigned int code )
 {
+#ifdef CLIENT
+
     if ( m_internal->justDeactivated )
     {
         m_internal->justDeactivated = false;
@@ -379,6 +387,8 @@ bool Console::CharEvent( unsigned int code )
     }
 
     m_internal->CharacterTyped( (char) code );
+
+#endif // #ifdef CLIENT
 
     return true;
 }
@@ -413,6 +423,11 @@ void Console::ExecuteCommand( const char * string )
 bool Console::IsActive() const
 {
     return m_internal->active;
+}
+
+void Console::Activate()
+{
+    m_internal->active = true;
 }
 
 #ifdef CLIENT

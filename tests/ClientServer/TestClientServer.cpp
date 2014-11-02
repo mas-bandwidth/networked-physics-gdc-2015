@@ -2516,6 +2516,7 @@ int main()
     test_client_and_server_data_multiple_clients();
     test_server_data_too_large();
 
+    // todo: this test breaks
     test_client_server_user_context();
 
     network::ShutdownNetwork();

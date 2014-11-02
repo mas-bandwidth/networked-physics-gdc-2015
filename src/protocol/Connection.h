@@ -17,7 +17,7 @@ namespace protocol
     struct ConnectionConfig
     {
         core::Allocator * allocator = nullptr;
-        int packetType = 0;
+        int packetType = protocol::CONNECTION_PACKET;
         int maxPacketSize = 1024;
         int slidingWindowSize = 256;
         PacketFactory * packetFactory = nullptr;

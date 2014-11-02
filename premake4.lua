@@ -1,6 +1,4 @@
 solution "Protocol"
-    language "C++"
-    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     includedirs { "src", "external", "tools", "." }
     platforms { "x64" }
     configurations { "Debug", "Release" }
@@ -10,46 +8,68 @@ solution "Protocol"
         defines { "NDEBUG" }
 
 project "Core"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "src/Core/*.h", "src/Core/*.cpp" }
     targetdir "lib"
 
 project "Network"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "src/network/*.h", "src/network/*.cpp" }
     links { "Core" }
     targetdir "lib"
 
 project "Protocol"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "src/protocol/*.h", "src/protocol/*.cpp" }
     links { "Core", "Network" }
     targetdir "lib"
 
 project "ClientServer"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "src/ClientServer/*.h", "src/ClientServer/*.cpp" }
     links { "Core", "Network", "Protocol" }
     targetdir "lib"
 
 project "VirtualGo"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "src/VirtualGo/*.h", "src/VirtualGo/*.cpp" }
     links { "Core" }
     targetdir "lib"
 
 project "Cubes"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "src/Cubes/*.h", "src/Cubes/*.cpp" }
     links { "Core" }
     targetdir "lib"
 
 project "nvImage"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "StaticLib"
     files { "external/nvImage/*.h", "external/nvImage/*.cpp" }
     targetdir "lib"
 
+project "tinycthread"
+    language "C"
+    kind "StaticLib"
+    files { "external/tinycthread/*.h", "external/tinycthread/*.c" }
+    targetdir "lib"
+
 project "TestCore"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Core/*.cpp" }
     links { "Core" }
@@ -57,6 +77,8 @@ project "TestCore"
     targetdir "bin"
 
 project "TestNetwork"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Network/Test*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on protocol or client server
@@ -64,6 +86,8 @@ project "TestNetwork"
     targetdir "bin"
 
 project "TestProtocol"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/Test*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client server
@@ -71,6 +95,8 @@ project "TestProtocol"
     targetdir "bin"
 
 project "TestClientServer"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/ClientServer/Test*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
@@ -78,6 +104,8 @@ project "TestClientServer"
     targetdir "bin"
 
 project "TestCubes"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Cubes/*.cpp" }
     links { "Core", "Cubes", "ode" }
@@ -85,6 +113,8 @@ project "TestCubes"
     targetdir "bin"
 
 project "TestVirtualGo"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/VirtualGo/*.cpp" }
     links { "Core", "VirtualGo", "ode" }
@@ -92,6 +122,8 @@ project "TestVirtualGo"
     targetdir "bin"
 
 project "SoakProtocol"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/SoakProtocol.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
@@ -99,6 +131,8 @@ project "SoakProtocol"
     location "build"
 
 project "SoakClientServer"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/ClientServer/SoakClientServer.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
@@ -106,6 +140,8 @@ project "SoakClientServer"
     location "build"
 
 project "ProfileProtocol"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/ProfileProtocol.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
@@ -113,6 +149,8 @@ project "ProfileProtocol"
     location "build"
 
 project "ProfileClientServer"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/ClientServer/ProfileClientServer.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
@@ -120,6 +158,8 @@ project "ProfileClientServer"
     location "build"
 
 project "FontTool"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tools/Font/*.cpp" }
     links { "Core", "Freetype", "Jansson" }
@@ -127,6 +167,8 @@ project "FontTool"
     targetdir "bin"
 
 project "StoneTool"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tools/Stone/*.cpp" }
     links { "Core", "VirtualGo", "Jansson" }
@@ -134,17 +176,21 @@ project "StoneTool"
     targetdir "bin"
 
 project "Client"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer", "VirtualGo", "Cubes", "nvImage", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "ode" }
+    links { "Core", "Network", "Protocol", "ClientServer", "VirtualGo", "Cubes", "nvImage", "tinycthread", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "ode" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }
 
 project "Server"
+    language "C++"
+    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "Core", "Network", "Protocol", "VirtualGo", "ode" }
+    links { "Core", "Network", "Protocol", "ClientServer" }
     location "build"
     targetdir "bin"
 
@@ -410,6 +456,70 @@ if not os.is "windows" then
                 os.exit(1)
             end
             os.execute "bin/Client"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "server",
+        description = "Build and run game server",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 Server" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Server"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "stone",
+        description = "Build and run stone demo",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 Client" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Client +load stone"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "cubes",
+        description = "Build and run cubes demo",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 Client" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Client +load cubes"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "interpolation",
+        description = "Build and run interpolation demo",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 Client" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Client +load interpolation"
         end
     }
 

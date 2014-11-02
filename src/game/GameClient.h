@@ -1,3 +1,5 @@
+#ifdef CLIENT
+
 #ifndef GAME_CLIENT_H
 #define GAME_CLIENT_H
 
@@ -37,3 +39,5 @@ protected:
 };
 
 #endif // #ifndef GAME_CLIENT_H
+
+#endif // #ifdef CLIENT

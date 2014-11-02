@@ -35,6 +35,8 @@ public:
 
     bool IsActive() const;
 
+    void Activate();
+
     #ifdef CLIENT
     void Render();
     #endif // #ifdef CLIENT

@@ -2,37 +2,24 @@ DONE:
 
 TODO:
 
-    Getting this error when running any client/server related stuff:
+    --------------------------------------------------------------
 
-    Assert failed: ( value == magic ), function Check, file ../src/protocol/Stream.h, line 179
+    Strip down Render.cpp as much as possible before conversion
 
-    Seems that I have fucked something up!
+    Split out the Render.h so that it is just an "interface" for rendering
+    and perform the implementation of that interface inside "CubesDemo.cpp"
 
-    *** FIX IT ***
-
-    ---------------------------------------------------------------
-
-    Get "TestClientServer" working.
-
-    Get "SoakClientServer" working.
-
-    ---------------------------------------------------------------
-
-    Add new "cubes" demo, eg. "load cubes"
-
-    Add command line parsing to pass into console, eg. "+demo cubes" should load cubes demo
-
-    Implement premake rules: "pm cubes" and "pm stones" so I can iterate quickly on demos.
-
-    Get the singleplayer cube working with updated rendering
-
-    If no command line args passed to console, default to starting with console open
+    This will allow me to keep rendering out of "cubes" library, which is ideal.
 
     --------------------------------------------------------------
 
-    Implement an "interpolation" demo for Nathan Lazur, eg: "load interpolation"
+    Need a way to get instantaneous input for left/right/up/down, space and Z from glfw
 
-    Add a premake shortcut, eg: "pm interpolation" or "pm lerp" for fast iteration.
+    Code this in such a way that the demo has an interface to query stuff, without specifically
+    talking to glfw. For example, I want to make sure that when the console is up, the demo running
+    underneath it doesn't do stuff on left/right or space as they are pressed.
+
+    --------------------------------------------------------------
 
     Explore various different interpolation strategies to use for 2D linear motion.
 

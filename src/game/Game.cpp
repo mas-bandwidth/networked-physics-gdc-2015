@@ -1,5 +1,6 @@
 #include "core/Core.h"
 #include "network/Network.h"
+#include "CommandLine.h"
 #include "Global.h"
 #include <time.h>
 #include <stdlib.h>
@@ -67,12 +68,10 @@ static void game_init()
 
     glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
-    //glEnable( GL_CULL_FACE );
-    //glFrontFace( GL_CW );
+    glEnable( GL_CULL_FACE );
+    glFrontFace( GL_CW );
 
     check_opengl_error( "after game_init" );
-
-    global.demoManager->LoadDemo( "stone" );
 }
 
 static void game_update()
@@ -229,6 +228,8 @@ int main( int argc, char * argv[] )
 
     core::memory::initialize();
 
+    ParseCommandLine( argc, argv );
+
     if ( !network::InitializeNetwork() )
     {
         printf( "%.3f: Failed to initialize network!\n", global.timeBase.time );
@@ -278,6 +279,8 @@ int main( int argc, char * argv[] )
 
     game_init();
 
+    CommandLinePostGameInit();
+
     while ( !global.quit && !glfwWindowShouldClose( window ) )
     {
         update_fps();
@@ -321,15 +324,15 @@ int main( int argc, char ** argv )
 
     global.timeBase.deltaTime = 1.0 / TickRate;
 
-    memory::initialize();
+    core::memory::initialize();
     
-    if ( !InitializeNetwork() )
+    if ( !network::InitializeNetwork() )
     {
         printf( "%.3f: Failed to initialize network!\n", global.timeBase.time );
         return 1;
     }
 
-    auto server = CreateGameServer( memory::default_allocator(), ServerPort, MaxClients );
+    auto server = CreateGameServer( core::memory::default_allocator(), ServerPort, MaxClients );
 
     if ( !server )
     {
@@ -350,18 +353,18 @@ int main( int argc, char ** argv )
 
         server->Update( global.timeBase );
 
-        sleep_milliseconds( global.timeBase.deltaTime * 1000 );
+        core::sleep_milliseconds( global.timeBase.deltaTime * 1000 );
 
         global.timeBase.time += global.timeBase.deltaTime;
     }
 
     printf( "%.3f: Shutting down game server\n", global.timeBase.time );
 
-    DestroyGameServer( memory::default_allocator(), server );
+    DestroyGameServer( core::memory::default_allocator(), server );
 
-    ShutdownNetwork();
+    network::ShutdownNetwork();
 
-    memory::shutdown();
+    core::memory::shutdown();
 
     return 0;
 }
