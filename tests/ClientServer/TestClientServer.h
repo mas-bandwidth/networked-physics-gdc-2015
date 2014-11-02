@@ -1,15 +1,15 @@
 #ifndef TEST_CLIENT_SERVER_H
 #define TEST_CLIENT_SERVER_H
 
-#include "protocol/Client.h"
-#include "protocol/Server.h"
+#include "clientServer/Client.h"
+#include "clientServer/Server.h"
 #include "TestMessages.h"
 
-class TestClient : public protocol::Client
+class TestClient : public clientServer::Client
 {
 public:
 
-    TestClient( const protocol::ClientConfig & config ) : Client( config ) {}
+    TestClient( const clientServer::ClientConfig & config ) : Client( config ) {}
 
     const TestContext * GetTestContext() const
     {
@@ -28,18 +28,18 @@ protected:
         // Set it as the user context. This simulates for example, send
         // tables or other data which the client needs to deserialize
         // connection packets.
-        SetContext( protocol::CONTEXT_USER, block.GetData() );
+        SetContext( clientServer::CONTEXT_USER, block.GetData() );
     }
 };
 
-class TestServer : public protocol::Server
+class TestServer : public clientServer::Server
 {
 public:
 
-    TestServer( const protocol::ServerConfig & config ) : Server( config )
+    TestServer( const clientServer::ServerConfig & config ) : Server( config )
     {
         CORE_ASSERT( config.serverData );
-        SetContext( protocol::CONTEXT_USER, config.serverData->GetData() );
+        SetContext( clientServer::CONTEXT_USER, config.serverData->GetData() );
     }
 
     const TestContext * GetTestContext() const

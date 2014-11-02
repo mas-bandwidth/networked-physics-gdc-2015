@@ -32,7 +32,7 @@ namespace clientServer
 
         CLIENT_SERVER_PACKET_CONNECTION,                        // connection packet send both directions once connection established (Connection.cpp)
 
-        NUM_CLIENT_SERVER_PACKETS
+        NUM_CLIENT_SERVER_NUM_PACKETS
     };
 
     struct ConnectionRequestPacket : public protocol::Packet

@@ -1,4 +1,31 @@
-Saturday Morning, October 1st November, 2014
+
+Saturday Night, November 1st, 2014
+----------------------------------
+
+    Converted TestClientServer.cpp
+
+    Fix profile and soak test client/server not compiling.
+
+
+Saturday Lunch, November 1st, 2014
+----------------------------------
+
+    Split client and server into their own library: "ClientServer"
+
+    Use proper casing from now on for projects so they don't need to be single word. (Grow up!)
+
+    Move client/server tests out of protocol so they can be iterated on independently
+
+    Get "ClientServer" library building.
+
+    Make sure all client server stuff is removed from protocol.
+
+    protocol::MaxHostName should be in ClientServerConstants.h, not protocol.
+
+    Got game client / game server compiling again.
+
+
+Saturday Morning, November 1st, 2014
 --------------------------------------------
 
     Convert the cube demo to run inside the new engine.

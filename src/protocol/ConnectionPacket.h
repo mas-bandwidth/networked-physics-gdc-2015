@@ -9,6 +9,10 @@
 #include "Memory.h"
 #include "PacketFactory.h"
 
+// todo: protocol should not depend on client/server
+#include "clientServer/ClientServerContext.h"
+#include "clientServer/ClientServerEnums.h"
+
 namespace protocol
 {
     struct ConnectionPacket : public Packet
@@ -55,16 +59,12 @@ namespace protocol
             CORE_ASSERT( numChannels > 0 );
             CORE_ASSERT( numChannels <= MaxChannels );
 
-            // todo: need to derive from this to run the client/server check -- can't do client/server stuff in base connection
+            // todo: protocol should not depend on client/server
 
-            // todo: ideally there is some concept of a "serializer" that can do this work for us, such that it is
-            // general, and we can derive client/server specific serializer behavior between network <-> protocol
-
-            /*
             // IMPORTANT: Context here is used when running under client/server
             // so we can filter out connection packets that do not match any connected client.
 
-            auto clientServerContext = (const ClientServerContext*) stream.GetContext( CONTEXT_CLIENT_SERVER );
+            auto clientServerContext = (const clientServer::ClientServerContext*) stream.GetContext( clientServer::CONTEXT_CLIENT_SERVER );
 
             if ( clientServerContext )
             {
@@ -79,7 +79,6 @@ namespace protocol
                     return;                        
                 }
             }
-            */
 
             // IMPORTANT: Insert non-frequently changing values here
             // This helps LZ dictionary based compressors do a good job!

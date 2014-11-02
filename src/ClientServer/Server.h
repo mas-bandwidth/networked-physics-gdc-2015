@@ -1,7 +1,7 @@
 // Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
 
-#ifndef CLIENT_SERVER_CLIENT_H
-#define CLIENT_SERVER_CLIENT_H
+#ifndef CLIENT_SERVER_SERVER_H
+#define CLIENT_SERVER_SERVER_H
 
 #include "protocol/Connection.h"
 #include "ClientServerContext.h"

@@ -387,6 +387,7 @@ namespace network
 
             if ( !stream.Check( 0x51246234 ) )
             {
+                // todo: counter for truncated packets
                 m_config.packetFactory->Destroy( packet );
                 continue;
             }

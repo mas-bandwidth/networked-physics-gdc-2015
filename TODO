@@ -1,20 +1,14 @@
 DONE:
 
-    Split client and server into their own library: "ClientServer"
-
-    Use proper casing from now on for projects so they don't need to be single word. (Grow up!)
-
-    Move client/server tests out of protocol so they can be iterated on independently
-
-    Get "ClientServer" library building.
-
-    Make sure all client server stuff is removed from protocol.
-
-    protocol::MaxHostName should be in ClientServerConstants.h, not protocol.
-
-    Got game client / game server compiling again.
-
 TODO:
+
+    Getting this error when running any client/server related stuff:
+
+    Assert failed: ( value == magic ), function Check, file ../src/protocol/Stream.h, line 179
+
+    Seems that I have fucked something up!
+
+    *** FIX IT ***
 
     ---------------------------------------------------------------
 

@@ -1,22 +1,21 @@
 #include "core/Core.h"
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "clientServer/Client.h"
 #include "clientServer/Server.h"
+#include "clientServer/ClientServerPackets.h"
 #include "protocol/Message.h"
-#include "protocol/Packets.h"
 #include "protocol/ReliableMessageChannel.h"
+#include "network/Network.h"
 #include "network/Interface.h"
 #include "network/BSDSocket.h"
 #include "network/DNSResolver.h"
-
 #include "TestCommon.h"
 #include "TestPackets.h"
 #include "TestMessages.h"
 #include "TestClientServer.h"
 #include "TestChannelStructure.h"
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void test_client_initial_state()
 {
@@ -37,18 +36,18 @@ void test_client_initial_state()
 
         network::BSDSocket networkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         CORE_CHECK( client.IsDisconnected () );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
         CORE_CHECK( client.GetNetworkInterface() == &networkInterface );
 #if PROTOCOL_USE_RESOLVER
         CORE_CHECK( client.GetResolver() == nullptr );
@@ -259,11 +258,11 @@ void test_client_connection_request_timeout()
 
         network::BSDSocket networkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.networkInterface = &networkInterface;
         clientConfig.channelStructure = &channelStructure;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
@@ -271,7 +270,7 @@ void test_client_connection_request_timeout()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 1.0f;
@@ -290,9 +289,9 @@ void test_client_connection_request_timeout()
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_CONNECTION_TIMED_OUT );
-        CORE_CHECK( client.GetExtendedError() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_CONNECTION_TIMED_OUT );
+        CORE_CHECK( client.GetExtendedError() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
     }
 }
 
@@ -315,22 +314,22 @@ void test_client_connection_request_denied()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         server.Close();     // IMPORTANT: close the server so all connection requests are denied
 
@@ -340,7 +339,7 @@ void test_client_connection_request_denied()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -367,9 +366,9 @@ void test_client_connection_request_denied()
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        CORE_CHECK( client.GetExtendedError() == protocol::CONNECTION_REQUEST_DENIED_SERVER_CLOSED );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        CORE_CHECK( client.GetExtendedError() == clientServer::CONNECTION_REQUEST_DENIED_SERVER_CLOSED );
     }
 }
 
@@ -392,22 +391,22 @@ void test_client_connection_challenge()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -415,7 +414,7 @@ void test_client_connection_challenge()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -426,7 +425,7 @@ void test_client_connection_challenge()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_SENDING_CHALLENGE_RESPONSE )
+            if ( client.GetState() == clientServer::CLIENT_STATE_SENDING_CHALLENGE_RESPONSE )
                 break;
 
             client.Update( timeBase );
@@ -438,14 +437,14 @@ void test_client_connection_challenge()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_SENDING_CHALLENGE );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_SENDING_CHALLENGE );
 
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
     }
 }
@@ -469,22 +468,22 @@ void test_client_connection_challenge_response()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -492,7 +491,7 @@ void test_client_connection_challenge_response()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -503,7 +502,7 @@ void test_client_connection_challenge_response()
 
         while ( true )
         {
-            if ( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_READY_FOR_CONNECTION )
+            if ( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_READY_FOR_CONNECTION )
                 break;
 
             client.Update( timeBase );
@@ -515,13 +514,13 @@ void test_client_connection_challenge_response()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_READY_FOR_CONNECTION );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_READY_FOR_CONNECTION );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CHALLENGE_RESPONSE );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
     }
 }
@@ -545,22 +544,22 @@ void test_client_connection_established()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -568,7 +567,7 @@ void test_client_connection_established()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -579,7 +578,7 @@ void test_client_connection_established()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -591,13 +590,13 @@ void test_client_connection_established()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
     }
 
@@ -623,22 +622,22 @@ void test_client_connection_messages()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -646,7 +645,7 @@ void test_client_connection_messages()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -657,7 +656,7 @@ void test_client_connection_messages()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -669,13 +668,13 @@ void test_client_connection_messages()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         auto clientMessageChannel = static_cast<protocol::ReliableMessageChannel*>( client.GetConnection()->GetChannel( 0 ) );
@@ -771,22 +770,22 @@ void test_client_connection_disconnect()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -794,7 +793,7 @@ void test_client_connection_disconnect()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -805,7 +804,7 @@ void test_client_connection_disconnect()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -817,24 +816,24 @@ void test_client_connection_disconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         server.DisconnectClient( clientIndex );
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_DISCONNECTED );
 
         iteration = 0;
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -846,13 +845,13 @@ void test_client_connection_disconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_DISCONNECTED );
         CORE_CHECK( client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_DISCONNECTED_FROM_SERVER );
         CORE_CHECK( client.GetExtendedError() == 0 );
     }
 }
@@ -880,19 +879,19 @@ void test_client_connection_server_full()
 
         const int NumClients = 4;
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.maxClients = NumClients;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
         // connect the maximum number of clients to the server
         // and wait until they are all fully connected.
 
-        protocol::Client * clients[NumClients];
+        clientServer::Client * clients[NumClients];
         network::Interface * clientInterface[NumClients];
 
         bsdSocketConfig.port = 0;
@@ -903,11 +902,11 @@ void test_client_connection_server_full()
 
             CORE_CHECK( clientNetworkInterface );
 
-            protocol::ClientConfig clientConfig;
+            clientServer::ClientConfig clientConfig;
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
-            auto client = CORE_NEW( core::memory::default_allocator(), protocol::Client, clientConfig );
+            auto client = CORE_NEW( core::memory::default_allocator(), clientServer::Client, clientConfig );
 
             CORE_CHECK( client );
 
@@ -917,7 +916,7 @@ void test_client_connection_server_full()
             CORE_CHECK( !client->IsDisconnected() );
             CORE_CHECK( !client->IsConnected() );
             CORE_CHECK( !client->HasError() );
-            CORE_CHECK( client->GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+            CORE_CHECK( client->GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
             clients[i] = client;
             clientInterface[i] = clientNetworkInterface;
@@ -933,7 +932,7 @@ void test_client_connection_server_full()
             int numConnectedClients = 0;
             for ( auto client : clients )
             {
-                if ( client->GetState() == protocol::CLIENT_STATE_CONNECTED )
+                if ( client->GetState() == clientServer::CLIENT_STATE_CONNECTED )
                     numConnectedClients++;
 
                 client->Update( timeBase );
@@ -950,7 +949,7 @@ void test_client_connection_server_full()
         }
 
         for ( int i = 0; i < serverConfig.maxClients; ++i )
-            CORE_CHECK( server.GetClientState(i) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+            CORE_CHECK( server.GetClientState(i) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
 
         for ( auto client : clients )
         {
@@ -958,8 +957,8 @@ void test_client_connection_server_full()
             CORE_CHECK( !client->IsConnecting() );
             CORE_CHECK( client->IsConnected() );
             CORE_CHECK( !client->HasError() );
-            CORE_CHECK( client->GetState() == protocol::CLIENT_STATE_CONNECTED );
-            CORE_CHECK( client->GetError() == protocol::CLIENT_ERROR_NONE );
+            CORE_CHECK( client->GetState() == clientServer::CLIENT_STATE_CONNECTED );
+            CORE_CHECK( client->GetError() == clientServer::CLIENT_ERROR_NONE );
             CORE_CHECK( client->GetExtendedError() == 0 );
         }
 
@@ -969,11 +968,11 @@ void test_client_connection_server_full()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client extraClient( clientConfig );
+        clientServer::Client extraClient( clientConfig );
 
         extraClient.Connect( "[::1]:10000" );
 
@@ -981,7 +980,7 @@ void test_client_connection_server_full()
         CORE_CHECK( !extraClient.IsDisconnected() );
         CORE_CHECK( !extraClient.IsConnected() );
         CORE_CHECK( !extraClient.HasError() );
-        CORE_CHECK( extraClient.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( extraClient.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         iteration = 0;
 
@@ -1003,7 +1002,7 @@ void test_client_connection_server_full()
         }
 
         for ( int i = 0; i < serverConfig.maxClients; ++i )
-            CORE_CHECK( server.GetClientState(i) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+            CORE_CHECK( server.GetClientState(i) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
 
         for ( auto client : clients )
         {
@@ -1011,8 +1010,8 @@ void test_client_connection_server_full()
             CORE_CHECK( !client->IsConnecting() );
             CORE_CHECK( client->IsConnected() );
             CORE_CHECK( !client->HasError() );
-            CORE_CHECK( client->GetState() == protocol::CLIENT_STATE_CONNECTED );
-            CORE_CHECK( client->GetError() == protocol::CLIENT_ERROR_NONE );
+            CORE_CHECK( client->GetState() == clientServer::CLIENT_STATE_CONNECTED );
+            CORE_CHECK( client->GetError() == clientServer::CLIENT_ERROR_NONE );
             CORE_CHECK( client->GetExtendedError() == 0 );
         }
 
@@ -1020,9 +1019,9 @@ void test_client_connection_server_full()
         CORE_CHECK( extraClient.IsDisconnected() );
         CORE_CHECK( !extraClient.IsConnecting() );
         CORE_CHECK( !extraClient.IsConnected() );
-        CORE_CHECK( extraClient.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( extraClient.GetError() == protocol::CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        CORE_CHECK( extraClient.GetExtendedError() == protocol::CONNECTION_REQUEST_DENIED_SERVER_FULL );
+        CORE_CHECK( extraClient.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( extraClient.GetError() == clientServer::CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        CORE_CHECK( extraClient.GetExtendedError() == clientServer::CONNECTION_REQUEST_DENIED_SERVER_FULL );
 
         for ( int i = 0; i < NumClients; ++i )
             CORE_DELETE( core::memory::default_allocator(), Client, clients[i] );
@@ -1059,22 +1058,22 @@ void test_client_connection_timeout()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1082,7 +1081,7 @@ void test_client_connection_timeout()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1093,7 +1092,7 @@ void test_client_connection_timeout()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1105,13 +1104,13 @@ void test_client_connection_timeout()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // now stop updating the server and verify that the client times out
@@ -1130,9 +1129,9 @@ void test_client_connection_timeout()
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_CONNECTION_TIMED_OUT );    
-        CORE_CHECK( client.GetExtendedError() == protocol::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_CONNECTION_TIMED_OUT );    
+        CORE_CHECK( client.GetExtendedError() == clientServer::CLIENT_STATE_CONNECTED );
 
         // now update only the server and verify that the client slot times out
 
@@ -1140,7 +1139,7 @@ void test_client_connection_timeout()
 
         while ( true )
         {
-            if ( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_DISCONNECTED )
+            if ( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_DISCONNECTED )
                 break;
 
             server.Update( timeBase );
@@ -1150,7 +1149,7 @@ void test_client_connection_timeout()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_DISCONNECTED );
     }
 
     core::memory::shutdown();
@@ -1177,22 +1176,22 @@ void test_client_connection_already_connected()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1200,7 +1199,7 @@ void test_client_connection_already_connected()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1211,7 +1210,7 @@ void test_client_connection_already_connected()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1223,19 +1222,19 @@ void test_client_connection_already_connected()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // now connect a new client while already connected
         // verify the client connect is *denied* with reason already connected.
 
-        protocol::Client newClient( clientConfig );
+        clientServer::Client newClient( clientConfig );
 
         newClient.Connect( "[::1]:10001" );
 
@@ -1259,9 +1258,9 @@ void test_client_connection_already_connected()
         CORE_CHECK( !newClient.IsConnecting() );
         CORE_CHECK( !newClient.IsConnected() );
         CORE_CHECK( newClient.HasError() );
-        CORE_CHECK( newClient.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( newClient.GetError() == protocol::CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
-        CORE_CHECK( newClient.GetExtendedError() == protocol::CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
+        CORE_CHECK( newClient.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( newClient.GetError() == clientServer::CLIENT_ERROR_CONNECTION_REQUEST_DENIED );
+        CORE_CHECK( newClient.GetExtendedError() == clientServer::CONNECTION_REQUEST_DENIED_ALREADY_CONNECTED );
     }
 
     core::memory::shutdown();
@@ -1288,22 +1287,22 @@ void test_client_connection_reconnect()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1311,7 +1310,7 @@ void test_client_connection_reconnect()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1322,7 +1321,7 @@ void test_client_connection_reconnect()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1334,13 +1333,13 @@ void test_client_connection_reconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // now disconnect the client on the server and call connect again
@@ -1354,7 +1353,7 @@ void test_client_connection_reconnect()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1366,22 +1365,22 @@ void test_client_connection_reconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
     }
 
     core::memory::shutdown();
 }
 
-void test_client_side_disconnect()
+void test_client_connection_disconnect_client_side()
 {
-    printf( "test_client_side_disconnect\n" );
+    printf( "test_client_connection_disconnect_client_side\n" );
 
     core::memory::initialize();
     {
@@ -1400,23 +1399,23 @@ void test_client_side_disconnect()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
         bsdSocketConfig.port = 10001;
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.connectedTimeOut = 10000;  // IMPORTANT: effectively disables server side timeout
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1424,7 +1423,7 @@ void test_client_side_disconnect()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1435,7 +1434,7 @@ void test_client_side_disconnect()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1447,13 +1446,13 @@ void test_client_side_disconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // now disconnect the client on on the client side
@@ -1466,7 +1465,7 @@ void test_client_side_disconnect()
 
         while ( true )
         {
-            if ( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_DISCONNECTED )
+            if ( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_DISCONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1478,13 +1477,13 @@ void test_client_side_disconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_DISCONNECTED );
         CORE_CHECK( client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
     }
 
@@ -1521,12 +1520,12 @@ void test_server_data()
 
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = &serverData;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1538,11 +1537,11 @@ void test_server_data()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10000" );
 
@@ -1550,7 +1549,7 @@ void test_server_data()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1561,7 +1560,7 @@ void test_server_data()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1573,13 +1572,13 @@ void test_server_data()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // verify there is no client data on the server
@@ -1625,11 +1624,11 @@ void test_client_data()
 
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1650,12 +1649,12 @@ void test_client_data()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.clientData = &clientData;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10000" );
 
@@ -1663,7 +1662,7 @@ void test_client_data()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1674,7 +1673,7 @@ void test_client_data()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1686,13 +1685,13 @@ void test_client_data()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // verify there is no server data on the client
@@ -1747,12 +1746,12 @@ void test_client_and_server_data()
 
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = &serverData;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1773,12 +1772,12 @@ void test_client_and_server_data()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.clientData = &clientData;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10000" );
 
@@ -1786,7 +1785,7 @@ void test_client_and_server_data()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1797,7 +1796,7 @@ void test_client_and_server_data()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1809,13 +1808,13 @@ void test_client_and_server_data()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // verify the client has received the server block
@@ -1880,12 +1879,12 @@ void test_client_and_server_data_reconnect()
                 data[i] = ( 10 + i ) % 256;
         }
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.clientData = &clientData;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10001" );
 
@@ -1901,12 +1900,12 @@ void test_client_and_server_data_reconnect()
                 data[i] = ( 10 + i ) % 256;
         }
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = &serverData;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -1914,7 +1913,7 @@ void test_client_and_server_data_reconnect()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -1925,7 +1924,7 @@ void test_client_and_server_data_reconnect()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -1937,13 +1936,13 @@ void test_client_and_server_data_reconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         // verify the client has received the server block
@@ -1991,7 +1990,7 @@ void test_client_and_server_data_reconnect()
 
         clientConfig.clientData = &newClientData;
 
-        protocol::Client newClient( clientConfig );
+        clientServer::Client newClient( clientConfig );
 
         newClient.Connect( "[::1]:10001" );
 
@@ -1999,7 +1998,7 @@ void test_client_and_server_data_reconnect()
 
         while ( true )
         {
-            if ( newClient.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( newClient.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             newClient.Update( timeBase );
@@ -2011,13 +2010,13 @@ void test_client_and_server_data_reconnect()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !newClient.IsDisconnected() );
         CORE_CHECK( !newClient.IsConnecting() );
         CORE_CHECK( newClient.IsConnected() );
         CORE_CHECK( !newClient.HasError() );
-        CORE_CHECK( newClient.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( newClient.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( newClient.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( newClient.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( newClient.GetExtendedError() == 0 );
 
         // verify the new client has received the server block
@@ -2084,20 +2083,21 @@ void test_client_and_server_data_multiple_clients()
                 data[i] = ( 10 + i ) % 256;
         }
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = &serverData;
         serverConfig.maxClients = NumClients;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
         // connect the maximum number of clients to the server
         // and wait until they are all fully connected.
 
-        protocol::Client * clients[NumClients];
+        clientServer::Client * clients[NumClients];
+
         network::Interface * clientInterface[NumClients];
 
         bsdSocketConfig.port = 0;
@@ -2119,12 +2119,12 @@ void test_client_and_server_data_multiple_clients()
                     data[j] = ( i + j ) % 256;
             }
 
-            protocol::ClientConfig clientConfig;
+            clientServer::ClientConfig clientConfig;
             clientConfig.clientData = clientData[i];
             clientConfig.channelStructure = &channelStructure;
             clientConfig.networkInterface = clientNetworkInterface;
 
-            auto client = CORE_NEW( core::memory::default_allocator(), protocol::Client, clientConfig );
+            auto client = CORE_NEW( core::memory::default_allocator(), clientServer::Client, clientConfig );
 
             CORE_CHECK( client );
 
@@ -2134,7 +2134,7 @@ void test_client_and_server_data_multiple_clients()
             CORE_CHECK( !client->IsDisconnected() );
             CORE_CHECK( !client->IsConnected() );
             CORE_CHECK( !client->HasError() );
-            CORE_CHECK( client->GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+            CORE_CHECK( client->GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
             clients[i] = client;
             clientInterface[i] = clientNetworkInterface;
@@ -2150,7 +2150,7 @@ void test_client_and_server_data_multiple_clients()
             int numConnectedClients = 0;
             for ( auto client : clients )
             {
-                if ( client->GetState() == protocol::CLIENT_STATE_CONNECTED )
+                if ( client->GetState() == clientServer::CLIENT_STATE_CONNECTED )
                     numConnectedClients++;
 
                 client->Update( timeBase );
@@ -2168,7 +2168,7 @@ void test_client_and_server_data_multiple_clients()
 
         for ( int i = 0; i < serverConfig.maxClients; ++i )
         {
-            CORE_CHECK( server.GetClientState(i) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+            CORE_CHECK( server.GetClientState(i) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
 
             const protocol::Block * serverClientData = server.GetClientData( i );
 
@@ -2190,8 +2190,8 @@ void test_client_and_server_data_multiple_clients()
             CORE_CHECK( !client->IsConnecting() );
             CORE_CHECK( client->IsConnected() );
             CORE_CHECK( !client->HasError() );
-            CORE_CHECK( client->GetState() == protocol::CLIENT_STATE_CONNECTED );
-            CORE_CHECK( client->GetError() == protocol::CLIENT_ERROR_NONE );
+            CORE_CHECK( client->GetState() == clientServer::CLIENT_STATE_CONNECTED );
+            CORE_CHECK( client->GetError() == clientServer::CLIENT_ERROR_NONE );
             CORE_CHECK( client->GetExtendedError() == 0 );
 
             const protocol::Block * clientServerData = client->GetServerData();
@@ -2254,12 +2254,12 @@ void test_server_data_too_large()
 
         network::BSDSocket serverNetworkInterface( bsdSocketConfig );
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = &serverData;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
 
-        protocol::Server server( serverConfig );
+        clientServer::Server server( serverConfig );
 
         CORE_CHECK( server.IsOpen() );
 
@@ -2271,12 +2271,12 @@ void test_server_data_too_large()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.maxServerDataSize = 22;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
-        protocol::Client client( clientConfig );
+        clientServer::Client client( clientConfig );
 
         client.Connect( "[::1]:10000" );
 
@@ -2284,7 +2284,7 @@ void test_server_data_too_large()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -2311,8 +2311,8 @@ void test_server_data_too_large()
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_DISCONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_DATA_BLOCK_ERROR );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_DISCONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_DATA_BLOCK_ERROR );
         CORE_CHECK( client.GetExtendedError() == protocol::DATA_BLOCK_RECEIVER_ERROR_BLOCK_TOO_LARGE );
     }
 
@@ -2338,7 +2338,7 @@ void test_client_server_user_context()
 
         network::BSDSocket clientNetworkInterface( bsdSocketConfig );
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.channelStructure = &channelStructure;
         clientConfig.networkInterface = &clientNetworkInterface;
 
@@ -2355,7 +2355,7 @@ void test_client_server_user_context()
         testContext->value_min = -1 - ( rand() % 100000 );
         testContext->value_max = rand() % 100000;
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = &serverData;
         serverConfig.channelStructure = &channelStructure;
         serverConfig.networkInterface = &serverNetworkInterface;
@@ -2368,7 +2368,7 @@ void test_client_server_user_context()
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_SENDING_CONNECTION_REQUEST );
 
         core::TimeBase timeBase;
         timeBase.deltaTime = 0.01f;
@@ -2379,7 +2379,7 @@ void test_client_server_user_context()
 
         while ( true )
         {
-            if ( client.GetState() == protocol::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+            if ( client.GetState() == clientServer::CLIENT_STATE_CONNECTED && server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 break;
 
             client.Update( timeBase );
@@ -2391,13 +2391,13 @@ void test_client_server_user_context()
             sleep_after_too_many_iterations( iteration );
         }
 
-        CORE_CHECK( server.GetClientState( clientIndex ) == protocol::SERVER_CLIENT_STATE_CONNECTED );
+        CORE_CHECK( server.GetClientState( clientIndex ) == clientServer::SERVER_CLIENT_STATE_CONNECTED );
         CORE_CHECK( !client.IsDisconnected() );
         CORE_CHECK( !client.IsConnecting() );
         CORE_CHECK( client.IsConnected() );
         CORE_CHECK( !client.HasError() );
-        CORE_CHECK( client.GetState() == protocol::CLIENT_STATE_CONNECTED );
-        CORE_CHECK( client.GetError() == protocol::CLIENT_ERROR_NONE );
+        CORE_CHECK( client.GetState() == clientServer::CLIENT_STATE_CONNECTED );
+        CORE_CHECK( client.GetError() == clientServer::CLIENT_ERROR_NONE );
         CORE_CHECK( client.GetExtendedError() == 0 );
 
         auto clientMessageChannel = static_cast<protocol::ReliableMessageChannel*>( client.GetConnection()->GetChannel( 0 ) );
@@ -2480,13 +2480,45 @@ int main()
 {
     srand( time( nullptr ) );
 
+    if ( !network::InitializeNetwork() )
+    {
+        printf( "failed to initialize network\n" );
+        return 1;
+    }
+
+    CORE_ASSERT( network::IsNetworkInitialized() );
+
+    test_client_initial_state();
+
+#if PROTOCOL_USE_RESOLVER
+    test_client_resolve_hostname_failure();
+    test_client_resolve_hostname_timeout();
+    test_client_resolve_hostname_success();
+#endif
+
+    test_client_connection_request_timeout();
+    test_client_connection_request_denied();
+    test_client_connection_challenge();
+    test_client_connection_challenge_response();
+    test_client_connection_established();
+    test_client_connection_messages();
+    test_client_connection_disconnect();
+    test_client_connection_server_full();
+    test_client_connection_timeout();
+    test_client_connection_already_connected();
+    test_client_connection_reconnect();
+    test_client_connection_disconnect_client_side();
+
     test_server_data();
     test_client_data();
     test_client_and_server_data();
     test_client_and_server_data_reconnect();
     test_client_and_server_data_multiple_clients();
     test_server_data_too_large();
+
     test_client_server_user_context();
+
+    network::ShutdownNetwork();
 
     return 0;
 }

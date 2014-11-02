@@ -2,7 +2,7 @@ solution "Protocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     includedirs { "src", "external", "tools", "." }
-    platforms { "x64", "x32" }
+    platforms { "x64" }
     configurations { "Debug", "Release" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
     configuration "Release"
@@ -58,22 +58,22 @@ project "TestCore"
 
 project "TestNetwork"
     kind "ConsoleApp"
-    files { "tests/Network/UnitTest.cpp", "tests/Network/Test*.cpp" }
-    links { "Core", "Network", "Protocol" }     -- todo: ideally would not depend on protocol!!!
+    files { "tests/Network/Test*.cpp" }
+    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on protocol or client server
     location "build"
     targetdir "bin"
 
 project "TestProtocol"
     kind "ConsoleApp"
-    files { "tests/Protocol/UnitTest.cpp", "tests/Protocol/Test*.cpp" }
-    links { "Core", "Network", "Protocol" }
+    files { "tests/Protocol/Test*.cpp" }
+    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client server
     location "build"
     targetdir "bin"
 
 project "TestClientServer"
     kind "ConsoleApp"
-    files { "tests/ClientServer/UnitTest.cpp", "tests/ClientServer/Test*.cpp" }
-    links { "Core", "Network", "Protocol" }
+    files { "tests/ClientServer/Test*.cpp" }
+    links { "Core", "Network", "Protocol", "ClientServer" }
     location "build"
     targetdir "bin"
 
@@ -94,28 +94,28 @@ project "TestVirtualGo"
 project "SoakProtocol"
     kind "ConsoleApp"
     files { "tests/Protocol/SoakProtocol.cpp" }
-    links { "Core", "Network", "Protocol" }
+    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
     targetdir "bin"
     location "build"
 
 project "SoakClientServer"
     kind "ConsoleApp"
     files { "tests/ClientServer/SoakClientServer.cpp" }
-    links { "Core", "Network", "Protocol" }
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
     location "build"
 
 project "ProfileProtocol"
     kind "ConsoleApp"
     files { "tests/Protocol/ProfileProtocol.cpp" }
-    links { "Core", "Network", "Protocol" }
+    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
     targetdir "bin"
     location "build"
 
 project "ProfileClientServer"
     kind "ConsoleApp"
     files { "tests/ClientServer/ProfileClientServer.cpp" }
-    links { "Core", "Network", "Protocol" }
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
     location "build"
 

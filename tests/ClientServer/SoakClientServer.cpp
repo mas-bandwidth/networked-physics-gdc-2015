@@ -101,7 +101,7 @@ void soak_test()
             testContext->value_max = rand() % 1000000000;
         }
 
-        protocol::ServerConfig serverConfig;
+        clientServer::ServerConfig serverConfig;
         serverConfig.serverData = serverInfo[i].serverData;
         serverConfig.maxClients = NumClientsPerServer;
         serverConfig.channelStructure = &channelStructure;
@@ -142,7 +142,7 @@ void soak_test()
                 data[j] = ( 20 + i + j ) % 256;
         }
 
-        protocol::ClientConfig clientConfig;
+        clientServer::ClientConfig clientConfig;
         clientConfig.clientData = clientInfo[i].clientData;
         clientConfig.channelStructure = &channelStructure;        
         clientConfig.networkInterface = clientInfo[i].networkInterface;
@@ -176,7 +176,7 @@ void soak_test()
 
             for ( int j = 0; j < NumClientsPerServer; ++j )
             {
-                if ( serverInfo[i].server->GetClientState(j) == protocol::SERVER_CLIENT_STATE_CONNECTED )
+                if ( serverInfo[i].server->GetClientState(j) == clientServer::SERVER_CLIENT_STATE_CONNECTED )
                 {
                     auto connection = serverInfo[i].server->GetClientConnection( j );
                     auto messageChannel = static_cast<protocol::ReliableMessageChannel*>( connection->GetChannel( 0 ) );
@@ -218,7 +218,7 @@ void soak_test()
             const int newState = clientInfo[i].state = clientInfo[i].client->GetState();
             if ( newState != oldState )
             {
-                if ( newState == protocol::CLIENT_STATE_CONNECTED )
+                if ( newState == clientServer::CLIENT_STATE_CONNECTED )
                 {
                     const int j = clientInfo[i].serverIndex;
 
@@ -250,9 +250,9 @@ void soak_test()
                     clientInfo[i].lastReceiveTime = timeBase.time;
                 }
 
-                if ( newState == protocol::CLIENT_STATE_DISCONNECTED )
+                if ( newState == clientServer::CLIENT_STATE_DISCONNECTED )
                 {
-                    if ( oldState != protocol::CLIENT_STATE_CONNECTED )
+                    if ( oldState != clientServer::CLIENT_STATE_CONNECTED )
                         printf( "%09.2f - client %d failed to connect to server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
                     else
                         printf( "%09.2f - client %d was disconnected from server %d\n", timeBase.time, i, clientInfo[i].serverIndex );
@@ -315,7 +315,7 @@ void soak_test()
                 }
             }
 
-            if ( clientInfo[i].client->GetState() == protocol::CLIENT_STATE_DISCONNECTED )
+            if ( clientInfo[i].client->GetState() == clientServer::CLIENT_STATE_DISCONNECTED )
             {
                 if ( ( rand() % 200 ) == 0 )
                 {
@@ -329,7 +329,7 @@ void soak_test()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            if ( clientInfo[i].client->GetState() == protocol::CLIENT_STATE_CONNECTED )
+            if ( clientInfo[i].client->GetState() == clientServer::CLIENT_STATE_CONNECTED )
             {
                 lastConnectedClientTime = timeBase.time;
                 break;                

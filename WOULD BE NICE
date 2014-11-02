@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    It's annoying having multiple "UnitTest.cpp"
+
+    They should be uniquely named, eg. "TestNetwork.cpp", "TestProtocl.cpp" and so on.
+
+    ----------------------------------
+
     Consider renaming "ChannelStructure" to "ConnectionContext"?
 
     ----------------------------------

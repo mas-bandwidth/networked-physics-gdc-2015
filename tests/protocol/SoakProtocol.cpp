@@ -193,7 +193,7 @@ void soak_test()
 
         uint8_t buffer[MaxPacketSize];
 
-        WriteStream writeStream( buffer, MaxPacketSize );
+        protocol::WriteStream writeStream( buffer, MaxPacketSize );
         writeStream.SetContext( context );
         writePacket->SerializeWrite( writeStream );
         writeStream.Flush();
@@ -202,13 +202,13 @@ void soak_test()
         packetFactory.Destroy( writePacket );
         writePacket = nullptr;
 
-        ReadStream readStream( buffer, MaxPacketSize );
+        protocol::ReadStream readStream( buffer, MaxPacketSize );
         readStream.SetContext( context );
-        auto readPacket = (ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
+        auto readPacket = (protocol::ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
         readPacket->SerializeRead( readStream );
         CORE_CHECK( !readStream.IsOverflow() );
 
-        connection.ReadPacket( static_cast<ConnectionPacket*>( readPacket ) );
+        connection.ReadPacket( static_cast<protocol::ConnectionPacket*>( readPacket ) );
 
         packetFactory.Destroy( readPacket );
         readPacket = nullptr;
