@@ -1,15 +1,50 @@
 DONE:
 
+    Move Render.cpp into CubesDemo.cpp -- this way cubes library has no rendering component.
+
+    Create shaders for cubes demo
+
+        1. Cube (basic lit vertex)
+        2. CubeDebug (unlit vertex)
+        3. CubeShadow (shadow vert version)
+
+    Actually cut this down to just:
+
+        1. CubeLit
+        2. CubeUnlit
+
+    Doesn't really seem that I can get the shader simpler than the unlit shader
+    that just passes through the base color.
+
+    Converted matrices to uniforms because I'm going to do one drawcall per-object for now.
+
 TODO:
 
     --------------------------------------------------------------
 
-    Strip down Render.cpp as much as possible before conversion
+    Setup a rendering path that makes it easy to emit dynamic lit and unlit vertices.
 
-    Split out the Render.h so that it is just an "interface" for rendering
-    and perform the implementation of that interface inside "CubesDemo.cpp"
+    eg. RenderBegin( RENDER_UNLIT ); RenderLitVertex( ... ); etc. RenderEnd( RENDER_UNLIT );
 
-    This will allow me to keep rendering out of "cubes" library, which is ideal.
+    This should make it easy to convert the old style OpenGL code.
+
+    --------------------------------------------------------------
+
+    Setup a way to easily specify the current projection, model and view matrices
+
+    eg. cache them locally so that when RenderBegin is called they are uploaded to uniforms
+
+    --------------------------------------------------------------
+
+    Get the cube rendering working
+
+    --------------------------------------------------------------
+
+    Get the activation circle working
+
+    --------------------------------------------------------------
+
+    Get shadows rendering
 
     --------------------------------------------------------------
 
@@ -18,6 +53,23 @@ TODO:
     Code this in such a way that the demo has an interface to query stuff, without specifically
     talking to glfw. For example, I want to make sure that when the console is up, the demo running
     underneath it doesn't do stuff on left/right or space as they are pressed.
+
+    --------------------------------------------------------------
+
+    Prep very basic talk outline for thursday
+
+    --------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
     --------------------------------------------------------------
 

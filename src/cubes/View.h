@@ -7,12 +7,44 @@
 #ifndef CUBES_VIEW_H
 #define CUBES_VIEW_H
 
-#include "Render.h"
 #include "ViewObject.h"
+#include "vectorial/vec3f.h"
+#include "vectorial/mat4f.h"
 #include <map>				// todo: remove this
 
 namespace view
 {
+	struct ActivationArea
+	{
+	    math::Vector origin;
+	    float radius;
+	    float startAngle;
+	    float r,g,b,a;
+	};
+
+	struct Cubes
+	{
+	    Cubes()
+	    {
+	        numCubes = 0;
+	    }
+
+	    struct Cube
+	    {
+	        vectorial::mat4f transform;
+	        vectorial::mat4f inverse_transform;
+	        float r,g,b,a;
+	        bool operator < ( const Cube & other ) const 
+	        {
+	            // for back to front sort only! 
+	            return simd4f_get_y( transform.value.w ) > simd4f_get_y( other.transform.value.w ); 
+	        }
+	    };
+
+	    int numCubes;
+	    Cube cube[MaxViewObjects];
+	};
+
 	struct ObjectUpdate
 	{
 		math::Quaternion orientation;
@@ -54,7 +86,7 @@ namespace view
 		math::Quaternion interpolatedOrientation;
 		float scale;
 		float r,g,b,a;
-		float t;
+		double t;
 		bool remove;
 		bool visible;
 		bool blending;
@@ -88,7 +120,7 @@ namespace view
 
 		void UpdateObjects( ObjectUpdate updates[], int updateCount, bool updateState = true );
 		
-		void InterpolateObjects( float t, float stepSize, InterpolationMode interpolationMode );
+		void InterpolateObjects( double t, float stepSize, InterpolationMode interpolationMode );
 
 		void ExtrapolateObjects( float deltaTime );
 
@@ -96,7 +128,7 @@ namespace view
 
 		Object * GetObject( unsigned int id );
 
-		void GetRenderState( render::Cubes & renderState, bool interpolation = false, bool smoothing = true );
+		void GetRenderState( Cubes & renderState, bool interpolation = false, bool smoothing = true );
 
 	private:
 
@@ -130,9 +162,7 @@ namespace view
 
 	void getViewObjectUpdates( view::ObjectUpdate * updates, const view::Packet & viewPacket, int authorityOverride = -1 );
 
-	void setupActivationArea( render::ActivationArea & activationArea, const math::Vector & origin, float radius, float t );
-
-	void setCameraAndLight( render::Interface * interface, const Camera & camera );
+	void setupActivationArea( ActivationArea & activationArea, const math::Vector & origin, float radius, double t );
 }
 
 #endif

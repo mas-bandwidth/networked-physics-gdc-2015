@@ -154,7 +154,7 @@ namespace view
 		}
 	}
 	
-	void ObjectManager::InterpolateObjects( float t, float stepSize, InterpolationMode interpolationMode )
+	void ObjectManager::InterpolateObjects( double t, float stepSize, InterpolationMode interpolationMode )
 	{
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
 		{
@@ -263,7 +263,7 @@ namespace view
 			return NULL;
 	}
 
-    void ObjectManager::GetRenderState( render::Cubes & renderState, bool interpolation, bool smoothing )
+    void ObjectManager::GetRenderState( Cubes & renderState, bool interpolation, bool smoothing )
     {
         renderState.numCubes = objects.size();
 
@@ -494,7 +494,7 @@ namespace view
 		}
 	}
 
-	void setupActivationArea( render::ActivationArea & activationArea, const math::Vector & origin, float radius, float t )
+	void setupActivationArea( ActivationArea & activationArea, const math::Vector & origin, float radius, double t )
 	{
 		activationArea.origin = origin;
 		activationArea.radius = radius;
@@ -506,13 +506,5 @@ namespace view
 		if ( activationArea.a > 1.0f )
 			activationArea.a = 1.0f;
 		activationArea.a *= 0.4f;
-	}
-
-	void setCameraAndLight( render::Interface * renderInterface, const Camera & camera )
-	{
- 		renderInterface->SetCamera( camera.position, camera.lookat, camera.up );
-		math::Vector lightPosition = math::Vector( 25.0f, -25.0f, 50.0f );
-		lightPosition += camera.lookat;
-		renderInterface->SetLightPosition( lightPosition );
 	}
 }
