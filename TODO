@@ -1,46 +1,30 @@
 DONE:
 
-    Move Render.cpp into CubesDemo.cpp -- this way cubes library has no rendering component.
-
-    Create shaders for cubes demo
-
-        1. Cube (basic lit vertex)
-        2. CubeDebug (unlit vertex)
-        3. CubeShadow (shadow vert version)
-
-    Actually cut this down to just:
-
-        1. CubeLit
-        2. CubeUnlit
-
-    Doesn't really seem that I can get the shader simpler than the unlit shader
-    that just passes through the base color.
-
-    Converted matrices to uniforms because I'm going to do one drawcall per-object for now.
-
 TODO:
 
     --------------------------------------------------------------
 
-    Setup a rendering path that makes it easy to emit dynamic lit and unlit vertices.
+    Implement code to create the vertex buffer and VAO for lit and unlit vertex data.
 
-    eg. RenderBegin( RENDER_UNLIT ); RenderLitVertex( ... ); etc. RenderEnd( RENDER_UNLIT );
+    We'll need one vertex buffer and VAO per-shader (lit and unlit)
 
-    This should make it easy to convert the old style OpenGL code.
-
-    --------------------------------------------------------------
-
-    Setup a way to easily specify the current projection, model and view matrices
-
-    eg. cache them locally so that when RenderBegin is called they are uploaded to uniforms
+    Vertex buffer should be set as streaming, eg. dynamically updated per-frame.
 
     --------------------------------------------------------------
 
-    Get the cube rendering working
+    Setup a way to easily get the current projection, model and view matrices
+
+    Work out how to pass this into the RenderBegin
+
+    Actually implement the RenderBegin, RenderVertexLit/Unit and RenderEnd
 
     --------------------------------------------------------------
 
-    Get the activation circle working
+    Get the bloody cubes rendering
+
+    --------------------------------------------------------------
+
+    Get the activation circle rendering
 
     --------------------------------------------------------------
 
@@ -48,15 +32,9 @@ TODO:
 
     --------------------------------------------------------------
 
-    Need a way to get instantaneous input for left/right/up/down, space and Z from glfw
+    Prep talk outline
 
-    Code this in such a way that the demo has an interface to query stuff, without specifically
-    talking to glfw. For example, I want to make sure that when the console is up, the demo running
-    underneath it doesn't do stuff on left/right or space as they are pressed.
-
-    --------------------------------------------------------------
-
-    Prep very basic talk outline for thursday
+    Prep talk slides
 
     --------------------------------------------------------------
 

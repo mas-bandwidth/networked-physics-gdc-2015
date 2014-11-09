@@ -173,6 +173,8 @@ void StoneDemo::Update()
 
 void StoneDemo::Render()
 {
+    glEnable( GL_DEPTH_TEST );
+
     if ( stoneDirty )
     {
         if ( stoneModel )

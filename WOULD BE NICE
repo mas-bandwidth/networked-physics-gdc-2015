@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    Would be nice if demos could specify whether they want to clear the screen or not.
+
+    For example, cubes demo does want to, but the stone demo does not.
+
+    ----------------------------------
+
     Clean up all the excessive namespace usage inside cubes source code.
 
     Everything should be uniformly inside "cubes" namespace. Nothing more.
@@ -11,12 +17,6 @@ WOULD BE NICE:
     "magic number" enums like 0 = block message, 0 = connection packet type, CONTEXT_USER and so on,
 
     They're error prone and easy to fuck up. And hard to track down. Is there a better way?
-
-    ----------------------------------
-
-    It's annoying having multiple "UnitTest.cpp"
-
-    They should be uniquely named, eg. "TestNetwork.cpp", "TestProtocl.cpp" and so on.
 
     ----------------------------------
 
@@ -54,6 +54,8 @@ WOULD BE NICE:
 
     Network simulator maybe is really a part of protocol. It doesn't really "work" as per-network
     type send/recv should work, eg. blocks of packet data, it works on protocol packets.
+
+    It would be really nice if protocol layer didn't actually depend on network library at all. It shouldn't really.
 
     ----------------------------------
 
@@ -102,10 +104,6 @@ WOULD BE NICE:
     ----------------------------------
 
     Cubes library uses STL. Fix this!
-
-    ----------------------------------
-
-    nvImage uses std::vector. Fix it so it doesn't.
 
     ----------------------------------
 

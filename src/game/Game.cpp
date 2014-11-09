@@ -66,8 +66,6 @@ static void game_init()
 
     glEnable( GL_FRAMEBUFFER_SRGB );
 
-    glClearColor( 0.25, 0.25, 0.25, 0.0 );
-
     glEnable( GL_CULL_FACE );
     glFrontFace( GL_CW );
 
@@ -167,6 +165,8 @@ static void render_console()
 static void game_render()
 {
     check_opengl_error( "before render" );
+
+    glClearColor( 0.25, 0.25, 0.25, 0.0 );
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 

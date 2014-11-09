@@ -1,3 +1,40 @@
+
+Sunday Morning, November 9th, 2014
+----------------------------------
+
+    Move Render.cpp into CubesDemo.cpp -- this way cubes library has no rendering component.
+
+    Create shaders for cubes demo
+
+        1. Cube (basic lit vertex)
+        2. CubeDebug (unlit vertex)
+        3. CubeShadow (shadow vert version)
+
+    Actually cut this down to just:
+
+        1. CubeLit
+        2. CubeUnlit
+
+    Doesn't really seem that I can get the shader simpler than the unlit shader
+    that just passes through the base color.
+
+    Converted matrices to uniforms because I'm going to do one drawcall per-object for now.
+
+    Sketched out a rendering path that makes it easy to emit dynamic lit and unlit vertices.
+
+    eg. RenderBegin( RENDER_UNLIT ); RenderLitVertex( ... ); etc. RenderEnd( RENDER_UNLIT );
+
+    This should make it easy to convert the old style OpenGL code.
+
+    Moved a bunch of code from cubes demo class into internal, because it is simpler that way.
+
+    Found a way to get the game input from key pressed/released events and implemented it.
+
+    Should now have working left/right/up/down/space/z input.
+
+    Fixed some weirdness with screen clearing.
+
+
 Sunday Morning, November 2nd, 2014
 ----------------------------------
 

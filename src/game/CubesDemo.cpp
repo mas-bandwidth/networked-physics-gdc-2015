@@ -55,6 +55,19 @@ private:
 
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
 
+enum VertexType
+{
+    VERTEX_LIT,
+    VERTEX_UNLIT   
+};
+
+/*
+static void RenderBegin( VertexType type, const math::Matrix & model, const math::Matrix & view, const math::Matrix & projection );
+static void RenderVertexUnlit( const math::Vector & position, float r, float g, float b, float a );
+static void RenderVertexLit( const math::Vector & position, const math::Vector & normal, float r, float g, float b, float a );
+static void RenderEnd();
+*/
+
 struct CubesInternal
 {
     GameInstance * gameInstance = nullptr;
@@ -63,6 +76,156 @@ struct CubesInternal
     view::Camera camera;
     view::Packet viewPacket;
     view::ObjectManager viewObjectManager;
+    game::Input gameInput;
+
+    void Initialize( core::Allocator & allocator, game::Config & config )
+    {
+        gameInstance = CORE_NEW( allocator, GameInstance, config );
+
+        origin = math::Vector(0,0,0);
+
+        gameInstance->InitializeBegin();
+
+        gameInstance->AddPlane( math::Vector(0,0,1), 0 );
+
+        AddCube( gameInstance, 1, math::Vector(0,0,10) );
+
+        const int border = 10.0f;
+        const float origin = -Steps / 2 + border;
+        const float z = hypercube::NonPlayerCubeSize / 2;
+        const int count = Steps - border * 2;
+        for ( int y = 0; y < count; ++y )
+            for ( int x = 0; x < count; ++x )
+                AddCube( gameInstance, 0, math::Vector(x+origin,y+origin,z) );
+
+        gameInstance->InitializeEnd();
+
+        gameInstance->OnPlayerJoined( 0 );
+        gameInstance->SetLocalPlayer( 0 );
+        gameInstance->SetPlayerFocus( 0, 1 );
+
+        gameInstance->SetFlag( game::FLAG_Push );
+        gameInstance->SetFlag( game::FLAG_Pull );
+    }
+
+    void Free( core::Allocator & allocator )
+    {
+        CORE_DELETE( allocator, GameInstance, gameInstance );
+        gameInstance = nullptr;
+    }
+
+    void AddCube( GameInstance * gameInstance, int player, const math::Vector & position )
+    {
+        hypercube::DatabaseObject object;
+        cubes::CompressPosition( position, object.position );
+        cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
+        object.dirty = player;
+        object.enabled = player;
+        object.session = 0;
+        object.player = player;
+        activation::ObjectId id = gameInstance->AddObject( object, position.x, position.y );
+        if ( player )
+            gameInstance->DisableObject( id );
+    }
+
+    void Update()
+    {
+        gameInstance->SetPlayerInput( 0, gameInput );
+
+        const float deltaTime = global.timeBase.deltaTime;
+
+        if ( viewPacket.objectCount >= 1 )
+        {
+            view::ObjectUpdate updates[MaxViewObjects];
+            getViewObjectUpdates( updates, viewPacket );
+            viewObjectManager.UpdateObjects( updates, viewPacket.objectCount );
+        }
+
+        viewObjectManager.ExtrapolateObjects( deltaTime );
+
+        viewObjectManager.Update( deltaTime );
+
+        view::Object * playerCube = viewObjectManager.GetObject( 1 );
+        if ( playerCube )
+            origin = playerCube->position + playerCube->positionError;
+
+        math::Vector lookat = origin - math::Vector(0,0,1);
+        #ifdef WIDESCREEN
+        math::Vector position = lookat + math::Vector(0,-11,5);
+        #else
+        math::Vector position = lookat + math::Vector(0,-12,6);
+        #endif
+
+        camera.EaseIn( lookat, position ); 
+    }
+
+    void Render()
+    {
+        renderInterface.ResizeDisplay( global.displayWidth, global.displayHeight );
+
+        renderInterface.ClearScreen();
+
+        view::Cubes cubes;
+        viewObjectManager.GetRenderState( cubes );
+
+        const int width = renderInterface.GetDisplayWidth();
+        const int height = renderInterface.GetDisplayHeight();
+
+        renderInterface.BeginScene( 0, 0, width, height );
+
+        renderInterface.SetCamera( camera.position, camera.lookat, camera.up );
+        
+        math::Vector lightPosition = math::Vector( 25.0f, -25.0f, 50.0f );
+        lightPosition += camera.lookat;
+        renderInterface.SetLightPosition( lightPosition );
+
+        view::ActivationArea activationArea;
+        view::setupActivationArea( activationArea, origin, 5.0f, global.timeBase.time );
+        
+        renderInterface.RenderActivationArea( activationArea, 1.0f );
+
+        renderInterface.RenderCubes( cubes );
+        
+        #ifdef SHADOWS
+        renderInterface.RenderCubeShadows( cubes );
+        renderInterface.RenderShadowQuad();
+        #endif
+        
+        renderInterface.EndScene();
+    }
+
+    bool KeyEvent( int key, int scancode, int action, int mods )
+    {
+        if ( mods != 0 )
+            return false;
+
+        if ( action == GLFW_PRESS || action == GLFW_REPEAT )
+        {
+            switch ( key )
+            {
+                case GLFW_KEY_LEFT:     gameInput.left = true;      return true;
+                case GLFW_KEY_RIGHT:    gameInput.right = true;     return true;
+                case GLFW_KEY_UP:       gameInput.up = true;        return true;
+                case GLFW_KEY_DOWN:     gameInput.down = true;      return true;
+                case GLFW_KEY_SPACE:    gameInput.push = true;      return true;
+                case GLFW_KEY_Z:        gameInput.pull = true;      return true;
+            }
+        }
+        else if ( action == GLFW_RELEASE )
+        {
+            switch ( key )
+            {
+                case GLFW_KEY_LEFT:     gameInput.left = false;      return true;
+                case GLFW_KEY_RIGHT:    gameInput.right = false;     return true;
+                case GLFW_KEY_UP:       gameInput.up = false;        return true;
+                case GLFW_KEY_DOWN:     gameInput.down = false;      return true;
+                case GLFW_KEY_SPACE:    gameInput.push = false;      return true;
+                case GLFW_KEY_Z:        gameInput.pull = false;      return true;
+            }
+        }
+
+        return false;
+    }
 };
 
 CubesDemo::CubesDemo( core::Allocator & allocator )
@@ -73,24 +236,12 @@ CubesDemo::CubesDemo( core::Allocator & allocator )
 
 CubesDemo::~CubesDemo()
 {
-    CORE_DELETE( *m_allocator, GameInstance, m_internal->gameInstance );
+    CORE_ASSERT( m_internal );
+    CORE_ASSERT( m_allocator );
+    m_internal->Free( *m_allocator );
     CORE_DELETE( *m_allocator, CubesInternal, m_internal );
     m_internal = nullptr;
     m_allocator = nullptr;
-}
-
-static void AddCube( game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> * gameInstance, int player, const math::Vector & position )
-{
-    hypercube::DatabaseObject object;
-    cubes::CompressPosition( position, object.position );
-    cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
-    object.dirty = player;
-    object.enabled = player;
-    object.session = 0;
-    object.player = player;
-    activation::ObjectId id = gameInstance->AddObject( object, position.x, position.y );
-    if ( player )
-        gameInstance->DisableObject( id );
 }
 
 bool CubesDemo::Initialize()
@@ -113,171 +264,32 @@ bool CubesDemo::Initialize()
     config.simConfig.AngularDrag = 0.01f;
     config.simConfig.Friction = 200.0f;
 
-    m_internal->gameInstance = CORE_NEW( *m_allocator, GameInstance, config );
-
-    m_internal->origin = math::Vector(0,0,0);
-
-    m_internal->gameInstance->InitializeBegin();
-
-    m_internal->gameInstance->AddPlane( math::Vector(0,0,1), 0 );
-
-    AddCube( m_internal->gameInstance, 1, math::Vector(0,0,10) );
-
-    const int border = 10.0f;
-    const float origin = -Steps / 2 + border;
-    const float z = hypercube::NonPlayerCubeSize / 2;
-    const int count = Steps - border * 2;
-    for ( int y = 0; y < count; ++y )
-        for ( int x = 0; x < count; ++x )
-            AddCube( m_internal->gameInstance, 0, math::Vector(x+origin,y+origin,z) );
-
-    m_internal->gameInstance->InitializeEnd();
-
-    m_internal->gameInstance->OnPlayerJoined( 0 );
-    m_internal->gameInstance->SetLocalPlayer( 0 );
-    m_internal->gameInstance->SetPlayerFocus( 0, 1 );
-
-    m_internal->gameInstance->SetFlag( game::FLAG_Push );
-    m_internal->gameInstance->SetFlag( game::FLAG_Pull );
+    m_internal->Initialize( *m_allocator, config );
 
     return true;
 }
 
 void CubesDemo::Update()
 {
-    // ...
+    m_internal->Update();
 }
 
 void CubesDemo::Render()
 {
-    const float deltaTime = global.timeBase.deltaTime;
-
-    // update the scene to be rendered
-    
-    if ( m_internal->viewPacket.objectCount >= 1 )
-    {
-        view::ObjectUpdate updates[MaxViewObjects];
-        getViewObjectUpdates( updates, m_internal->viewPacket );
-        m_internal->viewObjectManager.UpdateObjects( updates, m_internal->viewPacket.objectCount );
-    }
-
-    m_internal->viewObjectManager.ExtrapolateObjects( deltaTime );
-
-    m_internal->viewObjectManager.Update( deltaTime );
-
-    // update camera
-
-    view::Object * playerCube = m_internal->viewObjectManager.GetObject( 1 );
-    if ( playerCube )
-        m_internal->origin = playerCube->position + playerCube->positionError;
-    math::Vector lookat = m_internal->origin - math::Vector(0,0,1);
-    #ifdef WIDESCREEN
-    math::Vector position = lookat + math::Vector(0,-11,5);
-    #else
-    math::Vector position = lookat + math::Vector(0,-12,6);
-    #endif
-    m_internal->camera.EaseIn( lookat, position ); 
-
-    // render the scene
-    
-    m_internal->renderInterface.ResizeDisplay( global.displayWidth, global.displayHeight );
-
-    m_internal->renderInterface.ClearScreen();
-
-    view::Cubes cubes;
-    m_internal->viewObjectManager.GetRenderState( cubes );
-
-    const int width = m_internal->renderInterface.GetDisplayWidth();
-    const int height = m_internal->renderInterface.GetDisplayHeight();
-
-    m_internal->renderInterface.BeginScene( 0, 0, width, height );
-
-    // todo
-//    view::setCameraAndLight( &m_internal->renderInterface, m_internal->camera );
-
-    view::ActivationArea activationArea;
-    view::setupActivationArea( activationArea, m_internal->origin, 5.0f, global.timeBase.time );
-    
-    m_internal->renderInterface.RenderActivationArea( activationArea, 1.0f );
-    m_internal->renderInterface.RenderCubes( cubes );
-    
-    /*
-    #ifdef SHADOWS
-    if ( shadows )
-    {
-        renderInterface->RenderCubeShadows( cubes );
-        renderInterface->RenderShadowQuad();
-    }
-    #endif
-    */
-    
-    m_internal->renderInterface.EndScene();
+    m_internal->Render();
 }
 
 bool CubesDemo::KeyEvent( int key, int scancode, int action, int mods )
 {
-    // ...
-
-    return false;
+    return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
 bool CubesDemo::CharEvent( unsigned int code )
 {
-    // ...
-
     return false;
 }
 
 #endif // #ifdef CLIENT
-
-
-
-
-
-
-
-
-
-#if 0
-
-    void ProcessInput( const platform::Input & input )
-    {
-        // pass input to game instance
-        
-        game::Input gameInput;
-        gameInput.left = input.left ? 1.0f : 0.0f;
-        gameInput.right = input.right ? 1.0f : 0.0f;
-        gameInput.up = input.up ? 1.0f : 0.0f;
-        gameInput.down = input.down ? 1.0f : 0.0f;
-        gameInput.push = input.space ? 1.0f : 0.0f;
-        gameInput.pull = input.z ? 1.0f : 0.0f;
-        gameInstance->SetPlayerInput( 0, gameInput );
-    }
-    
-    void Update( float deltaTime )
-    {
-        // start the worker thread
-        workerThread.Start( gameInstance );
-        t += deltaTime;
-    }
-
-    void WaitForSim()
-    {
-        workerThread.Join();
-        gameInstance->GetViewPacket( viewPacket );
-    }
-
-#endif
-
-/*
-    void setCameraAndLight( render::Interface * renderInterface, const Camera & camera )
-    {
-        renderInterface->SetCamera( camera.position, camera.lookat, camera.up );
-        math::Vector lightPosition = math::Vector( 25.0f, -25.0f, 50.0f );
-        lightPosition += camera.lookat;
-        renderInterface->SetLightPosition( lightPosition );
-    }
-*/
 
 struct CubeVertex
 {
@@ -377,7 +389,6 @@ void RenderInterface::SetCamera( const math::Vector & position, const math::Vect
 void RenderInterface::ClearScreen()
 {
     glViewport( 0, 0, displayWidth, displayHeight );
-    glDisable( GL_SCISSOR_TEST );
     glClearStencil( 0 );
     glClearColor( 1.0f, 1.0f, 1.0f, 1.0f );     
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -385,13 +396,18 @@ void RenderInterface::ClearScreen()
 
 void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
 {
-    /*
-    // setup viewport & scissor
-
     glViewport( x1, y1, x2 - x1, y2 - y1 );
-    glScissor( x1, y1, x2 - x1, y2 - y1 );
-    glEnable( GL_SCISSOR_TEST );
 
+    glEnable( GL_SCISSOR_TEST );
+    glScissor( x1, y1, x2 - x1, y2 - y1 );
+
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    glEnable( GL_DEPTH_TEST );
+    glDepthFunc( GL_LEQUAL );
+
+    /*
     // setup view
 
     glMatrixMode( GL_PROJECTION );
@@ -405,12 +421,7 @@ void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
     glLoadIdentity();
     gluLookAt( cameraPosition.x, cameraPosition.y, cameraPosition.z,
                cameraLookAt.x, cameraLookAt.y, cameraLookAt.z,
-               cameraUp.x, cameraUp.y, cameraUp.z );
-                                
-    // enable alpha blending
-
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+               cameraUp.x, cameraUp.y, cameraUp.z );                                
                     
     // setup lights
 
@@ -432,9 +443,6 @@ void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
     glLightfv( GL_LIGHT0, GL_POSITION, position );
 
     // enable depth buffering and backface culling
-
-    glEnable( GL_DEPTH_TEST );
-    glDepthFunc( GL_LEQUAL );
     */
 } 
 
@@ -811,5 +819,28 @@ void RenderInterface::RenderShadowQuad()
 
 void RenderInterface::EndScene()
 {
+    glDisable( GL_SCISSOR_TEST );
+    glDisable( GL_BLEND );
+}
+
+/*
+static void RenderBegin( VertexType type, const math::Matrix & model, const math::Matrix & view, const math::Matrix & projection )
+{
     // ...
 }
+
+static void RenderVertexUnlit( const math::Vector & position, float r, float g, float b, float a )
+{
+    // ...
+}
+
+static void RenderVertexLit( const math::Vector & position, const math::Vector & normal, float r, float g, float b, float a )
+{
+    // ...
+}
+
+static void RenderEnd()
+{
+    // ...
+}
+*/
