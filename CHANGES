@@ -1,4 +1,20 @@
 
+Saturday Morning, November 15th, 2014
+-------------------------------------
+
+    Implement code to create the vertex buffer and VAO for lit and unlit vertex data.
+
+    Bring across the code to setup the VAO from the model. Setup a VAO for lit and unlit.    
+
+    Setup structs for each vertex type, eg. LitVertex, UnlitVertex etc.
+
+    Setup some max # of vertices per-drawcall, eg. 1024
+
+    Setup the actual vertex buffer data arrays
+
+    Sketch out the begin/end calls inside render interface
+
+
 Sunday Morning, November 9th, 2014
 ----------------------------------
 

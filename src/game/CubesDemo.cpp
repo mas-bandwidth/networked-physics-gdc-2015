@@ -3,6 +3,8 @@
 #ifdef CLIENT
 
 #include "Global.h"
+#include "Render.h"
+#include "ShaderManager.h"
 #include "core/Memory.h"
 #include "cubes/Game.h"
 #include "cubes/View.h"
@@ -12,10 +14,29 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 const int Steps = 1024;
+const int MaxVertices = 1024;
+
+typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
+
+struct LitVertex
+{
+    float x,y,z;
+    float nx,ny,nz;
+    float r,g,b,a;
+};
+
+struct UnlitVertex
+{
+    float x,y,z;
+    float r,g,b,a;
+};
 
 class RenderInterface
 {
 public:
+
+    RenderInterface();
+    ~RenderInterface();
 
     void ResizeDisplay( int displayWidth, int displayHeight );
     
@@ -43,6 +64,16 @@ public:
                 
 private:
 
+    void Initialize();
+
+    void BeginLit();
+    void AddLitVertex( const LitVertex & vertex );
+    void EndLit();
+
+    void BeginUnlit();
+    void AddUnlitVertex( const UnlitVertex & vertex );
+    void EndUnlit();
+
     int displayWidth;
     int displayHeight;
 
@@ -51,22 +82,15 @@ private:
     math::Vector cameraUp;
 
     math::Vector lightPosition;
+
+    uint32_t vbo_lit;
+    uint32_t vbo_unlit;
+    uint32_t vao_lit;
+    uint32_t vao_unlit;
+
+    LitVertex lit_vertices[MaxVertices];
+    UnlitVertex unlit_vertices[MaxVertices];
 };
-
-typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
-
-enum VertexType
-{
-    VERTEX_LIT,
-    VERTEX_UNLIT   
-};
-
-/*
-static void RenderBegin( VertexType type, const math::Matrix & model, const math::Matrix & view, const math::Matrix & projection );
-static void RenderVertexUnlit( const math::Vector & position, float r, float g, float b, float a );
-static void RenderVertexLit( const math::Vector & position, const math::Vector & normal, float r, float g, float b, float a );
-static void RenderEnd();
-*/
 
 struct CubesInternal
 {
@@ -289,7 +313,21 @@ bool CubesDemo::CharEvent( unsigned int code )
     return false;
 }
 
-#endif // #ifdef CLIENT
+// ---------------------------------------------------------------------------------------------------------
+
+enum VertexType
+{
+    VERTEX_LIT,
+    VERTEX_UNLIT   
+};
+
+/*
+static void RenderBegin( VertexType type, const math::Matrix & model, const math::Matrix & view, const math::Matrix & projection );
+static void RenderVertexUnlit( const math::Vector & position, float r, float g, float b, float a );
+static void RenderVertexLit( const math::Vector & position, const math::Vector & normal, float r, float g, float b, float a );
+static void RenderEnd();
+*/
+
 
 struct CubeVertex
 {
@@ -358,10 +396,134 @@ struct RenderImpl
 
 // -----------------------------------------
 
-void RenderInterface::ResizeDisplay( int displayWidth, int displayHeight )
+RenderInterface::RenderInterface()
 {
-    this->displayWidth = displayWidth;
-    this->displayHeight = displayHeight;
+    glGenBuffers( 1, &vbo_lit );
+    glGenBuffers( 1, &vbo_unlit );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+    vao_lit = 0;
+    vao_unlit = 0;
+}
+
+RenderInterface::~RenderInterface()
+{
+    glDeleteVertexArrays( 1, &vao_lit );
+    glDeleteVertexArrays( 1, &vao_unlit );
+    glDeleteBuffers( 1, &vbo_lit );
+    glDeleteBuffers( 1, &vbo_unlit );
+    vbo_lit = 0;
+    vao_lit = 0;
+    vbo_unlit = 0;
+    vao_unlit = 0;
+}
+
+void RenderInterface::Initialize()
+{
+    uint32_t lit_shader = global.shaderManager->GetShader( "CubesLit" );
+    uint32_t unlit_shader = global.shaderManager->GetShader( "CubesUnlit" );
+    if ( !lit_shader || !unlit_shader )
+        return;
+
+    // setup lit vao
+    {
+        glUseProgram( lit_shader );
+
+        glGenVertexArrays( 1, &vao_lit );
+
+        glBindVertexArray( vao_lit );
+
+        glBindBuffer( GL_ARRAY_BUFFER, vbo_lit );
+
+        const int vertex_position_location = glGetAttribLocation( lit_shader, "VertexPosition" );
+        const int vertex_normal_location = glGetAttribLocation( lit_shader, "VertexNormal" );
+        const int vertex_color_location = glGetAttribLocation( lit_shader, "VertexColor" );
+
+        if ( vertex_position_location >= 0 )
+        {
+            glEnableVertexAttribArray( vertex_position_location );
+            glVertexAttribPointer( vertex_position_location, 3, GL_FLOAT, GL_FALSE, sizeof(LitVertex), (GLubyte*)0 );
+        }
+
+        if ( vertex_normal_location >= 0 )
+        {
+            glEnableVertexAttribArray( vertex_normal_location );
+            glVertexAttribPointer( vertex_normal_location, 3, GL_FLOAT, GL_FALSE, sizeof(LitVertex), (GLubyte*)(3*4) );
+        }
+
+        if ( vertex_color_location >= 0 )
+        {
+            glEnableVertexAttribArray( vertex_color_location );
+            glVertexAttribPointer( vertex_color_location, 4, GL_FLOAT, GL_FALSE, sizeof(LitVertex), (GLubyte*)(6*4) );
+        }
+    }
+
+    // setup unlit vao
+    {
+        glUseProgram( unlit_shader );
+
+        glGenVertexArrays( 1, &vao_unlit );
+
+        glBindVertexArray( vao_unlit );
+
+        glBindBuffer( GL_ARRAY_BUFFER, vbo_unlit );
+
+        const int vertex_position_location = glGetAttribLocation( unlit_shader, "VertexPosition" );
+        const int vertex_color_location = glGetAttribLocation( unlit_shader, "VertexColor" );
+
+        if ( vertex_position_location >= 0 )
+        {
+            glEnableVertexAttribArray( vertex_position_location );
+            glVertexAttribPointer( vertex_position_location, 3, GL_FLOAT, GL_FALSE, sizeof(UnlitVertex), (GLubyte*)0 );
+        }
+
+        if ( vertex_color_location >= 0 )
+        {
+            glEnableVertexAttribArray( vertex_color_location );
+            glVertexAttribPointer( vertex_color_location, 4, GL_FLOAT, GL_FALSE, sizeof(UnlitVertex), (GLubyte*)(6*4) );
+        }
+    }
+
+    check_opengl_error( "after cubes render init" );
+
+    glUseProgram( 0 );
+    glBindVertexArray( 0 );
+}
+
+void RenderInterface::BeginLit()
+{
+    CORE_ASSERT( )
+    // ...
+}
+
+void RenderInterface::AddLitVertex( const LitVertex & vertex )
+{
+    // ...
+}
+
+void RenderInterface::EndLit()
+{
+    // ...
+}
+
+void RenderInterface::BeginUnlit()
+{
+    // ...
+}
+
+void RenderInterface::AddUnlitVertex( const UnlitVertex & vertex )
+{
+    // ...
+}
+
+void RenderInterface::EndUnlit()
+{
+    // ...
+}
+
+void RenderInterface::ResizeDisplay( int _displayWidth, int _displayHeight )
+{
+    displayWidth = _displayWidth;
+    displayHeight = _displayHeight;
 }
 
 int RenderInterface::GetDisplayWidth() const
@@ -396,6 +558,9 @@ void RenderInterface::ClearScreen()
 
 void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
 {
+    if ( vao_lit == 0 )
+        Initialize();
+
     glViewport( x1, y1, x2 - x1, y2 - y1 );
 
     glEnable( GL_SCISSOR_TEST );
@@ -823,24 +988,4 @@ void RenderInterface::EndScene()
     glDisable( GL_BLEND );
 }
 
-/*
-static void RenderBegin( VertexType type, const math::Matrix & model, const math::Matrix & view, const math::Matrix & projection )
-{
-    // ...
-}
-
-static void RenderVertexUnlit( const math::Vector & position, float r, float g, float b, float a )
-{
-    // ...
-}
-
-static void RenderVertexLit( const math::Vector & position, const math::Vector & normal, float r, float g, float b, float a )
-{
-    // ...
-}
-
-static void RenderEnd()
-{
-    // ...
-}
-*/
+#endif // #ifdef CLIENT

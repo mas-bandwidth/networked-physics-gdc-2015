@@ -84,9 +84,9 @@ static void game_update()
 }
 
 static double start_time = 0.0;
-static int current_fps = 0;
+static int current_fps = 60;
 static int frame_count = 0;
-static int initial_wait = 20;
+static int initial_wait = 120;
 
 static void update_fps()
 {

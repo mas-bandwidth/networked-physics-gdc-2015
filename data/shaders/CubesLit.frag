@@ -2,7 +2,7 @@
 
 in vec3 Position;
 in vec3 Normal;
-in vec4 BaseColor;
+in vec4 Color;
 
 uniform vec3 EyePosition;
 uniform vec3 LightPosition;
@@ -31,5 +31,5 @@ void main()
 
     float SpecularIntensity = pow( max( dot(r,v), 0.0 ), SpecularPower );
 
-    FragColor = vec4( BaseColor.rgb * ( LightIntensity * ( Ka + Kd * max( dot(s,n), 0.0 ) ) ) + LightIntensity * SpecularIntensity, BaseColor.a );
+    FragColor = vec4( Color.rgb * ( LightIntensity * ( Ka + Kd * max( dot(s,n), 0.0 ) ) ) + LightIntensity * SpecularIntensity, Color.a );
 }

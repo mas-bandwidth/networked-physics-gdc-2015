@@ -2,25 +2,33 @@ DONE:
 
 TODO:
 
-    --------------------------------------------------------------
+    Now setup the begin/end and per-vertex calls for lit vertices.
 
-    Implement code to create the vertex buffer and VAO for lit and unlit vertex data.
+    Begin call needs to:
 
-    We'll need one vertex buffer and VAO per-shader (lit and unlit)
+        a) clear vertex index to zero
 
-    Vertex buffer should be set as streaming, eg. dynamically updated per-frame.
+    Per-vertex lit needs to:
+
+        a) assert we are inside begin/end for lit
+        b) assert we have room in the vertex buffer for another vertex
+        c) copy the vertex to the buffer
+
+    End call needs to:
+
+        a) bind the vao and vbo
+        b) actually load the vertex data as streaming
+        c) setup the uniforms, eg. light position, matrices
+        d) kick off the actual drawcall
+        e) unbind everything and set vertex index back to zero
 
     --------------------------------------------------------------
 
     Setup a way to easily get the current projection, model and view matrices
 
-    Work out how to pass this into the RenderBegin
+    Also work out how to pass in the current light as a uniform for lit.
 
-    Actually implement the RenderBegin, RenderVertexLit/Unit and RenderEnd
-
-    --------------------------------------------------------------
-
-    Get the bloody cubes rendering
+    Get the basic cubes working with basic lighting.
 
     --------------------------------------------------------------
 

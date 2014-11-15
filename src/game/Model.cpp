@@ -28,7 +28,6 @@ Model * CreateModel( core::Allocator & allocator, uint32_t shader, Mesh * mesh )
 
     glGenVertexArrays( 1, &model->vertexArrayObject );
     glBindVertexArray( model->vertexArrayObject );
-    glEnableVertexAttribArray( 1 );
 
     // bind the index buffer to the VAO
 
