@@ -1,9 +1,8 @@
 #version 410
 
-uniform mat4 Model;
-uniform mat4 ModelView;
-uniform mat4 ModelViewProjection;
-
+in mat4 Model;
+in mat4 ModelView;
+in mat4 ModelViewProjection;
 in vec3 VertexPosition;
 in vec3 VertexNormal;
 in vec4 VertexColor;

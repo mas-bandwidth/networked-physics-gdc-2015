@@ -14,22 +14,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 const int Steps = 1024;
-const int MaxVertices = 1024;
+const int MaxCubes = 1024;
 
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
-
-struct LitVertex
-{
-    float x,y,z;
-    float nx,ny,nz;
-    float r,g,b,a;
-};
-
-struct UnlitVertex
-{
-    float x,y,z;
-    float r,g,b,a;
-};
 
 class RenderInterface
 {
@@ -66,13 +53,7 @@ private:
 
     void Initialize();
 
-    void BeginLit();
-    void AddLitVertex( const LitVertex & vertex );
-    void EndLit();
-
-    void BeginUnlit();
-    void AddUnlitVertex( const UnlitVertex & vertex );
-    void EndUnlit();
+    bool initialized;
 
     int displayWidth;
     int displayHeight;
@@ -83,13 +64,10 @@ private:
 
     math::Vector lightPosition;
 
-    uint32_t vbo_lit;
-    uint32_t vbo_unlit;
-    uint32_t vao_lit;
-    uint32_t vao_unlit;
-
-    LitVertex lit_vertices[MaxVertices];
-    UnlitVertex unlit_vertices[MaxVertices];
+    uint32_t cubes_vao;
+    uint32_t cubes_vbo;
+    uint32_t cubes_ibo;
+    uint32_t cubes_instance_buffer;
 };
 
 struct CubesInternal
@@ -154,9 +132,13 @@ struct CubesInternal
 
     void Update()
     {
+        const float deltaTime = global.timeBase.deltaTime;
+
         gameInstance->SetPlayerInput( 0, gameInput );
 
-        const float deltaTime = global.timeBase.deltaTime;
+        gameInstance->Update( deltaTime );
+
+        gameInstance->GetViewPacket( viewPacket );
 
         if ( viewPacket.objectCount >= 1 )
         {
@@ -199,9 +181,7 @@ struct CubesInternal
 
         renderInterface.SetCamera( camera.position, camera.lookat, camera.up );
         
-        math::Vector lightPosition = math::Vector( 25.0f, -25.0f, 50.0f );
-        lightPosition += camera.lookat;
-        renderInterface.SetLightPosition( lightPosition );
+        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -250.0f, 50.0f ) );
 
         view::ActivationArea activationArea;
         view::setupActivationArea( activationArea, origin, 5.0f, global.timeBase.time );
@@ -315,19 +295,13 @@ bool CubesDemo::CharEvent( unsigned int code )
 
 // ---------------------------------------------------------------------------------------------------------
 
-enum VertexType
+struct CubeInstance
 {
-    VERTEX_LIT,
-    VERTEX_UNLIT   
+    glm::vec3 color;
+    glm::mat4 model;
+    glm::mat4 modelView;
+    glm::mat4 modelViewProjection;
 };
-
-/*
-static void RenderBegin( VertexType type, const math::Matrix & model, const math::Matrix & view, const math::Matrix & projection );
-static void RenderVertexUnlit( const math::Vector & position, float r, float g, float b, float a );
-static void RenderVertexLit( const math::Vector & position, const math::Vector & normal, float r, float g, float b, float a );
-static void RenderEnd();
-*/
-
 
 struct CubeVertex
 {
@@ -368,156 +342,134 @@ CubeVertex cube_vertices[] =
     { +1, -1, +1, 0, -1, 0 },
 };
 
-struct ShadowVBO
+uint16_t cube_indices[] = 
 {
-    uint32_t id;
-    vectorial::vec3f vertices[ MaxShadowVertices ];
+    0, 1, 2,
+    0, 2, 3,
+
+    4, 5, 6,
+    4, 6, 7,
+
+    8, 9, 10,
+    8, 10, 11,
+
+    12, 13, 14,
+    12, 14, 15,
+
+    16, 17, 18,
+    16, 18, 19,
+
+    20, 21, 22,
+    20, 22, 23,
 };
-
-struct RenderImpl
-{
-    RenderImpl()
-    {
-        glGenBuffers( 1, &shadow_vbo.id );
-        glGenBuffers( 1, &cube_vbo );
-        glBindBuffer( GL_ARRAY_BUFFER, cube_vbo );
-        glBufferData( GL_ARRAY_BUFFER, sizeof( cube_vertices ), cube_vertices, GL_STATIC_DRAW );
-    }
-    
-    ~RenderImpl()
-    {
-        glDeleteBuffers( 1, &shadow_vbo.id );
-        glDeleteBuffers( 1, &cube_vbo );
-    }
-
-    uint32_t cube_vbo;
-    ShadowVBO shadow_vbo;
-};
-
-// -----------------------------------------
 
 RenderInterface::RenderInterface()
 {
-    glGenBuffers( 1, &vbo_lit );
-    glGenBuffers( 1, &vbo_unlit );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    vao_lit = 0;
-    vao_unlit = 0;
+    initialized = false;    
+    displayWidth = 0;
+    displayHeight = 0;
+    cubes_vao = 0;
+    cubes_vbo = 0;
+    cubes_ibo = 0;
+    cubes_instance_buffer = 0;
 }
 
 RenderInterface::~RenderInterface()
 {
-    glDeleteVertexArrays( 1, &vao_lit );
-    glDeleteVertexArrays( 1, &vao_unlit );
-    glDeleteBuffers( 1, &vbo_lit );
-    glDeleteBuffers( 1, &vbo_unlit );
-    vbo_lit = 0;
-    vao_lit = 0;
-    vbo_unlit = 0;
-    vao_unlit = 0;
+    // todo: cleanup
 }
 
 void RenderInterface::Initialize()
 {
-    uint32_t lit_shader = global.shaderManager->GetShader( "CubesLit" );
-    uint32_t unlit_shader = global.shaderManager->GetShader( "CubesUnlit" );
-    if ( !lit_shader || !unlit_shader )
+    CORE_ASSERT( !initialized );
+
+    uint32_t shader = global.shaderManager->GetShader( "Cubes" );
+    if ( !shader )
         return;
 
-    // setup lit vao
+    glUseProgram( shader );
+
+    const int position_location = glGetAttribLocation( shader, "VertexPosition" );
+    const int normal_location = glGetAttribLocation( shader, "VertexNormal" );
+    const int color_location = glGetAttribLocation( shader, "VertexColor" );
+    const int model_location = glGetAttribLocation( shader, "Model" );
+    const int model_view_location = glGetAttribLocation( shader, "ModelView" );
+    const int model_view_projection_location = glGetAttribLocation( shader, "ModelViewProjection" );
+
+    glGenBuffers( 1, &cubes_vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, cubes_vbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( cube_vertices ), cube_vertices, GL_STATIC_DRAW );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+ 
+    glGenBuffers( 1, &cubes_ibo );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, cubes_ibo );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( cube_indices ), cube_indices, GL_STATIC_DRAW );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+
+    glGenBuffers( 1, &cubes_instance_buffer );
+
+    glGenVertexArrays( 1, &cubes_vao );
+
+    glBindVertexArray( cubes_vao );
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, cubes_ibo );
+
+    glBindBuffer( GL_ARRAY_BUFFER, cubes_vbo );
+
+    if ( position_location >= 0 )
     {
-        glUseProgram( lit_shader );
+        glEnableVertexAttribArray( position_location );
+        glVertexAttribPointer( position_location, 3, GL_FLOAT, GL_FALSE, sizeof(CubeVertex), (GLubyte*)0 );
+    }
 
-        glGenVertexArrays( 1, &vao_lit );
+    if ( normal_location >= 0 )
+    {
+        glEnableVertexAttribArray( normal_location );
+        glVertexAttribPointer( normal_location, 3, GL_FLOAT, GL_FALSE, sizeof(CubeVertex), (GLubyte*)(3*4) );
+    }
 
-        glBindVertexArray( vao_lit );
+    glBindBuffer( GL_ARRAY_BUFFER, cubes_instance_buffer );
 
-        glBindBuffer( GL_ARRAY_BUFFER, vbo_lit );
+    if ( color_location >= 0 )
+    {
+        glEnableVertexAttribArray( color_location );
+        glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, color ) ) );
+        glVertexAttribDivisor( color_location, 1 );
+    }
 
-        const int vertex_position_location = glGetAttribLocation( lit_shader, "VertexPosition" );
-        const int vertex_normal_location = glGetAttribLocation( lit_shader, "VertexNormal" );
-        const int vertex_color_location = glGetAttribLocation( lit_shader, "VertexColor" );
-
-        if ( vertex_position_location >= 0 )
+    for ( unsigned int i = 0; i < 4 ; ++i )
+    {
+        if ( model_location >= 0 )
         {
-            glEnableVertexAttribArray( vertex_position_location );
-            glVertexAttribPointer( vertex_position_location, 3, GL_FLOAT, GL_FALSE, sizeof(LitVertex), (GLubyte*)0 );
+            glEnableVertexAttribArray( model_location + i );
+            glVertexAttribPointer( model_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, model ) + ( sizeof(float) * 4 * i ) ) );
+            glVertexAttribDivisor( model_location + i, 1 );
         }
 
-        if ( vertex_normal_location >= 0 )
+        if ( model_view_location >= 0 )
         {
-            glEnableVertexAttribArray( vertex_normal_location );
-            glVertexAttribPointer( vertex_normal_location, 3, GL_FLOAT, GL_FALSE, sizeof(LitVertex), (GLubyte*)(3*4) );
+            glEnableVertexAttribArray( model_view_location + i );
+            glVertexAttribPointer( model_view_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, modelView ) + ( sizeof(float) * 4 * i ) ) );
+            glVertexAttribDivisor( model_view_location + i, 1 );
         }
 
-        if ( vertex_color_location >= 0 )
+        if ( model_view_projection_location >= 0 )
         {
-            glEnableVertexAttribArray( vertex_color_location );
-            glVertexAttribPointer( vertex_color_location, 4, GL_FLOAT, GL_FALSE, sizeof(LitVertex), (GLubyte*)(6*4) );
+            glEnableVertexAttribArray( model_view_projection_location + i );
+            glVertexAttribPointer( model_view_projection_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, modelViewProjection ) + ( sizeof(float) * 4 * i ) ) );
+            glVertexAttribDivisor( model_view_projection_location + i, 1 );
         }
     }
 
-    // setup unlit vao
-    {
-        glUseProgram( unlit_shader );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-        glGenVertexArrays( 1, &vao_unlit );
-
-        glBindVertexArray( vao_unlit );
-
-        glBindBuffer( GL_ARRAY_BUFFER, vbo_unlit );
-
-        const int vertex_position_location = glGetAttribLocation( unlit_shader, "VertexPosition" );
-        const int vertex_color_location = glGetAttribLocation( unlit_shader, "VertexColor" );
-
-        if ( vertex_position_location >= 0 )
-        {
-            glEnableVertexAttribArray( vertex_position_location );
-            glVertexAttribPointer( vertex_position_location, 3, GL_FLOAT, GL_FALSE, sizeof(UnlitVertex), (GLubyte*)0 );
-        }
-
-        if ( vertex_color_location >= 0 )
-        {
-            glEnableVertexAttribArray( vertex_color_location );
-            glVertexAttribPointer( vertex_color_location, 4, GL_FLOAT, GL_FALSE, sizeof(UnlitVertex), (GLubyte*)(6*4) );
-        }
-    }
-
-    check_opengl_error( "after cubes render init" );
+    glBindVertexArray( 0 );
 
     glUseProgram( 0 );
-    glBindVertexArray( 0 );
-}
 
-void RenderInterface::BeginLit()
-{
-    CORE_ASSERT( )
-    // ...
-}
+    initialized = true;
 
-void RenderInterface::AddLitVertex( const LitVertex & vertex )
-{
-    // ...
-}
-
-void RenderInterface::EndLit()
-{
-    // ...
-}
-
-void RenderInterface::BeginUnlit()
-{
-    // ...
-}
-
-void RenderInterface::AddUnlitVertex( const UnlitVertex & vertex )
-{
-    // ...
-}
-
-void RenderInterface::EndUnlit()
-{
-    // ...
+    check_opengl_error( "after cubes render init" );
 }
 
 void RenderInterface::ResizeDisplay( int _displayWidth, int _displayHeight )
@@ -558,8 +510,11 @@ void RenderInterface::ClearScreen()
 
 void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
 {
-    if ( vao_lit == 0 )
+    if ( !initialized )
         Initialize();
+
+    if ( !initialized )
+        return;
 
     glViewport( x1, y1, x2 - x1, y2 - y1 );
 
@@ -692,52 +647,51 @@ void RenderInterface::RenderActivationArea( const view::ActivationArea & activat
         
 void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
 {
-#ifndef DEBUG_SHADOW_VOLUMES
+    if ( cubes.numCubes == 0 )
+        return;
 
-    /*    
-    if ( cubes.numCubes > 0 )
+    uint32_t shader = global.shaderManager->GetShader( "Cubes" );
+    if ( !shader )
+        return;
+
+    glUseProgram( shader );
+
+    const int eye_location = glGetUniformLocation( shader, "EyePosition" );
+    const int light_location = glGetUniformLocation( shader, "LightPosition" );
+
+    if ( eye_location >= 0 )
+        glUniform3fv( eye_location, 1, &cameraPosition[0] );
+
+    if ( light_location >= 0 )
+        glUniform3fv( light_location, 1, &lightPosition[0] );
+
+    CubeInstance instance_data[MaxCubes];
+
+    /*
+    for ( int i = 0; i < cubes.numCubes; ++i )
     {
-        glEnable( GL_CULL_FACE );
-        glCullFace( GL_BACK );
-        glFrontFace( GL_CW );
-
-        glEnable( GL_COLOR_MATERIAL );
-        glColorMaterial ( GL_FRONT, GL_AMBIENT_AND_DIFFUSE ) ;
-                    
-        glBindBuffer( GL_ARRAY_BUFFER, impl->cube_vbo );
-
-        glEnable( GL_RESCALE_NORMAL );
-
-        glEnableClientState( GL_VERTEX_ARRAY );
-        glEnableClientState( GL_NORMAL_ARRAY );
-
-        #define BUFFER_OFFSET(i) ( (char*)NULL + (i) )
-        glVertexPointer( 3, GL_FLOAT, sizeof(CubeVertex), BUFFER_OFFSET(0) );
-        glNormalPointer( GL_FLOAT, sizeof(CubeVertex), BUFFER_OFFSET(12) );
+        CubeInstance & instance = instance_data[i];
 
         float matrix[16];
-        for ( int i = 0; i < cubes.numCubes; ++i )
-        {
-            glPushMatrix();
-            cubes.cube[i].transform.store( matrix );
-            glMultMatrixf( matrix );
-            glColor4f( cubes.cube[i].r, cubes.cube[i].g, cubes.cube[i].b, cubes.cube[i].a );
-            glDrawArrays( GL_QUADS, 0, 6 * 4 );
-            glPopMatrix();
-        }
-        
-        glDisableClientState( GL_VERTEX_ARRAY );
-        glDisableClientState( GL_NORMAL_ARRAY );
-      
-        glBindBuffer( GL_ARRAY_BUFFER, 0 );
-        
-        glDisable( GL_COLOR_MATERIAL );
-        
-        glDisable( GL_RESCALE_NORMAL );
+        cubes.cube[i].transform.store( matrix );
+
+        // ...
     }
     */
-    
-#endif
+
+    glBindBuffer( GL_ARRAY_BUFFER, cubes_instance_buffer );
+    glBufferData( GL_ARRAY_BUFFER, sizeof(CubeInstance) * cubes.numCubes, instance_data, GL_STREAM_DRAW );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+    glBindVertexArray( cubes_vao );
+
+    glDrawElementsInstanced( GL_TRIANGLES, sizeof( cube_indices ) / 2, GL_UNSIGNED_SHORT, nullptr, cubes.numCubes );
+
+    glBindVertexArray( 0 );
+
+    glUseProgram( 0 );
+
+    check_opengl_error( "after draw cubes" );
 }
 
 inline void RenderSilhouette( int & vertex_index,
@@ -752,6 +706,8 @@ inline void RenderSilhouette( int & vertex_index,
                               bool left_dot,
                               bool right_dot )
 {
+    // todo: what we *really* want to do here is to implement the shadow silhouettes in the vertex shader instead
+
     /*
 #ifdef DEBUG_SHADOW_VOLUMES
     
@@ -989,3 +945,56 @@ void RenderInterface::EndScene()
 }
 
 #endif // #ifdef CLIENT
+
+
+#if 0 
+
+struct LitVertex
+{
+    float x,y,z;
+    float nx,ny,nz;
+    float r,g,b,a;
+};
+
+struct UnlitVertex
+{
+    float x,y,z;
+    float r,g,b,a;
+};
+
+void RenderInterface::BeginLit()
+{
+    CORE_ASSERT( num_lit_vertices == 0 );
+    glBindVertexArray( vao_lit );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo_lit );
+}
+
+void RenderInterface::AddLitVertex( const LitVertex & vertex )
+{
+    CORE_ASSERT( num_lit_vertices >= 0 );
+    CORE_ASSERT( num_lit_vertices < MaxVertices - 1 );
+    lit_vertices[num_lit_vertices++] = vertex;
+}
+
+void RenderInterface::EndLit()
+{
+    glBufferData( GL_ARRAY_BUFFER, sizeof( LitVertex ) * num_lit_vertices, lit_vertices, GL_STREAM_DRAW );
+    glDrawArrays( GL_TRIANGLES, 0, num_lit_vertices );
+    glBindVertexArray( 0 );
+    glUseProgram( 0 );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+    num_lit_vertices = 0;
+}
+
+    uint32_t vbo_lit;
+    uint32_t vbo_unlit;
+    uint32_t vao_lit;
+    uint32_t vao_unlit;
+
+    LitVertex lit_vertices[MaxVertices];
+//    UnlitVertex unlit_vertices[MaxVertices];
+
+    int num_lit_vertices;
+    int num_unlit_vertices;
+
+#endif
