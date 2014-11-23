@@ -13,6 +13,11 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+using glm::mat3;
+using glm::mat4;
+using glm::vec3;
+using glm::vec4;
+
 const int Steps = 1024;
 const int MaxCubes = 1024;
 
@@ -181,7 +186,7 @@ struct CubesInternal
 
         renderInterface.SetCamera( camera.position, camera.lookat, camera.up );
         
-        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -250.0f, 50.0f ) );
+        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -100.0f, 100.0f ) );
 
         view::ActivationArea activationArea;
         view::setupActivationArea( activationArea, origin, 5.0f, global.timeBase.time );
@@ -297,7 +302,7 @@ bool CubesDemo::CharEvent( unsigned int code )
 
 struct CubeInstance
 {
-    glm::vec3 color;
+    glm::vec4 color;
     glm::mat4 model;
     glm::mat4 modelView;
     glm::mat4 modelViewProjection;
@@ -526,44 +531,6 @@ void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
 
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
-
-    /*
-    // setup view
-
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity();
-    float fov = 40.0f;
-    gluPerspective( fov, ( x2 - x1 ) / ( y2 - y1 ), 0.1f, 100.0f );
-
-    // setup camera
-
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
-    gluLookAt( cameraPosition.x, cameraPosition.y, cameraPosition.z,
-               cameraLookAt.x, cameraLookAt.y, cameraLookAt.z,
-               cameraUp.x, cameraUp.y, cameraUp.z );                                
-                    
-    // setup lights
-
-    glEnable( GL_LIGHTING );
-    glEnable( GL_LIGHT0 );
-
-    glShadeModel( GL_SMOOTH );
-
-    GLfloat lightAmbientColor[] = { 0.5, 0.5, 0.5, 1.0 };
-    glLightModelfv( GL_LIGHT_MODEL_AMBIENT, lightAmbientColor );
-
-    glLightf( GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.01f );
-
-    GLfloat position[4];
-    position[0] = lightPosition.x;
-    position[1] = lightPosition.y;
-    position[2] = lightPosition.z;
-    position[3] = 1.0f;
-    glLightfv( GL_LIGHT0, GL_POSITION, position );
-
-    // enable depth buffering and backface culling
-    */
 } 
 
 void RenderInterface::RenderActivationArea( const view::ActivationArea & activationArea, float alpha )
@@ -667,17 +634,23 @@ void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
 
     CubeInstance instance_data[MaxCubes];
 
-    /*
+    mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x, cameraPosition.y, cameraPosition.z ), 
+                                   glm::vec3( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ), 
+                                   glm::vec3( cameraUp.x, cameraUp.y, cameraUp.z ) );
+
+    mat4 projectionMatrix = glm::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
+
     for ( int i = 0; i < cubes.numCubes; ++i )
     {
         CubeInstance & instance = instance_data[i];
 
-        float matrix[16];
-        cubes.cube[i].transform.store( matrix );
+        cubes.cube[i].transform.store( (float*) &instance.model );
 
-        // ...
+        instance.modelView = viewMatrix * instance.model;
+        instance.modelViewProjection = projectionMatrix * instance.modelView;
+
+        instance.color = vec4( cubes.cube[i].r, cubes.cube[i].g, cubes.cube[i].b, cubes.cube[i].a );
     }
-    */
 
     glBindBuffer( GL_ARRAY_BUFFER, cubes_instance_buffer );
     glBufferData( GL_ARRAY_BUFFER, sizeof(CubeInstance) * cubes.numCubes, instance_data, GL_STREAM_DRAW );

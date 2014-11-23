@@ -454,8 +454,8 @@ namespace view
 		else if ( authority == 0 )
 		{
 			r = 1.0f;
-			g = 0.15f;
-			b = 0.15f;
+			g = 0.05f;
+			b = 0.05f;
 		}
 		else if ( authority == 1 )
 		{

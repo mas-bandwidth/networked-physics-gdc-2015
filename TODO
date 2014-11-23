@@ -1,28 +1,16 @@
 DONE:
 
-    Actually attempt to render the cubes!
-
-    Setup light position as a uniform.
-
-    Setup per-instance data before rendering.
-
-    Upload per-instance data to the instance buffer.
-
-    Kick off the instanced draw call!
-
-    Stupid OpenGL is giving me an invalid operation post draw call. WTF... =p
-
-    Was just that IBO was not bound to VAO.
-
 TODO:
 
-    Get the cubes rendering... pass in the correct matrices and so forth.
+    Get the color rendering working.
+
+    Get the alpha blending working.    
 
     --------------------------------------------------------------
 
     Retune the simulation now that I have a bit more CPU power,
     eg. try more iterations and so on. Try to make sure stacks
-    of cubes are stable and come to rest.
+    of cubes are stable and always come to rest.
 
     --------------------------------------------------------------
 

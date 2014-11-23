@@ -20,6 +20,24 @@ Sunday Morning, November 23rd, 2014
 
     Add code to setup per-instance vertex attributes (color, matrices etc.)
 
+    Actually attempt to render the cubes!
+
+    Setup light position as a uniform.
+
+    Setup per-instance data before rendering.
+
+    Upload per-instance data to the instance buffer.
+
+    Kick off the instanced draw call!
+
+    Stupid OpenGL is giving me an invalid operation post draw call. WTF... =p
+
+    Was just that IBO was not bound to VAO.
+
+    Get the cubes rendering... pass in the correct matrices and so forth.
+
+    Tune the specular down a bit.
+
 
 Sunday Morning, November 16th, 2014
 -----------------------------------
