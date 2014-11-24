@@ -10,7 +10,7 @@ uniform vec3 LightIntensity = vec3( 1, 1, 1 );
 uniform vec3 Ks = vec3( 0.15, 0.15, 0.15 );
 uniform vec3 Kd = vec3( 0.6, 0.6, 0.6 );
 uniform vec3 Ka = vec3( 0.4, 0.4, 0.4 );
-uniform float SpecularPower = 1;
+uniform float SpecularPower = 1.0;
 
 layout( location = 0 ) out vec4 FragColor;
 
@@ -28,9 +28,9 @@ void main()
 
     vec3 r = reflect( s, n );
 
-    float SpecularIntensity = pow( max( dot(r,v), 0.0 ), SpecularPower ) * Ks;
+    float SpecularIntensity = pow( max( dot(r,v), 0.0 ), SpecularPower );
 
     FragColor = vec4( Color.rgb * ( LightIntensity * ( Ka + Kd * max( dot(s,n), 0.0 ) ) ) + 
-                                  ( LightIntensity * SpecularIntensity ), 
+                                  ( LightIntensity * SpecularIntensity * Ks ), 
                       Color.a );
 }

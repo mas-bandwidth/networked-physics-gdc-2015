@@ -2,23 +2,9 @@ DONE:
 
 TODO:
 
-    Get the color rendering working.
-
-    Get the alpha blending working.    
-
     --------------------------------------------------------------
 
-    Retune the simulation now that I have a bit more CPU power,
-    eg. try more iterations and so on. Try to make sure stacks
-    of cubes are stable and always come to rest.
-
-    --------------------------------------------------------------
-
-    Get the activation circle rendering
-
-    --------------------------------------------------------------
-
-    Get shadows rendering
+    Get shadows working!
 
     --------------------------------------------------------------
 

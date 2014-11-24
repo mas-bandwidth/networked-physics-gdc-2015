@@ -2,6 +2,24 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    There is a bug if you take cubes off the edge of activation, they don't reactivate, eg. they disappear.
+
+    Probably means they are outside the grid cells, eg. nowhere for them to be saved.
+
+    ----------------------------------
+
+    It would be much better to do the stencil shadows in a vertex shader instead!
+
+    ----------------------------------
+
+    There is definitely a bug in the activation system if i bump up cubes demo activation distance to 25.
+
+    Stack overflow? Too many active objects at one time?
+
+    Needs to be fixed!
+
+    ----------------------------------
+
     Would be nice if demos could specify whether they want to clear the screen or not.
 
     For example, cubes demo does want to, but the stone demo does not.

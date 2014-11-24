@@ -447,15 +447,15 @@ namespace view
 		
 		if ( authority >= maxPlayers )
 		{
-			r = 0.8f;
-			g = 0.8f;
-			b = 0.85f;
+			r = 0.65f;
+			g = 0.65f;
+			b = 0.70f;
 		}
 		else if ( authority == 0 )
 		{
-			r = 1.0f;
-			g = 0.05f;
-			b = 0.05f;
+			r = 0.9f;
+			g = 0.0f;
+			b = 0.0f;
 		}
 		else if ( authority == 1 )
 		{

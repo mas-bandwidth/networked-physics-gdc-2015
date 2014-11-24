@@ -22,24 +22,24 @@ namespace view
 	    float r,g,b,a;
 	};
 
+    struct Cube
+    {
+        vectorial::mat4f transform;
+        vectorial::mat4f inverse_transform;
+        float r,g,b,a;
+        bool operator < ( const Cube & other ) const 
+        {
+            // for back to front sort only! 
+            return simd4f_get_y( transform.value.w ) > simd4f_get_y( other.transform.value.w ); 
+        }
+    };
+    
 	struct Cubes
 	{
 	    Cubes()
 	    {
 	        numCubes = 0;
 	    }
-
-	    struct Cube
-	    {
-	        vectorial::mat4f transform;
-	        vectorial::mat4f inverse_transform;
-	        float r,g,b,a;
-	        bool operator < ( const Cube & other ) const 
-	        {
-	            // for back to front sort only! 
-	            return simd4f_get_y( transform.value.w ) > simd4f_get_y( other.transform.value.w ); 
-	        }
-	    };
 
 	    int numCubes;
 	    Cube cube[MaxViewObjects];

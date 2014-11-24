@@ -38,6 +38,26 @@ Sunday Morning, November 23rd, 2014
 
     Tune the specular down a bit.
 
+    Get the color rendering working.
+
+    Get the alpha blending working.    
+
+    Tuned the balance between specular, ambient, diffuse. 
+
+    Got something that with specular now adds a nice touch vs. the old demo.
+
+    Retuned the simulation now that I have a bit more CPU power.
+
+    Found something that has better coming to rest behavior for stacks,
+    as well as looking good while in the katamari ball. Nice!
+
+    Bumped up activation distance. This should avoid the need to get the activation circle working.
+
+    The demo is fast enough now to have a large activation distance, but unfortunately, there
+    is a bug in the activation system above 15m activation distance.
+
+    For now setting to 10m activation distance for the USC demo.
+
 
 Sunday Morning, November 16th, 2014
 -----------------------------------

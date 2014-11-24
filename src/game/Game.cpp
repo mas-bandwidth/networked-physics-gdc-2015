@@ -247,7 +247,7 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
     glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
     glfwWindowHint( GLFW_SAMPLES, 8 );
-    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
+//    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
 
     const GLFWvidmode * mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
 

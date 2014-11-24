@@ -19,7 +19,8 @@ using glm::vec3;
 using glm::vec4;
 
 const int Steps = 1024;
-const int MaxCubes = 1024;
+const int MaxCubes = 1024 * 4;
+const int MaxShadowVertices = 1024 * 32;
 
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
 
@@ -44,8 +45,6 @@ public:
 
     void BeginScene( float x1, float y1, float x2, float y2 );
  
-    void RenderActivationArea( const view::ActivationArea & activationArea, float alpha );
-
     void RenderCubes( const view::Cubes & cubes, float alpha = 1.0f );
     
     void RenderCubeShadows( const view::Cubes & cubes );
@@ -73,6 +72,8 @@ private:
     uint32_t cubes_vbo;
     uint32_t cubes_ibo;
     uint32_t cubes_instance_buffer;
+
+    vectorial::vec3f shadow_vertices[MaxShadowVertices];
 };
 
 struct CubesInternal
@@ -161,11 +162,8 @@ struct CubesInternal
             origin = playerCube->position + playerCube->positionError;
 
         math::Vector lookat = origin - math::Vector(0,0,1);
-        #ifdef WIDESCREEN
+
         math::Vector position = lookat + math::Vector(0,-11,5);
-        #else
-        math::Vector position = lookat + math::Vector(0,-12,6);
-        #endif
 
         camera.EaseIn( lookat, position ); 
     }
@@ -186,19 +184,16 @@ struct CubesInternal
 
         renderInterface.SetCamera( camera.position, camera.lookat, camera.up );
         
-        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -100.0f, 100.0f ) );
+        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -100.0f, 75.0f ) );
 
         view::ActivationArea activationArea;
         view::setupActivationArea( activationArea, origin, 5.0f, global.timeBase.time );
         
-        renderInterface.RenderActivationArea( activationArea, 1.0f );
-
         renderInterface.RenderCubes( cubes );
         
-        #ifdef SHADOWS
         renderInterface.RenderCubeShadows( cubes );
+
         renderInterface.RenderShadowQuad();
-        #endif
         
         renderInterface.EndScene();
     }
@@ -262,13 +257,13 @@ bool CubesDemo::Initialize()
     config.cellSize = 4.0f;
     config.cellWidth = Steps / config.cellSize + 2;
     config.cellHeight = config.cellWidth;
-    config.activationDistance = 5.0f;
-    config.simConfig.ERP = 0.1f;
+    config.activationDistance = 10.0f;
+    config.simConfig.ERP = 0.25f;
     config.simConfig.CFM = 0.001f;
-    config.simConfig.MaxIterations = 12;
-    config.simConfig.MaximumCorrectingVelocity = 100.0f;
-    config.simConfig.ContactSurfaceLayer = 0.05f;
-    config.simConfig.Elasticity = 0.3f;
+    config.simConfig.MaxIterations = 64;
+    config.simConfig.MaximumCorrectingVelocity = 250.0f;
+    config.simConfig.ContactSurfaceLayer = 0.01f;
+    config.simConfig.Elasticity = 0.0f;
     config.simConfig.LinearDrag = 0.01f;
     config.simConfig.AngularDrag = 0.01f;
     config.simConfig.Friction = 200.0f;
@@ -531,85 +526,6 @@ void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
 
     glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LEQUAL );
-} 
-
-void RenderInterface::RenderActivationArea( const view::ActivationArea & activationArea, float alpha )
-{
-    /*
-    glDisable( GL_CULL_FACE );
-    glDisable( GL_DEPTH_TEST );
-
-    const float r = 0.2f;
-    const float g = 0.2f;
-    const float b = 1.0f;
-    const float a = 0.1f * alpha;
-
-    glColor4f( r, g, b, a );
-
-    GLfloat color[] = { r, g, b, a };
-
-    glMaterialfv( GL_FRONT, GL_AMBIENT, color );
-    glMaterialfv( GL_FRONT, GL_DIFFUSE, color );
-
-    const int steps = 256;
-    const float radius = activationArea.radius - 0.1f;
-
-    const math::Vector & origin = activationArea.origin;
-
-    const float deltaAngle = 2*math::pi / steps;
-
-    float angle = 0.0f;
-
-    glBegin( GL_TRIANGLE_FAN );
-    glVertex3f( origin.x, origin.y, 0.0f );
-    for ( float i = 0; i <= steps; i++ )
-    {
-        glVertex3f( radius * math::cos(angle) + origin.x, radius * math::sin(angle) + origin.y, 0.0f );
-        angle += deltaAngle;
-    }
-    glEnd();
-
-    glEnable( GL_DEPTH_TEST );
-    {
-        const float r = activationArea.r;
-        const float g = activationArea.g;
-        const float b = activationArea.b;
-        const float a = activationArea.a * alpha;
-
-        glColor4f( r, g, b, a );
-
-        GLfloat color[] = { r, g, b, a };
-
-        glMaterialfv( GL_FRONT, GL_AMBIENT, color );
-        glMaterialfv( GL_FRONT, GL_DIFFUSE, color );
-
-        const int steps = 40;
-        const float radius = activationArea.radius;
-        const float thickness = 0.1f;
-        const float r1 = radius - thickness;
-        const float r2 = radius + thickness;
-
-        const math::Vector & origin = activationArea.origin;
-
-        const float bias = 0.001f;
-        const float deltaAngle = 2*math::pi / steps;
-
-        float angle = activationArea.startAngle;
-
-        glBegin( GL_QUADS );
-        for ( float i = 0; i < steps; i++ )
-        {
-            glVertex3f( r1 * math::cos(angle) + origin.x, r1 * math::sin(angle) + origin.y, bias );
-            glVertex3f( r2 * math::cos(angle) + origin.x, r2 * math::sin(angle) + origin.y, bias );
-            glVertex3f( r2 * math::cos(angle+deltaAngle*0.5f) + origin.x, r2 * math::sin(angle+deltaAngle*0.5f) + origin.y, bias );
-            glVertex3f( r1 * math::cos(angle+deltaAngle*0.5f) + origin.x, r1 * math::sin(angle+deltaAngle*0.5f) + origin.y, bias );
-            angle += deltaAngle;
-        }
-        glEnd();
-
-        glEnable( GL_CULL_FACE );
-    }
-    */
 }
         
 void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
@@ -679,27 +595,6 @@ inline void RenderSilhouette( int & vertex_index,
                               bool left_dot,
                               bool right_dot )
 {
-    // todo: what we *really* want to do here is to implement the shadow silhouettes in the vertex shader instead
-
-    /*
-#ifdef DEBUG_SHADOW_VOLUMES
-    
-    vectorial::vec3f world_a = transformPoint( transform, a );
-    vectorial::vec3f world_b = transformPoint( transform, b );
-    
-    glVertex3f( world_a.x(), world_a.y(), world_a.z() );
-    glVertex3f( world_b.x(), world_b.y(), world_b.z() );
-    
-    {
-        vectorial::vec3f world_l = transformPoint( transform, local_light );
-        glVertex3f( world_a.x(), world_a.y(), world_a.z() );
-        glVertex3f( world_l.x(), world_l.y(), world_l.z() );
-        glVertex3f( world_b.x(), world_b.y(), world_b.z() );
-        glVertex3f( world_l.x(), world_l.y(), world_l.z() );
-    }
-    
-#endif
-    
     // check if silhouette edge
     if ( left_dot ^ right_dot )
     {
@@ -738,55 +633,41 @@ inline void RenderSilhouette( int & vertex_index,
         
         vertex_index += 4;
     }
-    */
 }
 
 void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 {
+    // todo: what we *really* want is to do this in the vertex shader instead!
+
+    glDepthMask( GL_FALSE );  
+
+    glDisable( GL_CULL_FACE );
+
+
+    glColorMask( 0, 0, 0, 0 );
+
     /*
-    #ifdef DEBUG_SHADOW_VOLUMES
+    glEnable( GL_STENCIL_TEST );  
+    glEnable( GL_STENCIL_TEST_TWO_SIDE_EXT );
 
-        glDepthMask( GL_FALSE );
-        glDisable( GL_CULL_FACE );  
-        glColor3f( 1.0f, 0.75f, 0.8f );
+    glActiveStencilFaceEXT( GL_BACK );  
+    glStencilOp( GL_KEEP,             // stencil test fail  
+                 GL_KEEP,             // depth test fail  
+                 GL_DECR_WRAP_EXT );  // depth test pass  
+    glStencilMask( ~0 );  
+    glStencilFunc( GL_ALWAYS, 0, ~0 );
 
-    #else
-
-        glDepthMask(0);  
-        glColorMask(0,0,0,0);  
-        glDisable(GL_CULL_FACE);  
-        glEnable(GL_STENCIL_TEST);  
-        glEnable(GL_STENCIL_TEST_TWO_SIDE_EXT);  
-
-        glActiveStencilFaceEXT(GL_BACK);  
-        glStencilOp(GL_KEEP,            // stencil test fail  
-                    GL_KEEP,            // depth test fail  
-                    GL_DECR_WRAP_EXT);  // depth test pass  
-        glStencilMask(~0);  
-        glStencilFunc(GL_ALWAYS, 0, ~0);  
-
-        glActiveStencilFaceEXT(GL_FRONT);  
-        glStencilOp(GL_KEEP,            // stencil test fail  
-                    GL_KEEP,            // depth test fail  
-                    GL_INCR_WRAP_EXT);  // depth test pass  
-        glStencilMask(~0);  
-        glStencilFunc(GL_ALWAYS, 0, ~0);  
-
-    #endif
+    glActiveStencilFaceEXT( GL_FRONT );  
+    glStencilOp( GL_KEEP,             // stencil test fail  
+                 GL_KEEP,             // depth test fail  
+                 GL_INCR_WRAP_EXT );  // depth test pass  
+    glStencilMask( ~0 );  
+    glStencilFunc( GL_ALWAYS, 0, ~0 );  
+    */
 
     vectorial::vec3f world_light( lightPosition.x, lightPosition.y, lightPosition.z );
     
     int vertex_index = 0;
-
-    vectorial::vec3f * vertices = impl->shadow_vbo.vertices;
-    
-    #ifdef DEBUG_SHADOW_VOLUMES
-    glPushMatrix();
-    float matrix[16];
-    cube.transform.store( matrix );
-    glColor3f( 1, 0, 0 );
-    glBegin( GL_LINES );
-    #endif
     
     vectorial::vec3f a(-1,+1,-1);
     vectorial::vec3f b(+1,+1,-1);
@@ -809,7 +690,7 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 
     for ( int i = 0; i < (int) cubes.numCubes; ++i )
     {
-        const Cubes::Cube & cube = cubes.cube[i];
+        const view::Cube & cube = cubes.cube[i];
 
         if ( cube.a < ShadowAlphaThreshold )
             continue;
@@ -824,31 +705,31 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
         dot[4] = vectorial::dot( normals[4], local_light ) > 0;
         dot[5] = vectorial::dot( normals[5], local_light ) > 0;
         
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, a, b, normals[5], normals[2], dot[5], dot[2] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, b, c, normals[0], normals[2], dot[0], dot[2] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, c, d, normals[4], normals[2], dot[4], dot[2] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, d, a, normals[1], normals[2], dot[1], dot[2] );
-        
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, e, f, normals[3], normals[5], dot[3], dot[5] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, f, g, normals[3], normals[0], dot[3], dot[0] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, g, h, normals[3], normals[4], dot[3], dot[4] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, h, e, normals[3], normals[1], dot[3], dot[1] );
+        assert( vertex_index < MaxShadowVertices );
 
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, a, e, normals[1], normals[5], dot[1], dot[5] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, b, f, normals[5], normals[0], dot[5], dot[0] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, c, g, normals[0], normals[4], dot[0], dot[4] );
-        RenderSilhouette( vertex_index, vertices, cube.transform, local_light, world_light, d, h, normals[4], normals[1], dot[4], dot[1] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, b, normals[5], normals[2], dot[5], dot[2] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, c, normals[0], normals[2], dot[0], dot[2] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, d, normals[4], normals[2], dot[4], dot[2] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, a, normals[1], normals[2], dot[1], dot[2] );
+        
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, e, f, normals[3], normals[5], dot[3], dot[5] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, f, g, normals[3], normals[0], dot[3], dot[0] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, g, h, normals[3], normals[4], dot[3], dot[4] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, h, e, normals[3], normals[1], dot[3], dot[1] );
+
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, e, normals[1], normals[5], dot[1], dot[5] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, f, normals[5], normals[0], dot[5], dot[0] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, g, normals[0], normals[4], dot[0], dot[4] );
+        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, h, normals[4], normals[1], dot[4], dot[1] );
+
+        assert( vertex_index < MaxShadowVertices );
     }
     
-    #ifdef DEBUG_SHADOW_VOLUMES
-    glEnd();
-    glPopMatrix();
-    #endif
-
     int vertex_count = vertex_index;
     
     if ( vertex_count > 0 )
     {
+        /*
         int vertex_bytes = vertex_count * sizeof( vectorial::vec3f );
         glBindBufferARB( GL_ARRAY_BUFFER_ARB, impl->shadow_vbo.id );
         glBufferDataARB( GL_ARRAY_BUFFER_ARB, vertex_bytes, vertices, GL_STREAM_DRAW_ARB );
@@ -857,33 +738,25 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
         glDrawArrays( GL_QUADS, 0, vertex_count );
         glDisableClientState( GL_VERTEX_ARRAY );
         glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+        */
     }
 
-    #ifndef DEBUG_SHADOW_VOLUMES
-        
-        glCullFace( GL_BACK );
-        glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-        glDepthMask( GL_TRUE);
+    glCullFace( GL_BACK );
 
-        glDisable( GL_STENCIL_TEST );
-        glDisable( GL_STENCIL_TEST_TWO_SIDE_EXT );
+    glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 
-    #else
-    
-        glDepthMask( GL_TRUE );
-    
-    #endif
+    glDepthMask( GL_TRUE);
+
+    /*
+    glDisable( GL_STENCIL_TEST );
+    glDisable( GL_STENCIL_TEST_TWO_SIDE_EXT );
     */
+
+    check_opengl_error( "after cube shadows" );
 }
 
 void RenderInterface::RenderShadowQuad()
 {
-    #if !defined DEBUG_SHADOW_VOLUMES
-
-    /*
-    glDisable( GL_LIGHTING );
-    glDisable( GL_DEPTH_TEST );
-
     glEnable( GL_STENCIL_TEST );
 
     glStencilFunc( GL_NOTEQUAL, 0x0, 0xff );
@@ -892,6 +765,9 @@ void RenderInterface::RenderShadowQuad()
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
+    // todo: urrrrrgh!
+
+    /*
     glColor4f( 0.0f, 0.0f, 0.0f, 0.1f );
 
     glBegin( GL_QUADS );
@@ -902,13 +778,13 @@ void RenderInterface::RenderShadowQuad()
         glVertex2f( 1, 0 );
 
     glEnd();
+    */
 
     glDisable( GL_BLEND );
 
     glDisable( GL_STENCIL_TEST );
-    */
 
-    #endif
+    check_opengl_error( "after shadow quad" );
 }
 
 void RenderInterface::EndScene()
@@ -918,56 +794,3 @@ void RenderInterface::EndScene()
 }
 
 #endif // #ifdef CLIENT
-
-
-#if 0 
-
-struct LitVertex
-{
-    float x,y,z;
-    float nx,ny,nz;
-    float r,g,b,a;
-};
-
-struct UnlitVertex
-{
-    float x,y,z;
-    float r,g,b,a;
-};
-
-void RenderInterface::BeginLit()
-{
-    CORE_ASSERT( num_lit_vertices == 0 );
-    glBindVertexArray( vao_lit );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo_lit );
-}
-
-void RenderInterface::AddLitVertex( const LitVertex & vertex )
-{
-    CORE_ASSERT( num_lit_vertices >= 0 );
-    CORE_ASSERT( num_lit_vertices < MaxVertices - 1 );
-    lit_vertices[num_lit_vertices++] = vertex;
-}
-
-void RenderInterface::EndLit()
-{
-    glBufferData( GL_ARRAY_BUFFER, sizeof( LitVertex ) * num_lit_vertices, lit_vertices, GL_STREAM_DRAW );
-    glDrawArrays( GL_TRIANGLES, 0, num_lit_vertices );
-    glBindVertexArray( 0 );
-    glUseProgram( 0 );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    num_lit_vertices = 0;
-}
-
-    uint32_t vbo_lit;
-    uint32_t vbo_unlit;
-    uint32_t vao_lit;
-    uint32_t vao_unlit;
-
-    LitVertex lit_vertices[MaxVertices];
-//    UnlitVertex unlit_vertices[MaxVertices];
-
-    int num_lit_vertices;
-    int num_unlit_vertices;
-
-#endif
