@@ -247,6 +247,7 @@ int main( int argc, char * argv[] )
     glfwWindowHint( GLFW_SRGB_CAPABLE, GL_TRUE );
     glfwWindowHint( GLFW_RESIZABLE, GL_TRUE );
     glfwWindowHint( GLFW_SAMPLES, 8 );
+    glfwWindowHint( GLFW_STENCIL_BITS, 8 );
 //    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE );
 
     const GLFWvidmode * mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
@@ -273,7 +274,7 @@ int main( int argc, char * argv[] )
 
     if ( !GLEW_VERSION_4_1 )
     {
-        printf( "error: OpenGL 4.1 is not supported\n" );
+        printf( "error: OpenGL 4.1 is not supported :(\n" );
         exit(1);
     }
 

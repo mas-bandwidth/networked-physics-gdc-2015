@@ -376,7 +376,16 @@ RenderInterface::RenderInterface()
 
 RenderInterface::~RenderInterface()
 {
-    // todo: cleanup
+    glDeleteVertexArrays( 1, &cubes_vao );
+
+    glDeleteBuffers( 1, &cubes_vbo );
+    glDeleteBuffers( 1, &cubes_ibo );
+    glDeleteBuffers( 1, &cubes_instance_buffer );
+
+    cubes_vao = 0;
+    cubes_vbo = 0;
+    cubes_ibo = 0;
+    cubes_instance_buffer = 0;
 }
 
 void RenderInterface::Initialize()
@@ -583,17 +592,17 @@ void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
     check_opengl_error( "after draw cubes" );
 }
 
-inline void RenderSilhouette( int & vertex_index,
-                              vectorial::vec3f * vertices,
-                              vectorial::mat4f transform,
-                              vectorial::vec3f local_light,
-                              vectorial::vec3f world_light,
-                              vectorial::vec3f a, 
-                              vectorial::vec3f b,
-                              vectorial::vec3f left_normal,
-                              vectorial::vec3f right_normal,
-                              bool left_dot,
-                              bool right_dot )
+inline void GenerateSilhoutteVerts( int & vertex_index,
+                                    vectorial::vec3f * vertices,
+                                    vectorial::mat4f transform,
+                                    vectorial::vec3f local_light,
+                                    vectorial::vec3f world_light,
+                                    vectorial::vec3f a, 
+                                    vectorial::vec3f b,
+                                    vectorial::vec3f left_normal,
+                                    vectorial::vec3f right_normal,
+                                    bool left_dot,
+                                    bool right_dot )
 {
     // check if silhouette edge
     if ( left_dot ^ right_dot )
@@ -624,46 +633,22 @@ inline void RenderSilhouette( int & vertex_index,
         vectorial::vec3f extruded_a = world_light - difference_a * at;
         vectorial::vec3f extruded_b = world_light - difference_b * bt;
         
-        // emit extruded quad
+        // emit extruded quad as two triangles
         
         vertices[vertex_index]   = world_b;
         vertices[vertex_index+1] = world_a;
         vertices[vertex_index+2] = extruded_a;
-        vertices[vertex_index+3] = extruded_b;
+        vertices[vertex_index+3]   = world_b;
+        vertices[vertex_index+4] = extruded_a;
+        vertices[vertex_index+5] = extruded_b;
         
-        vertex_index += 4;
+        vertex_index += 6;
     }
 }
 
 void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 {
-    // todo: what we *really* want is to do this in the vertex shader instead!
-
-    glDepthMask( GL_FALSE );  
-
-    glDisable( GL_CULL_FACE );
-
-
-    glColorMask( 0, 0, 0, 0 );
-
-    /*
-    glEnable( GL_STENCIL_TEST );  
-    glEnable( GL_STENCIL_TEST_TWO_SIDE_EXT );
-
-    glActiveStencilFaceEXT( GL_BACK );  
-    glStencilOp( GL_KEEP,             // stencil test fail  
-                 GL_KEEP,             // depth test fail  
-                 GL_DECR_WRAP_EXT );  // depth test pass  
-    glStencilMask( ~0 );  
-    glStencilFunc( GL_ALWAYS, 0, ~0 );
-
-    glActiveStencilFaceEXT( GL_FRONT );  
-    glStencilOp( GL_KEEP,             // stencil test fail  
-                 GL_KEEP,             // depth test fail  
-                 GL_INCR_WRAP_EXT );  // depth test pass  
-    glStencilMask( ~0 );  
-    glStencilFunc( GL_ALWAYS, 0, ~0 );  
-    */
+    // generate shadow silhoutte vertices
 
     vectorial::vec3f world_light( lightPosition.x, lightPosition.y, lightPosition.z );
     
@@ -707,50 +692,61 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
         
         assert( vertex_index < MaxShadowVertices );
 
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, b, normals[5], normals[2], dot[5], dot[2] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, c, normals[0], normals[2], dot[0], dot[2] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, d, normals[4], normals[2], dot[4], dot[2] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, a, normals[1], normals[2], dot[1], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, b, normals[5], normals[2], dot[5], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, c, normals[0], normals[2], dot[0], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, d, normals[4], normals[2], dot[4], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, a, normals[1], normals[2], dot[1], dot[2] );
         
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, e, f, normals[3], normals[5], dot[3], dot[5] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, f, g, normals[3], normals[0], dot[3], dot[0] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, g, h, normals[3], normals[4], dot[3], dot[4] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, h, e, normals[3], normals[1], dot[3], dot[1] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, e, f, normals[3], normals[5], dot[3], dot[5] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, f, g, normals[3], normals[0], dot[3], dot[0] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, g, h, normals[3], normals[4], dot[3], dot[4] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, h, e, normals[3], normals[1], dot[3], dot[1] );
 
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, e, normals[1], normals[5], dot[1], dot[5] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, f, normals[5], normals[0], dot[5], dot[0] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, g, normals[0], normals[4], dot[0], dot[4] );
-        RenderSilhouette( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, h, normals[4], normals[1], dot[4], dot[1] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, e, normals[1], normals[5], dot[1], dot[5] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, f, normals[5], normals[0], dot[5], dot[0] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, g, normals[0], normals[4], dot[0], dot[4] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, h, normals[4], normals[1], dot[4], dot[1] );
 
         assert( vertex_index < MaxShadowVertices );
     }
-    
-    int vertex_count = vertex_index;
-    
-    if ( vertex_count > 0 )
-    {
-        /*
-        int vertex_bytes = vertex_count * sizeof( vectorial::vec3f );
-        glBindBufferARB( GL_ARRAY_BUFFER_ARB, impl->shadow_vbo.id );
-        glBufferDataARB( GL_ARRAY_BUFFER_ARB, vertex_bytes, vertices, GL_STREAM_DRAW_ARB );
-        glEnableClientState( GL_VERTEX_ARRAY );
-        glVertexPointer( 3, GL_FLOAT, sizeof( vectorial::vec3f ), NULL );
-        glDrawArrays( GL_QUADS, 0, vertex_count );
-        glDisableClientState( GL_VERTEX_ARRAY );
-        glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
-        */
-    }
+
+    // upload vertices to shadow vbo
+
+    // ...
+
+    // increment front faces
+
+    glDepthMask( 0 );
+    glColorMask( 0, 0, 0, 0 );
+    glEnable( GL_CULL_FACE );
+    glEnable( GL_STENCIL_TEST );
+
+    glStencilMask( ~0 );
+    glStencilFunc( GL_ALWAYS, 0, ~0 );
 
     glCullFace( GL_BACK );
 
+    glStencilOp( GL_KEEP,               // stencil test fail
+                 GL_KEEP,               // depth test fail
+                 GL_INCR_WRAP_EXT );    // depth test pass
+
+    // todo: render shadow vbo
+
+    // decrement back faces
+
+    glCullFace( GL_FRONT );
+    glStencilOp( GL_KEEP,               // stencil test fail
+                 GL_KEEP,               // depth test fail
+                 GL_DECR_WRAP_EXT );    // depth test pass
+
+    // todo: render shadow vbo
+
+    // clean up post stencil
+
+    glCullFace( GL_BACK );
     glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-
-    glDepthMask( GL_TRUE);
-
-    /*
+    glDepthMask( GL_TRUE );
     glDisable( GL_STENCIL_TEST );
-    glDisable( GL_STENCIL_TEST_TWO_SIDE_EXT );
-    */
 
     check_opengl_error( "after cube shadows" );
 }
@@ -765,20 +761,7 @@ void RenderInterface::RenderShadowQuad()
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-    // todo: urrrrrgh!
-
-    /*
-    glColor4f( 0.0f, 0.0f, 0.0f, 0.1f );
-
-    glBegin( GL_QUADS );
-
-        glVertex2f( 0, 0 );
-        glVertex2f( 0, 1 );
-        glVertex2f( 1, 1 );
-        glVertex2f( 1, 0 );
-
-    glEnd();
-    */
+    // todo: render shadow quad over screen
 
     glDisable( GL_BLEND );
 
