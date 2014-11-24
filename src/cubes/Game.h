@@ -238,7 +238,6 @@ namespace game
 
 		void InitializeEnd()
 		{
-			/*
 			if ( objectCount > 0 )
 			{
 				if ( objectCount > 1 )
@@ -264,7 +263,6 @@ namespace game
 				else
 					printf( "activation system is %.1fKB\n", activationSystemBytes / ( 1000.0f ) );
 			}
-			*/
 			
 			initialized = true;
 			initializing = false;
@@ -584,9 +582,9 @@ namespace game
 					
 					// bobbing torque on player cube
 					{
-						float wobble_x = sin(frame[playerId]*0.1+10) + sin(frame[playerId]*0.05f+22) + sin(frame[playerId]);
-						float wobble_y = sin(frame[playerId]*0.09+5) + sin(frame[playerId]*0.045f+16) + sin(frame[playerId]);
-						float wobble_z = sin(frame[playerId]*0.11+4) + sin(frame[playerId]*0.055f+9) + sin(frame[playerId]);
+						float wobble_x = sin(frame[playerId]*0.05+10) + sin(frame[playerId]*0.05f+22) + sin(frame[playerId]*1.1f);
+						float wobble_y = sin(frame[playerId]*0.09+5) + sin(frame[playerId]*0.045f+16) + sin(frame[playerId]*1.11f);
+						float wobble_z = sin(frame[playerId]*0.05+4) + sin(frame[playerId]*0.055f+9) + sin(frame[playerId]*1.12f);
 						math::Vector torque = math::Vector( wobble_x, wobble_y, wobble_z ) * 1.5f;
 						simulation->ApplyTorque( activePlayerObject->activeId, torque );
 					}

@@ -645,7 +645,7 @@ void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     glEnable( GL_DEPTH_TEST );
-    glDepthFunc( GL_LEQUAL );
+    glDepthFunc( GL_LESS );
 }
         
 void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
@@ -883,7 +883,7 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
     glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
     glDepthMask( GL_TRUE );
     glDisable( GL_STENCIL_TEST );
-
+   
     check_opengl_error( "after cube shadows" );
 }
 

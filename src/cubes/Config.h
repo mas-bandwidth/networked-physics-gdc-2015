@@ -9,9 +9,10 @@
 
 const int MaxPlayers = 2;
 const int MaxViewObjects = 1024 * 4;
-const float ColorChangeTightness = 0.2f;
+const float ColorChangeTightnessDefault = 0.01f;
+const float ColorChangeTightnessAuthority = 0.2f;
 const float ShadowAlphaThreshold = 0.15f;
-const float PositionSmoothingTightness = 0.05f;
+const float PositionSmoothingTightness = 0.025f;
 const float OrientationSmoothingTightness = 0.015f;
 
 #endif

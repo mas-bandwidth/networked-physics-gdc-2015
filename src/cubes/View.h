@@ -64,6 +64,7 @@ namespace view
 		Object()
 		{
 			this->id = 0;
+			authority = 0;
 			remove = 0;
 			visible = 0;
 			blending = 0;
@@ -72,6 +73,16 @@ namespace view
 		}
 
 		unsigned int id;
+		int authority;
+		float scale;
+		float r,g,b,a;
+		double t;
+		bool remove;
+		bool visible;
+		bool blending;
+		float blend_time;
+		float blend_start;
+		float blend_finish;
 		math::Vector position;
 		math::Quaternion orientation;
 		math::Vector linearVelocity;
@@ -84,15 +95,6 @@ namespace view
 		math::Quaternion previousOrientation;
 		math::Vector interpolatedPosition;
 		math::Quaternion interpolatedOrientation;
-		float scale;
-		float r,g,b,a;
-		double t;
-		bool remove;
-		bool visible;
-		bool blending;
-		float blend_time;
-		float blend_start;
-		float blend_finish;
 	};
 
 	enum InterpolationMode

@@ -58,6 +58,7 @@ namespace view
 				Object * object = new Object();
 
 				object->id = updates[i].id;
+				object->authority = updates[i].authority;
 				object->position = updates[i].position;
 				object->orientation = updates[i].orientation;
 				object->previousPosition = updates[i].position;
@@ -86,10 +87,12 @@ namespace view
 				Object * object = itor->second;
 
 				assert( object );
-				
-				object->r += ( updates[i].r - object->r ) * ColorChangeTightness;
-				object->g += ( updates[i].g - object->g ) * ColorChangeTightness;
-				object->b += ( updates[i].b - object->b ) * ColorChangeTightness;
+
+				const float tightness = ( object->authority == 0 ) ? ColorChangeTightnessDefault : ColorChangeTightnessAuthority;
+
+				object->r += ( updates[i].r - object->r ) * tightness;
+				object->g += ( updates[i].g - object->g ) * tightness;
+				object->b += ( updates[i].b - object->b ) * tightness;
 				
 				if ( updateState )
 				{
