@@ -2,6 +2,16 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    There was a bug with shadow render that rendered the outline of the cubes in grey
+    on top of the red cubes. This game a very convincing "glass" effect for the red
+    cubes.
+
+    This would be a nice effect to get working properly, eg. make the red cubes look like glass!
+
+    It works very well with the white reflection
+
+    ----------------------------------
+
     There is a bug if you take cubes off the edge of activation, they don't reactivate, eg. they disappear.
 
     Probably means they are outside the grid cells, eg. nowhere for them to be saved.
