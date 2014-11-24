@@ -22,6 +22,16 @@ Sunday Evening, November 23rd, 2014
 
     Everything looks good!
 
+    Create "Debug" shader for rendering shadow quad
+
+    Setup a simple VAO/VBO for the shadow quad.
+
+    Upload shadow mask vertex data    
+
+    Render the shadow quad on top of the scene.
+
+    Shadows are working!
+
 
 Sunday Morning, November 23rd, 2014
 -----------------------------------

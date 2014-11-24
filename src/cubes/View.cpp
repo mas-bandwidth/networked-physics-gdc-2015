@@ -447,9 +447,9 @@ namespace view
 		
 		if ( authority >= maxPlayers )
 		{
-			r = 0.65f;
-			g = 0.65f;
-			b = 0.70f;
+			r = 0.75f;
+			g = 0.75f;
+			b = 0.8f;
 		}
 		else if ( authority == 0 )
 		{

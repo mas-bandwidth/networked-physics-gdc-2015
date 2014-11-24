@@ -78,6 +78,9 @@ private:
     uint32_t shadow_vao;
     uint32_t shadow_vbo;
 
+    uint32_t mask_vao;
+    uint32_t mask_vbo;
+
     vectorial::vec3f shadow_vertices[MaxShadowVertices];
 };
 
@@ -189,7 +192,7 @@ struct CubesInternal
 
         renderInterface.SetCamera( camera.position, camera.lookat, camera.up );
         
-        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -100.0f, 75.0f ) );
+        renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
 
         view::ActivationArea activationArea;
         view::setupActivationArea( activationArea, origin, 5.0f, global.timeBase.time );
@@ -368,6 +371,12 @@ uint16_t cube_indices[] =
     20, 22, 23,
 };
 
+struct DebugVertex
+{
+    float x,y,z;
+    float r,g,b,a;
+};
+
 RenderInterface::RenderInterface()
 {
     initialized = false;    
@@ -379,6 +388,8 @@ RenderInterface::RenderInterface()
     cubes_instance_buffer = 0;
     shadow_vao = 0;
     shadow_vbo = 0;
+    mask_vao = 0;
+    mask_vbo = 0;
 }
 
 RenderInterface::~RenderInterface()
@@ -398,6 +409,12 @@ RenderInterface::~RenderInterface()
 
     shadow_vao = 0;
     shadow_vbo = 0;
+
+    glDeleteVertexArrays( 1, &mask_vao );
+    glDeleteBuffers( 1, &mask_vbo );
+
+    mask_vao = 0;
+    mask_vbo = 0;
 }
 
 void RenderInterface::Initialize()
@@ -406,8 +423,9 @@ void RenderInterface::Initialize()
 
     uint32_t shadow_shader = global.shaderManager->GetShader( "Shadow" );
     uint32_t cubes_shader = global.shaderManager->GetShader( "Cubes" );
+    uint32_t debug_shader = global.shaderManager->GetShader( "Debug" );
 
-    if ( !shadow_shader || !cubes_shader )
+    if ( !shadow_shader || !cubes_shader || !debug_shader )
         return;
 
     // setup cubes draw call
@@ -511,6 +529,55 @@ void RenderInterface::Initialize()
         {
             glEnableVertexAttribArray( position_location );
             glVertexAttribPointer( position_location, 3, GL_FLOAT, GL_FALSE, sizeof(vectorial::vec3f), (GLubyte*)0 );
+        }
+
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+        glBindVertexArray( 0 );
+
+        glUseProgram( 0 );
+    }
+
+    // setup mask draw call
+    {
+        glUseProgram( debug_shader );
+
+        const int position_location = glGetAttribLocation( debug_shader, "VertexPosition" );
+        const int color_location = glGetAttribLocation( debug_shader, "VertexColor" );
+
+        const float shadow_alpha = 0.25f;
+
+        DebugVertex mask_vertices[6] =
+        {
+            { 0, 0, 0, 0, 0, 0, shadow_alpha },
+            { 1, 0, 0, 0, 0, 0, shadow_alpha },
+            { 1, 1, 0, 0, 0, 0, shadow_alpha },
+            { 0, 0, 0, 0, 0, 0, shadow_alpha },
+            { 1, 1, 0, 0, 0, 0, shadow_alpha },
+            { 0, 1, 0, 0, 0, 0, shadow_alpha },
+        };
+
+        glGenBuffers( 1, &mask_vbo );
+        glBindBuffer( GL_ARRAY_BUFFER, mask_vbo );
+        glBufferData( GL_ARRAY_BUFFER, sizeof( DebugVertex ) * 6, mask_vertices, GL_STATIC_DRAW );
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
+     
+        glGenVertexArrays( 1, &mask_vao );
+
+        glBindVertexArray( mask_vao );
+
+        glBindBuffer( GL_ARRAY_BUFFER, mask_vbo );
+
+        if ( position_location >= 0 )
+        {
+            glEnableVertexAttribArray( position_location );
+            glVertexAttribPointer( position_location, 3, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (GLubyte*)0 );
+        }
+
+        if ( color_location >= 0 )
+        {
+            glEnableVertexAttribArray( color_location );
+            glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, sizeof(DebugVertex), (GLubyte*) ( 3 * 4 ) );
         }
 
         glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -762,8 +829,6 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 
     // upload vertices to shadow vbo
 
-    glBindVertexArray( shadow_vao );
-
     glBindBuffer( GL_ARRAY_BUFFER, shadow_vbo );
     glBufferData( GL_ARRAY_BUFFER, sizeof( vectorial::vec3f ) * vertex_index, shadow_vertices, GL_STREAM_DRAW );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
@@ -772,15 +837,15 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 
 #if !DEBUG_SHADOWS
 
-    glStencilOpSeparate( GL_BACK, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP );
-    glStencilOpSeparate( GL_FRONT, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP );
+    glStencilOpSeparate( GL_BACK, GL_KEEP, GL_KEEP, GL_DECR_WRAP_EXT );
+    glStencilOpSeparate( GL_FRONT, GL_KEEP, GL_KEEP, GL_INCR_WRAP_EXT );
     glStencilMask( ~0 );
     glStencilFunc( GL_ALWAYS, 0, ~0 );
 
-    glDepthMask( 0 );
-    glColorMask( 0, 0, 0, 0 );
-    glDisable( GL_CULL_FACE ); 
+    glDepthMask( GL_FALSE );
+    glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
     glEnable( GL_STENCIL_TEST );
+    glDisable( GL_CULL_FACE ); 
 
 #else
 
@@ -804,6 +869,8 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
     if ( location >= 0 )
         glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
 
+    glBindVertexArray( shadow_vao );
+
     glDrawArrays( GL_TRIANGLES, 0, vertex_index );
 
     glBindVertexArray( 0 );
@@ -822,6 +889,14 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 
 void RenderInterface::RenderShadowQuad()
 {
+    GLuint shader = global.shaderManager->GetShader( "Debug" );
+    if ( !shader )
+        return;
+
+    glUseProgram( shader );
+
+    glEnable( GL_DEPTH_TEST );
+
     glEnable( GL_STENCIL_TEST );
 
     glStencilFunc( GL_NOTEQUAL, 0x0, 0xff );
@@ -830,7 +905,19 @@ void RenderInterface::RenderShadowQuad()
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-    // todo: render shadow quad over screen
+    mat4 modelViewProjection = glm::ortho( 0.0f, 1.0f, 1.0f, 0.0f, -1.0f, 1.0f );
+
+    int location = glGetUniformLocation( shader, "ModelViewProjection" );
+    if ( location >= 0 )
+        glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
+
+    glBindVertexArray( mask_vao );
+
+    glDrawArrays( GL_TRIANGLES, 0, 6 );
+
+    glBindVertexArray( 0 );
+
+    glUseProgram( 0 );
 
     glDisable( GL_BLEND );
 
