@@ -1,4 +1,28 @@
 
+Sunday Evening, November 23rd, 2014
+-----------------------------------
+
+    Get shadows working!
+
+    Seems that I can't use two sided shadows ext. Not supported in OpenGL 4.1?
+
+    Dropping back to single pass code. Should be fast enough.
+
+    Convert from generate silhoutte from shadow quads to triangles.
+
+    There is a new "separate stencil" method for single pass shadow render.
+
+    Create shadow vertex and fragment shader.
+
+    Create shadow_vao and shadow_vbo.
+
+    Add code to selec the vao and actually upload shadow vertex data (streaming)
+
+    Verify the actual shadow triangles are rendering with debug vis
+
+    Everything looks good!
+
+
 Sunday Morning, November 23rd, 2014
 -----------------------------------
 

@@ -1,20 +1,7 @@
 DONE:
 
-    Get shadows working!
-
-    Seems that I can't use two sided shadows ext. Not supported in OpenGL 4.1?
-
-    Dropping back to single pass code. Should be fast enough.
-
-    Convert from generate silhoutte from shadow quads to triangles.
-
 TODO:
-
-    Create shadow vertex and fragment shader.
     
-    Create shadow_vao and shadow_vbo.
-
-    Actually render the shadow triangles
 
     --------------------------------------------------------------
 
@@ -28,9 +15,7 @@ TODO:
 
     --------------------------------------------------------------
 
-    Prep talk outline
-
-    Prep talk slides
+    Prep talk slides - fishing theme!
 
     --------------------------------------------------------------
 

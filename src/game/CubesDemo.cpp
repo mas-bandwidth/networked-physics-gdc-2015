@@ -22,6 +22,8 @@ const int Steps = 1024;
 const int MaxCubes = 1024 * 4;
 const int MaxShadowVertices = 1024 * 32;
 
+#define DEBUG_SHADOWS 0
+
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
 
 class RenderInterface
@@ -72,6 +74,9 @@ private:
     uint32_t cubes_vbo;
     uint32_t cubes_ibo;
     uint32_t cubes_instance_buffer;
+
+    uint32_t shadow_vao;
+    uint32_t shadow_vbo;
 
     vectorial::vec3f shadow_vertices[MaxShadowVertices];
 };
@@ -372,12 +377,13 @@ RenderInterface::RenderInterface()
     cubes_vbo = 0;
     cubes_ibo = 0;
     cubes_instance_buffer = 0;
+    shadow_vao = 0;
+    shadow_vbo = 0;
 }
 
 RenderInterface::~RenderInterface()
 {
     glDeleteVertexArrays( 1, &cubes_vao );
-
     glDeleteBuffers( 1, &cubes_vbo );
     glDeleteBuffers( 1, &cubes_ibo );
     glDeleteBuffers( 1, &cubes_instance_buffer );
@@ -386,95 +392,133 @@ RenderInterface::~RenderInterface()
     cubes_vbo = 0;
     cubes_ibo = 0;
     cubes_instance_buffer = 0;
+
+    glDeleteVertexArrays( 1, &shadow_vao );
+    glDeleteBuffers( 1, &shadow_vbo );
+
+    shadow_vao = 0;
+    shadow_vbo = 0;
 }
 
 void RenderInterface::Initialize()
 {
     CORE_ASSERT( !initialized );
 
-    uint32_t shader = global.shaderManager->GetShader( "Cubes" );
-    if ( !shader )
+    uint32_t shadow_shader = global.shaderManager->GetShader( "Shadow" );
+    uint32_t cubes_shader = global.shaderManager->GetShader( "Cubes" );
+
+    if ( !shadow_shader || !cubes_shader )
         return;
 
-    glUseProgram( shader );
-
-    const int position_location = glGetAttribLocation( shader, "VertexPosition" );
-    const int normal_location = glGetAttribLocation( shader, "VertexNormal" );
-    const int color_location = glGetAttribLocation( shader, "VertexColor" );
-    const int model_location = glGetAttribLocation( shader, "Model" );
-    const int model_view_location = glGetAttribLocation( shader, "ModelView" );
-    const int model_view_projection_location = glGetAttribLocation( shader, "ModelViewProjection" );
-
-    glGenBuffers( 1, &cubes_vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, cubes_vbo );
-    glBufferData( GL_ARRAY_BUFFER, sizeof( cube_vertices ), cube_vertices, GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
- 
-    glGenBuffers( 1, &cubes_ibo );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, cubes_ibo );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( cube_indices ), cube_indices, GL_STATIC_DRAW );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-
-    glGenBuffers( 1, &cubes_instance_buffer );
-
-    glGenVertexArrays( 1, &cubes_vao );
-
-    glBindVertexArray( cubes_vao );
-
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, cubes_ibo );
-
-    glBindBuffer( GL_ARRAY_BUFFER, cubes_vbo );
-
-    if ( position_location >= 0 )
+    // setup cubes draw call
     {
-        glEnableVertexAttribArray( position_location );
-        glVertexAttribPointer( position_location, 3, GL_FLOAT, GL_FALSE, sizeof(CubeVertex), (GLubyte*)0 );
-    }
+        glUseProgram( cubes_shader );
 
-    if ( normal_location >= 0 )
-    {
-        glEnableVertexAttribArray( normal_location );
-        glVertexAttribPointer( normal_location, 3, GL_FLOAT, GL_FALSE, sizeof(CubeVertex), (GLubyte*)(3*4) );
-    }
+        const int position_location = glGetAttribLocation( cubes_shader, "VertexPosition" );
+        const int normal_location = glGetAttribLocation( cubes_shader, "VertexNormal" );
+        const int color_location = glGetAttribLocation( cubes_shader, "VertexColor" );
+        const int model_location = glGetAttribLocation( cubes_shader, "Model" );
+        const int model_view_location = glGetAttribLocation( cubes_shader, "ModelView" );
+        const int model_view_projection_location = glGetAttribLocation( cubes_shader, "ModelViewProjection" );
 
-    glBindBuffer( GL_ARRAY_BUFFER, cubes_instance_buffer );
+        glGenBuffers( 1, &cubes_vbo );
+        glBindBuffer( GL_ARRAY_BUFFER, cubes_vbo );
+        glBufferData( GL_ARRAY_BUFFER, sizeof( cube_vertices ), cube_vertices, GL_STATIC_DRAW );
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
+     
+        glGenBuffers( 1, &cubes_ibo );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, cubes_ibo );
+        glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( cube_indices ), cube_indices, GL_STATIC_DRAW );
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 
-    if ( color_location >= 0 )
-    {
-        glEnableVertexAttribArray( color_location );
-        glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, color ) ) );
-        glVertexAttribDivisor( color_location, 1 );
-    }
+        glGenBuffers( 1, &cubes_instance_buffer );
 
-    for ( unsigned int i = 0; i < 4 ; ++i )
-    {
-        if ( model_location >= 0 )
+        glGenVertexArrays( 1, &cubes_vao );
+
+        glBindVertexArray( cubes_vao );
+
+        glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, cubes_ibo );
+
+        glBindBuffer( GL_ARRAY_BUFFER, cubes_vbo );
+
+        if ( position_location >= 0 )
         {
-            glEnableVertexAttribArray( model_location + i );
-            glVertexAttribPointer( model_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, model ) + ( sizeof(float) * 4 * i ) ) );
-            glVertexAttribDivisor( model_location + i, 1 );
+            glEnableVertexAttribArray( position_location );
+            glVertexAttribPointer( position_location, 3, GL_FLOAT, GL_FALSE, sizeof(CubeVertex), (GLubyte*)0 );
         }
 
-        if ( model_view_location >= 0 )
+        if ( normal_location >= 0 )
         {
-            glEnableVertexAttribArray( model_view_location + i );
-            glVertexAttribPointer( model_view_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, modelView ) + ( sizeof(float) * 4 * i ) ) );
-            glVertexAttribDivisor( model_view_location + i, 1 );
+            glEnableVertexAttribArray( normal_location );
+            glVertexAttribPointer( normal_location, 3, GL_FLOAT, GL_FALSE, sizeof(CubeVertex), (GLubyte*)(3*4) );
         }
 
-        if ( model_view_projection_location >= 0 )
+        glBindBuffer( GL_ARRAY_BUFFER, cubes_instance_buffer );
+
+        if ( color_location >= 0 )
         {
-            glEnableVertexAttribArray( model_view_projection_location + i );
-            glVertexAttribPointer( model_view_projection_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, modelViewProjection ) + ( sizeof(float) * 4 * i ) ) );
-            glVertexAttribDivisor( model_view_projection_location + i, 1 );
+            glEnableVertexAttribArray( color_location );
+            glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, color ) ) );
+            glVertexAttribDivisor( color_location, 1 );
         }
+
+        for ( unsigned int i = 0; i < 4 ; ++i )
+        {
+            if ( model_location >= 0 )
+            {
+                glEnableVertexAttribArray( model_location + i );
+                glVertexAttribPointer( model_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, model ) + ( sizeof(float) * 4 * i ) ) );
+                glVertexAttribDivisor( model_location + i, 1 );
+            }
+
+            if ( model_view_location >= 0 )
+            {
+                glEnableVertexAttribArray( model_view_location + i );
+                glVertexAttribPointer( model_view_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, modelView ) + ( sizeof(float) * 4 * i ) ) );
+                glVertexAttribDivisor( model_view_location + i, 1 );
+            }
+
+            if ( model_view_projection_location >= 0 )
+            {
+                glEnableVertexAttribArray( model_view_projection_location + i );
+                glVertexAttribPointer( model_view_projection_location + i, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, modelViewProjection ) + ( sizeof(float) * 4 * i ) ) );
+                glVertexAttribDivisor( model_view_projection_location + i, 1 );
+            }
+        }
+
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+        glBindVertexArray( 0 );
+
+        glUseProgram( 0 );
     }
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+    // setup shadow draw call
+    {
+        glUseProgram( shadow_shader );
 
-    glBindVertexArray( 0 );
+        const int position_location = glGetAttribLocation( shadow_shader, "VertexPosition" );
 
-    glUseProgram( 0 );
+        glGenBuffers( 1, &shadow_vbo );
+     
+        glGenVertexArrays( 1, &shadow_vao );
+
+        glBindVertexArray( shadow_vao );
+
+        glBindBuffer( GL_ARRAY_BUFFER, shadow_vbo );
+
+        if ( position_location >= 0 )
+        {
+            glEnableVertexAttribArray( position_location );
+            glVertexAttribPointer( position_location, 3, GL_FLOAT, GL_FALSE, sizeof(vectorial::vec3f), (GLubyte*)0 );
+        }
+
+        glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+        glBindVertexArray( 0 );
+
+        glUseProgram( 0 );
+    }
 
     initialized = true;
 
@@ -648,6 +692,12 @@ inline void GenerateSilhoutteVerts( int & vertex_index,
 
 void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 {
+    // make sure we have the shadow shader before going any further
+
+    GLuint shader = global.shaderManager->GetShader( "Shadow" );
+    if ( !shader )
+        return;
+
     // generate shadow silhoutte vertices
 
     vectorial::vec3f world_light( lightPosition.x, lightPosition.y, lightPosition.z );
@@ -712,36 +762,55 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 
     // upload vertices to shadow vbo
 
-    // ...
+    glBindVertexArray( shadow_vao );
 
-    // increment front faces
+    glBindBuffer( GL_ARRAY_BUFFER, shadow_vbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( vectorial::vec3f ) * vertex_index, shadow_vertices, GL_STREAM_DRAW );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    glDepthMask( 0 );
-    glColorMask( 0, 0, 0, 0 );
-    glEnable( GL_CULL_FACE );
-    glEnable( GL_STENCIL_TEST );
+    // setup for zpass stencil shadow rendering in one pass
 
+#if !DEBUG_SHADOWS
+
+    glStencilOpSeparate( GL_BACK, GL_KEEP, GL_DECR_WRAP_EXT, GL_KEEP );
+    glStencilOpSeparate( GL_FRONT, GL_KEEP, GL_INCR_WRAP_EXT, GL_KEEP );
     glStencilMask( ~0 );
     glStencilFunc( GL_ALWAYS, 0, ~0 );
 
-    glCullFace( GL_BACK );
+    glDepthMask( 0 );
+    glColorMask( 0, 0, 0, 0 );
+    glDisable( GL_CULL_FACE ); 
+    glEnable( GL_STENCIL_TEST );
 
-    glStencilOp( GL_KEEP,               // stencil test fail
-                 GL_KEEP,               // depth test fail
-                 GL_INCR_WRAP_EXT );    // depth test pass
+#else
 
-    // todo: render shadow vbo
+    glDisable( GL_CULL_FACE );
 
-    // decrement back faces
+#endif
 
-    glCullFace( GL_FRONT );
-    glStencilOp( GL_KEEP,               // stencil test fail
-                 GL_KEEP,               // depth test fail
-                 GL_DECR_WRAP_EXT );    // depth test pass
+    // render shadow silhouette triangles
 
-    // todo: render shadow vbo
+    glUseProgram( shader );
 
-    // clean up post stencil
+    mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x, cameraPosition.y, cameraPosition.z ), 
+                                   glm::vec3( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ), 
+                                   glm::vec3( cameraUp.x, cameraUp.y, cameraUp.z ) );
+
+    mat4 projectionMatrix = glm::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
+
+    mat4 modelViewProjection = projectionMatrix * viewMatrix;
+
+    int location = glGetUniformLocation( shader, "ModelViewProjection" );
+    if ( location >= 0 )
+        glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
+
+    glDrawArrays( GL_TRIANGLES, 0, vertex_index );
+
+    glBindVertexArray( 0 );
+
+    glUseProgram( 0 );
+
+    // clean up
 
     glCullFace( GL_BACK );
     glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );

@@ -244,9 +244,7 @@ namespace clientServer
         CORE_ASSERT( clientIndex >= 0 );
         CORE_ASSERT( clientIndex < m_numClients );
 
-        #ifndef NDEBUG
         ClientData & client = m_clients[clientIndex];
-        #endif
 
         CORE_ASSERT( client.state == SERVER_CLIENT_STATE_READY_FOR_CONNECTION );
 

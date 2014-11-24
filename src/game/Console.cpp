@@ -432,7 +432,9 @@ void Console::Activate()
 
 #ifdef CLIENT
 
+#ifndef NDEBUG
 const int MaxConsoleVertices = 1024;
+#endif
 
 struct ConsoleVertex
 {
