@@ -1,7 +1,7 @@
 solution "Protocol"
     includedirs { "src", "external", "tools", "." }
     platforms { "x64" }
-    configurations { "Debug", "Release" }
+    configurations { "Release", "Debug" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
     configuration "Release"
         flags { "OptimizeSpeed" }
@@ -180,7 +180,7 @@ project "Client"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer", "VirtualGo", "Cubes", "nvImage", "tinycthread", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "ode" }
+    links { "Core", "Network", "Protocol", "ClientServer", "VirtualGo", "Cubes", "nvImage", "tinycthread", "ode", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "CoreVideo.framework", "IOKit.framework" }
     location "build"
     targetdir "bin"
     defines { "CLIENT" }

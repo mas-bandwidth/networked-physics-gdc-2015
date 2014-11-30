@@ -1,46 +1,24 @@
 DONE:
 
-    I would like the color tightness to grey to be slower,
-    but I want to keep the tight color going to red the same.
-
-    Tuned the wobble and bob a bit while hovering.
-
 TODO:
 
-    *** POLISH ***
+    Bring across the code to record inputs and playback a demo while recording
+    the inputs. 
 
-    When I am in a katamari ball and I press SPACE I want to burst
-    out of it and go up high. Right now it is very unsatisfying!
+    Make sure the input record is at the lowest level, eg. so it plays back everything
+    including console keys, commands and such.
 
-    ^--- solve by extra force proportional to velocity, eg. if
-    velocity is below a certain amount of up (faded out), add extra
-    up force, this should apply extra up force to remove the weight
-    of the other stones that are pushing down on you.
+    Capture some videos of key bits so it can be presented on the website.
 
-    When I bounce on the ground, I would like there to be a region,
-    say 1-2m worth, where I have the same consistent launch up force
-    vs. right now where it feels there is a small 25cm area where I 
-    get a big force up.
+    Ideally, convert the videos to GIFs so they auto-play when the website is up.
 
-    When I accelerate the ball left/right I would like it to do so
-    a bit faster initially when I am still, eg. an amount of extra force
-    proportional to the dot of my speed in the direction I want to go.
+    Write the article describing the physics simulation
 
-    The circle of activation looks weird. Would probably look better
-    if it were based on manhattan distance, eg. a square of activation?
+    -------------------------------------------
 
-    When I roll really quickly I want the cubes I splash through to be
-    pushed forward with some force proportional to my linear velocity,
-    eg. if linear velocity is above some threshold, add a force proportional
-    to that speed in the direction of motion to push or splash cubes forward.
+    Get the cube demo polished up and ready to release (singleplayer)
 
-    --------------------------------------------------------------
-
-    Prep talk outline and slides
-
-    --------------------------------------------------------------
-
-
+    -------------------------------------------
 
 
 
@@ -54,30 +32,13 @@ TODO:
 
     Explore various different interpolation strategies to use for 2D linear motion.
 
+    Share this demo with Nathan (pro-bono) and try to get some involvement back with their project.
+
     --------------------------------------------------------------
 
     Return to PBR rendering
 
     --------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ----------------------------------
 
     Convert DDS loading to use nvImage to load HDR uffizi cubemap.
 

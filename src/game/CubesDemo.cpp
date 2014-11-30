@@ -18,7 +18,7 @@ using glm::mat4;
 using glm::vec3;
 using glm::vec4;
 
-const int Steps = 1024;
+const int Steps = 50;
 const int MaxCubes = 1024 * 4;
 const int MaxShadowVertices = 1024 * 32;
 
@@ -262,10 +262,10 @@ bool CubesDemo::Initialize()
 
     config.maxObjects = Steps * Steps + MaxPlayers + 1;
     config.deactivationTime = 0.5f;
-    config.cellSize = 4.0f;
+    config.cellSize = 5.0f;
     config.cellWidth = Steps / config.cellSize + 2;
     config.cellHeight = config.cellWidth;
-    config.activationDistance = 10.0f;
+    config.activationDistance = 100.0f;
     config.simConfig.ERP = 0.25f;
     config.simConfig.CFM = 0.001f;
     config.simConfig.MaxIterations = 64;

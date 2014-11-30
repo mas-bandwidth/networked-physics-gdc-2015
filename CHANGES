@@ -1,4 +1,48 @@
 
+Saturday Evening, November 29th, 2014
+-------------------------------------
+
+    Convert and simplify demo. There is no need for activation. All objects will be active all the time.
+
+    Ideally, convert to 50x50 cubes (eg. 2500 cubes total)
+
+    The cube demo gets a bit slow sometimes. Maybe try running the simulation async to render again?
+
+    Seems to run fine in release build. Seeing as it is non-release build only, and I'm linking
+    to pre-build ODE lib, I think that the issue is not physics simulation taking too much time
+    but something that I am doing.
+
+    My guess is that CPU time is being spent in the activation system (easy fix), or the stencil shadows.
+
+    Profiling can determine this for sure.
+
+    Ideally, I would have something that is fast enough to be running in debug build with no drama @ 60fps.
+
+    So optimization is worthwhile.
+
+
+Thursday Morning, November 27th, 2014 (thanksgiving)
+----------------------------------------------------
+
+    Tried to upgrade to latest GLFW3 library, but it slowed everything down.
+
+    I think it is rendering at a super-high retina resolution plus 8X AA,
+    and the graphics card just can't handle the fill-rate.
+
+    Not sure though. Reverted to old GLFW3 (brew)
+
+
+Monday Morning, November 24th, 2014
+-----------------------------------
+
+    I would like the color tightness to grey to be slower,
+    but I want to keep the tight color going to red the same.
+
+    Tuned the wobble and bob a bit while hovering.
+
+    Ready for talk at USC.
+
+
 Sunday Evening, November 23rd, 2014
 -----------------------------------
 

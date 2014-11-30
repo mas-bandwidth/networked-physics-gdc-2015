@@ -2,6 +2,53 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    There should be a Debug.h and Debug.cpp -- inside here FPS display,
+    and code that toggles the FPS display when you press delete while
+    in the console is not up.
+
+    ----------------------------------
+
+    jemalloc, dlmalloc and tlsf are all interesting allocators that should be explored.
+
+    Using these allocators I should be able to implement proper heirarchical heaps.
+
+    Right now I suspect that jemalloc may be the winner.
+
+    Need to think about multithreaded allocations as well. What is the strategy?
+
+    ----------------------------------
+
+    When I am in a katamari ball and I press SPACE I want to burst
+    out of it and go up high. Right now it is very unsatisfying!
+
+    ^--- solve by extra force proportional to velocity, eg. if
+    velocity is below a certain amount of up (faded out), add extra
+    up force, this should apply extra up force to remove the weight
+    of the other stones that are pushing down on you.
+
+    ^--- extra up force should only apply if within say, 1-2m of ground.
+
+    When I bounce on the ground, I would like there to be a region,
+    say 1-2m worth, where I have the same consistent launch up force
+    vs. right now where it feels there is a small 25cm area where I 
+    get a big force up.
+
+    When I accelerate the ball left/right I would like it to do so
+    a bit faster initially when I am still, eg. an amount of extra force
+    proportional to the dot of my speed in the direction I want to go.
+
+    When I roll really quickly I want the cubes I splash through to be
+    pushed forward with some force proportional to my linear velocity,
+    eg. if linear velocity is above some threshold, add a force proportional
+    to that speed in the direction of motion to push or splash cubes forward.
+
+    ----------------------------------
+
+    The circle of activation looks a bit weird. Would probably look better
+    if it were based on manhattan distance, eg. a square of activation?
+
+    ----------------------------------
+
     There was a bug with shadow render that rendered the outline of the cubes in grey
     on top of the red cubes. This game a very convincing "glass" effect for the red
     cubes.
@@ -9,12 +56,6 @@ WOULD BE NICE:
     This would be a nice effect to get working properly, eg. make the red cubes look like glass!
 
     It works very well with the white reflection
-
-    ----------------------------------
-
-    There is a bug if you take cubes off the edge of activation, they don't reactivate, eg. they disappear.
-
-    Probably means they are outside the grid cells, eg. nowhere for them to be saved.
 
     ----------------------------------
 

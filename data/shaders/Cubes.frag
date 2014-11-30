@@ -9,7 +9,7 @@ uniform vec3 LightPosition;
 uniform vec3 LightIntensity = vec3( 1, 1, 1 );
 uniform vec3 Ks = vec3( 0.15, 0.15, 0.15 );
 uniform vec3 Kd = vec3( 0.6, 0.6, 0.6 );
-uniform vec3 Ka = vec3( 0.4, 0.4, 0.4 );
+uniform vec3 Ka = vec3( 0.2, 0.2, 0.2 );
 uniform float SpecularPower = 1.0;
 
 layout( location = 0 ) out vec4 FragColor;
