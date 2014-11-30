@@ -138,7 +138,9 @@ namespace cubes
 
 		impl->world = dWorldCreate();
 	    impl->contacts = dJointGroupCreate( 0 );
-		impl->space = dHashSpaceCreate( 0 );
+	    dVector3 center = { 0,0,0 };
+	    dVector3 extents = { 100,100,100 };
+	    impl->space = dQuadTreeSpaceCreate( 0, center, extents, 10 );
 
 		// configure world
 
@@ -161,7 +163,7 @@ namespace cubes
 			impl->contact[i].surface.bounce_vel = 0.001f;
 	    }
 	
-		impl->objects.resize( 32 );
+		impl->objects.resize( 4 * 1024 );
 	}
 
 	void Simulation::Update( float deltaTime, bool paused )

@@ -26,6 +26,14 @@ const int MaxShadowVertices = 1024 * 32;
 
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
 
+struct CubeInstance
+{
+    glm::vec4 color;
+    glm::mat4 model;
+    glm::mat4 modelView;
+    glm::mat4 modelViewProjection;
+};
+
 class RenderInterface
 {
 public:
@@ -82,6 +90,8 @@ private:
     uint32_t mask_vbo;
 
     vectorial::vec3f shadow_vertices[MaxShadowVertices];
+
+    CubeInstance instance_data[MaxCubes];
 };
 
 struct CubesInternal
@@ -302,14 +312,6 @@ bool CubesDemo::CharEvent( unsigned int code )
 }
 
 // ---------------------------------------------------------------------------------------------------------
-
-struct CubeInstance
-{
-    glm::vec4 color;
-    glm::mat4 model;
-    glm::mat4 modelView;
-    glm::mat4 modelViewProjection;
-};
 
 struct CubeVertex
 {
@@ -667,8 +669,6 @@ void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
 
     if ( light_location >= 0 )
         glUniform3fv( light_location, 1, &lightPosition[0] );
-
-    CubeInstance instance_data[MaxCubes];
 
     mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x, cameraPosition.y, cameraPosition.z ), 
                                    glm::vec3( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ), 

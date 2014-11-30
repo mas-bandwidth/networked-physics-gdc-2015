@@ -20,6 +20,58 @@ Saturday Evening, November 29th, 2014
 
     So optimization is worthwhile.
 
+    First profile and determine where the hotspots are.
+
+    So far 50/50 split on render and simulation.
+
+    Within render:
+
+        20%   - render cubes (can't really be made much faster)
+        16.1% - render cube shadows (could be moved to vertex shader...)
+         9.7% - get render state (view)
+
+    Within sim:
+
+        41%   - game instance update
+         3%   - update objects (view)
+         2%   - extrapolate objects
+         1%   - object manager update
+
+    Within game instance:
+
+        26%   - dxHashSpace collide (seems a lot!)
+        7.3%  - quickstep (seems small relative to collision!)
+
+    So basically. It seems that running render and sim parallel is probably a good idea.
+
+    Secondly, it seem that the bulk of the cost is ODE hash collisions (broadphase).
+
+    I suspect that with some tuning I can get the hash space behaving a bit better.    
+
+    See http://www.ode.org/ode-0.5-userguide.html
+
+    Based on profiling the smartest optimizations would be to:
+
+        a) optimize the hash space collision detection in ODE
+
+        b) run the simulation and rendering in parallel
+
+    Got the hash collision down to 19% with some basic tuning.
+
+    Switched to quadtree space. It's much faster now!!!
+
+    Now look at remaining costs. What can be optimized away?
+
+        21% - render cubes
+        18% - render cube shadows
+        11% - get render state (candidate for optimization!!!)
+
+    Seems that cube instance default constructor is very expensive.
+
+    Fucking GLM. Easy wins here.
+
+    Now the render cubes is cheaper than the render cube shadows.
+
 
 Thursday Morning, November 27th, 2014 (thanksgiving)
 ----------------------------------------------------

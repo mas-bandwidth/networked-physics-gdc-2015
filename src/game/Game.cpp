@@ -11,7 +11,7 @@
 //                                                       CLIENT
 // ===================================================================================================================
 
-static const bool fullscreen = true;
+static const bool fullscreen = false; //true;
 
 #include "Font.h"
 #include "Render.h"
@@ -256,7 +256,7 @@ int main( int argc, char * argv[] )
     if ( fullscreen )
         window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr );
     else
-        window = glfwCreateWindow( 1200, 800, "Client", nullptr, nullptr );
+        window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
 
     if ( !window )
     {
