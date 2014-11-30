@@ -224,8 +224,6 @@ void char_callback( GLFWwindow * window, unsigned int code )
 
 int main( int argc, char * argv[] )
 {
-    printf( "hello world\n" );
-
     srand( time( nullptr ) );
 
     core::memory::initialize();
@@ -262,7 +260,7 @@ int main( int argc, char * argv[] )
 
     if ( !window )
     {
-        printf( "failed to create window\n" );
+        printf( "error: failed to create window\n" );
         exit( 1 );
     }
 
