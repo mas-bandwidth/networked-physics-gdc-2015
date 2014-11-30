@@ -11,7 +11,7 @@
 //                                                       CLIENT
 // ===================================================================================================================
 
-static const bool fullscreen = false; //true;
+static const bool fullscreen = false;
 
 #include "Font.h"
 #include "Render.h"
@@ -166,9 +166,12 @@ static void game_render()
 {
     check_opengl_error( "before render" );
 
-    glClearColor( 0.25, 0.25, 0.25, 0.0 );
-
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    Demo * demo = global.demoManager->GetDemo();
+    if ( demo && !demo->Clear() )
+    {
+        glClearColor( 0.25, 0.25, 0.25, 0.0 );
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    }
 
     glEnable( GL_DEPTH_TEST );
 

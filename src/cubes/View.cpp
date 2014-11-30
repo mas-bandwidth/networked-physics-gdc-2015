@@ -227,10 +227,13 @@ namespace view
 
 			assert( object );
 
+			// todo: this smoothing code is not working properly. fix it and turn it back on
+			/*
 			// update error smoothing
 			
 			object->positionError *= ( 1.0f - PositionSmoothingTightness );
 			object->visualOrientation = math::slerp( object->visualOrientation, object->orientation, OrientationSmoothingTightness );
+			*/
 
 			// update alpha blend
 
@@ -305,34 +308,25 @@ namespace view
             math::build_translation( translation_data, position );
             math::build_rotation( rotation_data, orientation );
             math::build_scale( scale_data, object->scale * 0.5f );
-            
             vectorial::mat4f translation;
             vectorial::mat4f rotation;
-            vectorial::mat4f scale;
-            
+            vectorial::mat4f scale;            
             translation.load( translation_data );
             rotation.load( rotation_data );
             scale.load( scale_data );
 
             float inv_translation_data[16];
-            float inv_scale_data[16];
-
-            translation.load( translation_data );
-            rotation.load( rotation_data );
-            scale.load( scale_data );
-            
-            math::build_translation( inv_translation_data, - ( object->position + object->positionError ) );
+            float inv_scale_data[16];            
+            math::build_translation( inv_translation_data, -position );
             math::build_scale( inv_scale_data, 1.0f / ( object->scale * 0.5f ) );
-
             vectorial::mat4f inv_translation;
             vectorial::mat4f inv_rotation = transpose( rotation );
             vectorial::mat4f inv_scale;
-
             inv_translation.load( inv_translation_data );
             inv_scale.load( inv_scale_data );
 
             renderState.cube[i].transform = translation * rotation * scale;
-            renderState.cube[i].inverse_transform = inv_rotation * inv_translation;
+            renderState.cube[i].inverse_transform = inv_rotation * inv_translation * inv_scale;
             
             renderState.cube[i].r = object->r;
             renderState.cube[i].g = object->g;
@@ -341,9 +335,6 @@ namespace view
 
             i++;
         }
-        
-        // sort back to front
-        std::sort( renderState.cube, renderState.cube + renderState.numCubes );
     }
 
 	// ------------------------------------------------------
@@ -357,11 +348,13 @@ namespace view
 
 	void Camera::EaseIn( const math::Vector & new_lookat, const math::Vector & new_position )
 	{
+		// todo: need to handle denormals
+
 		if ( ( new_lookat - lookat ).lengthSquared() > 0.000001f )
-			lookat += ( new_lookat - lookat ) * 0.2f;
+			lookat += ( new_lookat - lookat ) * 0.15f;
 
 		if ( ( new_position - position ).lengthSquared() > 0.000001f )
-			position += ( new_position - position ) * 0.2f;
+			position += ( new_position - position ) * 0.15f;
 		
 		up = ( position - lookat ).cross( math::Vector(1,0,0) );
 	}
@@ -374,74 +367,6 @@ namespace view
 	}
 
 	// ------------------------------------------------------
-
-	void mergeViewObjectSets( ObjectManager * gameObjects[], int maxPlayers, ObjectManager & output, int primaryPlayer, bool blendColors )
-	{
-		for ( int i = maxPlayers - 1; i >= 0; --i )
-		{
-			if ( i == primaryPlayer )
-				continue;
-			
-			for ( ObjectManager::object_map::iterator itor = gameObjects[i]->objects.begin(); itor != gameObjects[i]->objects.end(); ++itor )
-			{
-				int key = itor->first;
-	 			Object * srcObject = itor->second;
-				Object * dstObject = output.objects[key];
-				if ( !dstObject )
-				{
-					dstObject = new Object();
-					*dstObject = *srcObject;
-					output.objects[key] = dstObject;
-				}
-				else
-				{
-					float currentAlpha = dstObject->a;
-					float newAlpha = srcObject->a;
-					float newR = ( srcObject->r + dstObject->r ) * 0.5f;
-					float newG = ( srcObject->g + dstObject->g ) * 0.5f;
-					float newB = ( srcObject->b + dstObject->b ) * 0.5f;
-					*dstObject = *srcObject;
-					dstObject->a = std::max( currentAlpha, newAlpha );
-					if ( blendColors )
-					{
-						dstObject->r = newR;
-						dstObject->g = newG;
-						dstObject->b = newB;
-					}
-				}
-			}
-		}
-
-		int i = primaryPlayer;
-		for ( ObjectManager::object_map::iterator itor = gameObjects[i]->objects.begin(); itor != gameObjects[i]->objects.end(); ++itor )
-		{
-			int key = itor->first;
-			Object * srcObject = itor->second;
-			Object * dstObject = output.objects[key];
-			if ( !dstObject )
-			{
-				dstObject = new Object();
-				*dstObject = *srcObject;
-				output.objects[key] = dstObject;
-			}
-			else
-			{
-				float currentAlpha = dstObject->a;
-				float newAlpha = srcObject->a;
-				float newR = ( srcObject->r + dstObject->r ) * 0.5f;
-				float newG = ( srcObject->g + dstObject->g ) * 0.5f;
-				float newB = ( srcObject->b + dstObject->b ) * 0.5f;
-				*dstObject = *srcObject;
-				dstObject->a = std::max( currentAlpha, newAlpha );
-				if ( blendColors )
-				{
-					dstObject->r = newR;
-					dstObject->g = newG;
-					dstObject->b = newB;
-				}
-			}
-		}
-	}
 
 	void getAuthorityColor( int authority, float & r, float & g, float & b, int maxPlayers )
 	{
@@ -495,19 +420,5 @@ namespace view
 			updates[i].visible = !viewPacket.object[i].pendingDeactivation;
 			getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
 		}
-	}
-
-	void setupActivationArea( ActivationArea & activationArea, const math::Vector & origin, float radius, double t )
-	{
-		activationArea.origin = origin;
-		activationArea.radius = radius;
-		activationArea.startAngle = - t * 0.75f;
-		activationArea.r = 0.0f;
-		activationArea.g = 0.0f;
-		activationArea.b = 0.1f;
-		activationArea.a = 0.5f + pow( math::sin( t * 5 ) + 1.0f, 2 ) * 0.8f;
-		if ( activationArea.a > 1.0f )
-			activationArea.a = 1.0f;
-		activationArea.a *= 0.4f;
 	}
 }

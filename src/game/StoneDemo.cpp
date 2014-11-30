@@ -171,6 +171,12 @@ void StoneDemo::Update()
     rotationAngle += global.timeBase.deltaTime * rotationSpeed * 20;
 }
 
+bool StoneDemo::Clear()
+{
+    // let the game framework handle the clear (default)
+    return false;
+}
+
 void StoneDemo::Render()
 {
     glEnable( GL_DEPTH_TEST );

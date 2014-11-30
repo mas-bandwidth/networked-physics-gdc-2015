@@ -1,4 +1,101 @@
 
+Sunday Morning, November 30th, 2014
+-----------------------------------
+
+    Continue optimization analysis:
+
+    Simulation:
+
+        34.9% - update physics
+         2.2% - extrapolate objects (removed)
+         1.7% - update objects (view)           <-- slerp. try converting to nlerp?
+         0.7% - object update (view)            <-- mostly my crappy vector/quaternion classes
+         0.3% - get view object update (view)
+
+    Render:
+
+        20.3% - render cube shadows
+        12.4% - render cubes
+        11.9% - get render state (view)
+         8.0% - glFlush
+         0.6% - view::Cubes::Cubes (default ctor -- nuke it!)
+         0.4% - glClear
+
+    Things that can easily be done:
+
+        1. Convert update objects to use nlerp
+        2. Don't clear the screen twice (done)
+        3. Disable extrapolate objects (done -- but breaks, why?)
+
+    Seems like lots of extra work is done in "GetViewObjects" 
+
+        - lots of unused transforms
+        - conversion from my math to vectorial
+        - sorting by value (lots of copying)
+
+    Removed the sort. I don't have any alpha blending now so it's not required.
+
+    Post optimization:
+
+        21.3%   - render cube shadows (lots of vec3 copy ctors, maybe pass by ref?)
+        13.2%   - render cubes (11% wasted on GLM matrix multiplies. WTAF!?!)
+        10.4%   - object manager get render state (mostly vectorial matrix multiply -- 7%)
+        15.6%   - dWorldQuickStep
+         9.0%   - dxQuadTreeSpace
+         2.7%   - std::vector<short> (active object buckets?) -- duplicating the quadtree really
+
+    Biggest wins should be:
+
+        1. Pass by ref for generate silhouette
+        2. Reduce amount of work getting render state from sim
+        3. Reduce amount of GLM math done rendering cubes (possibly by replacing with vectorial matrix math...)
+
+    Past this diminishing returns, and disruptive optimizations (Eg. removing activation system concept, reworking view mgr and so on...)
+
+    Don't want to do those sort of optimizations yet.
+
+    Another large optimization is to move the stencil shadows into the vertex shader.
+
+    This is not too disruptive, but could be a reasonable amount of work. I have no idea how to do this with OpenGL yet.
+
+    Passed in refs to generate silhouette. Faster but still slow. Best to move this to GPU long term.
+
+    Reduce work getting render state ready.
+
+    Tried but the inverse of the matrix is required for shadow silhoutte detection.
+
+    Replace GLM math usage with vectorial in cube instance render.
+
+    Just pass in the r,g,b,a directly per-cube. Don't use glm::vec4.
+
+    ^--- After this much faster, cubes render is very small. 6.3%. 5% of that is the matrix multiply per-object!
+
+    Remaining major optimizations that could be done:
+
+        1. Move stencil shadows to vertex shader (would save 22% frame CPU)
+        2. Convert away from my own vector math and quaternion classes
+           over to vectorial everywhere. Guess, 10-15% CPU savings.
+
+    Now profile in release build and see what's up.
+
+    In release build it is all basicaly simulation cost, as it should be.
+
+    Render is nearly free:
+
+        4% - render shadows
+        2% - render cubes
+        1.5% - get render state (i think, under render cubes... so only 0.5% actual render cube cost)
+
+    Simulation:
+
+        24% - quickstep
+        21% - quadtree collide
+
+    This looks like pretty good news.
+
+    At this point it is reasonable to stop optimization.
+
+
 Saturday Evening, November 29th, 2014
 -------------------------------------
 

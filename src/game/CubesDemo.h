@@ -19,6 +19,8 @@ public:
 
     virtual void Update() override;
 
+    virtual bool Clear() override;
+
     virtual void Render() override;
 
     virtual bool KeyEvent( int key, int scancode, int action, int mods ) override;

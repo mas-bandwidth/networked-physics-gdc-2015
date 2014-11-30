@@ -2,7 +2,10 @@
 #include "cubes/Activation.h"
 #include "cubes/Engine.h"
 #include "cubes/Game.h"
-#include "cubes/Cubes.h"
+
+// todo: convert from cubes to hypercube
+
+/*
 
 using namespace activation;
 using namespace cubes;
@@ -861,3 +864,4 @@ int main()
 
     return 0;
 }
+*/

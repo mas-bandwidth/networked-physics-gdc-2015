@@ -26,6 +26,11 @@ void InterpolationDemo::Update()
     // ...
 }
 
+bool InterpolationDemo::Clear()
+{
+    return false;
+}
+
 void InterpolationDemo::Render()
 {
     // ...

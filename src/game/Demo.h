@@ -13,6 +13,8 @@ public:
 
     virtual bool Initialize() = 0;
 
+    virtual bool Clear() = 0;
+
     virtual void Update() = 0;
 
     virtual void Render() = 0;

@@ -1,7 +1,7 @@
 solution "Protocol"
     includedirs { "src", "external", "tools", "." }
     platforms { "x64" }
-    configurations { "Debug", "Release" }
+    configurations { "Release", "Debug" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
     configuration "Release"
         flags { "OptimizeSpeed" }

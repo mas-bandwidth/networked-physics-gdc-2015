@@ -28,10 +28,10 @@ typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameI
 
 struct CubeInstance
 {
-    glm::vec4 color;
-    glm::mat4 model;
-    glm::mat4 modelView;
-    glm::mat4 modelViewProjection;
+    float r,g,b,a;
+    vectorial::mat4f model;
+    vectorial::mat4f modelView;
+    vectorial::mat4f modelViewProjection;
 };
 
 class RenderInterface
@@ -55,7 +55,7 @@ public:
 
     void BeginScene( float x1, float y1, float x2, float y2 );
  
-    void RenderCubes( const view::Cubes & cubes, float alpha = 1.0f );
+    void RenderCubes( const view::Cubes & cubes );
     
     void RenderCubeShadows( const view::Cubes & cubes );
 
@@ -103,6 +103,8 @@ struct CubesInternal
     view::Packet viewPacket;
     view::ObjectManager viewObjectManager;
     game::Input gameInput;
+    view::ObjectUpdate objectUpdates[MaxViewObjects];
+    view::Cubes cubes;
 
     void Initialize( core::Allocator & allocator, game::Config & config )
     {
@@ -145,7 +147,6 @@ struct CubesInternal
         hypercube::DatabaseObject object;
         cubes::CompressPosition( position, object.position );
         cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
-        object.dirty = player;
         object.enabled = player;
         object.session = 0;
         object.player = player;
@@ -166,18 +167,17 @@ struct CubesInternal
 
         if ( viewPacket.objectCount >= 1 )
         {
-            view::ObjectUpdate updates[MaxViewObjects];
-            getViewObjectUpdates( updates, viewPacket );
-            viewObjectManager.UpdateObjects( updates, viewPacket.objectCount );
+            getViewObjectUpdates( objectUpdates, viewPacket );
+            viewObjectManager.UpdateObjects( objectUpdates, viewPacket.objectCount );
         }
-
-        viewObjectManager.ExtrapolateObjects( deltaTime );
 
         viewObjectManager.Update( deltaTime );
 
         view::Object * playerCube = viewObjectManager.GetObject( 1 );
         if ( playerCube )
-            origin = playerCube->position + playerCube->positionError;
+            origin = playerCube->position;// + playerCube->positionError;
+
+        // todo: ^--- positionError above is completely broken, also orientationError should be added instead of "visualOrientation"
 
         math::Vector lookat = origin - math::Vector(0,0,1);
 
@@ -186,14 +186,21 @@ struct CubesInternal
         camera.EaseIn( lookat, position ); 
     }
 
+    bool Clear()
+    {
+        renderInterface.ClearScreen();
+
+        return true;
+    }
+
     void Render()
     {
         renderInterface.ResizeDisplay( global.displayWidth, global.displayHeight );
 
-        renderInterface.ClearScreen();
+        const bool interpolating = false;
+        const bool smoothing = false;               // todo: fix smoothing and turn it back on
 
-        view::Cubes cubes;
-        viewObjectManager.GetRenderState( cubes );
+        viewObjectManager.GetRenderState( cubes, interpolating, smoothing );
 
         const int width = renderInterface.GetDisplayWidth();
         const int height = renderInterface.GetDisplayHeight();
@@ -204,9 +211,6 @@ struct CubesInternal
         
         renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
 
-        view::ActivationArea activationArea;
-        view::setupActivationArea( activationArea, origin, 5.0f, global.timeBase.time );
-        
         renderInterface.RenderCubes( cubes );
         
         renderInterface.RenderCubeShadows( cubes );
@@ -294,6 +298,11 @@ bool CubesDemo::Initialize()
 void CubesDemo::Update()
 {
     m_internal->Update();
+}
+
+bool CubesDemo::Clear()
+{
+    return m_internal->Clear();
 }
 
 void CubesDemo::Render()
@@ -478,7 +487,7 @@ void RenderInterface::Initialize()
         if ( color_location >= 0 )
         {
             glEnableVertexAttribArray( color_location );
-            glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, color ) ) );
+            glVertexAttribPointer( color_location, 4, GL_FLOAT, GL_FALSE, sizeof( CubeInstance ), (void*) ( offsetof( CubeInstance, r ) ) );
             glVertexAttribDivisor( color_location, 1 );
         }
 
@@ -650,7 +659,7 @@ void RenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
     glDepthFunc( GL_LESS );
 }
         
-void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
+void RenderInterface::RenderCubes( const view::Cubes & cubes )
 {
     if ( cubes.numCubes == 0 )
         return;
@@ -670,22 +679,22 @@ void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
     if ( light_location >= 0 )
         glUniform3fv( light_location, 1, &lightPosition[0] );
 
-    mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x, cameraPosition.y, cameraPosition.z ), 
-                                   glm::vec3( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ), 
-                                   glm::vec3( cameraUp.x, cameraUp.y, cameraUp.z ) );
+    vectorial::mat4f viewMatrix = vectorial::mat4f::lookAt( vectorial::vec3f( cameraPosition.x, cameraPosition.y, cameraPosition.z ),
+                                                            vectorial::vec3f( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ),
+                                                            vectorial::vec3f( cameraUp.x, cameraUp.y, cameraUp.z ) );
 
-    mat4 projectionMatrix = glm::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
+    vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
 
     for ( int i = 0; i < cubes.numCubes; ++i )
     {
         CubeInstance & instance = instance_data[i];
-
-        cubes.cube[i].transform.store( (float*) &instance.model );
-
+        instance.r = cubes.cube[i].r;
+        instance.g = cubes.cube[i].g;
+        instance.b = cubes.cube[i].b;
+        instance.a = cubes.cube[i].a;
+        instance.model = cubes.cube[i].transform;
         instance.modelView = viewMatrix * instance.model;
         instance.modelViewProjection = projectionMatrix * instance.modelView;
-
-        instance.color = vec4( cubes.cube[i].r, cubes.cube[i].g, cubes.cube[i].b, cubes.cube[i].a );
     }
 
     glBindBuffer( GL_ARRAY_BUFFER, cubes_instance_buffer );
@@ -704,14 +713,14 @@ void RenderInterface::RenderCubes( const view::Cubes & cubes, float alpha )
 }
 
 inline void GenerateSilhoutteVerts( int & vertex_index,
-                                    vectorial::vec3f * vertices,
-                                    vectorial::mat4f transform,
-                                    vectorial::vec3f local_light,
-                                    vectorial::vec3f world_light,
+                                    __restrict vectorial::vec3f * vertices,
+                                    const vectorial::mat4f & transform,
+                                    const vectorial::vec3f & local_light,
+                                    const vectorial::vec3f & world_light,
                                     vectorial::vec3f a, 
                                     vectorial::vec3f b,
-                                    vectorial::vec3f left_normal,
-                                    vectorial::vec3f right_normal,
+                                    const vectorial::vec3f & left_normal,
+                                    const vectorial::vec3f & right_normal,
                                     bool left_dot,
                                     bool right_dot )
 {
@@ -749,13 +758,33 @@ inline void GenerateSilhoutteVerts( int & vertex_index,
         vertices[vertex_index]   = world_b;
         vertices[vertex_index+1] = world_a;
         vertices[vertex_index+2] = extruded_a;
-        vertices[vertex_index+3]   = world_b;
+        vertices[vertex_index+3] = world_b;
         vertices[vertex_index+4] = extruded_a;
         vertices[vertex_index+5] = extruded_b;
         
         vertex_index += 6;
     }
 }
+
+static vectorial::vec3f a(-1,+1,-1);
+static vectorial::vec3f b(+1,+1,-1);
+static vectorial::vec3f c(+1,+1,+1);
+static vectorial::vec3f d(-1,+1,+1);
+static vectorial::vec3f e(-1,-1,-1);
+static vectorial::vec3f f(+1,-1,-1);
+static vectorial::vec3f g(+1,-1,+1);
+static vectorial::vec3f h(-1,-1,+1);
+
+static vectorial::vec3f normals[6] =
+{
+    vectorial::vec3f(+1,0,0),
+    vectorial::vec3f(-1,0,0),
+    vectorial::vec3f(0,+1,0),
+    vectorial::vec3f(0,-1,0),
+    vectorial::vec3f(0,0,+1),
+    vectorial::vec3f(0,0,-1)
+};
+
 
 void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
 {
@@ -771,25 +800,6 @@ void RenderInterface::RenderCubeShadows( const view::Cubes & cubes )
     
     int vertex_index = 0;
     
-    vectorial::vec3f a(-1,+1,-1);
-    vectorial::vec3f b(+1,+1,-1);
-    vectorial::vec3f c(+1,+1,+1);
-    vectorial::vec3f d(-1,+1,+1);
-    vectorial::vec3f e(-1,-1,-1);
-    vectorial::vec3f f(+1,-1,-1);
-    vectorial::vec3f g(+1,-1,+1);
-    vectorial::vec3f h(-1,-1,+1);
-    
-    vectorial::vec3f normals[6] =
-    {
-        vectorial::vec3f(+1,0,0),
-        vectorial::vec3f(-1,0,0),
-        vectorial::vec3f(0,+1,0),
-        vectorial::vec3f(0,-1,0),
-        vectorial::vec3f(0,0,+1),
-        vectorial::vec3f(0,0,-1)
-    };
-
     for ( int i = 0; i < (int) cubes.numCubes; ++i )
     {
         const view::Cube & cube = cubes.cube[i];

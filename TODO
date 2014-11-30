@@ -2,48 +2,10 @@ DONE:
 
 TODO:
 
-    Seems like remaining optimizations are clear:
-
-        1. GLM is fucking SHIT
-        2. Remove activation system
-        3. Optimize view render (eg. don't copy a bunch of stuff)
-        4. Run the simulation and render in parallel (e.g one frame behind)
-
-    --------------------------------------------
-
-    My guess is:
-
-        1. Activation system
-
-        2. Stencil shadows
-
-        3. View system (eg. separation of model and view...)
-
-    If it is activation, remove that aspect and simplify.
-
-    If it is stencil shadows, probably a good idea to move those guys
-    into the vertex shader (research how!)
-
-    -------------------------------------------
-
-    OpenGL Clear is being called twice.
-
-    This is clearly not efficient. Fix so demos only clear once.
-
     -------------------------------------------
 
     There is a bug where the first cube added (bottom left corner)
     is always blue. It probably thinks it is a player owned cube.
-
-    -------------------------------------------
-
-    It would be nice to strip the activation system out entirely. 
-
-    I probably don't need it for anything I reasonably want to do.
-
-    Get the cubes demo working without it. 
-
-    SIMPLIFY
 
     -------------------------------------------
 
@@ -59,9 +21,7 @@ TODO:
 
     Write the article describing the physics simulation
 
-    -------------------------------------------
-
-    Get the cube demo polished up and ready to release (singleplayer)
+    Don't release the source code yet as it needs a large amount of cleaning up first.
 
     -------------------------------------------
 
