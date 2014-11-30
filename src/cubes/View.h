@@ -16,9 +16,9 @@ namespace view
 {
     struct Cube
     {
+        float r,g,b,a;
         vectorial::mat4f transform;
         vectorial::mat4f inverse_transform;
-        float r,g,b,a;
     };
     
 	struct Cubes
@@ -34,6 +34,7 @@ namespace view
 
 	struct ObjectUpdate
 	{
+		// todo: convert these guys to vectorial
 		math::Quaternion orientation;
 		math::Vector position;
 		math::Vector linearVelocity;
@@ -70,6 +71,8 @@ namespace view
 		float blend_time;
 		float blend_start;
 		float blend_finish;
+
+		// todo: convert these guys to vectorial
 		math::Vector position;
 		math::Quaternion orientation;
 		math::Vector linearVelocity;
@@ -121,6 +124,7 @@ namespace view
 
 	private:
 
+		// todo: convert this to use the core hash instead
 		typedef std::map<unsigned int, Object*> object_map;
 
 		object_map objects;
@@ -132,6 +136,7 @@ namespace view
 
 	struct Camera
 	{
+		// todo: convert these guys to use vectorial
 		math::Vector position;
 		math::Vector lookat;
 		math::Vector up;
@@ -147,7 +152,7 @@ namespace view
 
 	void getAuthorityColor( int authority, float & r, float & g, float & b, int maxPlayers = MaxPlayers );
 
-	void getViewObjectUpdates( view::ObjectUpdate * updates, const view::Packet & viewPacket, int authorityOverride = -1 );
+	void getViewObjectUpdates( view::ObjectUpdate * updates, const view::Packet & viewPacket );
 }
 
 #endif

@@ -2081,31 +2081,7 @@ inline Quaternion slerp( const Quaternion & a, const Quaternion & b, float t )
         matrix[14] = 0;
         matrix[15] = 1;
     }
-    
-    // fast inverse transform for a rotation/translate matrix with uniform scale only (rigid body transform)
-    
-    inline void fast_inverse_transform( float * matrix, float scale )
-    {
-        // NETHACK: not implemented yet - code below does not work
-        assert( false );
         
-        float tmp = matrix[1];
-        matrix[1] = matrix[4];
-        matrix[4] = tmp;
-        
-        tmp = matrix[2];
-        matrix[2] = matrix[8];
-        matrix[8] = tmp;
-        
-        tmp = matrix[6];
-        matrix[6] = matrix[9];
-        matrix[9] = tmp;
-        
-        matrix[12] = - ( matrix[12]*matrix[0] + matrix[13]*matrix[1] + matrix[14]*matrix[2] );
-        matrix[13] = - ( matrix[12]*matrix[4] + matrix[13]*matrix[5] + matrix[14]*matrix[6] );
-//        matrix[14] = - ( matrix[12]*matrix[8] + matrix[13]*matrix[9] + matrix[14]*matrix[10] );
-    }
-    
     // get axis angle from quaternion
     
 	inline void GetAxisAngle( const math::Quaternion & quaternion, math::Vector & axis, float & angle )

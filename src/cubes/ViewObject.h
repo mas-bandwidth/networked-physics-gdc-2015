@@ -27,7 +27,6 @@ namespace view
 
 		ObjectState()
 		{
-			// NETHACK: do we really need a default construct for this?
 			this->id = 0;
 			owner = MaxPlayers;
 			authority = MaxPlayers;

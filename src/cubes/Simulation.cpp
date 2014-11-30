@@ -163,7 +163,7 @@ namespace cubes
 			impl->contact[i].surface.bounce_vel = 0.001f;
 	    }
 	
-		impl->objects.resize( 4 * 1024 );
+		impl->objects.resize( 1024 );
 	}
 
 	void Simulation::Update( float deltaTime, bool paused )

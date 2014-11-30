@@ -90,8 +90,8 @@ namespace game
 			cellWidth = 16;
 			cellHeight = 16;
 			maxObjects = 1024;
-			initialObjectsPerCell = 16;
-			initialActiveObjects = 256;
+			initialObjectsPerCell = 64;
+			initialActiveObjects = 1024;
 			z_min = 0.0f;
 			z_max = 100.0f;
 		}
@@ -484,12 +484,10 @@ namespace game
 			return activationSystem->IsActive( id );
 		}
 		
-		// NETHACK: todo - break up into get active and get database object state
 		void GetObjectState( ObjectId id, ActiveObject & object )
 		{
 			assert( id > 0 );
 			assert( id <= (ObjectId) objectCount );
-			// NETHACK: slow linear lookup
 			ActiveObject * activeObject = activeObjects.FindObject( id );
 			if ( activeObject )
 			{
@@ -500,17 +498,15 @@ namespace game
 			{
 				// inactive object
 				objects[id].DatabaseToActive( object );
-				object.activeId = 0;							// NETHACK: todo - need a way to signal that this is an inactive object
+				object.activeId = 0;
 				object.id = id;
 			}
 		}
 
-		// NETHACK: todo - should have fast set object state for active object vs. inactive object
 		void SetObjectState( ObjectId id, const ActiveObject & object )
 		{
 			assert( id > 0 );
 			assert( id <= (ObjectId) objectCount );
-			// NETHACK: slow linear lookup
 			ActiveObject * activeObject = activeObjects.FindObject( id );
 			if ( activeObject )
 			{
@@ -518,7 +514,7 @@ namespace game
 				ActiveId activeId = activeObject->activeId;
 				const bool warp = ( activeObject->position - object.position ).lengthSquared() > 25.0f;
 				*activeObject = object;
-				activeObject->activeId = activeId;		// NETHACK: use of activeId here is incorrect
+				activeObject->activeId = activeId;
 				activationSystem->MoveActiveObject( activeId, object.position.x, object.position.y, warp );
 			}
 			else
@@ -653,7 +649,7 @@ namespace game
 								math::Vector force = direction * magnitude;
 								if ( activeObject != activePlayerObject )
 									force *= mass;
-								if ( playerId <= authority )		// IMPORTANT: this intentionally turns blue cubes red!
+								if ( authority == MaxPlayers || playerId == authority )
 								{
 									simulation->ApplyForce( activeObject->activeId, force );
 									activeObject->authority = playerId;
@@ -667,7 +663,7 @@ namespace game
 							{
 								math::Vector difference = activeObject->position - origin;
 								float distanceSquared = difference.lengthSquared();
-								const float effectiveRadiusSquared = 1.6f * 1.6f;
+								const float effectiveRadiusSquared = 1.8f * 1.8f;
 								if ( distanceSquared > 0.2f*0.2f && distanceSquared < effectiveRadiusSquared )
 								{
 									float distance = math::sqrt( distanceSquared );
@@ -933,7 +929,7 @@ namespace game
 							if ( activeObject.authority == MaxPlayers || activeObject.authority == playerId )
 							{
 								activeObject.authority = playerId;
-								if ( activeObject.enabled )				// NETHACK: maybe change this to speed > threshold?
+								if ( activeObject.enabled )
 									activeObject.authorityTime = 0;
 							}
 						}

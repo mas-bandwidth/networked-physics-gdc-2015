@@ -7,8 +7,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-const int MaxPlayers = 2;
-const int MaxViewObjects = 1024 * 4;
+const int MaxPlayers = 1;
+const int MaxViewObjects = 1024;
 const float ColorChangeTightnessDefault = 0.01f;
 const float ColorChangeTightnessAuthority = 0.2f;
 const float ShadowAlphaThreshold = 0.15f;

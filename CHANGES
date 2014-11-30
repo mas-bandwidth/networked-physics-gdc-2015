@@ -95,6 +95,11 @@ Sunday Morning, November 30th, 2014
 
     At this point it is reasonable to stop optimization.
 
+    There is a bug where the first cube added (bottom left corner)
+    is always blue. It probably thinks it is a player owned cube.
+
+    Worked around for now by setting MaxPlayers to 1.
+
 
 Saturday Evening, November 29th, 2014
 -------------------------------------

@@ -4,8 +4,9 @@ TODO:
 
     -------------------------------------------
 
-    There is a bug where the first cube added (bottom left corner)
-    is always blue. It probably thinks it is a player owned cube.
+    Bug. If you hold arrow right and bring the console is up, the right input is held. 
+
+    Demo needs to be able to check if it has input focus, if not, clear inputs to false.
 
     -------------------------------------------
 

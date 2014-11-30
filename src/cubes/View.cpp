@@ -405,13 +405,13 @@ namespace view
 		}
 	}
 
-	void getViewObjectUpdates( view::ObjectUpdate * updates, const view::Packet & viewPacket, int authorityOverride )
+	void getViewObjectUpdates( view::ObjectUpdate * updates, const view::Packet & viewPacket )
 	{
 		for ( int i = 0; i < (int) viewPacket.objectCount; ++i )
 		{
 			updates[i].id = viewPacket.object[i].id;
 			updates[i].owner = viewPacket.object[i].owner;
-			updates[i].authority = authorityOverride < 0 ? viewPacket.object[i].authority : authorityOverride;
+			updates[i].authority = viewPacket.object[i].authority;
 			updates[i].position = viewPacket.object[i].position;
 			updates[i].orientation = viewPacket.object[i].orientation;
 			updates[i].linearVelocity = viewPacket.object[i].linearVelocity;
