@@ -4,6 +4,7 @@
 
 #include "Global.h"
 #include "Render.h"
+#include "Console.h"
 #include "ShaderManager.h"
 #include "core/Memory.h"
 #include "cubes/Game.h"
@@ -158,6 +159,9 @@ struct CubesInternal
     void Update()
     {
         const float deltaTime = global.timeBase.deltaTime;
+
+        if ( global.console->IsActive() )
+            gameInput = game::Input();
 
         gameInstance->SetPlayerInput( 0, gameInput );
 
