@@ -16,6 +16,7 @@ class MeshManager;
 class StoneManager;
 class InputManager;
 class DemoManager;
+class ReplayManager;
 #endif // #ifdef CLIENT
 
 class Console;
@@ -40,6 +41,7 @@ struct Global
     InputManager * inputManager = nullptr;
     DemoManager * demoManager = nullptr;
     StoneManager * stoneManager = nullptr;
+    ReplayManager * replayManager = nullptr;
 
     #endif // #ifdef CLIENT
 

@@ -1,38 +1,40 @@
 #include "Global.h"
 #include "Console.h"
+#include "ReplayManager.h"
 #include <string>
 
-static bool stone_demo = false;
-static bool cubes_demo = false;
-static bool interpolation_demo = false;
+static char commandLineBuffer[2048];
 
-void ParseCommandLine( int argc, char * argv[] )
+void ProcessCommandLine( int argc, char * argv[] )
 {
-    // HACK HACK HACK -- this is a big hack for now!!!
-
-    // todo: implement proper command line parsing, eg. "-blah", "-blah = X", "+command something something something -switch"
-
-    char buffer[2048];
-    buffer[0] = '\0';
+    commandLineBuffer[0] = '\0';
     for ( int i = 1; i < argc; ++i )
     {
-        strcat( buffer, argv[i] );
+        strcat( commandLineBuffer, argv[i] );
         if ( i != argc -1 )
-            strcat( buffer, " " );
+            strcat( commandLineBuffer, " " );
     }
-
-//    printf( "command line: '%s'\n", buffer );
-
-    if ( strcmp( buffer, "+load stone" ) == 0 )
-        stone_demo = true;
-    else if ( strcmp( buffer, "+load cubes" ) == 0 )
-        cubes_demo = true;
-    else if ( strcmp( buffer, "+load interpolation" ) == 0 )
-        interpolation_demo = true;
 }
 
 void CommandLinePostGameInit()
 {
+    global.replayManager->RecordCommandLine( commandLineBuffer );
+
+    // todo: implement proper command line parsing, eg. "-blah", "-blah = X", "+command something something something -switch"
+
+//    printf( "command line: '%s'\n", buffer );
+
+    bool stone_demo = false;
+    bool cubes_demo = false;
+    bool interpolation_demo = false;
+
+    if ( strcmp( commandLineBuffer, "+load stone" ) == 0 )
+        stone_demo = true;
+    else if ( strcmp( commandLineBuffer, "+load cubes" ) == 0 )
+        cubes_demo = true;
+    else if ( strcmp( commandLineBuffer, "+load interpolation" ) == 0 )
+        interpolation_demo = true;
+
     if ( stone_demo )
         global.console->ExecuteCommand( "load stone" );
     else if ( cubes_demo )

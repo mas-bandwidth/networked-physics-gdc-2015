@@ -1,4 +1,32 @@
 
+Sunday Morning, December 7th, 2014
+----------------------------------
+
+    Sketched out replay manager.
+
+    This manager will just be a simple record and playback events.
+
+    The events will drive stuff like:
+
+        - command line
+        - random number seed
+        - key and char events
+        - update delta time
+
+    Hook up all the bits that should call each record.
+
+        RecordRandomSeed
+        RecordCommandLine
+        RecordKeyEvent
+        RecordCharEvent
+        RecordUpdate
+
+    Use JSON or a binary format?
+
+    Binary format is probably the easiest. This is not meant to be a file format
+    that persists for a long time and can be played back later. It's dev only.
+
+
 Sunday Morning, November 30th, 2014
 -----------------------------------
 

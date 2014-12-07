@@ -22,6 +22,7 @@ static const bool fullscreen = false;
 #include "StoneManager.h"
 #include "InputManager.h"
 #include "DemoManager.h"
+#include "ReplayManager.h"
 #include "Console.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -45,8 +46,15 @@ static void game_init()
 {
     auto & allocator = core::memory::default_allocator();
 
-    global.console = CORE_NEW( allocator, Console, allocator );
+    global.replayManager = CORE_NEW( allocator, ReplayManager, allocator );
 
+    const unsigned int seed = time( nullptr );
+
+    global.replayManager->RecordRandomSeed( seed );
+
+    srand( seed );
+
+    global.console = CORE_NEW( allocator, Console, allocator );
     global.fontManager = CORE_NEW( allocator, FontManager, allocator );
     global.shaderManager = CORE_NEW( allocator, ShaderManager, allocator );
     global.meshManager = CORE_NEW( allocator, MeshManager, allocator );
@@ -74,6 +82,8 @@ static void game_init()
 
 static void game_update()
 {
+    global.replayManager->RecordUpdate( global.timeBase.deltaTime );
+
     global.client->Update( global.timeBase );
 
     Demo * demo = global.demoManager->GetDemo();
@@ -227,11 +237,9 @@ void char_callback( GLFWwindow * window, unsigned int code )
 
 int main( int argc, char * argv[] )
 {
-    srand( time( nullptr ) );
-
     core::memory::initialize();
 
-    ParseCommandLine( argc, argv );
+    ProcessCommandLine( argc, argv );
 
     if ( !network::InitializeNetwork() )
     {

@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"model",
+				"modelViewProjection"
+			],
+			[
 				"test_stone_board_",
 				"test_stone_board_collision_none"
 			],
@@ -461,134 +465,134 @@
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/virtualgo/Render.h",
-		"/Users/gaffer/git/protocol/src/Cubes/View.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Render.h",
-		"/Users/gaffer/git/protocol/src/game/CubesDemo.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/View.h",
-		"/Users/gaffer/git/virtualgo/README.md",
-		"/Users/gaffer/git/protocol/src/virtualgo/RigidBody.h",
-		"/Users/gaffer/git/protocol/src/cubes/ViewObject.h",
-		"/Users/gaffer/git/protocol/external/vectorial/vec3f.h",
-		"/Users/gaffer/git/cubes/client/View.cpp",
-		"/Users/gaffer/git/protocol/src/game/CubesDemo.h",
-		"/Users/gaffer/git/protocol/src/core/Core.h",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
-		"/Users/gaffer/git/protocol/src/Game/InterpolationDemo.h",
-		"/Users/gaffer/git/protocol/src/game/DemoManager.cpp",
-		"/Users/gaffer/git/protocol/src/Game/InterpolationDemo.cpp",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/src/game/Console.cpp",
-		"/Users/gaffer/git/protocol/src/game/Console.h",
+		"/Users/gaffer/git/protocol/src/Game/ReplayManager.cpp",
+		"/Users/gaffer/git/protocol/src/Game/CommandLine.h",
+		"/Users/gaffer/git/protocol/src/Game/Game.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Global.h",
 		"/Users/gaffer/git/protocol/src/Game/CommandLine.cpp",
-		"/Users/gaffer/git/protocol/src/game/CommandLine.h",
-		"/Users/gaffer/git/protocol/src/game/Game.cpp",
-		"/Users/gaffer/git/protocol/src/ClientServer/Client.cpp",
-		"/Users/gaffer/git/protocol/premake4.lua",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestClientServer.cpp",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestClientServer.h",
+		"/Users/gaffer/git/protocol/src/Game/InputManager.cpp",
+		"/Users/gaffer/git/protocol/src/Game/ReplayManager.h",
 		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/src/Cubes/ViewObject.h",
-		"/Users/gaffer/git/protocol/src/cubes/Game.h",
-		"/Users/gaffer/git/virtualgo/Intersection.h",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/en.lproj/MainStoryboard_iPad.storyboard",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go.xcodeproj/project.xcworkspace/xcuserdata/gaffer.xcuserdatad/UserInterfaceState.xcuserstate",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/en.lproj/MainStoryboard_iPhone.storyboard",
-		"/Users/gaffer/git/virtualgo/UnitTest++/Posix/SignalTranslator.cpp",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestChannelStructure.h",
-		"/Users/gaffer/git/cubes/demos/SingleplayerDemo.h",
-		"/Users/gaffer/git/protocol/build/ProfileProtocol.make",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestMessages.h",
-		"/Users/gaffer/git/protocol/data/fonts/Console.font",
-		"/Users/gaffer/git/protocol/data/shaders/Console.frag",
-		"/Users/gaffer/git/protocol/data/shaders/Console.vert",
-		"/Users/gaffer/git/protocol/src/network/Resolver.h",
-		"/Users/gaffer/git/protocol/src/protocol/Connection.h",
-		"/Users/gaffer/git/protocol/src/virtualgo/Common.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/Client.h",
-		"/Users/gaffer/git/protocol/src/protocol/Object.h",
-		"/Users/gaffer/git/protocol/Cubes.make",
-		"/Users/gaffer/git/protocol/src/game/Demo.h",
-		"/Users/gaffer/git/protocol/data/shaders/Default.frag",
-		"/Users/gaffer/git/protocol/src/protocol/DataBlockSender.cpp",
-		"/Users/gaffer/git/protocol/src/game/StoneDemo.cpp",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/Shaders/StoneShader.fragment",
-		"/Users/gaffer/git/protocol/src/ClientServer/Server.h",
-		"/Users/gaffer/git/virtualgo/Stone.h",
-		"/Users/gaffer/git/protocol/build/StoneTool.make",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestPackets.h",
-		"/Users/gaffer/git/protocol/tests/core/TestCore.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/Stream.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/Server.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/Connection.cpp",
-		"/Users/gaffer/git/protocol/tests/ClientServer/ProfileClientServer.cpp",
-		"/Users/gaffer/git/protocol/tests/ClientServer/SoakClientServer.cpp",
-		"/Users/gaffer/git/protocol/tests/protocol/ProfileProtocol.cpp",
-		"/Users/gaffer/git/protocol/tests/protocol/SoakProtocol.cpp",
-		"/Users/gaffer/git/protocol/tests/protocol/TestConnection.cpp",
-		"/Users/gaffer/git/protocol/tests/protocol/TestReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/src/protocol/ConnectionPacket.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerPackets.h",
-		"/Users/gaffer/git/protocol/src/network/BSDSocket.cpp",
-		"/Users/gaffer/git/protocol/tests/network/TestNetwork.cpp",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerDataBlock.h",
-		"/Users/gaffer/git/protocol/build/obj/x64/Debug/TestClientServer/TestClientServer.d",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestCommon.h",
-		"/Users/gaffer/git/protocol/build/TestClientServer.make",
-		"/Users/gaffer/git/virtualgo/xcode/Virtual Go/Shaders/BoardShader.fragment",
-		"/Users/gaffer/git/protocol/src/virtualgo/Board.h",
-		"/Users/gaffer/git/protocol/build/ProfileClientServer.make",
-		"/Users/gaffer/git/protocol/src/protocol/ProtocolEnums.h",
-		"/Users/gaffer/git/protocol/build/SoakClientServer.make",
-		"/Users/gaffer/git/protocol/build/TestNetwork.make",
-		"/Users/gaffer/git/protocol/src/clientServer/ClientServerEnums.h",
-		"/Users/gaffer/git/protocol/ClientServer.make",
-		"/Users/gaffer/git/protocol/tests/protocol/TestCommon.h",
-		"/Users/gaffer/git/protocol/tests/protocol/UnitTest.cpp",
-		"/Users/gaffer/git/protocol/tests/ClientServer/UnitTest.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest++/CurrentTest.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest++/Test.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest++/TestList.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest++/TestRunner.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest++/TestDetails.cpp",
-		"/Users/gaffer/git/protocol/tests/network/UnitTest.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest.cpp",
-		"/Users/gaffer/git/virtualgo/UnitTest++/TestSuite.h",
-		"/Users/gaffer/git/protocol/tests/protocol/TestStream.cpp",
-		"/Users/gaffer/git/virtualgo/Common.h",
-		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
-		"/Users/gaffer/git/protocol/src/game/GameClient.cpp",
-		"/Users/gaffer/git/protocol/src/game/GameClient.h",
-		"/Users/gaffer/git/protocol/src/game/GameServer.h",
-		"/Users/gaffer/git/protocol/src/game/GameMessages.h",
-		"/Users/gaffer/git/protocol/src/game/GameContext.h",
-		"/Users/gaffer/git/protocol/src/game/GamePackets.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerConstants.h",
-		"/Users/gaffer/git/protocol/src/protocol/ProtocolConstants.h",
-		"/Users/gaffer/git/protocol/src/network/Constants.h",
-		"/Users/gaffer/git/protocol/src/Protocol/ProtocolEnums.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerContext.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerEnums.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerContext.cpp",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerDataBlock.cpp",
-		"/Users/gaffer/git/protocol/build/Server.make",
-		"/Users/gaffer/git/protocol/src/cubes/Simulation.h",
-		"/Users/gaffer/git/protocol/tests/protocol/TestMessages.h",
-		"/Users/gaffer/git/protocol/tests/network/TestPackets.h",
-		"/Users/gaffer/git/protocol/tests/protocol/TestPackets.h",
-		"/Users/gaffer/git/virtualgo/UnitTest++/TestReporter.cpp",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/data/shaders/Cubes.vert",
+		"/Users/gaffer/git/protocol/src/Cubes/Config.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
+		"/Users/gaffer/git/protocol/src/Game/GameMessages.h",
+		"/Users/gaffer/git/protocol/src/Game/InputManager.h",
+		"/Users/gaffer/git/protocol/GOALS",
+		"/Users/gaffer/git/protocol/src/Game/Global.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Render.cpp",
+		"/Users/gaffer/git/protocol/external/nvImage/rgbe.c",
+		"/Users/gaffer/git/protocol/src/Game/RecordingManager.h",
 		"/Users/gaffer/git/protocol/Protocol.make",
-		"/Users/gaffer/git/virtualgo/UnitTest++/TestMacros.h",
-		"/Users/gaffer/git/protocol/src/protocol/DataBlockReceiver.cpp",
-		"/Users/gaffer/git/virtualgo/Dynamics.cpp",
-		"/Users/gaffer/git/protocol/src/clientServer/Client.h",
-		"/Users/gaffer/git/protocol/build/Client.make",
-		"/Users/gaffer/git/protocol/src/protocol/Enums.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/Packets.h",
-		"/Users/gaffer/git/protocol/tests/Network/TestPackets.h",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/src/Game/CubesDemo.cpp",
+		"/Users/gaffer/git/protocol/untitled",
+		"/Users/gaffer/git/protocol/src/Cubes/Mathematics.h",
+		"/Users/gaffer/git/protocol/src/Cubes/View.cpp",
+		"/Users/gaffer/git/protocol/external/vectorial/mat4f.h",
+		"/Users/gaffer/git/protocol/src/Cubes/ViewObject.h",
+		"/Users/gaffer/git/protocol/src/Cubes/View.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Simulation.cpp",
+		"/Users/gaffer/git/protocol/tests/Core/TestCore.cpp",
+		"/Users/gaffer/git/protocol/tests/Protocol/SoakProtocol.cpp",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestConnection.cpp",
+		"/Users/gaffer/git/protocol/assets/Fonts/AnonymousProMinus/README.txt",
+		"/Users/gaffer/git/protocol/src/Core/Allocator.h",
+		"/Users/gaffer/git/protocol/Core.make",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/DemoManager.d",
+		"/Users/gaffer/git/protocol/src/Game/GameChannelStructure.h",
+		"/Users/gaffer/git/protocol/src/Game/CubesDemo.h",
+		"/Users/gaffer/git/protocol/src/Game/DemoManager.h",
+		"/Users/gaffer/git/protocol/src/Game/StoneDemo.h",
+		"/Users/gaffer/git/protocol/src/Game/Demo.h",
+		"/Users/gaffer/git/protocol/src/Game/StoneDemo.cpp",
+		"/Users/gaffer/git/protocol/src/Game/InterpolationDemo.h",
+		"/Users/gaffer/git/protocol/src/Game/InterpolationDemo.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Hypercube.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Cubes.h",
+		"/Users/gaffer/git/protocol/tests/Cubes/TestCubes.cpp",
+		"/Users/gaffer/git/protocol/Cubes.make",
+		"/Users/gaffer/git/protocol/src/Core/Hash.h",
+		"/Users/gaffer/git/protocol/src/Game/Render.h",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestDataBlockSendAndReceive.cpp",
+		"/Users/gaffer/git/protocol/src/Network/Interface.h",
+		"/Users/gaffer/git/protocol/src/VirtualGo/InertiaTensor.h",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
+		"/Users/gaffer/git/protocol/src/Game/DemoManager.cpp",
+		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Debug.vert",
+		"/Users/gaffer/git/protocol/WOULD BE NICE",
+		"/Users/gaffer/git/protocol/PBR",
+		"/Users/gaffer/git/protocol/src/Core/Types.h",
+		"/Users/gaffer/git/protocol/tests/ClientServer/TestChannelStructure.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Release/Client/MeshManager.d",
+		"/Users/gaffer/git/protocol/data/shaders/Cubes.frag",
+		"/Users/gaffer/git/protocol/src/Protocol/Object.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Util.d",
+		"/Users/gaffer/git/cubes/client/Render.cpp",
+		"/Users/gaffer/git/protocol/tests/VirtualGo/TestVirtualGo.cpp",
+		"/Users/gaffer/git/protocol/assets/CubeMaps/grace-new.hdr",
+		"/Users/gaffer/git/protocol/src/Game/Console.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Debug.frag",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/GameClient.d",
+		"/Users/gaffer/git/protocol/assets/CubeMaps/doge2.hdr",
+		"/Users/gaffer/git/protocol/src/ClientServer/Server.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/Shadow.frag",
+		"/Users/gaffer/git/protocol/build/Server.make",
+		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerEnums.h",
+		"/Users/gaffer/git/protocol/data/shaders/Shadow.vert",
+		"/Users/gaffer/git/protocol/src/Game/Model.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Model.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Activation.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Activation.h",
+		"/Users/gaffer/git/protocol/data/shaders/Flat.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Console.frag",
+		"/Users/gaffer/git/protocol/src/Game/ShaderManager.cpp",
 		"/Users/gaffer/git/protocol/build/SoakProtocol.make",
-		"/Users/gaffer/git/protocol/bin/SoakProtocol",
-		"/Users/gaffer/git/protocol/build/TestProtocol.make"
+		"/Users/gaffer/git/protocol/build/StoneTool.make",
+		"/Users/gaffer/git/protocol/src/Game/MeshManager.cpp",
+		"/Users/gaffer/git/protocol/src/VirtualGo/CollisionResponse.h",
+		"/Users/gaffer/git/protocol/src/Protocol/ReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/Model.d",
+		"/Users/gaffer/git/cubes/shared/Game.h",
+		"/Users/gaffer/git/cubes/demos/Demo.h",
+		"/Users/gaffer/git/cubes/shared/Simulation.cpp",
+		"/Users/gaffer/git/cubes/shared/Game.cpp",
+		"/Users/gaffer/git/cubes/shared/Engine.cpp",
+		"/Users/gaffer/git/cubes/shared/Activation.cpp",
+		"/Users/gaffer/git/cubes/shared/ViewObject.h",
+		"/Users/gaffer/git/cubes/shared/Simulation.h",
+		"/Users/gaffer/git/cubes/shared/Mathematics.h",
+		"/Users/gaffer/git/cubes/shared/Engine.h",
+		"/Users/gaffer/git/cubes/shared/Cubes.h",
+		"/Users/gaffer/git/cubes/shared/Config.h",
+		"/Users/gaffer/git/cubes/shared/Activation.h",
+		"/Users/gaffer/git/protocol/src/Game/Font.cpp",
+		"/Users/gaffer/git/cubes/shared/Hypercube.h",
+		"/Users/gaffer/git/cubes/demos/SingleplayerDemo.h",
+		"/Users/gaffer/git/protocol/data/shaders/Default.frag",
+		"/Users/gaffer/git/protocol/src/Game/GameClient.cpp",
+		"/Users/gaffer/git/protocol/data/shaders/CubesLit.vert",
+		"/Users/gaffer/git/protocol/data/fonts/FPS.font",
+		"/Users/gaffer/git/protocol/data/shaders/CubesLit.frag",
+		"/Users/gaffer/git/protocol/tools/Stone/StoneTool.cpp",
+		"/Users/gaffer/git/protocol/src/ClientServer/Client.cpp",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/TestNetwork/TestNetwork.d",
+		"/Users/gaffer/git/protocol/data/shaders/CubeUnlit.vert",
+		"/Users/gaffer/git/protocol/data/shaders/CubeUnlit.frag",
+		"/Users/gaffer/git/protocol/src/Game/Util.cpp",
+		"/Users/gaffer/git/protocol/src/Protocol/ProtocolEnums.h",
+		"/Users/gaffer/git/protocol/build/Client.make",
+		"/Users/gaffer/git/protocol/ClientServer.make",
+		"/Users/gaffer/git/protocol/data/shaders/CubeLit.frag",
+		"/Users/gaffer/git/protocol/assets/CubeMaps/glacier.hdr",
+		"/Users/gaffer/git/protocol/data/shaders/CubeLit.vert",
+		"/Users/gaffer/git/protocol/src/Cubes/Simulation.h",
+		"/Users/gaffer/git/protocol/data/shaders/CubeDebug.vert",
+		"/Users/gaffer/git/protocol/data/shaders/CubeDebug.frag",
+		"/Users/gaffer/git/protocol/data/shaders/Flat.frag",
+		"/Users/gaffer/git/protocol/data/shaders/Stone.frag"
 	],
 	"find":
 	{
@@ -599,6 +603,8 @@
 		"height": 93.0,
 		"where_history":
 		[
+			"-CHANGES,-TODO",
+			"<open files>",
 			"-CHANGES,-TODO",
 			"<open files>",
 			"-CHANGES,-TODO",
@@ -636,134 +642,134 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"gl",
-			"sony",
-			"Sony",
-			"LoadDemo",
-			"load stone",
-			"load cubes",
-			"IsActive",
-			"CONTEXT_USER",
-			"TestContext",
-			"CONTEXT_USER",
-			"TestContext",
-			".packetType",
-			".packetTYpe",
-			".packetType",
-			"packetType",
-			".packetType",
-			"->packetType",
-			"Config->PacketType",
-			"connectionConfig.packetType",
-			"packetType",
-			"packetType = ",
-			"ConnectionPacket",
-			"ClientServerContext",
-			"value == magic",
-			"disconnect",
-			"disconnet",
-			"already_connected(",
-			"timeout()",
-			"established()",
-			"challenge()",
-			"0x51246234",
-			"TestCommon.h",
-			"pm cubes",
-			"MaxResolveAddresses",
-			"MaxHostName",
-			"protocol/ClientServerContext.h",
-			"protocol/ClientServerData",
-			"class Block;",
-			"OnServerDataReceived",
-			"struct ClientServerInfo",
-			"PacketFactory",
-			"ServerClientState",
-			"ClientServerState",
-			"CONTEXT_",
-			"#include \"protocol/Enums.h\"",
-			"Connection",
-			"Simulator",
-			"Biconvex_SAT",
-			"IntersectPlaneBiconvex_LocalSpace",
-			"IntersectPlaneBiconvex",
-			"IntersectPlaneBiconvex_LocalSpace",
-			"surface_normal_at_point",
-			"RigidBodyTransform",
-			"_CLOSE_VEC",
-			"CHECK",
-			"ASSERT",
-			"-j32",
-			"printf",
-			"_stress_test",
-			"_stress_",
-			"#define CORE_ASSERT",
-			"CHECK_CLOSE",
-			"CHECK",
-			"ActiveObject",
-			"nv_dds",
-			"TranslateDX10Format",
-			"readPng",
-			"readPing",
-			"\"../data",
-			"\"data/",
-			"Output.dds",
-			"output.dds",
-			"data\"",
-			"StoneDemo",
-			"meshData",
-			"MeshData",
-			"struct MeshData",
-			"MESH_H",
-			"numVertices = ",
-			"MODEL_H",
-			"texture_a",
-			"LightPosition",
-			"_fps",
-			"[]",
-			"operator",
-			"DDSF_CUBEMAP_POSITIVEX",
-			"fourcc",
-			"subdivision",
-			"tesselation",
-			"glm::",
-			"glViewport",
-			"DrawMeshInstances",
-			"check_",
-			"normalMatrix",
-			"after render",
-			"ProjectionMatrix",
-			"StoneRender.h",
-			"stonerender.h",
-			"glm",
-			"vec3f",
-			"mat4",
 			"game_init",
-			"clockwise",
-			"Subdivid",
-			"clockwise",
-			"stone_instance_buffer",
-			"RenderStonesInstanced",
-			"StoneManager.h",
-			"CORE_DELENTE",
-			"client->",
-			"game_update",
-			"client, ",
+			"srand",
+			"GameInput",
+			"gameInput",
+			"Input",
+			"4 * 1024",
+			"MaxPlayers",
+			"NETHACK",
+			"nethack",
+			"NETHACK",
+			"pull",
+			"        float r,g,b,a;\npull",
+			"math::",
+			"authorityOverride",
+			"getAuthorityColor",
+			"blend_time",
+			"getAuthorityColor",
+			"math::slerp",
+			"CubeInstance",
+			"RenderCubes",
+			".load",
+			"map<",
+			"ActivationArea",
+			"Cubes",
+			"alpha",
+			"RenderCubes",
+			"        view::Cubes cubes;\n::EaseIn",
+			"ExtrapolateObjects",
+			"getViewObjectUpdates",
+			"mergeViewObject",
+			"mergeViewObjectSets",
+			"visualOrientation",
+			"previousLinearVelocity",
+			"algorithm",
+			"sort",
+			"ExtrapolateObjects",
+			"Cubes.h",
+			"Cube.h",
+			"#include \"Cube.h\"",
+			"irty",
+			"dirty",
+			"AddCube",
+			"QuantizedObject",
+			"authorityTime",
+			"RenderCubeSha",
+			"ExtrapolateObjects",
+			"dHashSpaceCreate",
+			"dHashSpaceCrceate",
+			"Shadows",
+			"15",
+			"8",
+			"glfw",
+			".space",
+			".z",
+			"ColorChangeTightnessDefault",
+			"interpolationMode",
+			"InterpolationMode",
+			"ColorChangeTightness",
+			"getAuthorityColor",
+			"glDepthFunc",
+			"SetLight",
+			"getAuthorityColor",
+			"SetLightPosition",
+			"orth",
+			"Depth",
+			"STENCIL",
+			"mask_vao",
+			"orth",
+			"Ortho",
+			"DebugVeretx",
+			"::Initialize",
+			"shadow_vao",
+			"getAuthorityColor",
+			"vectorial",
+			"ShadowVertex",
+			"MaxConsoleVertices",
+			"::Initialize",
+			"~RenderInterface",
+			"todo:",
+			"vertices",
+			"struct Cube",
+			"Cube & ",
+			"RenderActivationArea",
+			"getAuthorityColor",
+			"SHADOWS",
+			"LETTERBOX",
+			"MaxViewObjects",
+			"g = ",
+			"r = ",
+			"SetLightPosition",
+			"lightPosition",
+			"numCubes",
+			"color",
+			"camera.position",
+			"lightPosition",
+			"\"EyePosition\"",
+			"Uniform",
+			"::Initialize",
 			"Render",
-			"override",
-			"overrie",
-			"functions[",
-			"Execute",
-			"m_funcion",
-			"Render",
-			"justActivated",
-			"Backspace(",
-			"Deactivate",
-			"Deactivated",
-			"justActivated",
-			"`",
-			"BindVertex",
-			"commandSize",
-			"Cursor("
+			"Initialize()",
+			"BeginScene",
+			"Render()",
+			"Initialize()",
+			"shader = ",
+			"BeginLit",
+			"GL_QUADS",
+			"GL_TRIANGLES",
+			"RenderCubes",
+			"GameWorker",
+			"GameWorkerThread",
+			"GameWorker",
+			"GameWorkerThread",
+			"        gameInstance->GetViewPacket( viewPacket );\nGameWorkerThread",
+			"GameWorkerThread",
+			"WorkerThread",
+			"viewPacket",
+			"RenderCubes",
+			"numCubes",
+			"RenderCubes",
+			"Render()",
+			"RenderCubes",
+			"Buffer",
+			"RenderInterface",
+			"Initialize()",
+			"BeginLit",
+			"Initialize(",
+			"BaseColor",
+			"\"Stone\""
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -841,7 +847,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 394.0
+		"height": 389.0
 	},
 	"output.find_results":
 	{
@@ -859,52 +865,296 @@
 		"selected_items":
 		[
 			[
-				"render.h",
-				"virtualgo/Render.h"
-			],
-			[
-				"view.cpp",
-				"protocol/src/cubes/View.cpp"
-			],
-			[
-				"cubedemo.cpp",
-				"protocol/src/game/CubesDemo.cpp"
+				"changes",
+				"CHANGES"
 			],
 			[
 				"todo",
-				"protocol/TODO"
+				"TODO"
 			],
 			[
-				"wouldbenice",
-				"protocol/WOULD BE NICE"
+				"command",
+				"src/Game/CommandLine.h"
+			],
+			[
+				"commandline.cpp",
+				"src/Game/CommandLine.cpp"
+			],
+			[
+				"game.cpp",
+				"src/Game/Game.cpp"
+			],
+			[
+				"inputmanager.cpp",
+				"src/Game/InputManager.cpp"
+			],
+			[
+				"replaymanager.cpp",
+				"src/Game/ReplayManager.cpp"
+			],
+			[
+				"replaymanager.h",
+				"src/Game/ReplayManager.h"
+			],
+			[
+				"global.h",
+				"src/Game/Global.h"
+			],
+			[
+				"repl",
+				"src/Game/ReplayManager.h"
+			],
+			[
+				"input",
+				"src/Game/InputManager.h"
+			],
+			[
+				"cubesdemo.cpp",
+				"src/Game/CubesDemo.cpp"
 			],
 			[
 				"game.h",
-				"protocol/src/cubes/Game.h"
+				"src/Cubes/Game.h"
+			],
+			[
+				"view.cpp",
+				"src/Cubes/View.cpp"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
+			],
+			[
+				"view.h",
+				"src/Cubes/View.h"
+			],
+			[
+				"mat4f.h",
+				"external/vectorial/mat4f.h"
+			],
+			[
+				"cubedemo.cpp",
+				"src/Game/CubesDemo.cpp"
+			],
+			[
+				"cubes.h",
+				"src/Cubes/Cubes.h"
+			],
+			[
+				"cube.h",
+				"src/Cubes/Cubes.h"
+			],
+			[
+				"",
+				"src/Cubes/Hypercube.h"
+			],
+			[
+				"hype",
+				"src/Cubes/Hypercube.h"
+			],
+			[
+				"hy",
+				"src/Cubes/Hypercube.h"
+			],
+			[
+				"interpolationdemo.cpp",
+				"src/Game/InterpolationDemo.cpp"
+			],
+			[
+				"interpolationdemo.h",
+				"src/Game/InterpolationDemo.h"
+			],
+			[
+				"stonedemo.cpp",
+				"src/Game/StoneDemo.cpp"
+			],
+			[
+				"stonedemo.h",
+				"src/Game/StoneDemo.h"
+			],
+			[
+				"demomanager.h",
+				"src/Game/DemoManager.h"
+			],
+			[
+				"cubedemo.h",
+				"src/Game/CubesDemo.h"
+			],
+			[
+				"demo.h",
+				"src/Game/Demo.h"
+			],
+			[
+				"cubedemo",
+				"src/Game/CubesDemo.cpp"
+			],
+			[
+				"wouldbe",
+				"WOULD BE NICE"
+			],
+			[
+				"would",
+				"WOULD BE NICE"
+			],
+			[
+				"cubes.frag",
+				"data/shaders/Cubes.frag"
+			],
+			[
+				"wouldbenice",
+				"WOULD BE NICE"
+			],
+			[
+				"config.h",
+				"src/Cubes/Config.h"
+			],
+			[
+				"console.cpp",
+				"src/Game/Console.cpp"
+			],
+			[
+				"debug.vert",
+				"data/shaders/Debug.vert"
+			],
+			[
+				"server.cpp",
+				"src/ClientServer/Server.cpp"
+			],
+			[
+				"shadow.frag",
+				"data/shaders/Shadow.frag"
+			],
+			[
+				"shadow.vert",
+				"data/shaders/Shadow.vert"
+			],
+			[
+				"model.cpp",
+				"src/Game/Model.cpp"
+			],
+			[
+				"activation.cpp",
+				"src/Cubes/Activation.cpp"
+			],
+			[
+				"config",
+				"src/Cubes/Config.h"
+			],
+			[
+				"activation.h",
+				"src/Cubes/Activation.h"
+			],
+			[
+				"view",
+				"src/Cubes/View.h"
+			],
+			[
+				"cubes",
+				"data/shaders/Cubes.vert"
+			],
+			[
+				"model.h",
+				"src/Game/Model.h"
+			],
+			[
+				"mesh.cpp",
+				"src/Game/MeshManager.cpp"
+			],
+			[
+				"font.cpp",
+				"src/Game/Font.cpp"
+			],
+			[
+				"cubeslit.vert",
+				"data/shaders/CubesLit.vert"
+			],
+			[
+				"cubeslit.frag",
+				"data/shaders/CubesLit.frag"
+			],
+			[
+				"meshmanager.cpp",
+				"src/Game/MeshManager.cpp"
+			],
+			[
+				"stone.cp",
+				"src/Game/StoneDemo.cpp"
+			],
+			[
+				"client.cpp",
+				"src/ClientServer/Client.cpp"
+			],
+			[
+				"mathem",
+				"src/Cubes/Mathematics.h"
+			],
+			[
+				"cubeunlit.vert",
+				"data/shaders/CubeUnlit.vert"
+			],
+			[
+				"cubelit.vert",
+				"data/shaders/CubeLit.vert"
+			],
+			[
+				"cubelit.frag",
+				"data/shaders/CubeLit.frag"
+			],
+			[
+				"flat.vert",
+				"data/shaders/Flat.vert"
+			],
+			[
+				"cube.vert",
+				"data/shaders/Cube.vert"
+			],
+			[
+				"stone.frag",
+				"data/shaders/Stone.frag"
+			],
+			[
+				"stone",
+				"data/shaders/Stone.vert"
+			],
+			[
+				"render.h",
+				"src/Cubes/Render.h"
+			],
+			[
+				"render.cpp",
+				"src/Cubes/Render.cpp"
+			],
+			[
+				"stone.cpp",
+				"src/Game/StoneDemo.cpp"
+			],
+			[
+				"gameclient.h",
+				"src/Game/GameClient.h"
+			],
+			[
+				"gameclient.cpp",
+				"src/Game/GameClient.cpp"
+			],
+			[
+				"stonemanager.h",
+				"src/Game/StoneManager.h"
+			],
+			[
+				"stonemanager.cpp",
+				"src/Game/StoneManager.cpp"
+			],
+			[
+				"inputmanager.h",
+				"src/Game/InputManager.h"
+			],
+			[
+				"cubes.c",
+				"src/Game/CubesDemo.cpp"
 			],
 			[
 				"cubesdemo.h",
 				"protocol/src/game/CubesDemo.h"
-			],
-			[
-				"cubesdemo.cpp",
-				"protocol/src/game/CubesDemo.cpp"
-			],
-			[
-				"premake4.lua",
-				"protocol/premake4.lua"
-			],
-			[
-				"changes",
-				"protocol/CHANGES"
-			],
-			[
-				"game.cpp",
-				"protocol/src/game/Game.cpp"
-			],
-			[
-				"console.cpp",
-				"protocol/src/game/Console.cpp"
 			],
 			[
 				"console.h",
@@ -915,16 +1165,8 @@
 				"protocol/src/game/CommandLine.h"
 			],
 			[
-				"client.cpp",
-				"protocol/src/ClientServer/Client.cpp"
-			],
-			[
 				"demomanager.cpp",
 				"protocol/src/game/DemoManager.cpp"
-			],
-			[
-				"stonedemo.h",
-				"protocol/src/game/StoneDemo.h"
 			],
 			[
 				"stonedemo",
@@ -979,20 +1221,12 @@
 				"protocol/tests/protocol/TestCommon.h"
 			],
 			[
-				"wouldbe",
-				"protocol/WOULD BE NICE"
-			],
-			[
 				"woudbe",
 				"protocol/WOULD BE NICE"
 			],
 			[
 				"soakprotocol.cpp",
 				"protocol/tests/protocol/SoakProtocol.cpp"
-			],
-			[
-				"gameclient.cpp",
-				"protocol/src/game/GameClient.cpp"
 			],
 			[
 				"gamecontext.h",
@@ -1003,16 +1237,8 @@
 				"protocol/src/game/GameServer.h"
 			],
 			[
-				"gameclient.h",
-				"protocol/src/game/GameClient.h"
-			],
-			[
 				"client.h",
 				"protocol/src/ClientServer/Client.h"
-			],
-			[
-				"server.cpp",
-				"protocol/src/ClientServer/Server.cpp"
 			],
 			[
 				"clientserverenums.h",
@@ -1067,10 +1293,6 @@
 				"protocol/src/virtualgo/Biconvex.h"
 			],
 			[
-				"would",
-				"protocol/WOULD BE NICE"
-			],
-			[
 				"comomn.h",
 				"protocol/src/virtualgo/Common.h"
 			],
@@ -1119,10 +1341,6 @@
 				"protocol/tests/protocol/UnitTest.cpp"
 			],
 			[
-				"activation.h",
-				"protocol/src/cubes/Activation.h"
-			],
-			[
 				"viewobject.h",
 				"protocol/src/cubes/ViewObject.h"
 			],
@@ -1155,220 +1373,8 @@
 				"external/nvimage/nvImagePng.cpp"
 			],
 			[
-				"stonedemo.cpp",
-				"src/game/StoneDemo.cpp"
-			],
-			[
-				"stone.frag",
-				"data/shaders/Stone.frag"
-			],
-			[
 				"nv_dds.cpp",
 				"src/game/nv_dds.cpp"
-			],
-			[
-				"cmft.sh",
-				"cmft.sh"
-			],
-			[
-				"stone.vert",
-				"data/shaders/Stone.vert"
-			],
-			[
-				"model.h",
-				"src/game/Model.h"
-			],
-			[
-				"model.cpp",
-				"src/game/Model.cpp"
-			],
-			[
-				"stone.cpp",
-				"src/game/StoneDemo.cpp"
-			],
-			[
-				"stonetool.cpp",
-				"tools/Stone/StoneTool.cpp"
-			],
-			[
-				"fonts.json",
-				"assets/fonts/Fonts.json"
-			],
-			[
-				"meshmanager.cpp",
-				"src/game/MeshManager.cpp"
-			],
-			[
-				"mesh.cpp",
-				"tools/Stone/ToolMesh.cpp"
-			],
-			[
-				"demo.h",
-				"src/game/Demo.h"
-			],
-			[
-				"mesh.h",
-				"src/game/Mesh.h"
-			],
-			[
-				"meshmanager.h",
-				"src/game/MeshManager.h"
-			],
-			[
-				"model",
-				"src/game/Model.h"
-			],
-			[
-				"pbr",
-				"PBR"
-			],
-			[
-				"phong.vert",
-				"data/shaders/Phong.vert"
-			],
-			[
-				"too",
-				"tools/Stone/ToolMesh.cpp"
-			],
-			[
-				"nv_dds.h",
-				"src/game/nv_dds.h"
-			],
-			[
-				"stones.cpp",
-				"tools/Stone/StoneTool.cpp"
-			],
-			[
-				"phong.frag",
-				"data/shaders/Phong.frag"
-			],
-			[
-				"shader.vert",
-				"data/shaders/Flat.vert"
-			],
-			[
-				"stonemanager.h",
-				"src/game/StoneManager.h"
-			],
-			[
-				"gouraud.vert",
-				"data/shaders/Gouraud.vert"
-			],
-			[
-				"stonerender.cpp",
-				"src/game/StoneRender.cpp"
-			],
-			[
-				"stonerender.h",
-				"src/game/StoneRender.h"
-			],
-			[
-				"meshmnager.h",
-				"src/game/MeshManager.h"
-			],
-			[
-				"oal",
-				"GOALS"
-			],
-			[
-				"stoneinstanced.vert",
-				"data/shaders/StoneInstanced.vert"
-			],
-			[
-				"inputmanager.cpp",
-				"src/game/InputManager.cpp"
-			],
-			[
-				"demo.cpp",
-				"src/game/StoneDemo.cpp"
-			],
-			[
-				"demomanager.h",
-				"src/game/DemoManager.h"
-			],
-			[
-				"global.h",
-				"src/game/Global.h"
-			],
-			[
-				"shadermanager.h",
-				"src/game/ShaderManager.h"
-			],
-			[
-				"shadermanager.cpp",
-				"src/game/ShaderManager.cpp"
-			],
-			[
-				"fontmanager.h",
-				"src/game/FontManager.h"
-			],
-			[
-				"stonemanager.cpp",
-				"src/game/StoneManager.cpp"
-			],
-			[
-				"fontmanager.cpp",
-				"src/game/FontManager.cpp"
-			],
-			[
-				"stone",
-				"src/game/StoneManager.cpp"
-			],
-			[
-				"shader",
-				"src/game/ShaderManager.cpp"
-			],
-			[
-				"game",
-				"src/game/Game.cpp"
-			],
-			[
-				"gameclient",
-				"src/game/GameClient.h"
-			],
-			[
-				"consolefunctions.cpp",
-				"src/game/ConsoleFunctions.cpp"
-			],
-			[
-				"font.h",
-				"src/game/Font.h"
-			],
-			[
-				"shader.h",
-				"src/game/ShaderManager.h"
-			],
-			[
-				"fonttool.cpp",
-				"tools/Font/FontTool.cpp"
-			],
-			[
-				"console.cp",
-				"src/game/Console.cpp"
-			],
-			[
-				"font.cpp",
-				"src/game/Font.cpp"
-			],
-			[
-				"stonefrag",
-				"data/shaders/StoneInstanced.frag"
-			],
-			[
-				"stoneinstanced.frag",
-				"data/shaders/StoneInstanced.frag"
-			],
-			[
-				"font.frag",
-				"data/shaders/Font.frag"
-			],
-			[
-				"font.vert",
-				"data/shaders/Font.vert"
-			],
-			[
-				"render.cpp",
-				"src/game/Render.cpp"
 			]
 		],
 		"width": 0.0

@@ -2,15 +2,13 @@ DONE:
 
 TODO:
 
-    -------------------------------------------
+    Setup so recording starts unless "+playback" is specified in the command line.
 
-    Bring across the code to record inputs and playback a demo while recording
-    the inputs. 
+    Implement code to write out events to a file.
 
-    Make sure the input record is at the lowest level, eg. so it plays back everything
-    including console keys, commands and such.
-
-    May also need to record the command line arguments for playback.
+    Rework the inner loop on playback so that it is driven from recorded events,
+    everything including command line, random seed, keyboard input and events,
+    and even the calls to updates (with delta time) come from the playback.
 
     -------------------------------------------
 
@@ -18,7 +16,9 @@ TODO:
 
     Capture some videos of key bits so it can be presented on the website.
 
-    Ideally, convert the videos to GIFs so they auto-play when the website is up.
+    Embed the videos into my website via HTML5 video tags:
+
+    http://www.w3schools.com/html/html5_video.asp
 
     -------------------------------------------
 
@@ -30,8 +30,47 @@ TODO:
 
     -------------------------------------------
 
+    Move as much of the cubes render and so on *OUT* of the specific cubes demo.
 
+    This allows me to have multiple cubes related demos, eg. "load lockstep", "load snapshots", "load stateful"
 
+    -------------------------------------------
+
+    Deterministic lockstep splitscreen demo
+
+    -------------------------------------------
+
+    Snapshots demo
+
+    -------------------------------------------
+
+    Stateful demo
+
+    -------------------------------------------
+
+    Write rest of article series
+
+    -------------------------------------------
+
+    Polish cube demo implementation as much as possible
+
+    Port to windows and make sure it runs on Win64
+
+    Release source code for singleplayer, lockstep, snapshot and stateful demos.
+
+    -------------------------------------------
+
+    Improve visuals of cube demo as much as possible
+
+    eg. cubemap, PBR, maybe some subtle glossy planar reflections...
+
+    Work out things that can be done to make it look as awesome as possible
+
+    -------------------------------------------
+
+    Prepare GDC slides from article series
+
+    -------------------------------------------
 
 
 

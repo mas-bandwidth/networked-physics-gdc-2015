@@ -3,6 +3,7 @@
 #ifdef CLIENT
 
 #include "DemoManager.h"
+#include "ReplayManager.h"
 #include "Console.h"
 #include "Global.h"
 
@@ -18,6 +19,8 @@ InputManager::~InputManager()
 
 void InputManager::KeyEvent( int key, int scancode, int action, int mods )
 {
+    global.replayManager->RecordKeyEvent( key, scancode, action, mods );
+
     if ( global.console->KeyEvent( key, scancode, action, mods ) )
         return;
 
@@ -29,6 +32,8 @@ void InputManager::KeyEvent( int key, int scancode, int action, int mods )
 
 void InputManager::CharEvent( unsigned int code )
 {
+    global.replayManager->RecordCharEvent( code );
+
     if ( global.console->CharEvent( code ) )
         return;
 
