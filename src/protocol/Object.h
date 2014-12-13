@@ -19,4 +19,10 @@ namespace protocol
     };
 }
 
+#define PROTOCOL_SERIALIZE_OBJECT( stream )                                                     \
+    void SerializeRead( class protocol::ReadStream & stream ) { Serialize( stream ); };         \
+    void SerializeWrite( class protocol::WriteStream & stream ) { Serialize( stream ); };       \
+    void SerializeMeasure( class protocol::MeasureStream & stream ) { Serialize( stream ); };   \
+    template <typename Stream> void Serialize( Stream & stream )
+
 #endif

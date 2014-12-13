@@ -2,9 +2,15 @@ DONE:
 
 TODO:
 
-    Setup so recording starts unless "+playback" is specified in the command line.
+    Record demo header (hardcode this with fwrite, eg. don't use stream)
 
-    Implement code to write out events to a file.
+    -------------------------------------------
+
+    Add read/write string to stream.
+
+    Add read/write float to stream.
+
+    -------------------------------------------
 
     Rework the inner loop on playback so that it is driven from recorded events,
     everything including command line, random seed, keyboard input and events,

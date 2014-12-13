@@ -2,6 +2,10 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    Take nice "PROTOCOL_SERIALIZE_OBJECT" macro and push to all other serialize objects, eg. messages
+
+    ----------------------------------
+
     There should be a Debug.h and Debug.cpp -- inside here FPS display,
     and code that toggles the FPS display when you press delete while
     in the console is not up.

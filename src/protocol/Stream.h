@@ -317,208 +317,232 @@ namespace protocol
         const void ** m_context;
         bool m_aborted;
     };
+}
 
-    template <typename T> void serialize_object( ReadStream & stream, T & object )
-    {                        
-        object.SerializeRead( stream );
+template <typename T> void serialize_object( protocol::ReadStream & stream, T & object )
+{                        
+    object.SerializeRead( stream );
+}
+
+template <typename T> void serialize_object( protocol::WriteStream & stream, T & object )
+{                        
+    object.SerializeWrite( stream );
+}
+
+template <typename T> void serialize_object( protocol::MeasureStream & stream, T & object )
+{                        
+    object.SerializeMeasure( stream );
+}
+
+#define serialize_int( stream, value, min, max )            \
+    do                                                      \
+    {                                                       \
+        CORE_ASSERT( min < max );                           \
+        int32_t int32_value;                                \
+        if ( Stream::IsWriting )                            \
+        {                                                   \
+            CORE_ASSERT( value >= min );                    \
+            CORE_ASSERT( value <= max );                    \
+            int32_value = (int32_t) value;                  \
+        }                                                   \
+        stream.SerializeInteger( int32_value, min, max );   \
+        if ( Stream::IsReading )                            \
+        {                                                   \
+            value = (decltype(value)) int32_value;          \
+            CORE_ASSERT( value >= min );                    \
+            CORE_ASSERT( value <= max );                    \
+        }                                                   \
+    } while (0)
+
+#define serialize_bits( stream, value, bits )               \
+    do                                                      \
+    {                                                       \
+        CORE_ASSERT( bits > 0 );                            \
+        CORE_ASSERT( bits <= 32 );                          \
+        uint32_t uint32_value;                              \
+        if ( Stream::IsWriting )                            \
+            uint32_value = (uint32_t) value;                \
+        stream.SerializeBits( uint32_value, bits );         \
+        if ( Stream::IsReading )                            \
+            value = (decltype(value)) uint32_value;         \
+    } while (0)
+
+template <typename Stream> void serialize_bool( Stream & stream, bool & value )
+{
+    serialize_bits( stream, value, 1 );
+}
+
+template <typename Stream> void serialize_uint16( Stream & stream, uint16_t & value )
+{
+    serialize_bits( stream, value, 16 );
+}
+
+template <typename Stream> void serialize_uint32( Stream & stream, uint32_t & value )
+{
+    serialize_bits( stream, value, 32 );
+}
+
+template <typename Stream> void serialize_uint64( Stream & stream, uint64_t & value )
+{
+    uint32_t hi,lo;
+    if ( Stream::IsWriting )
+    {
+        lo = value & 0xFFFFFFFF;
+        hi = value >> 32;
+    }
+    serialize_bits( stream, lo, 32 );
+    serialize_bits( stream, hi, 32 );
+    if ( Stream::IsReading )
+        value = ( uint64_t(hi) << 32 ) | lo;
+}
+
+template <typename Stream> void serialize_int16( Stream & stream, int16_t & value )
+{
+    serialize_bits( stream, value, 16 );
+}
+
+template <typename Stream> void serialize_int32( Stream & stream, int32_t & value )
+{
+    serialize_bits( stream, value, 32 );
+}
+
+template <typename Stream> void serialize_int64( Stream & stream, int64_t & value )
+{
+    uint32_t hi,lo;
+    if ( Stream::IsWriting )
+    {
+        lo = uint64_t(value) & 0xFFFFFFFF;
+        hi = uint64_t(value) >> 32;
+    }
+    serialize_bits( stream, lo, 32 );
+    serialize_bits( stream, hi, 32 );
+    if ( Stream::IsReading )
+        value = ( int64_t(hi) << 32 ) | lo;
+}
+
+template <typename Stream> void serialize_bytes( Stream & stream, uint8_t * data, int bytes )
+{
+    stream.SerializeBytes( data, bytes );        
+}
+
+template <typename Stream> void serialize_block( Stream & stream, protocol::Block & block, int maxBytes )
+{ 
+    stream.Align();
+
+    int numBytes;
+    if ( Stream::IsWriting )
+    {
+        CORE_ASSERT( block.IsValid() );
+        numBytes = (int) block.GetSize();
     }
 
-    template <typename T> void serialize_object( WriteStream & stream, T & object )
-    {                        
-        object.SerializeWrite( stream );
-    }
+    serialize_int( stream, numBytes, 1, maxBytes );
 
-    template <typename T> void serialize_object( MeasureStream & stream, T & object )
-    {                        
-        object.SerializeMeasure( stream );
+    stream.Align();
+    
+    if ( Stream::IsReading )
+    {
+        CORE_ASSERT( numBytes > 0 );
+        CORE_ASSERT( numBytes <= maxBytes );
+        core::Allocator * allocator = block.GetAllocator();
+        CORE_ASSERT( allocator );
+        uint8_t * data = (uint8_t*) allocator->Allocate( numBytes );
+        block.Connect( *allocator, data, numBytes );
     }
     
-    #define serialize_int( stream, value, min, max )            \
-        do                                                      \
-        {                                                       \
-            CORE_ASSERT( min < max );                           \
-            int32_t int32_value;                                \
-            if ( Stream::IsWriting )                            \
-            {                                                   \
-                CORE_ASSERT( value >= min );                    \
-                CORE_ASSERT( value <= max );                    \
-                int32_value = (int32_t) value;                  \
-            }                                                   \
-            stream.SerializeInteger( int32_value, min, max );   \
-            if ( Stream::IsReading )                            \
-            {                                                   \
-                value = (decltype(value)) int32_value;          \
-                CORE_ASSERT( value >= min );                    \
-                CORE_ASSERT( value <= max );                    \
-            }                                                   \
-        } while (0)
+    stream.SerializeBytes( block.GetData(), numBytes );
+}
 
-    #define serialize_bits( stream, value, bits )               \
-        do                                                      \
-        {                                                       \
-            CORE_ASSERT( bits > 0 );                            \
-            CORE_ASSERT( bits <= 32 );                          \
-            uint32_t uint32_value;                              \
-            if ( Stream::IsWriting )                            \
-                uint32_value = (uint32_t) value;                \
-            stream.SerializeBits( uint32_value, bits );         \
-            if ( Stream::IsReading )                            \
-                value = (decltype(value)) uint32_value;         \
-        } while (0)
-
-    template <typename Stream> void serialize_bool( Stream & stream, bool & value )
+template <typename Stream, typename T> void serialize_int_relative( Stream & stream, T previous, T & current )
+{
+    uint32_t difference;
+    if ( Stream::IsWriting )
     {
-        serialize_bits( stream, value, 1 );
+        CORE_ASSERT( previous < current );
+        difference = current - previous;
+        CORE_ASSERT( difference >= 0 );
     }
 
-    template <typename Stream> void serialize_uint16( Stream & stream, uint16_t & value )
+    bool oneBit;
+    if ( Stream::IsWriting )
+        oneBit = difference == 1;
+    serialize_bool( stream, oneBit );
+    if ( oneBit )
     {
-        serialize_bits( stream, value, 16 );
-    }
-
-    template <typename Stream> void serialize_uint32( Stream & stream, uint32_t & value )
-    {
-        serialize_bits( stream, value, 32 );
-    }
-
-    template <typename Stream> void serialize_uint64( Stream & stream, uint64_t & value )
-    {
-        uint32_t hi,lo;
-        if ( Stream::IsWriting )
-        {
-            lo = value & 0xFFFFFFFF;
-            hi = value >> 32;
-        }
-        serialize_bits( stream, lo, 32 );
-        serialize_bits( stream, hi, 32 );
         if ( Stream::IsReading )
-            value = ( uint64_t(hi) << 32 ) | lo;
+            current = previous + 1;
+        return;
     }
 
-    template <typename Stream> void serialize_bytes( Stream & stream, uint8_t * data, int bytes )
+    bool twoBits;
+    if ( Stream::IsWriting )
+        twoBits = difference == difference <= 4;
+    serialize_bool( stream, twoBits );
+    if ( twoBits )
     {
-        stream.SerializeBytes( data, bytes );        
-    }
-
-    template <typename Stream> void serialize_block( Stream & stream, Block & block, int maxBytes )
-    { 
-        stream.Align();
-
-        int numBytes;
-        if ( Stream::IsWriting )
-        {
-            CORE_ASSERT( block.IsValid() );
-            numBytes = (int) block.GetSize();
-        }
-
-        serialize_int( stream, numBytes, 1, maxBytes );
-
-        stream.Align();
-        
+        serialize_int( stream, difference, 1, 4 );
         if ( Stream::IsReading )
-        {
-            CORE_ASSERT( numBytes > 0 );
-            CORE_ASSERT( numBytes <= maxBytes );
-            core::Allocator * allocator = block.GetAllocator();
-            CORE_ASSERT( allocator );
-            uint8_t * data = (uint8_t*) allocator->Allocate( numBytes );
-            block.Connect( *allocator, data, numBytes );
-        }
-        
-        stream.SerializeBytes( block.GetData(), numBytes );
+            current = previous + difference;
+        return;
     }
 
-    template <typename Stream, typename T> void serialize_int_relative( Stream & stream, T previous, T & current )
+    bool fourBits;
+    if ( Stream::IsWriting )
+        fourBits = difference == difference <= 16;
+    serialize_bool( stream, fourBits );
+    if ( fourBits )
     {
-        uint32_t difference;
-        if ( Stream::IsWriting )
-        {
-            CORE_ASSERT( previous < current );
-            difference = current - previous;
-            CORE_ASSERT( difference >= 0 );
-        }
-
-        bool oneBit;
-        if ( Stream::IsWriting )
-            oneBit = difference == 1;
-        serialize_bool( stream, oneBit );
-        if ( oneBit )
-        {
-            if ( Stream::IsReading )
-                current = previous + 1;
-            return;
-        }
-
-        bool twoBits;
-        if ( Stream::IsWriting )
-            twoBits = difference == difference <= 4;
-        serialize_bool( stream, twoBits );
-        if ( twoBits )
-        {
-            serialize_int( stream, difference, 1, 4 );
-            if ( Stream::IsReading )
-                current = previous + difference;
-            return;
-        }
-
-        bool fourBits;
-        if ( Stream::IsWriting )
-            fourBits = difference == difference <= 16;
-        serialize_bool( stream, fourBits );
-        if ( fourBits )
-        {
-            serialize_int( stream, difference, 1, 16 );
-            if ( Stream::IsReading )
-                current = previous + difference;
-            return;
-        }
-
-        bool eightBits;
-        if ( Stream::IsWriting )
-            eightBits = difference == difference <= 256;
-        serialize_bool( stream, eightBits );
-        if ( eightBits )
-        {
-            serialize_int( stream, difference, 1, 256 );
-            if ( Stream::IsReading )
-                current = previous + difference;
-            return;
-        }
-
-        bool twelveBits;
-        if ( Stream::IsWriting )
-            twelveBits = difference <= 4096;
-        serialize_bool( stream, twelveBits );
-        if ( twelveBits )
-        {
-            serialize_int( stream, difference, 1, 4096 );
-            if ( Stream::IsReading )
-                current = previous + difference;
-            return;
-        }
-
-        bool sixteenBits;
-        if ( Stream::IsWriting ) 
-            sixteenBits = difference <= 65535;
-        serialize_bool( stream, sixteenBits );
-        if ( sixteenBits )
-        {
-            serialize_int( stream, difference, 1, 65536 );
-            if ( Stream::IsReading )
-                current = previous + difference;
-            return;
-        }
-
-        uint32_t value = current;
-        serialize_uint32( stream, value );
+        serialize_int( stream, difference, 1, 16 );
         if ( Stream::IsReading )
-            current = (decltype(current)) value;
+            current = previous + difference;
+        return;
     }
 
-    template <typename Stream> bool serialize_check( Stream & stream, uint32_t magic )
+    bool eightBits;
+    if ( Stream::IsWriting )
+        eightBits = difference == difference <= 256;
+    serialize_bool( stream, eightBits );
+    if ( eightBits )
     {
-        return stream.Check( magic );
+        serialize_int( stream, difference, 1, 256 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
     }
-}  //
+
+    bool twelveBits;
+    if ( Stream::IsWriting )
+        twelveBits = difference <= 4096;
+    serialize_bool( stream, twelveBits );
+    if ( twelveBits )
+    {
+        serialize_int( stream, difference, 1, 4096 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    bool sixteenBits;
+    if ( Stream::IsWriting ) 
+        sixteenBits = difference <= 65535;
+    serialize_bool( stream, sixteenBits );
+    if ( sixteenBits )
+    {
+        serialize_int( stream, difference, 1, 65536 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    uint32_t value = current;
+    serialize_uint32( stream, value );
+    if ( Stream::IsReading )
+        current = (decltype(current)) value;
+}
+
+template <typename Stream> bool serialize_check( Stream & stream, uint32_t magic )
+{
+    return stream.Check( magic );
+}
 
 #endif

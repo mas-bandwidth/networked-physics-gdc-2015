@@ -239,7 +239,7 @@ int main( int argc, char * argv[] )
 {
     core::memory::initialize();
 
-    ProcessCommandLine( argc, argv );
+    StoreCommandLine( argc, argv );
 
     if ( !network::InitializeNetwork() )
     {
@@ -297,7 +297,7 @@ int main( int argc, char * argv[] )
 
     game_init();
 
-    CommandLinePostGameInit();
+    ProcessCommandLine();
 
     while ( !global.quit && !glfwWindowShouldClose( window ) )
     {

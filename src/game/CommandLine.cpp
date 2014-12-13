@@ -1,22 +1,30 @@
+#include "CommandLine.h"
 #include "Global.h"
 #include "Console.h"
 #include "ReplayManager.h"
 #include <string>
 
-static char commandLineBuffer[2048];
+static char commandLineBuffer[CommandLineBufferSize];
 
-void ProcessCommandLine( int argc, char * argv[] )
+void StoreCommandLine( int argc, char * argv[] )
 {
     commandLineBuffer[0] = '\0';
     for ( int i = 1; i < argc; ++i )
     {
+        // todo: this should be strncat!!!
         strcat( commandLineBuffer, argv[i] );
         if ( i != argc -1 )
             strcat( commandLineBuffer, " " );
     }
 }
 
-void CommandLinePostGameInit()
+void StoreCommandLine( const char * commandLine )
+{
+    strncpy( commandLineBuffer, commandLine, CommandLineBufferSize );
+    commandLineBuffer[CommandLineBufferSize-1] = '\0';
+}
+
+void ProcessCommandLine()
 {
     global.replayManager->RecordCommandLine( commandLineBuffer );
 
@@ -24,23 +32,29 @@ void CommandLinePostGameInit()
 
 //    printf( "command line: '%s'\n", buffer );
 
-    bool stone_demo = false;
-    bool cubes_demo = false;
-    bool interpolation_demo = false;
+    const char replayFile[] = "replay.bin";
 
     if ( strcmp( commandLineBuffer, "+load stone" ) == 0 )
-        stone_demo = true;
-    else if ( strcmp( commandLineBuffer, "+load cubes" ) == 0 )
-        cubes_demo = true;
-    else if ( strcmp( commandLineBuffer, "+load interpolation" ) == 0 )
-        interpolation_demo = true;
-
-    if ( stone_demo )
+    {
         global.console->ExecuteCommand( "load stone" );
-    else if ( cubes_demo )
+    }
+    else if ( strcmp( commandLineBuffer, "+load cubes" ) == 0 )
+    {
         global.console->ExecuteCommand( "load cubes" );
-    else if ( interpolation_demo )
+    }
+    else if ( strcmp( commandLineBuffer, "+load interpolation" ) == 0 )
+    {
         global.console->ExecuteCommand( "load interpolation" );
+    }
+    else if ( strcmp( commandLineBuffer, "-playback" ) == 0 )
+    {
+        global.replayManager->StartPlayback( replayFile );
+    }
     else
+    {
         global.console->Activate();
+    }
+
+    if ( !global.replayManager->IsPlayback() )
+        global.replayManager->StartRecording( replayFile );
 }

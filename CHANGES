@@ -1,4 +1,59 @@
 
+Saturday Morning, December 13th, 2014
+-------------------------------------
+
+    Setup so recording starts unless "+playback" is specified in the command line.
+
+    Refactored command line processing so it can work with playback.
+
+    Added logs to replay manager when recording and playback start.
+
+    Implement code to write out events to a file.
+
+    File structure should be:
+
+        [header][message id][message bytes][message data] [etc...]
+
+    This keeps it flexible and allows for variable length messages.
+
+    Should I my own net stream to perform the serialization?
+
+    Make sense. *YES* Otherwise I'm going to have to create my own shitty serializer for replays.
+
+    On write. Create a write stream (max message size in bytes...), serialize
+    write to this buffer, and then when serialization for that message is complete
+    take the bytes of that message and write to file in format.
+
+    On read, do that in reverse, eg. read in type, read in size, then read block
+    of data and create a read stream on that.
+
+    Should be pretty easy.
+
+    Add message enum with ids per-replay message.
+
+    Added nice macro to serialize objects.
+
+    Added random seed replay message.
+
+    Added command line message.
+
+    Add key event message.
+
+    Add char event message.
+
+    Add update message (with delta time)
+
+    Sketched out record message function.
+
+    Implement code to open the replay file for binary write. fopen.
+
+    Close the file on shutdown.
+
+    Implement code to write out a message stream to file, eg: message type + stream
+
+    Converted replay manager to have internal implementation, so impl details don't spill out.
+
+
 Sunday Morning, December 7th, 2014
 ----------------------------------
 

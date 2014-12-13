@@ -5,6 +5,10 @@
 
 namespace core { class Allocator; }
 
+namespace protocol { class Object; }
+
+struct ReplayInternal;
+
 class ReplayManager
 {
 public:
@@ -21,6 +25,8 @@ public:
 
     bool IsPlayback() const;
 
+    void Stop();
+
     void RecordRandomSeed( unsigned int seed );
 
     void RecordCommandLine( const char * commandLine );
@@ -33,8 +39,9 @@ public:
 
 private:
 
-    bool m_recording;
-    bool m_playback;
+    void RecordMessage( int type, protocol::Object & object );
+
+    ReplayInternal * m_internal;
 
     core::Allocator * m_allocator;
 };
