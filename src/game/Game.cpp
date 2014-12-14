@@ -80,9 +80,31 @@ static void game_init()
     check_opengl_error( "after game_init" );
 }
 
+static void game_shutdown()
+{
+    auto & allocator = core::memory::default_allocator();
+
+    DestroyGameClient( allocator, global.client );
+
+    CORE_DELETE( allocator, FontManager, global.fontManager );
+    CORE_DELETE( allocator, ShaderManager, global.shaderManager );
+    CORE_DELETE( allocator, MeshManager, global.meshManager );
+    CORE_DELETE( allocator, StoneManager, global.stoneManager );
+    CORE_DELETE( allocator, InputManager, global.inputManager );
+    CORE_DELETE( allocator, DemoManager, global.demoManager );
+
+    CORE_DELETE( allocator, Console, global.console );
+
+    CORE_DELETE( allocator, ReplayManager, global.replayManager );
+
+    global = Global();
+}
+
 static void game_update()
 {
-    global.replayManager->RecordUpdate( global.timeBase.deltaTime );
+    global.replayManager->RecordUpdate();
+    
+    global.replayManager->UpdatePlayback();
 
     global.client->Update( global.timeBase );
 
@@ -126,6 +148,10 @@ static void update_fps()
 
 static void render_fps()
 {
+    if ( global.replayManager->IsPlayback() )
+        return;
+
+    /*
     if ( current_fps == 0 )
         return;
 
@@ -148,6 +174,7 @@ static void render_fps()
         font->DrawText( text_x, text_y, "   FPS", Color(0,0,0) );
         font->End();
     }
+    */
 }
 
 static void render_scene()
@@ -196,24 +223,6 @@ static void game_render()
     render_console();
 
     check_opengl_error( "after render" );
-}
-
-static void game_shutdown()
-{
-    auto & allocator = core::memory::default_allocator();
-
-    DestroyGameClient( allocator, global.client );
-
-    CORE_DELETE( allocator, FontManager, global.fontManager );
-    CORE_DELETE( allocator, ShaderManager, global.shaderManager );
-    CORE_DELETE( allocator, MeshManager, global.meshManager );
-    CORE_DELETE( allocator, StoneManager, global.stoneManager );
-    CORE_DELETE( allocator, InputManager, global.inputManager );
-    CORE_DELETE( allocator, DemoManager, global.demoManager );
-
-    CORE_DELETE( allocator, Console, global.console );
-
-    global = Global();
 }
 
 void framebuffer_size_callback( GLFWwindow * window, int width, int height )
@@ -267,7 +276,8 @@ int main( int argc, char * argv[] )
     if ( fullscreen )
         window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr );
     else
-        window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
+        window = glfwCreateWindow( 500, 250, "Client", nullptr, nullptr );
+        //window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
 
     if ( !window )
     {
@@ -312,6 +322,8 @@ int main( int argc, char * argv[] )
         game_render();
 
         glfwSwapBuffers( window );
+
+        global.replayManager->UpdateCapture();
     }
 
     game_shutdown();

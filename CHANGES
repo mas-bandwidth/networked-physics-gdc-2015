@@ -1,4 +1,40 @@
 
+Saturday Evening, December 13th, 2014
+-------------------------------------
+
+    Actually deserialize the replay types.
+
+    Implement code to handle each replay message type.
+
+    Replay works!!! :D
+
+    Don't show the FPS counter in playback.
+
+    Bring back code to read the framebuffer and write to compressed TGA.
+
+    It's already in the project in Util.h
+
+    Implement capture mode "+capture" where each frame grabs framebuffer
+    and writes out to an image (incrementing image-00001.tga etc...)
+
+    Must also delete the previous capture directory before starting playback
+
+    Work out how to get the framebuffer data and write it out to the TGA file
+    each frame in "capture" mode.
+
+    Remember how to convert the tga files to uncompressed videos. Quicktime Player 7 Pro.
+
+    Make sure the quality is high and runs at 60fps.
+
+    Compress the video with high framerate to something supported by HTML5.
+
+    Embed the videos into my website via HTML5 video tags:
+
+    http://www.w3schools.com/html/html5_video.asp
+
+    Got a test video up. Looking good!
+
+
 Saturday Morning, December 13th, 2014
 -------------------------------------
 

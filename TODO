@@ -2,30 +2,6 @@ DONE:
 
 TODO:
 
-    Record demo header (hardcode this with fwrite, eg. don't use stream)
-
-    -------------------------------------------
-
-    Add read/write string to stream.
-
-    Add read/write float to stream.
-
-    -------------------------------------------
-
-    Rework the inner loop on playback so that it is driven from recorded events,
-    everything including command line, random seed, keyboard input and events,
-    and even the calls to updates (with delta time) come from the playback.
-
-    -------------------------------------------
-
-    Bring back code to read the framebuffer and write to compressed TGA.
-
-    Capture some videos of key bits so it can be presented on the website.
-
-    Embed the videos into my website via HTML5 video tags:
-
-    http://www.w3schools.com/html/html5_video.asp
-
     -------------------------------------------
 
     Write the article describing the physics simulation

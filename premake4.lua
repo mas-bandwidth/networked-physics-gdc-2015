@@ -202,6 +202,7 @@ if _ACTION == "clean" then
     if not os.is "windows" then
         os.execute "rm -f Protocol.zip"
         os.execute "rm -f *.txt"
+        os.execute "rm -f replay.bin"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"
@@ -504,6 +505,22 @@ if not os.is "windows" then
                 os.exit(1)
             end
             os.execute "bin/Client +load cubes"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "playback",
+        description = "Playback replay recording",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "make -j4 Client" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Client +playback"
         end
     }
 

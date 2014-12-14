@@ -35,7 +35,11 @@ public:
 
     void RecordCharEvent( unsigned int code );
 
-    void RecordUpdate( float deltaTime );
+    void RecordUpdate();
+
+    void UpdatePlayback();
+
+    void UpdateCapture();
 
 private:
 

@@ -26,13 +26,13 @@ void StoreCommandLine( const char * commandLine )
 
 void ProcessCommandLine()
 {
-    global.replayManager->RecordCommandLine( commandLineBuffer );
-
     // todo: implement proper command line parsing, eg. "-blah", "-blah = X", "+command something something something -switch"
 
 //    printf( "command line: '%s'\n", buffer );
 
     const char replayFile[] = "replay.bin";
+
+    bool playback = false;
 
     if ( strcmp( commandLineBuffer, "+load stone" ) == 0 )
     {
@@ -46,15 +46,20 @@ void ProcessCommandLine()
     {
         global.console->ExecuteCommand( "load interpolation" );
     }
-    else if ( strcmp( commandLineBuffer, "-playback" ) == 0 )
+    else if ( strcmp( commandLineBuffer, "+playback" ) == 0 )
     {
         global.replayManager->StartPlayback( replayFile );
+        playback = true;
     }
     else
     {
         global.console->Activate();
     }
 
-    if ( !global.replayManager->IsPlayback() )
+    if ( !global.replayManager->IsPlayback() && !playback )
+    {
         global.replayManager->StartRecording( replayFile );
+
+        global.replayManager->RecordCommandLine( commandLineBuffer );
+    }
 }

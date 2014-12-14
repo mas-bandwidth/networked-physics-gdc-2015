@@ -420,9 +420,58 @@ template <typename Stream> void serialize_int64( Stream & stream, int64_t & valu
         value = ( int64_t(hi) << 32 ) | lo;
 }
 
+template <typename Stream> void serialize_float( Stream & stream, float & value )
+{
+    union FloatInt
+    {
+        float float_value;
+        uint32_t int_value;
+    };
+
+    FloatInt tmp;
+    if ( Stream::IsWriting )
+        tmp.float_value = value;
+
+    serialize_uint32( stream, tmp.int_value );
+
+    if ( Stream::IsReading )
+        value = tmp.float_value;
+}
+
+template <typename Stream> void serialize_double( Stream & stream, double & value )
+{
+    union DoubleInt
+    {
+        double double_value;
+        uint64_t int_value;
+    };
+
+    DoubleInt tmp;
+    if ( Stream::IsWriting )
+        tmp.double_value = value;
+
+    serialize_uint64( stream, tmp.int_value );
+
+    if ( Stream::IsReading )
+        value = tmp.double_value;
+}
+
 template <typename Stream> void serialize_bytes( Stream & stream, uint8_t * data, int bytes )
 {
     stream.SerializeBytes( data, bytes );        
+}
+
+template <typename Stream> void serialize_string( Stream & stream, char * string, int buffer_size )
+{
+    uint32_t length;
+    if ( Stream::IsWriting )
+        length = strlen( string );
+    stream.Align();
+    stream.SerializeBits( length, 32 );
+    CORE_ASSERT( length < buffer_size - 1 );
+    stream.SerializeBytes( (uint8_t*)string, length );
+    if ( Stream::IsReading )
+        string[length] = '\0';
 }
 
 template <typename Stream> void serialize_block( Stream & stream, protocol::Block & block, int maxBytes )
