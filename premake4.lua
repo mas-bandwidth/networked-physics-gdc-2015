@@ -203,6 +203,7 @@ if _ACTION == "clean" then
         os.execute "rm -f Protocol.zip"
         os.execute "rm -f *.txt"
         os.execute "rm -f replay.bin"
+        os.execute "rm -f output"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"
@@ -501,6 +502,9 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
+            if os.execute "rm -rf output; mkdir -p output" ~= 0 then
+                os.exit(1)
+            end
             if os.execute "make -j4 Client" ~= 0 then
                 os.exit(1)
             end

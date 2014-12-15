@@ -2,6 +2,16 @@ WOULD BE NICE:
 
     ----------------------------------
 
+    If the code that wrote the TGA file was spawned off to another thread,
+    it should be generally possible to capture realtime images without 
+    demo recording and playback, eg. faster workflow.
+
+    ----------------------------------
+
+    Add capture mode, eg. "-capture" which runs in windowed and in reduced resolution (500/250 is good)
+
+    ----------------------------------
+
     Take nice "PROTOCOL_SERIALIZE_OBJECT" macro and push to all other serialize objects, eg. messages
 
     ----------------------------------
