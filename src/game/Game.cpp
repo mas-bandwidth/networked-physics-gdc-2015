@@ -276,7 +276,8 @@ int main( int argc, char * argv[] )
     if ( fullscreen )
         window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr );
     else
-        window = glfwCreateWindow( 400, 200, "Client", nullptr, nullptr );
+        window = glfwCreateWindow( 960, 540, "Client", nullptr, nullptr );
+        //window = glfwCreateWindow( 400, 200, "Client", nullptr, nullptr );
         //window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
 
     if ( !window )
