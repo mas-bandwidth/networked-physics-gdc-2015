@@ -203,7 +203,7 @@ if _ACTION == "clean" then
         os.execute "rm -f Protocol.zip"
         os.execute "rm -f *.txt"
         os.execute "rm -f replay.bin"
-        os.execute "rm -f output"
+        os.execute "rm -rf output"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"
