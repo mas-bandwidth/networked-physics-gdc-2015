@@ -1,19 +1,7 @@
 DONE:
 
 TODO:
-
-    -------------------------------------------
-
-    Work out how to setup alternative images for when the HTML5 video is not available.    
-
-    Would actually be even better just to link to the youtube version of that video as a fallback.
-
-    BOOM great idea.
-
-    Seems that 60fps can be uploaded to youtube.
-
-    Idea, upload in super high res and see what happens. Should be possible.
-
+    
     -------------------------------------------
 
     Move as much of the cubes render and so on *OUT* of the specific cubes demo.
@@ -23,6 +11,12 @@ TODO:
     -------------------------------------------
 
     Deterministic lockstep splitscreen demo
+
+    Implement splitscreen view side-by-side
+
+    Add simulated latency and so on.
+
+    Actually implement packet transfer between the two halves, do it "for real" using the protocol layer.
 
     -------------------------------------------
 
@@ -43,14 +37,6 @@ TODO:
     Port to windows and make sure it runs on Win64
 
     Release source code for singleplayer, lockstep, snapshot and stateful demos.
-
-    -------------------------------------------
-
-    Improve visuals of cube demo as much as possible
-
-    eg. cubemap, PBR, maybe some subtle glossy planar reflections...
-
-    Work out things that can be done to make it look as awesome as possible
 
     -------------------------------------------
 

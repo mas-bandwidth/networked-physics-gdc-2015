@@ -1,4 +1,20 @@
 
+Saturday, December 20th, 2014
+-----------------------------
+
+    Capture a video of the player cube just rolling around by itself
+
+    Final pass the physics simulation article so it flows conversationally.
+
+    Updated gafferongames.com theme. It looks great!
+
+    Added code to center the GLFW window.
+
+    Added #if CAPTURE in ReplayManager.cpp to turn off video capture when it's not being used.
+
+    In the future this should become a command line argument, eg. "-capture"
+
+
 Sunday Evening, December 14th, 2014
 -----------------------------------
 
@@ -31,7 +47,6 @@ Sunday Evening, December 14th, 2014
     Setup nginx on debian with linode.com. Hosting the mp4 files is working well.
 
     For $20 a month I have 3TB of transfer out. This should be enough to support 10GB a day.
-
 
     Somebody suggested cloudfront should be another option. This may be cheaper than linode.com
 

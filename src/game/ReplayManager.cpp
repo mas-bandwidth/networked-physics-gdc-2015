@@ -13,8 +13,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+//#define CAPTURE 1
+
 const int MaxReplayMessageSize = 8 * 1024;
+
+#if CAPTURE
 const int NumPixelBufferObjects = 2;
+#endif // #if CAPTURE
 
 enum ReplayMessages
 {
@@ -90,18 +95,23 @@ struct ReplayInternal
     bool recording;
     bool playback;
     FILE * file;
+
+#if CAPTURE
     int index;
     uint64_t frame;
     GLuint pboIds[NumPixelBufferObjects];
+#endif // #if CAPTURE
 
     ReplayInternal()
     {
         recording = false;
         playback = false;
         file = nullptr;
+#if CAPTURE
         frame = 0;
         index = 0;
         memset( pboIds, 0, sizeof( pboIds ) );
+#endif // #if CAPTURE
     }
 };
 
@@ -110,6 +120,8 @@ ReplayManager::ReplayManager( core::Allocator & allocator )
     m_allocator = &allocator;
 
     m_internal = CORE_NEW( allocator, ReplayInternal );
+
+#if CAPTURE
 
     const int dataSize = global.displayWidth * global.displayHeight * 3;
 
@@ -122,6 +134,8 @@ ReplayManager::ReplayManager( core::Allocator & allocator )
     }
 
     glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
+
+#endif // #if CAPTURE
 }
 
 ReplayManager::~ReplayManager()
@@ -131,6 +145,8 @@ ReplayManager::~ReplayManager()
 
     Stop();
 
+#if CAPTURE
+
     for ( int i = 0; i < NumPixelBufferObjects; ++i )
     {
         glDeleteBuffers( 1, &m_internal->pboIds[i] );
@@ -138,6 +154,8 @@ ReplayManager::~ReplayManager()
     }
 
     CORE_DELETE( *m_allocator, ReplayInternal, m_internal );
+
+#endif // #if CAPTURE
 }
 
 void ReplayManager::StartRecording( const char filename[] )
@@ -519,6 +537,8 @@ bool WriteTGA( const char filename[], int width, int height, uint8_t * ptr )
 
 void ReplayManager::UpdateCapture()
 {
+#if CAPTURE
+
     m_internal->index = ( m_internal->index + 1 ) % NumPixelBufferObjects;
 
     const int prevIndex = ( m_internal->index + NumPixelBufferObjects - 1 ) % NumPixelBufferObjects;
@@ -547,6 +567,8 @@ void ReplayManager::UpdateCapture()
     glBindBufferARB( GL_PIXEL_PACK_BUFFER_ARB, 0 );
 
     m_internal->frame++;
+
+#endif // #if CAPTURE
 }
 
 #endif // #ifdef CLIENT

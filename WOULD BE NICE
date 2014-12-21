@@ -1,6 +1,30 @@
 WOULD BE NICE:
 
-    ----------------------------------
+    -------------------------------------------
+    
+    Run through this setup for my linode:
+
+    http://feross.org/how-to-setup-your-linode/
+
+    -------------------------------------------
+
+    Probably best to just use the linode for dedicated servers
+
+    Amazon cloudfront is a better, cheaper solution for delivering static content.
+
+    -------------------------------------------
+
+    Work out how to setup alternative images for when the HTML5 video is not available.    
+
+    Would actually be even better just to link to the youtube version of that video as a fallback.
+
+    BOOM great idea.
+
+    Seems that 60fps can be uploaded to youtube.
+
+    Idea, upload in super high res and see what happens. Should be possible.
+
+    -------------------------------------------
 
     If the code that wrote the TGA file was spawned off to another thread,
     it should be generally possible to capture realtime images without 

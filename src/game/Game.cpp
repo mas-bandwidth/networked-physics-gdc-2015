@@ -276,15 +276,31 @@ int main( int argc, char * argv[] )
     if ( fullscreen )
         window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr );
     else
-        window = glfwCreateWindow( 960, 540, "Client", nullptr, nullptr );
-        //window = glfwCreateWindow( 400, 200, "Client", nullptr, nullptr );
-        //window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
+        window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
+        //window = glfwCreateWindow( 500, 250, "Client", nullptr, nullptr );        // note: video capture resolution
+        //window = glfwCreateWindow( 960, 540, "Client", nullptr, nullptr );        // note: 1080p @ retina (X2)
 
     if ( !window )
     {
-        printf( "error: failed to create window\n" );
+        printf( "error: Failed to create window\n" );
         exit( 1 );
     }
+
+    int window_width, window_height;
+    glfwGetWindowSize( window, &window_width, &window_height );
+
+
+    const GLFWvidmode * desktop_mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
+    if ( !desktop_mode )
+    {
+        printf( "error: Desktop mode is null\n" );
+        exit( 1 );
+    }
+
+    const int desktop_width = desktop_mode->width;
+    const int desktop_height = desktop_mode->height;
+
+    glfwSetWindowPos( window, desktop_width / 2 - window_width / 2, desktop_height / 2 - window_height / 2 );
 
     glfwGetFramebufferSize( window, &global.displayWidth, &global.displayHeight );
 
@@ -377,8 +393,7 @@ int main( int argc, char ** argv )
     {
         // ...
 
-        // todo: rather than sleeping for MS we want a signal that comes in every n millis instead
-        // so we maintain a steady tick rate. how best to do this on linux, mac and windows respectively?
+        // todo: instead of sleeping do sleep(1ms) but if within tolerance < 2ms do a busy spinlock
 
         // todo: want to detect the CTRL^C signal and actually break outta here
 
