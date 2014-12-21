@@ -1,7 +1,7 @@
 solution "Protocol"
     includedirs { "src", "external", "tools", "." }
     platforms { "x64" }
-    configurations { "Release", "Debug" }
+    configurations { "Debug", "Release" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
     configuration "Release"
         flags { "OptimizeSpeed" }
@@ -190,7 +190,7 @@ project "Server"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }
+    links { "Core", "Network", "Protocol", "ClientServer", "Cubes", "ode" }
     location "build"
     targetdir "bin"
 
@@ -509,6 +509,25 @@ if not os.is "windows" then
                 os.exit(1)
             end
             os.execute "bin/Client +load cubes"
+        end
+    }
+
+    newaction
+    {
+        trigger     = "lockstep",
+        description = "Build and run lockstep demo",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "rm -rf output; mkdir -p output" ~= 0 then
+                os.exit(1)
+            end
+            if os.execute "make -j4 Client" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Client +load lockstep"
         end
     }
 

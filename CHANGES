@@ -1,4 +1,16 @@
 
+Sunday, December 21st, 2014
+---------------------------
+
+    Move as much of the cubes render and so on *OUT* of the specific cubes demo.
+
+    This allows me to have multiple cubes related demos, eg. "load lockstep", "load snapshots", "load stateful"
+
+    Add lockstep demo framework by copying cubes demo
+
+    Add premake setup, eg. "pm lockstep"
+
+
 Saturday, December 20th, 2014
 -----------------------------
 

@@ -30,6 +30,8 @@ void ProcessCommandLine()
 
 //    printf( "command line: '%s'\n", buffer );
 
+#ifdef CLIENT
+
     const char replayFile[] = "replay.bin";
 
     bool playback = false;
@@ -41,6 +43,10 @@ void ProcessCommandLine()
     else if ( strcmp( commandLineBuffer, "+load cubes" ) == 0 )
     {
         global.console->ExecuteCommand( "load cubes" );
+    }
+    else if ( strcmp( commandLineBuffer, "+load lockstep" ) == 0 )
+    {
+        global.console->ExecuteCommand( "load lockstep" );
     }
     else if ( strcmp( commandLineBuffer, "+load interpolation" ) == 0 )
     {
@@ -62,4 +68,6 @@ void ProcessCommandLine()
 
         global.replayManager->RecordCommandLine( commandLineBuffer );
     }
+
+#endif // #ifdef CLIENT
 }

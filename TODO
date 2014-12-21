@@ -1,17 +1,17 @@
 DONE:
 
 TODO:
+
+    -------------------------------------------
+
+    Get cube demo displaying on left side only in lockstep mode.
+
+    In lockstep demo, have *two* cube internals... but maybe they want to share the same render interface
+
+    Hey... it seems that cube simulation should be separated from the rendering side of that.
+
+    Will need to restructure in this way...
     
-    -------------------------------------------
-
-    Move as much of the cubes render and so on *OUT* of the specific cubes demo.
-
-    This allows me to have multiple cubes related demos, eg. "load lockstep", "load snapshots", "load stateful"
-
-    -------------------------------------------
-
-    Deterministic lockstep splitscreen demo
-
     Implement splitscreen view side-by-side
 
     Add simulated latency and so on.

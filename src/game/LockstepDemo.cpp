@@ -1,4 +1,4 @@
-#include "CubesDemo.h"
+#include "LockstepDemo.h"
 #include "Cubes.h"
 
 #ifdef CLIENT
@@ -7,13 +7,13 @@
 #include "Render.h"
 #include "Console.h"
 
-CubesDemo::CubesDemo( core::Allocator & allocator )
+LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
     m_allocator = &allocator;
     m_internal = CORE_NEW( allocator, CubesInternal );
 }
 
-CubesDemo::~CubesDemo()
+LockstepDemo::~LockstepDemo()
 {
     CORE_ASSERT( m_internal );
     CORE_ASSERT( m_allocator );
@@ -23,7 +23,7 @@ CubesDemo::~CubesDemo()
     m_allocator = nullptr;
 }
 
-bool CubesDemo::Initialize()
+bool LockstepDemo::Initialize()
 {
     game::Config config;
 
@@ -48,27 +48,27 @@ bool CubesDemo::Initialize()
     return true;
 }
 
-void CubesDemo::Update()
+void LockstepDemo::Update()
 {
     m_internal->Update();
 }
 
-bool CubesDemo::Clear()
+bool LockstepDemo::Clear()
 {
     return m_internal->Clear();
 }
 
-void CubesDemo::Render()
+void LockstepDemo::Render()
 {
     m_internal->Render();
 }
 
-bool CubesDemo::KeyEvent( int key, int scancode, int action, int mods )
+bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
 {
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool CubesDemo::CharEvent( unsigned int code )
+bool LockstepDemo::CharEvent( unsigned int code )
 {
     return false;
 }

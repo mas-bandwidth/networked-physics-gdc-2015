@@ -5,6 +5,7 @@
 #include "Demo.h"
 #include "StoneDemo.h"
 #include "CubesDemo.h"
+#include "LockstepDemo.h"
 #include "InterpolationDemo.h"
 #include "Render.h"
 #include "Global.h"
@@ -40,6 +41,10 @@ bool DemoManager::LoadDemo( const char * name )
     else if ( strcmp( name, "cubes" ) == 0 )
     {
         m_demo = CORE_NEW( *m_allocator, CubesDemo, *m_allocator );
+    }
+    else if ( strcmp( name, "lockstep" ) == 0 )
+    {
+        m_demo = CORE_NEW( *m_allocator, LockstepDemo, *m_allocator );
     }
     else if ( strcmp( name, "interpolation" ) == 0 )
     {
