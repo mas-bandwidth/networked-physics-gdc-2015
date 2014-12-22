@@ -29,12 +29,12 @@ const int MaxCubeShadowVertices = 1024 * 32;
 
 #define DEBUG_CUBE_SHADOWS 0
 
-class CubesRenderInterface
+class CubesRender
 {
 public:
 
-    CubesRenderInterface();
-    ~CubesRenderInterface();
+    CubesRender();
+    ~CubesRender();
 
     void ResizeDisplay( int displayWidth, int displayHeight );
     
@@ -91,24 +91,45 @@ private:
 
 #endif // #ifdef CLIENT
 
-struct CubesInternal
+struct CubesConfig
 {
-    GameInstance * gameInstance = nullptr;
-    math::Vector origin;
-    game::Input gameInput;
- 
+    int num_simulations = 1;
+    int num_views = 1;
+};
+
+struct CubesSimulation
+{
+    GameInstance * game_instance;
+};
+
 #ifdef CLIENT
 
-    CubesRenderInterface renderInterface;
+struct CubesView
+{
     view::Camera camera;
-    view::Packet viewPacket;
-    view::ObjectManager viewObjectManager;
-    view::ObjectUpdate objectUpdates[MaxViewObjects];
+    view::Packet packet;
+    view::ObjectManager objects;
+    view::ObjectUpdate updates[MaxViewObjects];
     view::Cubes cubes;
+};
+
+#endif
+
+struct CubesInternal
+{
+    CubesConfig config;
+
+    CubesSimulation * simulation;
+
+#ifdef CLIENT
+
+    CubesView * view;
+    CubesRender render;
+    game::Input input;
 
 #endif // #ifdef CLIENT
 
-    void Initialize( core::Allocator & allocator, game::Config & config );
+    void Initialize( core::Allocator & allocator, const CubesConfig & config = CubesConfig() );
 
     void Free( core::Allocator & allocator );
 

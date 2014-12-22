@@ -1,6 +1,6 @@
 /*
 	Networked Physics Demo
-	Copyright © 2008-2011 Glenn Fiedler
+	Copyright © 2008-2015 Glenn Fiedler
 	http://www.gafferongames.com/networking-for-game-programmers
 */
 
@@ -120,16 +120,13 @@ namespace view
 
 		Object * GetObject( unsigned int id );
 
-		void GetRenderState( Cubes & renderState, bool interpolation = false, bool smoothing = true );
+		void GetRenderState( Cubes & renderState, bool interpolation = false, bool smoothing = false );
 
 	private:
 
 		// todo: convert this to use the core hash instead
 		typedef std::map<unsigned int, Object*> object_map;
-
 		object_map objects;
-	
-		friend void mergeViewObjectSets( ObjectManager * gameObjects[], int maxPlayers, ObjectManager & output, int primaryPlayer, bool blendColors );
 	};
 
 	// camera object

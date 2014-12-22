@@ -23,6 +23,8 @@ public:
 
     virtual bool CharEvent( unsigned int code ) = 0;
 
+    virtual const char * GetName() const = 0;
+
     // todo: reload notification
 };
 

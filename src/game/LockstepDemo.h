@@ -27,6 +27,8 @@ public:
 
     virtual bool CharEvent( unsigned int code ) override;
 
+    virtual const char * GetName() const override { return "lockstep"; }
+
 private:
 
     core::Allocator * m_allocator;

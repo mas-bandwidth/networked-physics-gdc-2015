@@ -77,6 +77,18 @@ void DemoManager::UnloadDemo()
     }
 }
 
+bool DemoManager::ReloadDemo()
+{
+    if ( !m_demo )
+        return false;
+
+    const char * demo_name = m_demo->GetName();          // IMPORTANT: Assumes demo get name returns const char* literal
+
+    UnloadDemo();
+
+    return LoadDemo( demo_name );
+}
+
 Demo * DemoManager::GetDemo()
 {
     return m_demo;

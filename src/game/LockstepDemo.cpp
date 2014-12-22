@@ -25,25 +25,12 @@ LockstepDemo::~LockstepDemo()
 
 bool LockstepDemo::Initialize()
 {
-    game::Config config;
+    CubesConfig config;
+    
+    config.num_simulations = 2;
+    config.num_views = 2;
 
-    config.maxObjects = CubeSteps * CubeSteps + MaxPlayers + 1;     // note: why is the +1 required here?! seems wrong.
-    config.deactivationTime = 0.5f;
-    config.cellSize = 5.0f;
-    config.cellWidth = CubeSteps / config.cellSize + 2 * 2;     // note: double so we have some extra space at the edge of the world
-    config.cellHeight = config.cellWidth;
-    config.activationDistance = 100.0f;
-    config.simConfig.ERP = 0.25f;
-    config.simConfig.CFM = 0.001f;
-    config.simConfig.MaxIterations = 64;
-    config.simConfig.MaximumCorrectingVelocity = 250.0f;
-    config.simConfig.ContactSurfaceLayer = 0.01f;
-    config.simConfig.Elasticity = 0.0f;
-    config.simConfig.LinearDrag = 0.01f;
-    config.simConfig.AngularDrag = 0.01f;
-    config.simConfig.Friction = 200.0f;
-
-    m_internal->Initialize( *m_allocator, config );
+    m_internal->Initialize( *m_allocator );
 
     return true;
 }

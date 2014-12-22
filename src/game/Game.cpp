@@ -38,8 +38,7 @@ CONSOLE_FUNCTION( reload )
     global.shaderManager->Reload();
     global.meshManager->Reload();
     global.stoneManager->Reload();  
-
-    // todo: maybe inform demo manager that stuff was reloaded
+    global.demoManager->ReloadDemo();    
 }
 
 static void game_init()

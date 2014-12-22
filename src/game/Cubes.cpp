@@ -4,43 +4,111 @@
 #include "Console.h"
 #include "ShaderManager.h"
 
-void CubesInternal::Initialize( core::Allocator & allocator, game::Config & config )
+void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig & config )
 {
-    gameInstance = CORE_NEW( allocator, GameInstance, config );
+    this->config = config;
 
-    origin = math::Vector(0,0,0);
+    // create cube simulations
 
-    gameInstance->InitializeBegin();
+    if ( config.num_simulations > 0 )
+    {
+        simulation = CORE_NEW_ARRAY( allocator, CubesSimulation, config.num_simulations );
 
-    gameInstance->AddPlane( math::Vector(0,0,1), 0 );
+        game::Config game_config;
 
-    AddCube( gameInstance, 1, math::Vector(0,0,10) );
+        game_config.maxObjects = CubeSteps * CubeSteps + MaxPlayers + 1;      // note: +1 because 0 is null (or possibly "world")
+        game_config.deactivationTime = 0.25f;
+        game_config.cellSize = 2.0f;
+        game_config.cellWidth = CubeSteps / game_config.cellSize + 2 * 2;     // note: double so we have some extra space at the edge of the world
+        game_config.cellHeight = game_config.cellWidth;
+        game_config.activationDistance = 100.0f;
 
-    const float origin = -CubeSteps / 2.0f;
-    const float z = hypercube::NonPlayerCubeSize / 2.0f;
-    const int count = CubeSteps;
-    for ( int y = 0; y < count; ++y )
-        for ( int x = 0; x < count; ++x )
-            AddCube( gameInstance, 0, math::Vector(x+origin,y+origin,z) );
+        game_config.simConfig.ERP = 0.25f;
+        game_config.simConfig.CFM = 0.001f;
+        game_config.simConfig.MaxIterations = 64;
+        game_config.simConfig.MaximumCorrectingVelocity = 250.0f;
+        game_config.simConfig.ContactSurfaceLayer = 0.01f;
+        game_config.simConfig.Elasticity = 0.0f;
+        game_config.simConfig.LinearDrag = 0.001f;
+        game_config.simConfig.AngularDrag = 0.001f;
+        game_config.simConfig.Friction = 200.0f;
 
-    gameInstance->InitializeEnd();
+        for ( int i = 0; i < config.num_simulations; ++i )
+        {
+            simulation[i].game_instance = CORE_NEW( allocator, GameInstance, game_config );
 
-    // todo: probably want to leave this up to the demo
-    gameInstance->OnPlayerJoined( 0 );
-    gameInstance->SetLocalPlayer( 0 );
-    gameInstance->SetPlayerFocus( 0, 1 );
+            simulation[i].game_instance->InitializeBegin();
 
-    gameInstance->SetFlag( game::FLAG_Push );
-    gameInstance->SetFlag( game::FLAG_Pull );
+            simulation[i].game_instance->AddPlane( math::Vector(0,0,1), 0 );
+
+            AddCube( simulation[i].game_instance, 1, math::Vector(0,0,10) );
+
+            const float origin = -CubeSteps / 2.0f;
+            const float z = hypercube::NonPlayerCubeSize / 2.0f;
+            const int count = CubeSteps;
+            for ( int y = 0; y < count; ++y )
+                for ( int x = 0; x < count; ++x )
+                    AddCube( simulation[i].game_instance, 0, math::Vector(x+origin,y+origin,z) );
+
+            simulation[i].game_instance->InitializeEnd();
+
+            // todo: players joining and leaving and local player per-sim
+            // should definitely be parameterized not hardcoded like this
+            simulation[i].game_instance->OnPlayerJoined( 0 );
+            simulation[i].game_instance->SetLocalPlayer( 0 );
+            simulation[i].game_instance->SetPlayerFocus( 0, 1 );
+
+            simulation[i].game_instance->SetFlag( game::FLAG_Push );
+            simulation[i].game_instance->SetFlag( game::FLAG_Pull );
+        }
+    }
+    else
+    {
+        simulation = nullptr;
+    }
+
+#ifdef CLIENT
+
+    // create views
+
+    if ( config.num_views > 0 )
+    {
+        view = CORE_NEW_ARRAY( allocator, CubesView, config.num_views );
+    }
+    else
+    {
+        view = nullptr;
+    }
+
+#endif // #ifdef CLIENT
 }
 
 void CubesInternal::Free( core::Allocator & allocator )
 {
-    CORE_DELETE( allocator, GameInstance, gameInstance );
-    gameInstance = nullptr;
+    if ( simulation )
+    {
+        for ( int i = 0; i < config.num_simulations; ++i )
+        {
+            CORE_DELETE( allocator, GameInstance, simulation[i].game_instance );
+            simulation[i].game_instance = nullptr;
+        }
+
+        CORE_DELETE_ARRAY( allocator, simulation, config.num_simulations );
+
+        simulation = nullptr;
+    }
+
+#ifdef CLIENT
+    if ( view )
+    {
+        CORE_DELETE_ARRAY( allocator, view, config.num_views );
+
+        view = nullptr;
+    }
+#endif // #ifdef CLIENT
 }
 
-void CubesInternal::AddCube( GameInstance * gameInstance, int player, const math::Vector & position )
+void CubesInternal::AddCube( GameInstance * game_instance, int player, const math::Vector & position )
 {
     hypercube::DatabaseObject object;
     cubes::CompressPosition( position, object.position );
@@ -48,47 +116,80 @@ void CubesInternal::AddCube( GameInstance * gameInstance, int player, const math
     object.enabled = player;
     object.session = 0;
     object.player = player;
-    activation::ObjectId id = gameInstance->AddObject( object, position.x, position.y );
+    activation::ObjectId id = game_instance->AddObject( object, position.x, position.y );
     if ( player )
-        gameInstance->DisableObject( id );
+        game_instance->DisableObject( id );
 }
 
 void CubesInternal::Update()
 {
+    // todo: perhaps an input structure that describes which simulations
+    // to update and what input to pass to them?
+
+    // todo: its nice for this to be one large update because I can do
+    // threading here, eg. split out to worker threads transparently
+    // from the demo, avoiding coding worker thread stuff per-demo.
+
     const float deltaTime = global.timeBase.deltaTime;
 
 #ifdef CLIENT
     if ( global.console->IsActive() )
-        gameInput = game::Input();
+        input = game::Input();
 #endif // #ifdef CLIENT
 
-    gameInstance->SetPlayerInput( 0, gameInput );
+    if ( simulation )
+    {
+        // update input
 
-    gameInstance->Update( deltaTime );
+#ifdef CLIENT
+        for ( int i = 0; i < config.num_simulations; ++i )
+        {
+            simulation[i].game_instance->SetPlayerInput( 0, input );
+        }
+#endif // #ifdef CLIENT
+
+
+        // update simulations
+
+        for ( int i = 0; i < config.num_simulations; ++i )
+        {
+            simulation[i].game_instance->Update( deltaTime );
+        }
+    }
 
 #ifdef CLIENT
 
-    gameInstance->GetViewPacket( viewPacket );
-
-    if ( viewPacket.objectCount >= 1 )
+    if ( view )
     {
-        getViewObjectUpdates( objectUpdates, viewPacket );
-        viewObjectManager.UpdateObjects( objectUpdates, viewPacket.objectCount );
+        for ( int i = 0; i < config.num_views; ++i )
+        {
+            if ( simulation && i < config.num_simulations )
+            {
+                // todo: we need a mapping describing where the view should get its view packet from
+                // either from a simulation, or it should be passed in explicitly by the demo (eg. snapshot interpolation)
+
+                simulation[i].game_instance->GetViewPacket( view[i].packet );
+            }
+
+            getViewObjectUpdates( view[i].updates, view[i].packet );
+                
+            view[i].objects.UpdateObjects( view[i].updates, view[i].packet.objectCount );
+
+            view[i].objects.Update( deltaTime );
+
+            // todo: the current focus object per-view should be parameterized per-view
+
+            view::Object * player = view[i].objects.GetObject( 1 );
+
+            math::Vector origin = player ? player->position : math::Vector(0,0,0);
+
+            math::Vector lookat = origin - math::Vector(0,0,1);
+
+            math::Vector position = lookat + math::Vector(0,-11,5);
+
+            view[i].camera.EaseIn( lookat, position );
+        }
     }
-
-    viewObjectManager.Update( deltaTime );
-
-    view::Object * playerCube = viewObjectManager.GetObject( 1 );
-    if ( playerCube )
-        origin = playerCube->position;// + playerCube->positionError;
-
-    // todo: ^--- positionError above is completely broken, also orientationError should be added instead of "visualOrientation"
-
-    math::Vector lookat = origin - math::Vector(0,0,1);
-
-    math::Vector position = lookat + math::Vector(0,-11,5);
-
-    camera.EaseIn( lookat, position );
 
 #endif // #ifdef CLIENT
 }
@@ -97,36 +198,40 @@ void CubesInternal::Update()
 
 bool CubesInternal::Clear()
 {
-    renderInterface.ClearScreen();
+    render.ClearScreen();
 
     return true;
 }
 
 void CubesInternal::Render()
 {
-    renderInterface.ResizeDisplay( global.displayWidth, global.displayHeight );
+    // todo: we need some way to parameterize how we want the rendering to be performed
+    // default should be view 0, but we also want splitscreen and quadscreen, and we should
+    // be able to specify which view gets rendered where
 
-    const bool interpolating = false;
-    const bool smoothing = false;               // todo: fix smoothing and turn it back on
+    if ( !view )
+        return;
 
-    viewObjectManager.GetRenderState( cubes, interpolating, smoothing );
+    render.ResizeDisplay( global.displayWidth, global.displayHeight );
 
-    const int width = renderInterface.GetDisplayWidth();
-    const int height = renderInterface.GetDisplayHeight();
+    view[0].objects.GetRenderState( view[0].cubes );
 
-    renderInterface.BeginScene( 0, 0, width, height );
+    const int width = render.GetDisplayWidth();
+    const int height = render.GetDisplayHeight();
 
-    renderInterface.SetCamera( camera.position, camera.lookat, camera.up );
+    render.BeginScene( 0, 0, width, height );
+
+    render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
     
-    renderInterface.SetLightPosition( camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+    render.SetLightPosition( view[0].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
 
-    renderInterface.RenderCubes( cubes );
+    render.RenderCubes( view[0].cubes );
     
-    renderInterface.RenderCubeShadows( cubes );
+    render.RenderCubeShadows( view[0].cubes );
 
-    renderInterface.RenderShadowQuad();
+    render.RenderShadowQuad();
     
-    renderInterface.EndScene();
+    render.EndScene();
 }
 
 bool CubesInternal::KeyEvent( int key, int scancode, int action, int mods )
@@ -138,24 +243,24 @@ bool CubesInternal::KeyEvent( int key, int scancode, int action, int mods )
     {
         switch ( key )
         {
-            case GLFW_KEY_LEFT:     gameInput.left = true;      return true;
-            case GLFW_KEY_RIGHT:    gameInput.right = true;     return true;
-            case GLFW_KEY_UP:       gameInput.up = true;        return true;
-            case GLFW_KEY_DOWN:     gameInput.down = true;      return true;
-            case GLFW_KEY_SPACE:    gameInput.push = true;      return true;
-            case GLFW_KEY_Z:        gameInput.pull = true;      return true;
+            case GLFW_KEY_LEFT:     input.left = true;      return true;
+            case GLFW_KEY_RIGHT:    input.right = true;     return true;
+            case GLFW_KEY_UP:       input.up = true;        return true;
+            case GLFW_KEY_DOWN:     input.down = true;      return true;
+            case GLFW_KEY_SPACE:    input.push = true;      return true;
+            case GLFW_KEY_Z:        input.pull = true;      return true;
         }
     }
     else if ( action == GLFW_RELEASE )
     {
         switch ( key )
         {
-            case GLFW_KEY_LEFT:     gameInput.left = false;      return true;
-            case GLFW_KEY_RIGHT:    gameInput.right = false;     return true;
-            case GLFW_KEY_UP:       gameInput.up = false;        return true;
-            case GLFW_KEY_DOWN:     gameInput.down = false;      return true;
-            case GLFW_KEY_SPACE:    gameInput.push = false;      return true;
-            case GLFW_KEY_Z:        gameInput.pull = false;      return true;
+            case GLFW_KEY_LEFT:     input.left = false;     return true;
+            case GLFW_KEY_RIGHT:    input.right = false;    return true;
+            case GLFW_KEY_UP:       input.up = false;       return true;
+            case GLFW_KEY_DOWN:     input.down = false;     return true;
+            case GLFW_KEY_SPACE:    input.push = false;     return true;
+            case GLFW_KEY_Z:        input.pull = false;     return true;
         }
     }
 
@@ -228,7 +333,7 @@ struct DebugVertex
     float r,g,b,a;
 };
 
-CubesRenderInterface::CubesRenderInterface()
+CubesRender::CubesRender()
 {
     initialized = false;    
     displayWidth = 0;
@@ -243,7 +348,7 @@ CubesRenderInterface::CubesRenderInterface()
     mask_vbo = 0;
 }
 
-CubesRenderInterface::~CubesRenderInterface()
+CubesRender::~CubesRender()
 {
     glDeleteVertexArrays( 1, &cubes_vao );
     glDeleteBuffers( 1, &cubes_vbo );
@@ -268,7 +373,7 @@ CubesRenderInterface::~CubesRenderInterface()
     mask_vbo = 0;
 }
 
-void CubesRenderInterface::Initialize()
+void CubesRender::Initialize()
 {
     CORE_ASSERT( !initialized );
 
@@ -443,35 +548,35 @@ void CubesRenderInterface::Initialize()
     check_opengl_error( "after cubes render init" );
 }
 
-void CubesRenderInterface::ResizeDisplay( int _displayWidth, int _displayHeight )
+void CubesRender::ResizeDisplay( int _displayWidth, int _displayHeight )
 {
     displayWidth = _displayWidth;
     displayHeight = _displayHeight;
 }
 
-int CubesRenderInterface::GetDisplayWidth() const
+int CubesRender::GetDisplayWidth() const
 {
     return displayWidth;
 }
 
-int CubesRenderInterface::GetDisplayHeight() const
+int CubesRender::GetDisplayHeight() const
 {
     return displayHeight;
 }
 
-void CubesRenderInterface::SetLightPosition( const math::Vector & position )
+void CubesRender::SetLightPosition( const math::Vector & position )
 {
     lightPosition = position;
 }
 
-void CubesRenderInterface::SetCamera( const math::Vector & position, const math::Vector & lookAt, const math::Vector & up )
+void CubesRender::SetCamera( const math::Vector & position, const math::Vector & lookAt, const math::Vector & up )
 {
     cameraPosition = position;
     cameraLookAt = lookAt;
     cameraUp = up;
 }
 
-void CubesRenderInterface::ClearScreen()
+void CubesRender::ClearScreen()
 {
     glViewport( 0, 0, displayWidth, displayHeight );
     glClearStencil( 0 );
@@ -479,7 +584,7 @@ void CubesRenderInterface::ClearScreen()
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 }
 
-void CubesRenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
+void CubesRender::BeginScene( float x1, float y1, float x2, float y2 )
 {
     if ( !initialized )
         Initialize();
@@ -499,7 +604,7 @@ void CubesRenderInterface::BeginScene( float x1, float y1, float x2, float y2 )
     glDepthFunc( GL_LESS );
 }
         
-void CubesRenderInterface::RenderCubes( const view::Cubes & cubes )
+void CubesRender::RenderCubes( const view::Cubes & cubes )
 {
     if ( cubes.numCubes == 0 )
         return;
@@ -626,7 +731,7 @@ static vectorial::vec3f normals[6] =
 };
 
 
-void CubesRenderInterface::RenderCubeShadows( const view::Cubes & cubes )
+void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
 {
     // make sure we have the shadow shader before going any further
 
@@ -737,7 +842,7 @@ void CubesRenderInterface::RenderCubeShadows( const view::Cubes & cubes )
     check_opengl_error( "after cube shadows" );
 }
 
-void CubesRenderInterface::RenderShadowQuad()
+void CubesRender::RenderShadowQuad()
 {
     GLuint shader = global.shaderManager->GetShader( "Debug" );
     if ( !shader )
@@ -776,7 +881,7 @@ void CubesRenderInterface::RenderShadowQuad()
     check_opengl_error( "after shadow quad" );
 }
 
-void CubesRenderInterface::EndScene()
+void CubesRender::EndScene()
 {
     glDisable( GL_SCISSOR_TEST );
     glDisable( GL_BLEND );

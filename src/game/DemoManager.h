@@ -19,6 +19,8 @@ public:
 
     void UnloadDemo();
 
+    bool ReloadDemo();
+
     Demo * GetDemo();
 
     bool KeyEvent( int key, int scancode, int action, int mods );

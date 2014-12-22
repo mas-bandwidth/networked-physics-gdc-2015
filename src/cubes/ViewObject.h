@@ -14,6 +14,7 @@ namespace view
 {
 	struct ObjectState
 	{
+		// todo: convert to vectorial
 		math::Quaternion orientation;
 		math::Vector position;
 		math::Vector linearVelocity;
@@ -21,7 +22,7 @@ namespace view
 		uint32_t pendingDeactivation : 1;
 		uint32_t enabled : 1;
 		uint32_t id : 20;
-		uint32_t owner : 3;
+		uint32_t owner : 3;			// todo: these should be generalized to bits required max players
 		uint32_t authority : 3;
 		float scale;
 
@@ -45,7 +46,7 @@ namespace view
 		int droppedFrames;
 		float netTime;
 		float simTime;
-		math::Vector origin;
+		math::Vector origin;		// todo: convert to vectorial
 		int objectCount;
 		ObjectState object[MaxViewObjects];
 	
