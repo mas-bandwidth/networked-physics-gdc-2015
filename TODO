@@ -1,31 +1,5 @@
 DONE:
 
-    Configuration of world should be shared across all demos, eg. standardize it.
-
-    Added way to reload demo. This recreates the demo structure from scratch, as well as reloads all assets.
-
-    Cubes internal should take description for how many simulations there should be,
-    and how many views there should be.
-
-    For example, there could be 4 simulations but only one view.
-
-    Code should be able to pipe arbitrarily from one simulation and render to a defined view.
-
-    At the moment, what I need is either one simulation and one view, or two simulations and two views.
-
-    BUT... soon for interpolation and snapshot, I'll need one simulation and two views, and a
-    kickass interpolated/extrapolated thing to feed the view.
-
-    So I should structure such that this is possible.
-
-    Interface to create n simulations
-
-    Interface to create n views
-
-    Generalize code such that simulation and views are kept separate
-
-    Make sure generalized code is working with existing singleplayer cubes demo before going further.
-
 TODO:
 
     Code seems to crash if I don't have a demo loaded, eg. black screen.
@@ -41,6 +15,13 @@ TODO:
     eg. which simulations to update. Which players are joined per-simulation.
     Whether local input should be applied to that simulation, and to which player.
 
+    Whether to update that simulation *at all* should also be considered, because
+    that particular simulation might be delayed (eg. driven by inputs...)
+
+    eg. CubeUpdateConfig?
+
+    -------------------------------------------
+
     There also needs to be a mapping from view to simulation, eg. -1 means, no mapping
     while 0 means, view gets output from simulation 0 and draws that.
 
@@ -50,6 +31,8 @@ TODO:
     This allows insertion such that cubes can be rendered entirely without simulation
 
     This is super important for the snapshot interpolation demo.
+
+    eg. CubeRenderConfig?
 
     --------------------------------------------
 
