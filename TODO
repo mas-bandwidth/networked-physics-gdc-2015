@@ -1,20 +1,14 @@
 DONE:
 
-
 TODO:
-
-    Shadows not rendering correctly in splitscreen.
-
-    My guess is that it's related to the disconnect between display width/height
-    and the current render width/height with splitscreen.
-
-    How best to solve this?!
 
     -------------------------------------------
 
     Simulation also appears quite non-deterministic. 
 
     Probably need to do that thing to avoid the randomization of solver order, eg. recompile ODE.
+
+    Forum posts say that it is necessary to recompile with #define RANDOM_JOINT_ORDER commented out.
 
     -------------------------------------------
 

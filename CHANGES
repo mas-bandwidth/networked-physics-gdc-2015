@@ -32,6 +32,15 @@ Monday Evening, December 22nd, 2014
     I think the overlaid view probably wants different colors, eg. blue cubes
     force override for the second sim.
 
+    Shadows not rendering correctly in splitscreen.
+
+    My guess is that it's related to the disconnect between display width/height
+    and the current render width/height with splitscreen.
+
+    How best to solve this?!
+
+    Fixed. Was incorrectly using global.displayWidth instead of displayWidth in shadow render.
+
 
 Monday Morning, December 22nd, 2014
 -----------------------------------

@@ -856,7 +856,7 @@ void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
                                         glm::vec3( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ), 
                                         glm::vec3( cameraUp.x, cameraUp.y, cameraUp.z ) );
 
-    glm::mat4 projectionMatrix = glm::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
+    glm::mat4 projectionMatrix = glm::perspective( 40.0f, displayWidth / (float)displayHeight, 0.1f, 100.0f );
 
     glm::mat4 modelViewProjection = projectionMatrix * viewMatrix;
 

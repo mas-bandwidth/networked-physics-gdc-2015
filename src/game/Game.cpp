@@ -147,6 +147,7 @@ static void update_fps()
 
 static void render_fps()
 {
+    /*
     if ( global.replayManager->IsPlayback() )
         return;
 
@@ -172,6 +173,7 @@ static void render_fps()
         font->DrawText( text_x, text_y, "   FPS", Color(0,0,0) );
         font->End();
     }
+    */
 }
 
 static void render_scene()
