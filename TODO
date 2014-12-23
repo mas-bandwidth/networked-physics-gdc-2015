@@ -1,14 +1,31 @@
 DONE:
 
-TODO:
-
-    -------------------------------------------
-
     Simulation also appears quite non-deterministic. 
 
     Probably need to do that thing to avoid the randomization of solver order, eg. recompile ODE.
 
     Forum posts say that it is necessary to recompile with #define RANDOM_JOINT_ORDER commented out.
+
+    This is out of date. 
+
+    It now uses a pseudorandom ordering.
+
+    Should be able to capture via:
+
+        unsigned long dRandGetSeed()
+        dRandSetSeed( unsigned long s )
+
+    This is handy. Technically a custom install should not be required now.
+
+    Should be deterministic now, but fragile.
+
+    Verified. Yes it is determinstic! WOOHOO!!!! :D
+
+TODO:
+
+    A better option would be before each simulation step, set the seed to the current simulation frame #
+
+    (this would ensure same seed, for the *same frame* when frames are delayed via playout delay buffer...)
 
     -------------------------------------------
 

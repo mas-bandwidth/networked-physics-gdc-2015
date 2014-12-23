@@ -97,7 +97,8 @@ struct CubesConfig
 
 struct CubesSimulation
 {
-    GameInstance * game_instance;
+    uint32_t frame = 0;
+    GameInstance * game_instance = nullptr;
 };
 
 struct CubesUpdateConfig

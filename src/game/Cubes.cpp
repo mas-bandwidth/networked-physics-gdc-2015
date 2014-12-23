@@ -127,6 +127,12 @@ void CubesInternal::AddCube( GameInstance * game_instance, int player, const mat
         game_instance->DisableObject( id );
 }
 
+extern "C" 
+{
+    extern unsigned long dRandGetSeed();
+    extern void dRandSetSeed( unsigned int seed );
+}
+
 void CubesInternal::Update( const CubesUpdateConfig & update_config )
 {
     const float deltaTime = global.timeBase.deltaTime;
@@ -152,7 +158,13 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
         for ( int i = 0; i < config.num_simulations; ++i )
         {
             if ( update_config.run_update[i] )
+            {
+                dRandSetSeed( simulation[i].frame );
+
                 simulation[i].game_instance->Update( deltaTime );
+
+                simulation[i].frame++;
+            }
         }
     }
 
