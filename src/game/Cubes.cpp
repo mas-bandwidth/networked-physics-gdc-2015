@@ -20,7 +20,7 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
         game::Config game_config;
 
         game_config.maxObjects = CubeSteps * CubeSteps + MaxPlayers + 1;      // note: +1 because 0 is null (or possibly "world")
-        game_config.deactivationTime = 0.25f;
+        game_config.deactivationTime = 0.5f;
         game_config.cellSize = 2.0f;
         game_config.cellWidth = CubeSteps / game_config.cellSize + 2 * 2;     // note: double so we have some extra space at the edge of the world
         game_config.cellHeight = game_config.cellWidth;
@@ -248,13 +248,15 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
     {
         CORE_ASSERT( config.num_views >= 2 );
 
-        render.ResizeDisplay( width/2, height );
+        const float border = 20.0f;
+
+        render.ResizeDisplay( width/2 - border/2, height );
 
         // left view
 
         view[0].objects.GetRenderState( view[0].cubes );
 
-        render.BeginScene( 0, 0, width/2, height );
+        render.BeginScene( 0, 0, width/2 - border/2, height );
 
         render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
         
@@ -270,7 +272,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         view[1].objects.GetRenderState( view[1].cubes );
 
-        render.BeginScene( width/2, 0, width, height );
+        render.BeginScene( width/2 + border/2, 0, width, height );
 
         render.SetCamera( view[1].camera.position, view[1].camera.lookat, view[1].camera.up );
         
@@ -282,13 +284,9 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
         
         render.EndScene();
 
-        // shadow quad on top of all scenes
+        // shadow quad on top of both
 
         render.RenderShadowQuad();
-
-        // todo: splitscreen divider
-
-        // ...
     }
     else if ( render_config.render_mode == CUBES_RENDER_QUADSCREEN )
     {
@@ -680,7 +678,7 @@ void CubesRender::RenderCubes( const view::Cubes & cubes )
                                                             vectorial::vec3f( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ),
                                                             vectorial::vec3f( cameraUp.x, cameraUp.y, cameraUp.z ) );
 
-    vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, displayWidth / displayHeight, 0.1f, 100.0f );
+    vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, displayWidth / (float)displayHeight, 0.1f, 100.0f );
 
     for ( int i = 0; i < cubes.numCubes; ++i )
     {

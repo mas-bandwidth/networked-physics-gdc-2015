@@ -238,6 +238,7 @@ namespace game
 
 		void InitializeEnd()
 		{
+			/*
 			if ( objectCount > 0 )
 			{
 				if ( objectCount > 1 )
@@ -263,6 +264,7 @@ namespace game
 				else
 					printf( "activation system is %.1fKB\n", activationSystemBytes / ( 1000.0f ) );
 			}
+			*/
 			
 			initialized = true;
 			initializing = false;

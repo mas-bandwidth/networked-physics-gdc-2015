@@ -1,6 +1,19 @@
 WOULD BE NICE:
 
     -------------------------------------------
+
+    Idea: the quick console starts at the top center of the screen and grows centered
+
+    -------------------------------------------
+
+    Idea. If a body has energy below some minimum amount,
+    don't allow it to transmit interaction.
+
+    Should stop the case where cubes in a big stack never come to rest
+    and stay red, and then wake up other cubes while visually not moving 
+    at all.
+
+    -------------------------------------------
     
     Run through this setup for my linode:
 

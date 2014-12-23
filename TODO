@@ -1,48 +1,70 @@
 DONE:
 
-    Simulation also appears quite non-deterministic. 
+    Render splitscreen divider. For now, just using a small white border where cubes aren't drawn.
 
-    Probably need to do that thing to avoid the randomization of solver order, eg. recompile ODE.
+    Shadow issues show up in splitscreen at 1200x500 res, but not at 1000x500 res. Why?
 
-    Forum posts say that it is necessary to recompile with #define RANDOM_JOINT_ORDER commented out.
+    Notice that it still happens at 1000x400, but not 1000x500. Something to do with aspect ratio?
 
-    This is out of date. 
+    Was a different rounding error for projection matrix for cubes vs. shadows (int divide vs. float)
 
-    It now uses a pseudorandom ordering.
-
-    Should be able to capture via:
-
-        unsigned long dRandGetSeed()
-        dRandSetSeed( unsigned long s )
-
-    This is handy. Technically a custom install should not be required now.
-
-    Should be deterministic now, but fragile.
-
-    Verified. Yes it is determinstic! WOOHOO!!!! :D
+    Settled on 1200x500 resolution as looking best for splitscreen. Gives a square look to each side.
 
 TODO:
 
-    A better option would be before each simulation step, set the seed to the current simulation frame #
+    -------------------------------------------
 
-    (this would ensure same seed, for the *same frame* when frames are delayed via playout delay buffer...)
+    Next, actually construct a packet containing input and delay the right simulation by say, 100ms.
 
     -------------------------------------------
 
-    Interface to render splitscreen divider inside render interface (eg. dashed vertical line)
+    Now implement a reliability system between left and right simulation, eg. track sequence and ack,
+    and include *all* inputs since last acked sequence.
+
+    Note in the article it would be nice to be like, "OK. Lets beat TCP at its own game" 
+    and then link to the reddit discussion saying why write your own TCP? Gaffer is flawed etc.
+
+    Fuck those guys. I'm going to nail them.
+
+    --------------------------------------------
+
+    Now add a way to increase and decrease amount of packet loss.
+
+    --------------------------------------------
+
+    To really hammer this home, add a way to enable/disable the redundant inputs, 
+    eg. simulate TCP behavior vs. the redundant UDP (eg. an ack/response system).
 
     -------------------------------------------
 
-    Implement lockstep demo.
+    Implement 1 bit for input delta encoding, eg. if the next input has not changed,
+    just send one bit 0, otherwise 1 bit 1 and then the next input.
 
-    First just transmit the same input to both sides and see that they play out correctly.
+    Inputs don't change often in the cube sim so this should be a very effective compression.
 
-    Next, actually construct a packet protocol and delay the packets a certain amount (on the network,
-    and when received before being played back)
+    -------------------------------------------
 
-    Goal is to implement proper playout delay buffer.
+    It would be super cool to detect "ESCAPE" to reset the simulation in the deterministic demo.
 
-    Just fucking *do this* you pussy. This needs to be done. Actually implement it.
+    Going to need to reset the simulation often I think.
+
+    -------------------------------------------
+
+    Add a non-deterministic mode that can be toggled on/off via key press.
+
+    In this mode, just supress the code that sets the random seed to the current frame #.
+
+    This non-deterministic mode is super awesome because it can be trivially enabled/disabled to break stuff.
+
+    -------------------------------------------
+
+
+
+
+
+
+
+
 
     -------------------------------------------
 
