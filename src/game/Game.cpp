@@ -150,7 +150,6 @@ static void render_fps()
     if ( global.replayManager->IsPlayback() )
         return;
 
-    /*
     if ( current_fps == 0 )
         return;
 
@@ -173,7 +172,6 @@ static void render_fps()
         font->DrawText( text_x, text_y, "   FPS", Color(0,0,0) );
         font->End();
     }
-    */
 }
 
 static void render_scene()
@@ -203,7 +201,7 @@ static void game_render()
     check_opengl_error( "before render" );
 
     Demo * demo = global.demoManager->GetDemo();
-    if ( demo && !demo->Clear() )
+    if ( !demo || ( demo && !demo->Clear() ) )
     {
         glClearColor( 0.25, 0.25, 0.25, 0.0 );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );

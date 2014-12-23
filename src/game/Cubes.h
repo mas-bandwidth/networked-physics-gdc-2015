@@ -8,6 +8,8 @@
 
 const int CubeSteps = 30;
 const int MaxCubes = 1024 * 4;
+const int MaxViews = 4;
+const int MaxSimulations = 4;
 
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
 
@@ -38,10 +40,6 @@ public:
 
     void ResizeDisplay( int displayWidth, int displayHeight );
     
-    int GetDisplayWidth() const;
-
-    int GetDisplayHeight() const;
-
     void SetLightPosition( const math::Vector & position );
 
     void SetCamera( const math::Vector & position, const math::Vector & lookAt, const math::Vector & up );
@@ -102,6 +100,12 @@ struct CubesSimulation
     GameInstance * game_instance;
 };
 
+struct CubesUpdateConfig
+{
+    bool run_update[MaxSimulations];
+    game::Input input[MaxSimulations];
+};
+
 #ifdef CLIENT
 
 struct CubesView
@@ -111,6 +115,23 @@ struct CubesView
     view::ObjectManager objects;
     view::ObjectUpdate updates[MaxViewObjects];
     view::Cubes cubes;
+};
+
+enum CubesRenderMode
+{
+    CUBES_RENDER_FULLSCREEN,
+    CUBES_RENDER_SPLITSCREEN,
+    CUBES_RENDER_QUADSCREEN
+};
+
+struct CubesRenderConfig
+{
+    CubesRenderConfig()
+    {
+        render_mode = CUBES_RENDER_FULLSCREEN;
+    }
+
+    CubesRenderMode render_mode;
 };
 
 #endif
@@ -129,21 +150,23 @@ struct CubesInternal
 
 #endif // #ifdef CLIENT
 
-    void Initialize( core::Allocator & allocator, const CubesConfig & config = CubesConfig() );
+    void Initialize( core::Allocator & allocator, const CubesConfig & config );
 
     void Free( core::Allocator & allocator );
 
     void AddCube( GameInstance * gameInstance, int player, const math::Vector & position );
 
-    void Update();
+    void Update( const CubesUpdateConfig & update_config );
 
 #ifdef CLIENT
 
     bool Clear();
 
-    void Render();
+    void Render( const CubesRenderConfig & render_config );
 
     bool KeyEvent( int key, int scancode, int action, int mods );
+
+    const game::Input GetLocalInput() const { return input; }
 
 #endif // #ifdef CLIENT
 };

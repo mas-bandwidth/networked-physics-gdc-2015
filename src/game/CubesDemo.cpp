@@ -25,14 +25,24 @@ CubesDemo::~CubesDemo()
 
 bool CubesDemo::Initialize()
 {
-    m_internal->Initialize( *m_allocator );
+    CubesConfig config;
+
+    config.num_simulations = 1;
+    config.num_views = 1;
+
+    m_internal->Initialize( *m_allocator, config );
 
     return true;
 }
 
 void CubesDemo::Update()
 {
-    m_internal->Update();
+    CubesUpdateConfig update_config;
+
+    update_config.run_update[0] = true;
+    update_config.input[0] = m_internal->GetLocalInput();
+
+    m_internal->Update( update_config );
 }
 
 bool CubesDemo::Clear()
@@ -42,7 +52,11 @@ bool CubesDemo::Clear()
 
 void CubesDemo::Render()
 {
-    m_internal->Render();
+    CubesRenderConfig render_config;
+
+    render_config.render_mode = CUBES_RENDER_FULLSCREEN;
+
+    m_internal->Render( render_config );
 }
 
 bool CubesDemo::KeyEvent( int key, int scancode, int action, int mods )

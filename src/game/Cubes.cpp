@@ -10,6 +10,9 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
     // create cube simulations
 
+    CORE_ASSERT( config.num_simulations >= 0 );
+    CORE_ASSERT( config.num_simulations <= MaxSimulations );
+
     if ( config.num_simulations > 0 )
     {
         simulation = CORE_NEW_ARRAY( allocator, CubesSimulation, config.num_simulations );
@@ -71,6 +74,9 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
     // create views
 
+    CORE_ASSERT( config.num_views >= 0 );
+    CORE_ASSERT( config.num_views <= MaxViews );
+
     if ( config.num_views > 0 )
     {
         view = CORE_NEW_ARRAY( allocator, CubesView, config.num_views );
@@ -114,22 +120,15 @@ void CubesInternal::AddCube( GameInstance * game_instance, int player, const mat
     cubes::CompressPosition( position, object.position );
     cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
     object.enabled = player;
-    object.session = 0;
+    object.session = 0;             // todo: do we still need sessions?
     object.player = player;
     activation::ObjectId id = game_instance->AddObject( object, position.x, position.y );
     if ( player )
         game_instance->DisableObject( id );
 }
 
-void CubesInternal::Update()
+void CubesInternal::Update( const CubesUpdateConfig & update_config )
 {
-    // todo: perhaps an input structure that describes which simulations
-    // to update and what input to pass to them?
-
-    // todo: its nice for this to be one large update because I can do
-    // threading here, eg. split out to worker threads transparently
-    // from the demo, avoiding coding worker thread stuff per-demo.
-
     const float deltaTime = global.timeBase.deltaTime;
 
 #ifdef CLIENT
@@ -144,16 +143,16 @@ void CubesInternal::Update()
 #ifdef CLIENT
         for ( int i = 0; i < config.num_simulations; ++i )
         {
-            simulation[i].game_instance->SetPlayerInput( 0, input );
+            simulation[i].game_instance->SetPlayerInput( 0, update_config.input[i] );
         }
 #endif // #ifdef CLIENT
-
 
         // update simulations
 
         for ( int i = 0; i < config.num_simulations; ++i )
         {
-            simulation[i].game_instance->Update( deltaTime );
+            if ( update_config.run_update[i] )
+                simulation[i].game_instance->Update( deltaTime );
         }
     }
 
@@ -203,35 +202,86 @@ bool CubesInternal::Clear()
     return true;
 }
 
-void CubesInternal::Render()
+void CubesInternal::Render( const CubesRenderConfig & render_config )
 {
-    // todo: we need some way to parameterize how we want the rendering to be performed
-    // default should be view 0, but we also want splitscreen and quadscreen, and we should
-    // be able to specify which view gets rendered where
-
     if ( !view )
         return;
 
-    render.ResizeDisplay( global.displayWidth, global.displayHeight );
+    const int width = global.displayWidth;
+    const int height = global.displayHeight;
 
-    view[0].objects.GetRenderState( view[0].cubes );
+    if ( render_config.render_mode == CUBES_RENDER_FULLSCREEN )
+    {
+        CORE_ASSERT( config.num_views >= 1 );
 
-    const int width = render.GetDisplayWidth();
-    const int height = render.GetDisplayHeight();
+        render.ResizeDisplay( width, height );
 
-    render.BeginScene( 0, 0, width, height );
+        view[0].objects.GetRenderState( view[0].cubes );
 
-    render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
-    
-    render.SetLightPosition( view[0].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+        render.BeginScene( 0, 0, width, height );
 
-    render.RenderCubes( view[0].cubes );
-    
-    render.RenderCubeShadows( view[0].cubes );
+        render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
+        
+        render.SetLightPosition( view[0].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
 
-    render.RenderShadowQuad();
-    
-    render.EndScene();
+        render.RenderCubes( view[0].cubes );
+        
+        render.RenderCubeShadows( view[0].cubes );
+
+        render.RenderShadowQuad();
+        
+        render.EndScene();
+    }
+    else if ( render_config.render_mode == CUBES_RENDER_SPLITSCREEN )
+    {
+        CORE_ASSERT( config.num_views >= 2 );
+
+        render.ResizeDisplay( width/2, height );
+
+        // left view
+
+        view[0].objects.GetRenderState( view[0].cubes );
+
+        render.BeginScene( 0, 0, width/2, height );
+
+        render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
+        
+        render.SetLightPosition( view[0].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+
+        render.RenderCubes( view[0].cubes );
+        
+        render.RenderCubeShadows( view[0].cubes );
+        
+        render.EndScene();
+
+        // right view
+
+        view[1].objects.GetRenderState( view[1].cubes );
+
+        render.BeginScene( width/2, 0, width, height );
+
+        render.SetCamera( view[1].camera.position, view[1].camera.lookat, view[1].camera.up );
+        
+        render.SetLightPosition( view[1].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+
+        render.RenderCubes( view[1].cubes );
+        
+        render.RenderCubeShadows( view[1].cubes );
+        
+        render.EndScene();
+
+        // shadow quad on top of all scenes
+
+        render.RenderShadowQuad();
+
+        // todo: splitscreen divider
+
+        // ...
+    }
+    else if ( render_config.render_mode == CUBES_RENDER_QUADSCREEN )
+    {
+        // ...
+    }
 }
 
 bool CubesInternal::KeyEvent( int key, int scancode, int action, int mods )
@@ -554,16 +604,6 @@ void CubesRender::ResizeDisplay( int _displayWidth, int _displayHeight )
     displayHeight = _displayHeight;
 }
 
-int CubesRender::GetDisplayWidth() const
-{
-    return displayWidth;
-}
-
-int CubesRender::GetDisplayHeight() const
-{
-    return displayHeight;
-}
-
 void CubesRender::SetLightPosition( const math::Vector & position )
 {
     lightPosition = position;
@@ -578,7 +618,7 @@ void CubesRender::SetCamera( const math::Vector & position, const math::Vector &
 
 void CubesRender::ClearScreen()
 {
-    glViewport( 0, 0, displayWidth, displayHeight );
+    glViewport( 0, 0, global.displayWidth, global.displayHeight );
     glClearStencil( 0 );
     glClearColor( 1.0f, 1.0f, 1.0f, 1.0f );     
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -628,7 +668,7 @@ void CubesRender::RenderCubes( const view::Cubes & cubes )
                                                             vectorial::vec3f( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ),
                                                             vectorial::vec3f( cameraUp.x, cameraUp.y, cameraUp.z ) );
 
-    vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
+    vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, displayWidth / displayHeight, 0.1f, 100.0f );
 
     for ( int i = 0; i < cubes.numCubes; ++i )
     {
@@ -847,6 +887,16 @@ void CubesRender::RenderShadowQuad()
     GLuint shader = global.shaderManager->GetShader( "Debug" );
     if ( !shader )
         return;
+
+    float x1 = 0;
+    float y1 = 0;
+    float x2 = global.displayWidth;
+    float y2 = global.displayHeight;
+
+    glViewport( x1, y1, x2 - x1, y2 - y1 );
+
+    glEnable( GL_SCISSOR_TEST );
+    glScissor( x1, y1, x2 - x1, y2 - y1 );
 
     glUseProgram( shader );
 

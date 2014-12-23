@@ -1,6 +1,40 @@
 
-Monday, December 22nd, 2014
----------------------------
+Monday Evening, December 22nd, 2014
+-----------------------------------
+
+    We need something to pass into the update that describes the update to be performed,
+
+    eg. which simulations to update. Which players are joined per-simulation.
+    Whether local input should be applied to that simulation, and to which player.
+
+    Whether to update that simulation *at all* should also be considered, because
+    that particular simulation might be delayed (eg. driven by inputs...)
+
+    eg. CubeUpdateConfig?
+
+    There also needs to be a mapping from view to simulation, eg. -1 means, no mapping
+    while 0 means, view gets output from simulation 0 and draws that.
+
+    The view focus of each player should also be specified per-view, eg. view 2 may be
+    viewing object 5. etc...
+
+    This allows insertion such that cubes can be rendered entirely without simulation
+
+    This is super important for the snapshot interpolation demo.
+
+    eg. CubeRenderConfig?
+
+    Added render mode. This way we can pick fullscreen, splitscreen, quadscreen.
+
+    I also think it would be excellent to have an overlaid view, eg. overlay multiple
+    simulations.
+
+    I think the overlaid view probably wants different colors, eg. blue cubes
+    force override for the second sim.
+
+
+Monday Morning, December 22nd, 2014
+-----------------------------------
 
     Configuration of world should be shared across all demos, eg. standardize it.
 
@@ -27,6 +61,14 @@ Monday, December 22nd, 2014
     Generalize code such that simulation and views are kept separate
 
     Make sure generalized code is working with existing singleplayer cubes demo before going further.
+
+    Code seems to crash if I don't have a demo loaded, eg. black screen.
+
+    Shouldn't it be clearing the screen to white?
+
+    What is going on?
+
+    Fixed bug. Clearing was not happening if demo was null.
 
 
 Sunday, December 21st, 2014

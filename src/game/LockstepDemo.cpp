@@ -30,14 +30,24 @@ bool LockstepDemo::Initialize()
     config.num_simulations = 2;
     config.num_views = 2;
 
-    m_internal->Initialize( *m_allocator );
+    m_internal->Initialize( *m_allocator, config );
 
     return true;
 }
 
 void LockstepDemo::Update()
 {
-    m_internal->Update();
+    CubesUpdateConfig update_config;
+
+    update_config.run_update[0] = true;
+    update_config.input[0] = m_internal->GetLocalInput();
+
+    // todo: dequeue input and frames from playout delay buffer vs. feeding in local input
+
+    update_config.run_update[1] = true;
+    update_config.input[1] = m_internal->GetLocalInput();
+
+    m_internal->Update( update_config );
 }
 
 bool LockstepDemo::Clear()
@@ -47,7 +57,11 @@ bool LockstepDemo::Clear()
 
 void LockstepDemo::Render()
 {
-    m_internal->Render();
+    CubesRenderConfig render_config;
+
+    render_config.render_mode = CUBES_RENDER_SPLITSCREEN;
+
+    m_internal->Render( render_config );
 }
 
 bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
