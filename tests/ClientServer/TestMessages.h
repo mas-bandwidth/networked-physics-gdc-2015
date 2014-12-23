@@ -30,8 +30,8 @@ struct TestMessage : public protocol::Message
         sequence = 0;
     }
 
-    template <typename Stream> void Serialize( Stream & stream )
-    {        
+    PROTOCOL_SERIALIZE_OBJECT( stream )
+    {
         serialize_bits( stream, sequence, 16 );
 
         int numBits = GetNumBitsForMessage( sequence );
@@ -44,21 +44,6 @@ struct TestMessage : public protocol::Message
             serialize_bits( stream, dummy, numRemainderBits );
 
         CORE_CHECK( serialize_check( stream, 0xDEADBEEF ) );
-    }
-
-    void SerializeRead( protocol::ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( protocol::WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( protocol::MeasureStream & stream )
-    {
-        Serialize( stream );
     }
 
     uint16_t sequence;
@@ -78,8 +63,8 @@ struct TestContextMessage : public protocol::Message
         value = 0;
     }
 
-    template <typename Stream> void Serialize( Stream & stream )
-    {        
+    PROTOCOL_SERIALIZE_OBJECT( stream )
+    {
         serialize_bits( stream, sequence, 16 );
 
         int numBits = GetNumBitsForMessage( sequence ) / 2;
@@ -96,21 +81,6 @@ struct TestContextMessage : public protocol::Message
         serialize_int( stream, value, testContext->value_min, testContext->value_max );
 
         CORE_CHECK( serialize_check( stream, 0xDEADBEEF ) );
-    }
-
-    void SerializeRead( protocol::ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( protocol::WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( protocol::MeasureStream & stream )
-    {
-        Serialize( stream );
     }
 
     uint16_t sequence;

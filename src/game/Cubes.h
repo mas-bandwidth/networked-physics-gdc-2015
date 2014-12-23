@@ -137,9 +137,16 @@ struct CubesRenderConfig
 
 #endif
 
+struct CubesSettings
+{
+    bool deterministic = true;
+};
+
 struct CubesInternal
 {
     CubesConfig config;
+
+    const CubesSettings * settings;
 
     CubesSimulation * simulation;
 
@@ -151,7 +158,7 @@ struct CubesInternal
 
 #endif // #ifdef CLIENT
 
-    void Initialize( core::Allocator & allocator, const CubesConfig & config );
+    void Initialize( core::Allocator & allocator, const CubesConfig & config, const CubesSettings * settigs );
 
     void Free( core::Allocator & allocator );
 

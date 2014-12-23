@@ -6,6 +6,8 @@
 #include "Demo.h"
 
 struct CubesInternal;
+struct CubesSettings;
+struct LockstepInternal;
 
 class LockstepDemo : public Demo
 {
@@ -31,9 +33,15 @@ public:
 
 private:
 
+    void Shutdown();
+
     core::Allocator * m_allocator;
 
     CubesInternal * m_internal;
+
+    CubesSettings * m_settings;
+
+    LockstepInternal * m_lockstep;
 };
 
 #endif // #ifdef CLIENT

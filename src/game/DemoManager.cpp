@@ -16,6 +16,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <stdio.h>
+#include <GLFW/glfw3.h>
 
 DemoManager::DemoManager( core::Allocator & allocator )
 {
@@ -94,8 +95,16 @@ Demo * DemoManager::GetDemo()
     return m_demo;
 }
 
+extern void console_function_reload( const char * args );
+
 bool DemoManager::KeyEvent( int key, int scancode, int action, int mods )
 {
+    if ( key == GLFW_KEY_ESCAPE && action == GLFW_PRESS && mods == 0 )
+    {
+        console_function_reload( "" );
+        return true;
+    }
+
     if ( m_demo )
         return m_demo->KeyEvent( key, scancode, action, mods );
     else

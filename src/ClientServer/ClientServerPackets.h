@@ -42,24 +42,9 @@ namespace clientServer
 
         ConnectionRequestPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_REQUEST ) {}
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 
@@ -70,25 +55,10 @@ namespace clientServer
 
         ChallengeResponsePacket() : Packet( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE ) {}
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
             serialize_uint16( stream, serverId );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 
@@ -99,25 +69,10 @@ namespace clientServer
 
         ConnectionDeniedPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_DENIED ) {}
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
             serialize_uint32( stream, reason );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 
@@ -128,25 +83,10 @@ namespace clientServer
 
         ConnectionChallengePacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE ) {}
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
             serialize_uint16( stream, serverId );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 
@@ -157,25 +97,10 @@ namespace clientServer
 
         ReadyForConnectionPacket() : Packet( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION ) {}
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
             serialize_uint16( stream, serverId );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 
@@ -205,7 +130,7 @@ namespace clientServer
             }
         }
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             if ( Stream::IsWriting )
                 CORE_ASSERT( fragmentSize <= protocol::MaxFragmentSize );
@@ -229,21 +154,6 @@ namespace clientServer
 
             serialize_bytes( stream, fragmentData, fragmentBytes );
         }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
-        }
     };
 
     struct DataBlockFragmentAckPacket : public protocol::Packet
@@ -257,26 +167,11 @@ namespace clientServer
             fragmentId = 0;
         }
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
             serialize_uint16( stream, serverId );
             serialize_bits( stream, fragmentId, 16 );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 
@@ -287,25 +182,10 @@ namespace clientServer
 
         DisconnectedPacket() : Packet( CLIENT_SERVER_PACKET_DISCONNECTED ) {}
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             serialize_uint16( stream, clientId );
             serialize_uint16( stream, serverId );
-        }
-
-        void SerializeRead( protocol::ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( protocol::WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-    
-        void SerializeMeasure( protocol::MeasureStream & stream )
-        {
-            Serialize( stream );
         }
     };
 }

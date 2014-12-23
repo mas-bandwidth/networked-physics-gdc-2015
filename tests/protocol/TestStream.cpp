@@ -42,7 +42,7 @@ struct TestObject : public protocol::Object
             items[i] = i + 10;        
     }
 
-    template <typename Stream> void Serialize( Stream & stream )
+    PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_int( stream, a, 0, 10 );
         serialize_int( stream, b, -5, +5 );
@@ -57,21 +57,6 @@ struct TestObject : public protocol::Object
         serialize_int( stream, numItems, 0, MaxItems - 1 );
         for ( int i = 0; i < numItems; ++i )
             serialize_bits( stream, items[i], 8 );
-    }
-
-    void SerializeRead( protocol::ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( protocol::WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( protocol::MeasureStream & stream )
-    {
-        Serialize( stream );
     }
 };
 

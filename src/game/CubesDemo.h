@@ -6,6 +6,7 @@
 #include "Demo.h"
 
 struct CubesInternal;
+struct CubesSettings;
 
 class CubesDemo : public Demo
 {
@@ -34,6 +35,8 @@ private:
     core::Allocator * m_allocator;
 
     CubesInternal * m_internal;
+
+    CubesSettings * m_settings;
 };
 
 #endif // #ifdef CLIENT

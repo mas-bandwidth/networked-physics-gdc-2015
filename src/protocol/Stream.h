@@ -367,10 +367,7 @@ template <typename T> void serialize_object( protocol::MeasureStream & stream, T
             value = (decltype(value)) uint32_value;         \
     } while (0)
 
-template <typename Stream> void serialize_bool( Stream & stream, bool & value )
-{
-    serialize_bits( stream, value, 1 );
-}
+#define serialize_bool( stream, value ) serialize_bits( stream, value, 1 )
 
 template <typename Stream> void serialize_uint16( Stream & stream, uint16_t & value )
 {

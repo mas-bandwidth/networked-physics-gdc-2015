@@ -4,9 +4,10 @@
 #include "Console.h"
 #include "ShaderManager.h"
 
-void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig & config )
+void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig & config, const CubesSettings * settings )
 {
     this->config = config;
+    this->settings = settings;
 
     // create cube simulations
 
@@ -159,7 +160,8 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
         {
             if ( update_config.run_update[i] )
             {
-                dRandSetSeed( simulation[i].frame );
+                if ( settings->deterministic )
+                    dRandSetSeed( simulation[i].frame );
 
                 simulation[i].game_instance->Update( deltaTime );
 

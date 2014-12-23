@@ -11,15 +11,19 @@ CubesDemo::CubesDemo( core::Allocator & allocator )
 {
     m_allocator = &allocator;
     m_internal = CORE_NEW( allocator, CubesInternal );
+    m_settings = CORE_NEW( allocator, CubesSettings );
 }
 
 CubesDemo::~CubesDemo()
 {
     CORE_ASSERT( m_internal );
+    CORE_ASSERT( m_settings );
     CORE_ASSERT( m_allocator );
     m_internal->Free( *m_allocator );
     CORE_DELETE( *m_allocator, CubesInternal, m_internal );
+    CORE_DELETE( *m_allocator, CubesSettings, m_settings );
     m_internal = nullptr;
+    m_settings = nullptr;
     m_allocator = nullptr;
 }
 
@@ -30,7 +34,7 @@ bool CubesDemo::Initialize()
     config.num_simulations = 1;
     config.num_views = 1;
 
-    m_internal->Initialize( *m_allocator, config );
+    m_internal->Initialize( *m_allocator, config, m_settings );
 
     return true;
 }

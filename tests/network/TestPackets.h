@@ -29,26 +29,11 @@ struct ConnectPacket : public protocol::Packet
         c = 3;        
     }
 
-    template <typename Stream> void Serialize( Stream & stream )
+    PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_int( stream, a, -10, 10 );
         serialize_int( stream, b, -10, 10 );
         serialize_int( stream, c, -10, 10 );
-    }
-
-    void SerializeRead( protocol::ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( protocol::WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( protocol::MeasureStream & stream )
-    {
-        Serialize( stream );
     }
 
     ConnectPacket & operator = ( const ConnectPacket & other )
@@ -79,24 +64,9 @@ struct UpdatePacket : public protocol::Packet
         timestamp = 0;
     }
 
-    template <typename Stream> void Serialize( Stream & stream )
+    PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_bits( stream, timestamp, 16 );
-    }
-
-    void SerializeRead( protocol::ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( protocol::WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( protocol::MeasureStream & stream )
-    {
-        Serialize( stream );
     }
 
     UpdatePacket & operator = ( const UpdatePacket & other )
@@ -125,24 +95,9 @@ struct DisconnectPacket : public protocol::Packet
         x = 2;
     }
 
-    template <typename Stream> void Serialize( Stream & stream )
+    PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_int( stream, x, -100, +100 );
-    }
-
-    void SerializeRead( protocol::ReadStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeWrite( protocol::WriteStream & stream )
-    {
-        Serialize( stream );
-    }
-
-    void SerializeMeasure( protocol::MeasureStream & stream )
-    {
-        Serialize( stream );
     }
 
     DisconnectPacket & operator = ( const DisconnectPacket & other )

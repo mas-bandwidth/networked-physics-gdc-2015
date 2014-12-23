@@ -1,5 +1,35 @@
 WOULD BE NICE:
 
+    --------------------------------------------
+
+    Macros to define packet factory would be nice
+
+    It's tedious and annoying code, and basically boilerplate once the packet types are defined.
+
+    --------------------------------------------
+
+    While determinism is disabled, flash "non-determinstic!" over the screen somehere?
+
+    -------------------------------------------
+
+    Would actually be cooler if display settings could be passed in on the command line,
+    eg. -width -height, -windowed -fullscreen and so on.
+
+    This would allow me to fine tune display settings on a per-premake shortcut basis,
+    rather than continually editing and recompiling Game.cpp to change width/height.
+
+    -------------------------------------------
+
+    Demos could resize the window according to their needs
+
+    eg. the splitscreen demo could resize it wide
+
+    The overlay demo could have it normal width.
+
+    But this is overkill -- firstly, for my presentation I'm simply going to record videos ahead of time
+
+    No live demos. Keep the presentation completely smooth
+
     -------------------------------------------
 
     Idea: the quick console starts at the top center of the screen and grows centered

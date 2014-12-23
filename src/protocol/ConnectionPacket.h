@@ -45,7 +45,7 @@ namespace protocol
 
     public:
 
-        template <typename Stream> void Serialize( Stream & stream )
+        PROTOCOL_SERIALIZE_OBJECT( stream )
         {
             // IMPORTANT: Channel structure must be supplied as context
             // so we know what channels are to be serialized for this packet
@@ -159,21 +159,6 @@ namespace protocol
                     serialize_object( stream, *channelData[i] );
                 }
             }
-        }
-
-        void SerializeRead( ReadStream & stream )
-        {
-            return Serialize( stream );
-        }
-
-        void SerializeWrite( WriteStream & stream )
-        {
-            return Serialize( stream );
-        }
-
-        void SerializeMeasure( MeasureStream & stream )
-        {
-            return Serialize( stream );
         }
 
         bool operator ==( const ConnectionPacket & other ) const

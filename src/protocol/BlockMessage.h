@@ -27,24 +27,9 @@ namespace protocol
             block.Disconnect();
         }
 
-        template <typename Stream> void Serialize( Stream & stream )
-        { 
+        PROTOCOL_SERIALIZE_OBJECT( stream )
+        {
             serialize_block( stream, m_block, MaxSmallBlockSize );
-        }
-
-        void SerializeRead( ReadStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeWrite( WriteStream & stream )
-        {
-            Serialize( stream );
-        }
-
-        void SerializeMeasure( MeasureStream & stream )
-        {
-            Serialize( stream );
         }
 
         Block & GetBlock() { return m_block; }

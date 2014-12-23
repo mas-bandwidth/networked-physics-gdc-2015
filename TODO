@@ -1,22 +1,132 @@
 DONE:
 
-    Render splitscreen divider. For now, just using a small white border where cubes aren't drawn.
-
-    Shadow issues show up in splitscreen at 1200x500 res, but not at 1000x500 res. Why?
-
-    Notice that it still happens at 1000x400, but not 1000x500. Something to do with aspect ratio?
-
-    Was a different rounding error for projection matrix for cubes vs. shadows (int divide vs. float)
-
-    Settled on 1200x500 resolution as looking best for splitscreen. Gives a square look to each side.
-
 TODO:
 
     -------------------------------------------
 
-    Next, actually construct a packet containing input and delay the right simulation by say, 100ms.
+    Add a network simulator so I can do the packet delay and packet loss with little effort.
+
+    Pump the network simulator update inside demo update
+
+    Implement code to dequeue packets from the simulator and process them according to address.
+
+    Left should be address ::1 but with port 1000, right should be port 1001.
+
+    This way the address can determine flow, and packets can go left <->right with same simulator.
 
     -------------------------------------------
+
+    Each frame on the left simulation (0) I need to take the input and frame number
+    and insert that into the sliding window (&0xFFFF).
+    
+    If inserting a packet into the sliding window would overwrite an existing entry
+    then this is an error. Assert.
+
+    This assert may be annoying initially so perhaps disable it with a // todo
+
+    -------------------------------------------
+
+    Each frame write a packet to the right simulation (1)
+
+    This packet should include the most recent sequence and all the inputs
+    from the oldest sequence to the current (eg. num inputs)
+
+    Inputs should be written from oldest to newest order because this is cache efficient.
+
+    -------------------------------------------
+
+    Make sure to actually serialize read/write packets when they pop out of the simulator
+
+    I want to make sure the serialization is actually done.
+
+    This makes it "real networking" as far as I am concerned, vs. passing structures around.
+
+    -------------------------------------------
+
+    On the receiving side I don't need a queue since all inputs are in the packet.
+
+    Wait. No I do need a queue because I don't just playback the data on receive,
+    I will buffer that data, add a timestamp and then when the playout delay buffer
+    says it is time, that input comes out and we simulate a frame.
+
+    -------------------------------------------
+
+    Each frame, if a packet was received that frame (eg. added to playout buffer) 
+    send just one ack packet, this ack should just contain the most recent sequence
+    # received. This is what is sent back as ack.
+
+    -------------------------------------------
+
+    This means I need to implement a *simple* playout delay buffer, even if it's
+    just something like, OK, what is the time on the server, OK this packet should
+    play now (server time should be first packet receive - 100ms or so)
+
+    -------------------------------------------
+
+    When processing acks it's really easy. Just clear all inputs in the client input
+    sliding window that are not more recent than the ack sequence #.
+
+    -------------------------------------------
+
+    I think I want 100ms of actual latency, and 100ms of playout delay.
+
+    Calculate this according to # of frames sent, eg. how many packets can you lose
+    in a row before you see a dip.
+
+    Basically at 100ms playout delay, you are OK unless you lose 6 packets in a row @ 60pps.
+
+    -------------------------------------------
+
+
+
+
+
+
+
+
+
+
+    *** PHASE TWO ***
+
+    -------------------------------------------
+
+    Add a way to simulate packet loss and increase/decrease it
+
+    Visualize the amount of packet loss with a text display somewhere
+
+    -------------------------------------------
+
+    Add a way to increase/decrease latency
+
+    Determine if we have to do something to catch up / speed up / slow down because of this
+
+    -------------------------------------------
+
+    Implement a more TCP like reliability system, eg. only resend if packet is detected lost
+
+    This will show that UDP reliability can be better than TCP for this situation.
+
+    -------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    -------------------------------------------
+
+    Actually write the "Deterministic Lockstep" article
 
     Now implement a reliability system between left and right simulation, eg. track sequence and ack,
     and include *all* inputs since last acked sequence.
@@ -26,39 +136,7 @@ TODO:
 
     Fuck those guys. I'm going to nail them.
 
-    --------------------------------------------
-
-    Now add a way to increase and decrease amount of packet loss.
-
-    --------------------------------------------
-
-    To really hammer this home, add a way to enable/disable the redundant inputs, 
-    eg. simulate TCP behavior vs. the redundant UDP (eg. an ack/response system).
-
     -------------------------------------------
-
-    Implement 1 bit for input delta encoding, eg. if the next input has not changed,
-    just send one bit 0, otherwise 1 bit 1 and then the next input.
-
-    Inputs don't change often in the cube sim so this should be a very effective compression.
-
-    -------------------------------------------
-
-    It would be super cool to detect "ESCAPE" to reset the simulation in the deterministic demo.
-
-    Going to need to reset the simulation often I think.
-
-    -------------------------------------------
-
-    Add a non-deterministic mode that can be toggled on/off via key press.
-
-    In this mode, just supress the code that sets the random seed to the current frame #.
-
-    This non-deterministic mode is super awesome because it can be trivially enabled/disabled to break stuff.
-
-    -------------------------------------------
-
-
 
 
 

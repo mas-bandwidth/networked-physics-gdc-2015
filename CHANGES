@@ -1,4 +1,50 @@
 
+Tuesday Morning, December 23rd, 2014
+------------------------------------
+
+    Make escape reload the current demo
+
+    Add a key to enable/disable determinism (F1)
+
+    Need a constant. Max inputs. This is max inputs in packet,
+    and also the max inputs in 
+
+    At 60fps if I max the max inputs 256 then that means ~4.5 seconds.
+
+    If 512 then 10 ~9 seconds. 1024, ~18 seconds.
+
+    Seems that for this situation 256 should be plenty. Only going local.
+
+    Need a sliding window for inputs.
+
+    Set it to something large like 256. 
+
+    Idea is if the client ever runs out of room to store the input then
+    this is an error and the client would disconnect.
+
+    Added "LockstepInternal" struct as to not expose protocol details
+    to the game and demo system.
+
+    Now I need a packet factory. Definitions for all packets.
+
+    Converted all packet definitions to use the PROTOCOL_SERIALIZE_OBJECT macro. Nice.
+
+    Bring across packet factory and all that stuff specific to lockstep demo protocol
+
+    I need two packet types. Input Packet, Ack Packet.
+
+    Input packet is current sequence, number of inputs included and delta encoded inputs.
+
+    Ack packet is just a response saying the most recent number for which all inputs
+    were received, eg. uint16_t ack. Nothing more.
+
+    Implemented ack packet serialize.
+
+    Implement inputs packet. Don't do delta encoding yet. Keep it simple.
+
+    Fuck it implemented the delta encoding too. Easy.
+
+
 Monday Evening, December 22nd, 2014
 -----------------------------------
 
