@@ -205,9 +205,9 @@ if _ACTION == "clean" then
         os.execute "rm -f replay.bin"
         os.execute "rm -rf output"
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
+        os.execute "cd external/ode; make clean > /dev/null 2>&1"
     else
         os.rmdir "ipch"
-        os.execute "cd external/ode; make clean"
         os.execute "del /F /Q Protocol.zip"
     end
 end
