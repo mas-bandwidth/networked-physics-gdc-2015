@@ -207,6 +207,7 @@ if _ACTION == "clean" then
         os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
     else
         os.rmdir "ipch"
+        os.execute "cd external/ode; make clean"
         os.execute "del /F /Q Protocol.zip"
     end
 end
