@@ -2,6 +2,14 @@ WOULD BE NICE:
 
     --------------------------------------------
 
+    Network protocol "Sliding Window" is not a real sliding window.
+
+    A real sliding window doesn't have any holes.
+
+    Real sliding window has sequence at head and trailing ack sequence and no holes.
+    
+    --------------------------------------------
+
     Macros to define packet factory would be nice
 
     It's tedious and annoying code, and basically boilerplate once the packet types are defined.
@@ -214,11 +222,6 @@ WOULD BE NICE:
     ----------------------------------
 
     Finish implementing virtual go tests for each stone vs. board collision type
-
-    ----------------------------------
-
-    It's important that tests are able to be run in release, but currently they do checks via CORE_ASSERT
-    which is debug build only. This is wrong!!!
 
     ----------------------------------
 
@@ -529,11 +532,6 @@ WOULD BE NICE:
     for a real application. I don't want it to randomly cycle between settings
     automatically. I want the user to be able to choose between a series of presets.
 
-    ---------------------------
-
-    It's really annoying not being able to create an address passing in dynamic port,
-    eg. Address( "::1", ServerPort ) should be a thing.
-    
     ---------------------------
 
     Client connect takes over 1 second. Optimize!

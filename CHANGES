@@ -1,4 +1,82 @@
 
+Wednesday Afternoon, December 24th, 2014
+----------------------------------------
+
+    Each frame write a packet to the right simulation (1)
+
+    This packet should include the most recent sequence and all the inputs
+    from the oldest sequence to the current (eg. num inputs)
+
+    Inputs should be written from oldest to newest order because this is cache efficient.
+
+    Update address to accept constructor with port num. Annoying otherwise.    
+
+    We seem to have a memory trash on real sliding window insert! *OR* in the GetArray function.
+
+    Implement unit tests for real sliding window.
+
+    Isolated crash to sliding window get array function across wrap.
+
+    Another problem with the "IsFull" check. Fixed. 
+
+    All done. Ready to use.
+
+    Added code to check if not full before adding to sliding window. Temporary until acks come back.
+
+    Make sure to actually serialize read/write packets when they pop out of the simulator
+
+    I want to make sure the serialization is actually done.
+
+    This makes it "real networking" as far as I am concerned, vs. just passing 
+    pointers to structures around.
+
+    Verified that serialization is working and inputs are properly getting acked.
+
+    On to playout delay buffer!
+
+
+Wednesday Morning, December 24th, 2014
+--------------------------------------
+
+    Add a network simulator so I can do the packet delay and packet loss with little effort.
+
+    Set the simulator to have 100ms latency, +/- 2 frames of jitter @ 60fps, and 5% packet loss.
+
+    Pump the network simulator update inside demo update
+
+    Implement code to dequeue packets from the simulator and printf for "processing them"
+
+    Left should be address ::1 but with port 1000, right should be port 1001.
+
+    This way the address can determine flow, and packets can go left <->right with same simulator.
+
+    Now send a packet each frame from the left simulation to the right.
+
+    Sequence should be frame number & 0xFFFF.
+
+    Ack should be oldest sequence in input buffer. 
+
+    Can get this from sliding window right? Nope. Sliding window isn't designed like that.
+
+    Need to gather all inputs from sliding window in order of oldest to newest.
+
+    You know. My use of a sliding window is wrong. The real sliding window has no holes.
+
+    My "sliding window" is designed to have holes. It's really something different...
+
+    Implement "RealSlidingWindow"
+
+    This guy has sequence at head, and ack sequence at back. It has an interface
+    to add an entry at the front of the sequence, and an interface to ack a specific
+    sequence which removes all entries before and up to that one.
+
+    It should have a constant time query for GetSequence and GetAck, and a way to 
+    iterate across the array of entries, and copy entries to an array (the packet)
+
+    Converted to real sliding window. Now I only need to put the struct I want in there,
+    not a wrapper struct with "valid" and "sequence", eg. game::Input.
+
+
 Tuesday Morning, December 23rd, 2014
 ------------------------------------
 

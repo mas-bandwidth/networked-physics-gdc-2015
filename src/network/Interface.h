@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #ifndef NETWORK_INTERFACE_H
 #define NETWORK_INTERFACE_H

@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #include "network/Address.h"
 #include <netdb.h>
@@ -104,7 +104,18 @@ namespace network
         }
     }
 
-    Address::Address( const char * address_in )
+    Address::Address( const char * address )
+    {
+        Parse( address );
+    }
+
+    Address::Address( const char * address, uint16_t port )
+    {
+        Parse( address );
+        m_port = port;
+    }
+
+    void Address::Parse( const char * address_in )
     {
         // first try to parse as an IPv6 address:
         // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"

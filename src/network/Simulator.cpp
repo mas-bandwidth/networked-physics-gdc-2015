@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #include "network/Simulator.h"
 #include "core/Memory.h"
@@ -8,6 +8,7 @@ namespace network
 {
     Simulator::Simulator( const SimulatorConfig & config ) : m_config( config )
     {
+        CORE_ASSERT( m_config.numPackets > 0 );
         CORE_ASSERT( m_config.packetFactory );
 
         m_allocator = m_config.allocator ? m_config.allocator : &core::memory::default_allocator();
@@ -20,6 +21,18 @@ namespace network
 
     Simulator::~Simulator()
     {
+        CORE_ASSERT( m_allocator );
+        CORE_ASSERT( m_packets );
+
+        Reset();
+
+        CORE_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
+
+        m_packets = nullptr;
+    }
+
+    void Simulator::Reset()
+    {
         CORE_ASSERT( m_packets );
 
         for ( int i = 0; i < m_config.numPackets; ++i )
@@ -30,8 +43,6 @@ namespace network
                 m_packets[i].packet = nullptr;
             }
         }
-
-        CORE_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
     }
 
     void Simulator::AddState( const SimulatorState & state )

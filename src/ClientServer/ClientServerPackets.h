@@ -1,4 +1,4 @@
-// Client Server Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #ifndef CLIENT_SERVER_PACKETS_H
 #define CLIENT_SERVER_PACKETS_H

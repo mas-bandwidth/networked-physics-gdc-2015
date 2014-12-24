@@ -169,6 +169,7 @@ namespace cubes
 	void Simulation::Update( float deltaTime, bool paused )
 	{		
 		impl->interactions.clear();
+		
 		impl->interactions.resize( impl->objects.size() );
 
 		if ( paused )

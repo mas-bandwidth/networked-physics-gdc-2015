@@ -9,32 +9,29 @@
 #include "protocol/Stream.h"
 #include "protocol/SlidingWindow.h"
 #include "protocol/PacketFactory.h"
+#include "network/Simulator.h"
 
 static const int MaxInputs = 256;
+static const int LeftPort = 1000;
+static const int RightPort = 1001;
+static const int MaxPacketSize = 1024;
 
-struct LockstepInput
-{
-    uint32_t valid : 1;
-    uint32_t sequence : 16;
-    game::Input input;
-};
-
-typedef protocol::SlidingWindow<LockstepInput> LockstepInputSlidingWindow;
+typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
 enum LockstepPackets
 {
-    LOCKSTEP_PACKET_INPUTS,
+    LOCKSTEP_PACKET_INPUT,
     LOCKSTEP_PACKET_ACK,
     LOCKSTEP_NUM_PACKETS
 };
 
-struct LockstepPacketInputs : public protocol::Packet
+struct LockstepInputPacket : public protocol::Packet
 {
     uint16_t sequence;
-    uint16_t num_inputs;
+    int num_inputs;
     game::Input inputs[MaxInputs];
 
-    LockstepPacketInputs() : Packet( LOCKSTEP_PACKET_INPUTS )
+    LockstepInputPacket() : Packet( LOCKSTEP_PACKET_INPUT )
     {
         sequence = 0;
         num_inputs = 0;
@@ -73,11 +70,11 @@ struct LockstepPacketInputs : public protocol::Packet
     }
 };
 
-struct LockstepPacketAck : public protocol::Packet
+struct LockstepAckPacket : public protocol::Packet
 {
     uint16_t ack;
 
-    LockstepPacketAck() : Packet( LOCKSTEP_PACKET_ACK )
+    LockstepAckPacket() : Packet( LOCKSTEP_PACKET_ACK )
     {
         ack = 0;
     }
@@ -106,8 +103,8 @@ protected:
     {
         switch ( type )
         {
-            case LOCKSTEP_PACKET_INPUTS:    return CORE_NEW( *m_allocator, LockstepPacketInputs ); 
-            case LOCKSTEP_PACKET_ACK:       return CORE_NEW( *m_allocator, LockstepPacketAck );          
+            case LOCKSTEP_PACKET_INPUT:     return CORE_NEW( *m_allocator, LockstepInputPacket );
+            case LOCKSTEP_PACKET_ACK:       return CORE_NEW( *m_allocator, LockstepAckPacket );
             default:
                 return nullptr;
         }
@@ -119,11 +116,28 @@ struct LockstepInternal
     LockstepInternal( core::Allocator & allocator ) 
         : packet_factory( allocator ), input_sliding_window( allocator, MaxInputs )
     {
-        // ...
+        this->allocator = &allocator;
+        network::SimulatorConfig networkSimulatorConfig;
+        networkSimulatorConfig.packetFactory = &packet_factory;
+        network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
+        const float latency = 0.1f;
+        const float packet_loss = 5.0f;
+        const float jitter = 2 * 1.0f / 60.0f;
+        network_simulator->AddState( { latency, packet_loss, jitter } );
     }
 
+    ~LockstepInternal()
+    {
+        CORE_ASSERT( network_simulator );
+        typedef network::Simulator NetworkSimulator;
+        CORE_DELETE( *allocator, NetworkSimulator, network_simulator );
+        network_simulator = nullptr;
+    }
+
+    core::Allocator * allocator;
     LockstepPacketFactory packet_factory;
     LockstepInputSlidingWindow input_sliding_window;
+    network::Simulator * network_simulator;
 };
 
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
@@ -175,13 +189,120 @@ void LockstepDemo::Update()
 {
     CubesUpdateConfig update_config;
 
-    update_config.run_update[0] = true;
-    update_config.input[0] = m_internal->GetLocalInput();
+    auto local_input = m_internal->GetLocalInput();
 
-    // todo: dequeue input and frames from playout delay buffer vs. feeding in local input
+    // setup left simulation to update one frame with local input
+
+    update_config.run_update[0] = true;
+    update_config.input[0] = local_input;
+
+    // insert local input for this frame in the input sliding window
+
+    auto & inputs = m_lockstep->input_sliding_window;
+
+    CORE_ASSERT( !inputs.IsFull() );
+
+    inputs.Insert( local_input );
+
+    // send an input packet to the left simulation (all inputs since last ack)
+
+    auto input_packet = (LockstepInputPacket*) m_lockstep->packet_factory.Create( LOCKSTEP_PACKET_INPUT );
+
+    input_packet->sequence = inputs.GetSequence();
+
+    inputs.GetArray( input_packet->inputs, input_packet->num_inputs );
+
+    m_lockstep->network_simulator->SendPacket( network::Address( "::1", RightPort ), input_packet );
+
+    // update the network simulator
+
+    m_lockstep->network_simulator->Update( global.timeBase );
+
+    // receive packets from the simulator (with latency, packet loss and jitter applied...)
+
+    bool received_input_this_frame = false;
+    uint16_t ack_sequence = 0;
+
+    while ( true )
+    {
+        auto packet = m_lockstep->network_simulator->ReceivePacket();
+        if ( !packet )
+            break;
+
+        auto port = packet->GetAddress().GetPort();
+        auto type = packet->GetType();
+
+        // IMPORTANT: Make sure we actually serialize read/write the packet.
+        // Otherwise we're just passing around pointers to structs. LAME! :D
+
+        uint8_t buffer[MaxPacketSize];
+
+        protocol::WriteStream write_stream( buffer, MaxPacketSize );
+        packet->SerializeWrite( write_stream );
+        write_stream.Flush();
+        CORE_CHECK( !write_stream.IsOverflow() );
+
+        m_lockstep->packet_factory.Destroy( packet );
+        packet = nullptr;
+
+        protocol::ReadStream read_stream( buffer, MaxPacketSize );
+        auto read_packet = m_lockstep->packet_factory.Create( type );
+        read_packet->SerializeRead( read_stream );
+        CORE_CHECK( !read_stream.IsOverflow() );
+
+        if ( type == LOCKSTEP_PACKET_INPUT && port == RightPort )
+        {
+            // input packet for right simulation
+
+            printf( "input packet for right simulation\n" );
+
+            auto input_packet = (LockstepInputPacket*) read_packet;
+
+            if ( !received_input_this_frame )
+            {
+                received_input_this_frame = true;
+                ack_sequence = input_packet->sequence;
+            }
+            else
+            {
+                if ( core::sequence_greater_than( input_packet->sequence, ack_sequence ) )
+                    ack_sequence = input_packet->sequence;
+            }
+
+            // todo: insert inputs into playout delay buffer
+        }
+        else if ( type == LOCKSTEP_PACKET_ACK && port == LeftPort )
+        {
+            // ack packet for left simulation
+
+            printf( "ack packet for left simulation\n" );
+
+            auto ack_packet = (LockstepAckPacket*) read_packet;
+
+            inputs.Ack( ack_packet->ack );
+        }
+
+        m_lockstep->packet_factory.Destroy( read_packet );
+        read_packet = nullptr;
+    }
+
+    // if any input packets were received this frame, send an ack packet back to the left simulation
+
+    if ( received_input_this_frame )
+    {
+        auto ack_packet = (LockstepAckPacket*) m_lockstep->packet_factory.Create( LOCKSTEP_PACKET_ACK );
+
+        ack_packet->ack = ack_sequence;
+
+        m_lockstep->network_simulator->SendPacket( network::Address( "::1", LeftPort ), ack_packet );
+    }
+
+    // todo: if we have a frame available from playout delay buffer set the right simulation to run a frame with that input
 
     update_config.run_update[1] = true;
     update_config.input[1] = m_internal->GetLocalInput();
+
+    // run the simulation(s)
 
     m_internal->Update( update_config );
 }
@@ -198,8 +319,6 @@ void LockstepDemo::Render()
     render_config.render_mode = CUBES_RENDER_SPLITSCREEN;
 
     m_internal->Render( render_config );
-
-    // todo: if not deterministic, show text "non-deterministic!" flashing on screen?
 }
 
 bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
@@ -208,6 +327,7 @@ bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
     {
         if ( key == GLFW_KEY_BACKSPACE )
         {
+            Shutdown();
             Initialize();
             return true;
         }

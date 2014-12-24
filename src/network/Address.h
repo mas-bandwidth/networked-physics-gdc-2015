@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #ifndef NETWORK_ADDRESS_H
 #define NETWORK_ADDRESS_H
@@ -46,6 +46,8 @@ namespace network
 
         explicit Address( const char * address );
 
+        explicit Address( const char * address, uint16_t port );
+
         void Clear();
 
         uint32_t GetAddress4() const;
@@ -65,6 +67,10 @@ namespace network
         bool operator ==( const Address & other ) const;
 
         bool operator !=( const Address & other ) const;
+
+    protected:
+
+        void Parse( const char * address );
     };
 }
 

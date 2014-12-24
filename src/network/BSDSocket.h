@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #ifndef NETWORK_BSD_SOCKET_H
 #define NETWORK_BSD_SOCKET_H

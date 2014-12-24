@@ -1,4 +1,4 @@
-// Protocol Library - Copyright (c) 2014, The Network Protocol Company, Inc.
+// Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #ifndef PROTOCOL_BITPACKER_H
 #define PROTOCOL_BITPACKER_H

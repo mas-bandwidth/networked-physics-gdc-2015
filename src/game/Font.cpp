@@ -1,6 +1,6 @@
 /*
     Font Loader
-    Copyright (c) 2014, The Network Protocol Company, Inc.
+    Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 */  
 
 #ifdef CLIENT

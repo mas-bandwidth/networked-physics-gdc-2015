@@ -2,78 +2,32 @@ DONE:
 
 TODO:
 
-    -------------------------------------------
+    Implement a *simple* playout delay buffer.
 
-    Add a network simulator so I can do the packet delay and packet loss with little effort.
+    This buffer should be a queue. 
 
-    Pump the network simulator update inside demo update
+    It should have a function that takes an array of inputs (from packet)...
 
-    Implement code to dequeue packets from the simulator and process them according to address.
+    It then passes over these inputs and adds new ones to its own internal queue.
 
-    Left should be address ::1 but with port 1000, right should be port 1001.
+    It should track the current frame, eg. start at 0.
 
-    This way the address can determine flow, and packets can go left <->right with same simulator.
+    From this current frame, it should be able to determine what time the next packet should come out.
 
-    -------------------------------------------
+    There should be a function to get inputs given server time.
 
-    Each frame on the left simulation (0) I need to take the input and frame number
-    and insert that into the sliding window (&0xFFFF).
-    
-    If inserting a packet into the sliding window would overwrite an existing entry
-    then this is an error. Assert.
+    This function can return inputs that should be run.
 
-    This assert may be annoying initially so perhaps disable it with a // todo
+    It's possible that more than one simulation update needs to be run, so it should return
+    the number of frames, and inputs per-frame by filling an array of inputs.
 
-    -------------------------------------------
+    The cubes internal will need to be updated to accept a # of updates to perform per-simulation,
+    as well as an array of inputs. Right now it can only run 0 or 1 simulation step.s
 
-    Each frame write a packet to the right simulation (1)
+    There should be a maximum number of simulation frames per-update as well. I suggest 4 or 8.
 
-    This packet should include the most recent sequence and all the inputs
-    from the oldest sequence to the current (eg. num inputs)
-
-    Inputs should be written from oldest to newest order because this is cache efficient.
-
-    -------------------------------------------
-
-    Make sure to actually serialize read/write packets when they pop out of the simulator
-
-    I want to make sure the serialization is actually done.
-
-    This makes it "real networking" as far as I am concerned, vs. passing structures around.
-
-    -------------------------------------------
-
-    On the receiving side I don't need a queue since all inputs are in the packet.
-
-    Wait. No I do need a queue because I don't just playback the data on receive,
-    I will buffer that data, add a timestamp and then when the playout delay buffer
-    says it is time, that input comes out and we simulate a frame.
-
-    -------------------------------------------
-
-    Each frame, if a packet was received that frame (eg. added to playout buffer) 
-    send just one ack packet, this ack should just contain the most recent sequence
-    # received. This is what is sent back as ack.
-
-    -------------------------------------------
-
-    This means I need to implement a *simple* playout delay buffer, even if it's
-    just something like, OK, what is the time on the server, OK this packet should
-    play now (server time should be first packet receive - 100ms or so)
-
-    -------------------------------------------
-
-    When processing acks it's really easy. Just clear all inputs in the client input
-    sliding window that are not more recent than the ack sequence #.
-
-    -------------------------------------------
-
-    I think I want 100ms of actual latency, and 100ms of playout delay.
-
-    Calculate this according to # of frames sent, eg. how many packets can you lose
-    in a row before you see a dip.
-
-    Basically at 100ms playout delay, you are OK unless you lose 6 packets in a row @ 60pps.
+    Render should only happen after the simulation updates, and a lot of work is in the render,
+    so pulling off 4 invisible simulation updates then render should be OK.
 
     -------------------------------------------
 

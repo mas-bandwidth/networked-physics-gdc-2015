@@ -9,6 +9,7 @@ extern void test_bitpacker();
 extern void test_stream();
 extern void test_stream_context();
 extern void test_sliding_window();
+extern void test_real_sliding_window();
 extern void test_generate_ack_bits();
 extern void test_block();
 
@@ -59,6 +60,7 @@ int main()
     test_stream();
     test_stream_context();
     test_sliding_window();
+    test_real_sliding_window();
     test_generate_ack_bits();
     test_block();
 
