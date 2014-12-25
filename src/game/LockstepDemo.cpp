@@ -18,7 +18,7 @@ static const int RightPort = 1001;
 static const int MaxPacketSize = 1024;
 static const int PlayoutDelayBufferSize = 1024;
 
-static const float PlayoutDelay = 0.1f;     // delay packets for an additional 100ms
+static const float PlayoutDelay = 0.15;     // delay packets for an additional 150ms
 
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
@@ -143,14 +143,11 @@ struct LockstepPlayoutDelayBuffer
 
         const uint16_t first_input_sequence = sequence - num_inputs;
 
-        printf( "first input sequence = %d\n", first_input_sequence );
-
         for ( int i = 0; i < num_inputs; ++i )
         {
             uint16_t sequence = first_input_sequence + i;
             if ( sequence == most_recent_input )
             {
-                printf( "%.3f: add input %d\n", time, sequence );
                 most_recent_input = sequence + 1;
                 core::queue::push_back( input_queue, inputs[i] );
             }
@@ -166,7 +163,7 @@ struct LockstepPlayoutDelayBuffer
 
         for ( int i = 0; i < MaxSimFrames; ++i )
         {
-            if ( time < start_time + frame * 1.0f / 60.0f + PlayoutDelay )
+            if ( time < start_time + frame * ( 1.0f / 60.0f ) + PlayoutDelay )
                 break;
 
             if ( !core::queue::size( input_queue ) )
@@ -201,8 +198,8 @@ struct LockstepInternal
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         const float latency = 0.1f;
-        const float packet_loss = 0.0f; // 5.0f;
-        const float jitter = 0.0f; // 2 * 1.0f / 60.0f;
+        const float packet_loss = 2.0f;
+        const float jitter = 1.0f / 60.0f;
         network_simulator->AddState( { latency, packet_loss, jitter } );
     }
 
@@ -377,9 +374,6 @@ void LockstepDemo::Update()
     // if we have frames available from playout delay buffer set them up to simulate
 
     m_lockstep->playout_delay_buffer.GetFrames( global.timeBase.time, update_config.sim[1].num_frames, update_config.sim[1].frame_input );
-
-    if ( !m_lockstep->playout_delay_buffer.stopped )
-        printf( "%.3f: sim %d frames\n", global.timeBase.time, update_config.sim[1].num_frames );
 
     // run the simulation(s)
 

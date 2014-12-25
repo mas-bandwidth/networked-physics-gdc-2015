@@ -2,16 +2,6 @@ DONE:
 
 TODO:
 
-    Why is it jittery?! Is it just that it needs interpolation?
-
-    This seems unlikely. Packets should be received on next frame exactly. No variance.
-
-    ---------------------------
-
-
-
-
-
 
 
 

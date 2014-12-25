@@ -62,6 +62,22 @@ Wednesday Evening, after Christmas Dinner, 2014
 
     Re-enabled delta encoding for inputs. Still deterministic!
 
+    Why is it jittery?! Is it just that it needs interpolation?
+
+    This seems unlikely. Packets should be received on next frame exactly. No variance.
+
+    Woot. Got it working. Just needed some more brackets.
+
+    Add some packet loss and jitter. It should still be smooth!
+
+    Dropped to 2% packet loss and +/- 1 frame jitter. 
+
+    Need 150ms playout delay to ensure this is smooth.
+
+    It's smooth though.
+
+    Perhaps a 250ms playout delay buffer would be suitable @ 5%?
+
 
 Wednesday Evening, Christmas Eve, 2014
 --------------------------------------
