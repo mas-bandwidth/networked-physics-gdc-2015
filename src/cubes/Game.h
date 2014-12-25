@@ -651,6 +651,9 @@ namespace game
 								math::Vector force = direction * magnitude;
 								if ( activeObject != activePlayerObject )
 									force *= mass;
+								else if ( pull )
+									force *= 10;
+
 								if ( authority == MaxPlayers || playerId == authority )
 								{
 									simulation->ApplyForce( activeObject->activeId, force );

@@ -78,6 +78,47 @@ Wednesday Evening, after Christmas Dinner, 2014
 
     Perhaps a 250ms playout delay buffer would be suitable @ 5%?
 
+    Packet loss seems a bit excessive. eg. causes jittering at higher latency. It shouldn't.
+
+    There seems to be some jitter on playback that wasn't present on record, or at least I didn't notice it.
+
+    Regardless, with playout delay of 1 second, and no packet loss or jitter, there is simply no reason
+    for any sort of jitter on playback. There is plenty of buffer time!
+
+    Nope. Jitter happens without playback. It's a thing.
+
+    Why is jitter happening. It really shouldn't!
+
+    All hitches are "not ready for frame n yet"
+
+    I guess this means that there must be something wrong with the timing of the dequeue. Just so weird...
+
+    It seems to not happen right away. Beat frequency?
+
+    Found it! The playout delay was essentially disabled (needed to be subtracted from time, was added...)
+
+    Now it records and plays back without any trouble!
+
+    Wait. Nope. It's still broken :(
+
+    Somehow the playout delay factors into it, but what I've done is actually *disable* the playout delay.
+
+    Why would having the playout delay cause this, and not having it fixes it?
+
+    Is it because playout delay is not a multiple of 1/60?
+
+    Is this really just a way of telling me that we need interpolation?
+
+    I think it probably is.
+
+    Wait. Seem to have fixed it by adding 0.5 to the frame number. 
+
+    I'm guessing it was really close to the current/previous frame, so it was a bit noisy
+    as the float precision changed as time grew. 
+
+    Now there is enough slop that this noise never has any effect.
+
+
 
 Wednesday Evening, Christmas Eve, 2014
 --------------------------------------

@@ -88,7 +88,7 @@ namespace network
 
         for ( int i = 0; i < m_config.numPackets; ++i )
         {
-            if ( m_packets[i].packet == nullptr || m_packets[i].dequeueTime > m_timeBase.time )
+            if ( m_packets[i].packet == nullptr || m_packets[i].dequeueTime >= m_timeBase.time )
                 continue;
 
             if ( !oldestPacket || ( oldestPacket && m_packets[i].dequeueTime < oldestPacket->dequeueTime ) )

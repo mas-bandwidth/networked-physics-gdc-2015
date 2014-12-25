@@ -12,13 +12,16 @@
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
-static const int MaxInputs = 1024;
+static const int MaxInputs = 256;
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 static const int MaxPacketSize = 1024;
-static const int PlayoutDelayBufferSize = 10 * 1024;
+static const int PlayoutDelayBufferSize = 1024;
 
-static const float PlayoutDelay = 1.0f; // 0.15f     // delay packets for an additional 150ms
+static const float PlayoutDelay = 0.25f;            // 250ms playout delay
+static const float Latency = 0.1f;                  // 100ms latency
+static const float PacketLoss = 5.0f;               // 5% packet loss
+static const float Jitter = 2.0f / 60.0f;           // +/- 2 frames of jitter
 
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
@@ -164,7 +167,7 @@ struct LockstepPlayoutDelayBuffer
 
         for ( int i = 0; i < MaxSimFrames; ++i )
         {
-            if ( time < start_time + frame * ( 1.0f / 60.0f ) + PlayoutDelay )
+            if ( time < ( start_time + ( frame + 0.5 ) * ( 1.0f / 60.0f ) + PlayoutDelay ) )
                 break;
 
             if ( !core::queue::size( input_queue ) )
@@ -185,7 +188,7 @@ struct LockstepPlayoutDelayBuffer
     bool stopped;
     double start_time;
     uint16_t most_recent_input;
-    uint16_t frame;
+    uint64_t frame;
     core::Queue<game::Input> input_queue;
 };
 
@@ -198,10 +201,7 @@ struct LockstepInternal
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
-        const float latency = 1.0f;
-        const float packet_loss = 0; // 2.0f;
-        const float jitter = 0; // 1.0f / 60.0f;
-        network_simulator->AddState( { latency, packet_loss, jitter } );
+        network_simulator->AddState( { Latency, PacketLoss, Jitter } );
     }
 
     ~LockstepInternal()
