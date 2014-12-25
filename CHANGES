@@ -1,4 +1,68 @@
 
+Wednesday Evening, after Christmas Dinner, 2014
+-----------------------------------------------
+
+    Now actually implement the playout delay buffer.
+
+    Shouldn't be too hard. Initially in stopped state.
+
+    When first input comes in, goes into playing state and records current time value
+    as "start time". Uses this later on to work out when a frame should come out.
+
+    This means playout delay buffer needs a "playing" bool. 
+
+    Also means it needs the timebase on "AddInputs"
+
+    Add constant for maximum playout delay buffer size (1024)
+
+    Resize the playout delay buffer to the correct size on startup.
+
+    On first input, set playing to true.
+
+    Implement the function that adds inputs to the playout delay buffer.
+
+    This function needs to track most recent sequence added, and not add any sequences
+    older than that.
+
+    Simplest way seems to be just to iterate over all inputs to add and only add inputs
+    that are exactly one older than previous most recent sequence.
+
+    In order to get inputs acked properly, it's necessary to sequence - 1 for acks,
+    otherwise the ack gets one ahead of itself, and breaks the reliability.
+
+    We need a frame count, which will have added and be multiplied by 1/60 to get time
+    to pop off the next 
+
+    Implement function that compares time in GetFrames and works out how many frames
+    to take off, with maximum number MaxSimFrames (4).
+
+    Works basically, but it appears to be jitteringy. Eg. one frame, then none, then one.
+
+    It's also not deterministic. Are frames being lost?
+
+    Seems jittery every when no packet loss or jitter is in there. Has to be a logic error.
+
+    Why is it jittery?
+
+    It's definitely doing 1,1,1,2,0 type frame updates.
+
+    For some reason it's not dequeing frames when it should.
+
+    Reworked the whole push/pop and it's still jittery. WTF?!
+
+    Fixed a bug where on read the previous input was not copied across to current.
+
+    Fix off-by-one in the serialization of inputs.
+
+    Drop back to non-delta compressed versions of inputs. Nope still non-det.
+
+    Fixed off by one on input sequence when adding to playout delay buffer.
+
+    It's deterministic now, but still jittery!
+
+    Re-enabled delta encoding for inputs. Still deterministic!
+
+
 Wednesday Evening, Christmas Eve, 2014
 --------------------------------------
 

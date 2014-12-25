@@ -273,7 +273,7 @@ void test_queue()
 
         int items[] = { 1,2,3,4,5,6,7,8,9,10 };
 
-        core::queue::push( q,items,10 );
+        core::queue::push( q, items, 10 );
         
         CORE_CHECK( core::queue::size(q) == 10 );
         

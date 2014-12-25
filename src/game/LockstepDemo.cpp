@@ -16,6 +16,9 @@ static const int MaxInputs = 256;
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 static const int MaxPacketSize = 1024;
+static const int PlayoutDelayBufferSize = 1024;
+
+static const float PlayoutDelay = 0.1f;     // delay packets for an additional 100ms
 
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
@@ -45,7 +48,7 @@ struct LockstepInputPacket : public protocol::Packet
         serialize_int( stream, num_inputs, 0, MaxInputs );
 
         if ( num_inputs >= 1 )
-        {
+        {   
             serialize_bool( stream, inputs[0].left );
             serialize_bool( stream, inputs[0].right );
             serialize_bool( stream, inputs[0].up );
@@ -53,9 +56,9 @@ struct LockstepInputPacket : public protocol::Packet
             serialize_bool( stream, inputs[0].push );
             serialize_bool( stream, inputs[0].pull );
 
-            for ( int i = 0; i < num_inputs; ++i )
+            for ( int i = 1; i < num_inputs; ++i )
             {
-                bool input_changed = Stream::IsWriting ? inputs[i] == inputs[i-1] : false;
+                bool input_changed = Stream::IsWriting ? inputs[i] != inputs[i-1] : false;
                 serialize_bool( stream, input_changed );
                 if ( input_changed )
                 {
@@ -65,6 +68,10 @@ struct LockstepInputPacket : public protocol::Packet
                     serialize_bool( stream, inputs[i].down );
                     serialize_bool( stream, inputs[i].push );
                     serialize_bool( stream, inputs[i].pull );
+                }
+                else if ( Stream::IsReading )
+                {
+                    inputs[i] = inputs[i-1];
                 }
             }
         }
@@ -117,22 +124,71 @@ struct LockstepPlayoutDelayBuffer
     LockstepPlayoutDelayBuffer( core::Allocator & allocator )
         : input_queue( allocator )
     {
-        // ...
+        stopped = true;
+        start_time = 0.0;
+        most_recent_input = 0;
+        frame = 0;
+        core::queue::reserve( input_queue, PlayoutDelayBufferSize );
     }
 
-    void AddInputs( uint16_t sequence, int num_inputs, game::Input * inputs )
+    void AddInputs( double time, uint16_t sequence, int num_inputs, game::Input * inputs )
     {
-        // ...
+        CORE_ASSERT( num_inputs > 0 );
+
+        if ( stopped )
+        {
+            start_time = time;
+            stopped = false;
+        }
+
+        const uint16_t first_input_sequence = sequence - num_inputs;
+
+        printf( "first input sequence = %d\n", first_input_sequence );
+
+        for ( int i = 0; i < num_inputs; ++i )
+        {
+            uint16_t sequence = first_input_sequence + i;
+            if ( sequence == most_recent_input )
+            {
+                printf( "%.3f: add input %d\n", time, sequence );
+                most_recent_input = sequence + 1;
+                core::queue::push_back( input_queue, inputs[i] );
+            }
+        }
     }
 
-    void GetFrames( const core::TimeBase & timeBase, int & num_frames, game::Input * frame_input )
+    void GetFrames( double time, int & num_frames, game::Input * frame_input )
     {
         num_frames = 0;
 
-        // ...
+        if ( stopped )
+            return;
+
+        for ( int i = 0; i < MaxSimFrames; ++i )
+        {
+            if ( time < start_time + frame * 1.0f / 60.0f + PlayoutDelay )
+                break;
+
+            if ( !core::queue::size( input_queue ) )
+                break;
+
+            frame_input[i] = input_queue[0];
+
+            core::queue::pop_front( input_queue );
+
+            num_frames++;
+
+            frame++;
+        }
+
+        // todo: calculate remainder for interpolation
     }
 
-    core::Queue<int> input_queue;
+    bool stopped;
+    double start_time;
+    uint16_t most_recent_input;
+    uint16_t frame;
+    core::Queue<game::Input> input_queue;
 };
 
 struct LockstepInternal
@@ -145,8 +201,8 @@ struct LockstepInternal
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         const float latency = 0.1f;
-        const float packet_loss = 5.0f;
-        const float jitter = 2 * 1.0f / 60.0f;
+        const float packet_loss = 0.0f; // 5.0f;
+        const float jitter = 0.0f; // 2 * 1.0f / 60.0f;
         network_simulator->AddState( { latency, packet_loss, jitter } );
     }
 
@@ -279,28 +335,24 @@ void LockstepDemo::Update()
         {
             // input packet for right simulation
 
-            printf( "input packet for right simulation\n" );
-
             auto input_packet = (LockstepInputPacket*) read_packet;
 
             if ( !received_input_this_frame )
             {
                 received_input_this_frame = true;
-                ack_sequence = input_packet->sequence;
+                ack_sequence = input_packet->sequence - 1;
             }
             else
             {
-                if ( core::sequence_greater_than( input_packet->sequence, ack_sequence ) )
-                    ack_sequence = input_packet->sequence;
+                if ( core::sequence_greater_than( input_packet->sequence - 1, ack_sequence ) )
+                    ack_sequence = input_packet->sequence - 1;
             }
 
-            m_lockstep->playout_delay_buffer.AddInputs( input_packet->sequence, input_packet->num_inputs, input_packet->inputs );
+            m_lockstep->playout_delay_buffer.AddInputs( global.timeBase.time, input_packet->sequence, input_packet->num_inputs, input_packet->inputs );
         }
         else if ( type == LOCKSTEP_PACKET_ACK && port == LeftPort )
         {
             // ack packet for left simulation
-
-            printf( "ack packet for left simulation\n" );
 
             auto ack_packet = (LockstepAckPacket*) read_packet;
 
@@ -318,13 +370,16 @@ void LockstepDemo::Update()
         auto ack_packet = (LockstepAckPacket*) m_lockstep->packet_factory.Create( LOCKSTEP_PACKET_ACK );
 
         ack_packet->ack = ack_sequence;
-
+    
         m_lockstep->network_simulator->SendPacket( network::Address( "::1", LeftPort ), ack_packet );
     }
 
     // if we have frames available from playout delay buffer set them up to simulate
 
-    m_lockstep->playout_delay_buffer.GetFrames( global.timeBase, update_config.sim[1].num_frames, update_config.sim[1].frame_input );
+    m_lockstep->playout_delay_buffer.GetFrames( global.timeBase.time, update_config.sim[1].num_frames, update_config.sim[1].frame_input );
+
+    if ( !m_lockstep->playout_delay_buffer.stopped )
+        printf( "%.3f: sim %d frames\n", global.timeBase.time, update_config.sim[1].num_frames );
 
     // run the simulation(s)
 

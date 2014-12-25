@@ -2,21 +2,11 @@ DONE:
 
 TODO:
 
-    Now actually implement the playout delay buffer.
+    Why is it jittery?! Is it just that it needs interpolation?
 
-    Shouldn't be too hard. Initially in stopped state.
+    This seems unlikely. Packets should be received on next frame exactly. No variance.
 
-    When first input comes in, goes into playing state and records current time value
-    as "start time". Uses this later on to work out when a frame should come out.
-
-    Implement code to add input to queue. How large should the queue be? I'm thinking
-    it should be fairly generous, say 256. Add a constant for this.
-
-    Implement the function that takes adds inputs to the playout delay buffer.
-
-    Implement function that compares time in GetFrames and works out how many frames
-    to take off, with maximum number MaxSimFrames (4).
-
+    ---------------------------
 
 
 
@@ -28,6 +18,8 @@ TODO:
     *** PHASE TWO ***
 
     -------------------------------------------
+
+    After popping off as many inputs as possible, store the remainder so it can be used for interpolation.
 
     Might want to do some simulation on the right side, eg. delay one frame
     and do interpolation between the previous and current frame remainder.
