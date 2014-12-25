@@ -15,8 +15,12 @@ namespace network
 
         m_packets = CORE_NEW_ARRAY( *m_allocator, PacketData, config.numPackets );
 
-        m_packetNumber = 0;
+        m_packetNumberSend = 0;
+        m_packetNumberReceive = 0;
+
         m_numStates = 0;
+
+        m_tcpMode = false;
     }
 
     Simulator::~Simulator()
@@ -34,6 +38,9 @@ namespace network
     void Simulator::Reset()
     {
         CORE_ASSERT( m_packets );
+
+        m_packetNumberSend = 0;
+        m_packetNumberReceive = 0;
 
         for ( int i = 0; i < m_config.numPackets; ++i )
         {
@@ -57,49 +64,96 @@ namespace network
     {
         CORE_ASSERT( packet );
 
-        if ( core::random_int( 0, 99 ) < m_state.packetLoss )
+        const int index = m_packetNumberSend % m_config.numPackets;
+
+        const bool loss = core::random_int( 0, 99 ) < m_state.packetLoss;
+
+        const float jitter = core::random_float( -m_state.jitter, +m_state.jitter );
+
+        if ( m_tcpMode )
         {
-            m_config.packetFactory->Destroy( packet );
-            return;
+            // TCP mode. Don't drop packets on send. TCP-like behavior is simulated on receive
+            // by only dequeing the next expected packet and blocking until it is ready.
+            // RTT * 2 latency is added to "lost" packets to simulate TCP retransmit.
+
+            const float delay = m_state.latency + jitter + ( loss ? ( 4.0f * m_state.latency ) : 0.0f );
+
+            CORE_ASSERT( m_packets[index].packet == nullptr );      // In TCP mode we cannot drop any packets!
+
+            m_packets[index].packet = packet;
+            m_packets[index].packetNumber = m_packetNumberSend;
+            m_packets[index].dequeueTime = m_timeBase.time + delay;
+            
+            packet->SetAddress( address );
+
+            m_packetNumberSend++;
         }
-
-        const int index = m_packetNumber % m_config.numPackets;
-
-        if ( m_packets[index].packet )
+        else
         {
-            m_config.packetFactory->Destroy( m_packets[index].packet );
-            m_packets[index].packet = nullptr;
+            // UDP mode. drop packets on send. randomly delay time of packet delivery to simulate latency and jitter.
+
+            if ( loss )
+            {
+                m_config.packetFactory->Destroy( packet );
+                return;
+            }
+
+            if ( m_packets[index].packet )
+            {
+                m_config.packetFactory->Destroy( m_packets[index].packet );
+                m_packets[index].packet = nullptr;
+            }
+
+            const float delay = m_state.latency + jitter;
+
+            m_packets[index].packet = packet;
+            m_packets[index].packetNumber = m_packetNumberSend;
+            m_packets[index].dequeueTime = m_timeBase.time + delay;
+            
+            packet->SetAddress( address );
+
+            m_packetNumberSend++;
         }
-
-        const float delay = m_state.latency + core::random_float( -m_state.jitter, +m_state.jitter );
-
-        m_packets[index].packet = packet;
-        m_packets[index].packetNumber = m_packetNumber;
-        m_packets[index].dequeueTime = m_timeBase.time + delay;
-        
-        packet->SetAddress( address );
-
-        m_packetNumber++;
     }
 
     protocol::Packet * Simulator::ReceivePacket()
     {
         PacketData * oldestPacket = nullptr;
 
-        for ( int i = 0; i < m_config.numPackets; ++i )
+        if ( m_tcpMode )
         {
-            if ( m_packets[i].packet == nullptr || m_packets[i].dequeueTime >= m_timeBase.time )
-                continue;
+            // TCP mode. We know the next packet number we must dequeue. 
+            // "Lost" packets have extra delay added to simulate TCP retransmits.
 
-            if ( !oldestPacket || ( oldestPacket && m_packets[i].dequeueTime < oldestPacket->dequeueTime ) )
-                oldestPacket = &m_packets[i];
+            const int index = m_packetNumberReceive % m_config.numPackets;
+
+            if ( m_packets[index].packet && m_packets[index].dequeueTime <= m_timeBase.time )
+            {
+                auto packet = m_packets[index].packet;
+                m_packets[index].packet = nullptr;
+                m_packetNumberReceive++;
+                return packet;
+            }
         }
-
-        if ( oldestPacket )
+        else
         {
-            protocol::Packet * packet = oldestPacket->packet;
-            oldestPacket->packet = nullptr;
-            return packet;
+            // UDP mode. Dequeue the oldest packet we find. Don't worry about ordering at all!
+
+            for ( int i = 0; i < m_config.numPackets; ++i )
+            {
+                if ( m_packets[i].packet == nullptr || m_packets[i].dequeueTime > m_timeBase.time )
+                    continue;
+
+                if ( !oldestPacket || ( oldestPacket && m_packets[i].dequeueTime < oldestPacket->dequeueTime ) )
+                    oldestPacket = &m_packets[i];
+            }
+
+            if ( oldestPacket )
+            {
+                auto packet = oldestPacket->packet;
+                oldestPacket->packet = nullptr;
+                return packet;
+            }
         }
 
         return nullptr;

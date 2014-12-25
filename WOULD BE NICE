@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     --------------------------------------------
 
+    Should probably clean up the whole "RealSlidingWindow", vs. "SlidingWindow" thing.
+    
+    SlidingWindowWithHoles?
+
+    --------------------------------------------
+
     Network protocol "Sliding Window" is not a real sliding window.
 
     A real sliding window doesn't have any holes.

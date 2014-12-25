@@ -8,10 +8,6 @@
 
 namespace protocol
 {
-    // note: this is a "real" sliding window, eg. sequence and ack like for TCP
-    // the other one is an impostor and supports holes, eg. individual acks.
-    // should probably rename it to something else. but what? :D
-
     template <typename T> class RealSlidingWindow
     {
     public:
@@ -142,14 +138,6 @@ namespace protocol
         RealSlidingWindow( const RealSlidingWindow<T> & other );
         RealSlidingWindow<T> & operator = ( const RealSlidingWindow<T> & other );
     };
-
-
-
-
-
-
-
-
 
     template <typename T> class SlidingWindow
     {
@@ -291,8 +279,6 @@ namespace protocol
         SlidingWindow<T> & operator = ( const SlidingWindow<T> & other );
     };
 
-    // todo: this really doesn't belong here. it's specific to the connection layer.
-    // belongs in connection layer code IMO.
     template <typename T> void GenerateAckBits( const SlidingWindow<T> & packets, 
                                                 uint16_t & ack,
                                                 uint32_t & ack_bits )

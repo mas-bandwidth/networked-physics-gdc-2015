@@ -1,4 +1,24 @@
 
+Thursday Morning, Christmas 2014
+--------------------------------
+
+    250ms playout delay buffer handles 10% loss, +/- 2 frames of jitter.
+
+    This is a good result.
+
+    Implement a simulation of TCP retransmit behavior.
+
+    This could even be coded such that it was included in the network simulator! eg. TCP mode!
+
+    Basically, don't drop any packets, but deliver them all reliably and in-order,
+    and make sure to take the RTT time and use that to delay subsequent packets
+    by 3X TCP delay.
+
+    This would be awesome!!!!
+
+    Recorded a video of this. It's a super convincing argument against TCP! :D
+
+
 Wednesday Evening, after Christmas Dinner, 2014
 -----------------------------------------------
 

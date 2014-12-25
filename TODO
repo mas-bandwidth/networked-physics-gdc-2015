@@ -1,48 +1,20 @@
 DONE:
 
+
 TODO:
     
-    It might be a good idea to implement interpolation.
+    -------------------------------------------
 
-    I'm guessing that interpolation may fix some very minor remaining jitter.
+    Implement overlay render mode.
 
-    250ms playout delay buffer handles 10% loss, +/- 2 frames of jitter.
+    Capture non-deterministic behavior with it -- get it visually compelling.
 
-    This is a good result.
-
-
-
-
-    *** PHASE TWO ***
+    Disable deterministic mode and capture a video of it going wrong.
 
     -------------------------------------------
 
-    After popping off as many inputs as possible, store the remainder so it can be used for interpolation.
 
-    Might want to do some simulation on the right side, eg. delay one frame
-    and do interpolation between the previous and current frame remainder.
 
-    This is worth covering. You *should* do this.
-
-    -------------------------------------------
-
-    Add a way to simulate packet loss and increase/decrease it
-
-    Visualize the amount of packet loss with a text display somewhere
-
-    -------------------------------------------
-
-    Add a way to increase/decrease latency
-
-    Determine if we have to do something to catch up / speed up / slow down because of this
-
-    -------------------------------------------
-
-    Implement a more TCP like reliability system, eg. only resend if packet is detected lost
-
-    This will show that UDP reliability can be better than TCP for this situation.
-
-    -------------------------------------------
 
 
 

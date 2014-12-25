@@ -18,10 +18,23 @@ static const int RightPort = 1001;
 static const int MaxPacketSize = 1024;
 static const int PlayoutDelayBufferSize = 1024;
 
+#define TCP_MODE
+
+#ifdef TCP_MODE
+
 static const float PlayoutDelay = 0.25f;            // 250ms playout delay
-static const float Latency = 0.1f;                  // 100ms latency
-static const float PacketLoss = 5.0f;               // 5% packet loss
-static const float Jitter = 2.0f / 60.0f;           // +/- 2 frames of jitter
+static const float Latency = 0.05f;                 // 50ms latency (100ms round trip)
+static const float PacketLoss = 1.0f;               // 1% packet loss (quite generous...)
+static const float Jitter = 1.0f / 60.0f;           // +/- 1 frames of jitter (normal)
+
+#else // #ifdef TCP_MODE
+
+static const float PlayoutDelay = 0.25f;            // 250ms playout delay
+static const float Latency = 0.1f;                  // 100ms latency (200ms round trip, this is much higher than normal...)
+static const float PacketLoss = 5.0f;               // 5% packet loss (lots... normal is 1-2%...)
+static const float Jitter = 2.0f / 60.0f;           // +/- 2 frames of jitter (more than normal...)
+
+#endif // #ifdef TCP_MODE
 
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
@@ -202,6 +215,7 @@ struct LockstepInternal
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         network_simulator->AddState( { Latency, PacketLoss, Jitter } );
+        network_simulator->SetTCPMode( true) ;
     }
 
     ~LockstepInternal()
@@ -293,6 +307,11 @@ void LockstepDemo::Update()
 
     m_lockstep->network_simulator->SendPacket( network::Address( "::1", RightPort ), input_packet );
 
+    // if we are in TCP mode, ack right away because the simulator ensures reliable-ordered delivery
+
+    if ( m_lockstep->network_simulator->GetTCPMode() )
+        inputs.Ack( inputs.GetSequence() );
+
     // update the network simulator
 
     m_lockstep->network_simulator->Update( global.timeBase );
@@ -335,20 +354,23 @@ void LockstepDemo::Update()
 
             auto input_packet = (LockstepInputPacket*) read_packet;
 
-            if ( !received_input_this_frame )
+            if ( !m_lockstep->network_simulator->GetTCPMode() )
             {
-                received_input_this_frame = true;
-                ack_sequence = input_packet->sequence - 1;
-            }
-            else
-            {
-                if ( core::sequence_greater_than( input_packet->sequence - 1, ack_sequence ) )
+                if ( !received_input_this_frame )
+                {
+                    received_input_this_frame = true;
                     ack_sequence = input_packet->sequence - 1;
+                }
+                else
+                {
+                    if ( core::sequence_greater_than( input_packet->sequence - 1, ack_sequence ) )
+                        ack_sequence = input_packet->sequence - 1;
+                }
             }
 
             m_lockstep->playout_delay_buffer.AddInputs( global.timeBase.time, input_packet->sequence, input_packet->num_inputs, input_packet->inputs );
         }
-        else if ( type == LOCKSTEP_PACKET_ACK && port == LeftPort )
+        else if ( type == LOCKSTEP_PACKET_ACK && port == LeftPort && !m_lockstep->network_simulator->GetTCPMode() )
         {
             // ack packet for left simulation
 

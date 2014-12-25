@@ -18,7 +18,6 @@ namespace protocol
 
 namespace network
 {
-
     struct SimulatorConfig
     {
         core::Allocator * allocator;
@@ -58,6 +57,8 @@ namespace network
         }
     };
 
+    // todo: do we actually get any value implementing the interface? I don't think we do
+
     class Simulator : public Interface
     {
     public:
@@ -81,6 +82,9 @@ namespace network
         protocol::PacketFactory & GetPacketFactory() const;
         void SetContext( const void ** context ) {}        // not needed, we don't actually serialize the packets
 
+        void SetTCPMode( bool value ) { Reset(); m_tcpMode = value; }
+        bool GetTCPMode() const { return m_tcpMode; }
+
     private:
 
         struct PacketData
@@ -95,9 +99,14 @@ namespace network
         core::Allocator * m_allocator;
 
         core::TimeBase m_timeBase;
-        uint32_t m_packetNumber;
+
+        uint32_t m_packetNumberSend;
+        uint16_t m_packetNumberReceive;
 
         PacketData * m_packets;
+
+        bool m_tcpMode;         // note: simulate TCP behavior. deliver packets reliably and in-order. 
+                                // delay packets until simulated retransmission of lost packets @ 3X RTT
 
         int m_numStates;
         SimulatorState m_state;
