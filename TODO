@@ -2,6 +2,22 @@ DONE:
 
 TODO:
 
+    Packet loss seems a bit excessive. eg. causes jittering at higher latency. It shouldn't.
+
+    There seems to be some jitter on playback that wasn't present on record, or at least I didn't notice it.
+
+    Regardless, with playout delay of 1 second, and no packet loss or jitter, there is simply no reason
+    for any sort of jitter on playback. There is plenty of buffer time!
+
+    Nope. Jitter happens without playback. It's a thing.
+
+    Why is jitter happening. It really shouldn't!
+
+
+
+
+    
+
 
 
 

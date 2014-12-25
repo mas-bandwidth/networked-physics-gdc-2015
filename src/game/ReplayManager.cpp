@@ -13,7 +13,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-//#define CAPTURE 1
+#define CAPTURE 1
 
 const int MaxReplayMessageSize = 8 * 1024;
 
@@ -538,6 +538,9 @@ bool WriteTGA( const char filename[], int width, int height, uint8_t * ptr )
 void ReplayManager::UpdateCapture()
 {
 #if CAPTURE
+
+    if ( !IsPlayback() )
+        return;
 
     m_internal->index = ( m_internal->index + 1 ) % NumPixelBufferObjects;
 

@@ -235,12 +235,14 @@ void framebuffer_size_callback( GLFWwindow * window, int width, int height )
 
 void key_callback( GLFWwindow * window, int key, int scancode, int action, int mods )
 {
-    global.inputManager->KeyEvent( key, scancode, action, mods );
+    if ( !global.replayManager->IsPlayback() )
+        global.inputManager->KeyEvent( key, scancode, action, mods );
 }
 
 void char_callback( GLFWwindow * window, unsigned int code )
 {
-    global.inputManager->CharEvent( code );
+    if ( !global.replayManager->IsPlayback() )
+        global.inputManager->CharEvent( code );
 }
 
 int main( int argc, char * argv[] )
@@ -275,7 +277,8 @@ int main( int argc, char * argv[] )
     if ( fullscreen )
         window = glfwCreateWindow( mode->width, mode->height, "Client", glfwGetPrimaryMonitor(), nullptr );
     else
-        window = glfwCreateWindow( 1200, 500, "Client", nullptr, nullptr );
+        window = glfwCreateWindow( 600, 250, "Client", nullptr, nullptr );
+        //window = glfwCreateWindow( 1200, 500, "Client", nullptr, nullptr );
         //window = glfwCreateWindow( 1000, 500, "Client", nullptr, nullptr );
         //window = glfwCreateWindow( 500, 250, "Client", nullptr, nullptr );        // note: video capture resolution
         //window = glfwCreateWindow( 960, 540, "Client", nullptr, nullptr );        // note: 1080p @ retina (X2)
