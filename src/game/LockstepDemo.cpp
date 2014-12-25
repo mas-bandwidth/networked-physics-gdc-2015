@@ -6,6 +6,7 @@
 #include "Global.h"
 #include "Render.h"
 #include "Console.h"
+#include "core/Queue.h"
 #include "protocol/Stream.h"
 #include "protocol/SlidingWindow.h"
 #include "protocol/PacketFactory.h"
@@ -111,10 +112,33 @@ protected:
     }
 };
 
+struct LockstepPlayoutDelayBuffer
+{
+    LockstepPlayoutDelayBuffer( core::Allocator & allocator )
+        : input_queue( allocator )
+    {
+        // ...
+    }
+
+    void AddInputs( uint16_t sequence, int num_inputs, game::Input * inputs )
+    {
+        // ...
+    }
+
+    void GetFrames( const core::TimeBase & timeBase, int & num_frames, game::Input * frame_input )
+    {
+        num_frames = 0;
+
+        // ...
+    }
+
+    core::Queue<int> input_queue;
+};
+
 struct LockstepInternal
 {
     LockstepInternal( core::Allocator & allocator ) 
-        : packet_factory( allocator ), input_sliding_window( allocator, MaxInputs )
+        : packet_factory( allocator ), input_sliding_window( allocator, MaxInputs ), playout_delay_buffer( allocator )
     {
         this->allocator = &allocator;
         network::SimulatorConfig networkSimulatorConfig;
@@ -137,6 +161,7 @@ struct LockstepInternal
     core::Allocator * allocator;
     LockstepPacketFactory packet_factory;
     LockstepInputSlidingWindow input_sliding_window;
+    LockstepPlayoutDelayBuffer playout_delay_buffer;
     network::Simulator * network_simulator;
 };
 
@@ -193,8 +218,8 @@ void LockstepDemo::Update()
 
     // setup left simulation to update one frame with local input
 
-    update_config.run_update[0] = true;
-    update_config.input[0] = local_input;
+    update_config.sim[0].num_frames = 1;
+    update_config.sim[0].frame_input[0] = local_input;
 
     // insert local input for this frame in the input sliding window
 
@@ -269,7 +294,7 @@ void LockstepDemo::Update()
                     ack_sequence = input_packet->sequence;
             }
 
-            // todo: insert inputs into playout delay buffer
+            m_lockstep->playout_delay_buffer.AddInputs( input_packet->sequence, input_packet->num_inputs, input_packet->inputs );
         }
         else if ( type == LOCKSTEP_PACKET_ACK && port == LeftPort )
         {
@@ -297,10 +322,9 @@ void LockstepDemo::Update()
         m_lockstep->network_simulator->SendPacket( network::Address( "::1", LeftPort ), ack_packet );
     }
 
-    // todo: if we have a frame available from playout delay buffer set the right simulation to run a frame with that input
+    // if we have frames available from playout delay buffer set them up to simulate
 
-    update_config.run_update[1] = true;
-    update_config.input[1] = m_internal->GetLocalInput();
+    m_lockstep->playout_delay_buffer.GetFrames( global.timeBase, update_config.sim[1].num_frames, update_config.sim[1].frame_input );
 
     // run the simulation(s)
 

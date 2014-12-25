@@ -2,35 +2,20 @@ DONE:
 
 TODO:
 
-    Implement a *simple* playout delay buffer.
+    Now actually implement the playout delay buffer.
 
-    This buffer should be a queue. 
+    Shouldn't be too hard. Initially in stopped state.
 
-    It should have a function that takes an array of inputs (from packet)...
+    When first input comes in, goes into playing state and records current time value
+    as "start time". Uses this later on to work out when a frame should come out.
 
-    It then passes over these inputs and adds new ones to its own internal queue.
+    Implement code to add input to queue. How large should the queue be? I'm thinking
+    it should be fairly generous, say 256. Add a constant for this.
 
-    It should track the current frame, eg. start at 0.
+    Implement the function that takes adds inputs to the playout delay buffer.
 
-    From this current frame, it should be able to determine what time the next packet should come out.
-
-    There should be a function to get inputs given server time.
-
-    This function can return inputs that should be run.
-
-    It's possible that more than one simulation update needs to be run, so it should return
-    the number of frames, and inputs per-frame by filling an array of inputs.
-
-    The cubes internal will need to be updated to accept a # of updates to perform per-simulation,
-    as well as an array of inputs. Right now it can only run 0 or 1 simulation step.s
-
-    There should be a maximum number of simulation frames per-update as well. I suggest 4 or 8.
-
-    Render should only happen after the simulation updates, and a lot of work is in the render,
-    so pulling off 4 invisible simulation updates then render should be OK.
-
-    -------------------------------------------
-
+    Implement function that compares time in GetFrames and works out how many frames
+    to take off, with maximum number MaxSimFrames (4).
 
 
 
@@ -41,6 +26,13 @@ TODO:
 
 
     *** PHASE TWO ***
+
+    -------------------------------------------
+
+    Might want to do some simulation on the right side, eg. delay one frame
+    and do interpolation between the previous and current frame remainder.
+
+    This is worth covering. You *should* do this.
 
     -------------------------------------------
 

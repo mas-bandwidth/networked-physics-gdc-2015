@@ -10,6 +10,7 @@ const int CubeSteps = 30;
 const int MaxCubes = 1024 * 4;
 const int MaxViews = 4;
 const int MaxSimulations = 4;
+const int MaxSimFrames = 4;
 
 typedef game::Instance<hypercube::DatabaseObject, hypercube::ActiveObject> GameInstance;
 
@@ -101,10 +102,20 @@ struct CubesSimulation
     GameInstance * game_instance = nullptr;
 };
 
+struct CubesUpdateConfigPerSim
+{
+    CubesUpdateConfigPerSim()
+    {
+        num_frames = 0;
+    }
+
+    int num_frames;
+    game::Input frame_input[MaxSimFrames];
+};
+
 struct CubesUpdateConfig
 {
-    bool run_update[MaxSimulations];
-    game::Input input[MaxSimulations];
+    CubesUpdateConfigPerSim sim[MaxSimulations];
 };
 
 #ifdef CLIENT

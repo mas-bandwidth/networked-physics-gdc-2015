@@ -145,21 +145,14 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
     if ( simulation )
     {
-        // update input
-
-#ifdef CLIENT
-        for ( int i = 0; i < config.num_simulations; ++i )
-        {
-            simulation[i].game_instance->SetPlayerInput( 0, update_config.input[i] );
-        }
-#endif // #ifdef CLIENT
-
-        // update simulations
+        // todo: run simulations wide on multiple threads
 
         for ( int i = 0; i < config.num_simulations; ++i )
         {
-            if ( update_config.run_update[i] )
-            {
+            for ( int j = 0; j < update_config.sim[i].num_frames; ++j )
+            { 
+                simulation[i].game_instance->SetPlayerInput( 0, update_config.sim[i].frame_input[j] );
+
                 if ( settings->deterministic )
                     dRandSetSeed( simulation[i].frame );
 

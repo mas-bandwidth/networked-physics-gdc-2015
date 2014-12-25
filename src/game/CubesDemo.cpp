@@ -43,8 +43,8 @@ void CubesDemo::Update()
 {
     CubesUpdateConfig update_config;
 
-    update_config.run_update[0] = true;
-    update_config.input[0] = m_internal->GetLocalInput();
+    update_config.sim[0].num_frames = 1;
+    update_config.sim[0].frame_input[0] = m_internal->GetLocalInput();
 
     m_internal->Update( update_config );
 }

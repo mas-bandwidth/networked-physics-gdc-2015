@@ -1,4 +1,47 @@
 
+Wednesday Evening, Christmas Eve, 2014
+--------------------------------------
+
+    Implement a *simple* playout delay buffer.
+
+    This buffer should be a queue. 
+
+    It then passes over these inputs and adds new ones to its own internal queue.
+
+    It should track the current frame, eg. start at 0.
+
+    From this current frame, it should be able to determine what time the next packet should come out.
+
+    There should be a function to get inputs given server time.
+
+    This function can return inputs that should be run.
+
+    It's possible that more than one simulation update needs to be run, so it should return
+    the number of frames, and inputs per-frame by filling an array of inputs.
+
+    The cubes internal will need to be updated to accept a # of updates to perform per-simulation,
+    as well as an array of inputs. Right now it can only run 0 or 1 simulation step.s
+
+    There should be a maximum number of simulation frames per-update as well. I suggest 4 or 8.
+
+    Render should only happen after the simulation updates, and a lot of work is in the render,
+    so pulling off 4 invisible simulation updates then render should be OK.
+
+    It should have a function that takes an array of inputs (from packet) and processes them.
+
+    Added skeleton for this function. Hooked up to input packet processing.
+
+    Add constant for MaxFrames. Set to 4.
+
+    Sketch out function that returns the number of frames and inputs.
+
+    Extend cubes internal to take num frames to simulate per-sim, and num inputs.
+
+    Verify cubes demo and lockstep demo on left still works.
+
+    Now grab the right sim frames to simulate from the playout delay buffer.
+
+
 Wednesday Afternoon, December 24th, 2014
 ----------------------------------------
 
