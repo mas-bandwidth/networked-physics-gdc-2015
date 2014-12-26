@@ -66,7 +66,7 @@ namespace network
 
         const int index = m_packetNumberSend % m_config.numPackets;
 
-        const bool loss = core::random_int( 0, 99 ) < m_state.packetLoss;
+        const bool loss = core::random_float( 0.0f, 100.0f ) <= m_state.packetLoss;
 
         const float jitter = core::random_float( -m_state.jitter, +m_state.jitter );
 

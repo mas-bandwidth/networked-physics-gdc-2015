@@ -1,4 +1,47 @@
 
+Thursday Night, Christmas 2014
+------------------------------
+
+    Record videos of different network conditions with UDP/TCP:
+
+        1. Deterministic lockstep (out of sync)
+
+        2. Deterministic lockstep (in sync)
+
+        3. TCP @ 100ms round trip with 1% packet loss and +/- 1 frame of jitter
+
+        4. TCP @ 200ms round trip with 2% packet loss and +/- 1 frame of jitter
+
+        5. TCP @ 200ms round trip with 5% packet loss and +/- 1 frame of jitter
+
+        6. UDP @ 2 second round trip with 25% packet loss and +/- 1 frame of jitter
+
+    All uploaded to website and ready to write the article.
+
+
+Thursday Evening, Christmas 2014
+--------------------------------
+
+    Added code to switch in/out of TCP mode when you press F2.
+
+    There was a bug in the TCP simulation. Latency and jitter were switched,
+    making it look much worse than it really would be.
+
+    It's not *great* at 100ms RTT, just occasional hitches every other second,
+    but it's not as bad as that video. To get that bad you need around 250ms
+    latency and 2-5% packet loss (perfect with UDP though).
+
+    In fact UDP can go up to 25% packet loss and 2 seconds round trip without problems.
+
+    Going up to 50% packet loss is possible if playout delay buffer is increased
+    from 100ms to 250ms, but if the playout delay is 250ms, this hides the TCP
+    effects at lower latencies.
+
+    Recorded a video of the perfect deterministic behavior in splitscreen (done)
+
+    Got a video of the perfect deterministic behavior.
+
+
 Thursday Morning, Christmas 2014
 --------------------------------
 

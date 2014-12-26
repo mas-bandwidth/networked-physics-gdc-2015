@@ -1,17 +1,14 @@
 DONE:
 
-
 TODO:
-    
-    -------------------------------------------
 
-    Implement overlay render mode.
+    Time for a break!
 
-    Capture non-deterministic behavior with it -- get it visually compelling.
+    ----------------------------------------------------------------------------------
 
-    Disable deterministic mode and capture a video of it going wrong.
+    Write the article.
 
-    -------------------------------------------
+    ----------------------------------------------------------------------------------
 
 
 
@@ -32,19 +29,14 @@ TODO:
 
 
 
-    -------------------------------------------
 
-    Actually write the "Deterministic Lockstep" article
 
-    Now implement a reliability system between left and right simulation, eg. track sequence and ack,
-    and include *all* inputs since last acked sequence.
 
-    Note in the article it would be nice to be like, "OK. Lets beat TCP at its own game" 
-    and then link to the reddit discussion saying why write your own TCP? Gaffer is flawed etc.
 
-    Fuck those guys. I'm going to nail them.
 
-    -------------------------------------------
+
+
+
 
 
 

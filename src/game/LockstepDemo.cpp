@@ -18,23 +18,56 @@ static const int RightPort = 1001;
 static const int MaxPacketSize = 1024;
 static const int PlayoutDelayBufferSize = 1024;
 
+/*
+// 1. TCP over LAN. No latency or packet loss. +/- 1 frame of jitter.
+
 #define TCP_MODE
 
-#ifdef TCP_MODE
+static const float PlayoutDelay = 0.1f;
+static const float Latency = 1.0;
+static const float PacketLoss = 0.0f;
+static const float Jitter = 1.0f / 60.0f;
+*/
 
-static const float PlayoutDelay = 0.25f;            // 250ms playout delay
-static const float Latency = 0.05f;                 // 50ms latency (100ms round trip)
-static const float PacketLoss = 1.0f;               // 1% packet loss (quite generous...)
-static const float Jitter = 1.0f / 60.0f;           // +/- 1 frames of jitter (normal)
+/*
+// 2. TCP @ 100ms round trip with 1% packet loss and +/- 1 frame of jitter
 
-#else // #ifdef TCP_MODE
+#define TCP_MODE
 
-static const float PlayoutDelay = 0.25f;            // 250ms playout delay
-static const float Latency = 0.1f;                  // 100ms latency (200ms round trip, this is much higher than normal...)
-static const float PacketLoss = 5.0f;               // 5% packet loss (lots... normal is 1-2%...)
-static const float Jitter = 2.0f / 60.0f;           // +/- 2 frames of jitter (more than normal...)
+static const float PlayoutDelay = 0.1f;
+static const float Latency = 0.05f;
+static const float PacketLoss = 1.0f;
+static const float Jitter = 1.0f / 60.0f;
+*/
 
-#endif // #ifdef TCP_MODE
+/*
+// 3. TCP @ 200ms round trip with 2% packet loss and +/- 1 frame of jitter
+
+#define TCP_MODE
+
+static const float PlayoutDelay = 0.1f;
+static const float Latency = 0.1f;
+static const float PacketLoss = 2.0f;
+static const float Jitter = 1.0f / 60.0f;
+*/
+
+/*
+// 4. TCP @ 250ms round trip with 5% packet loss and +/- 1 frame of jitter
+
+#define TCP_MODE
+
+static const float PlayoutDelay = 0.1f;
+static const float Latency = 0.125f;
+static const float PacketLoss = 5.0f;
+static const float Jitter = 1.0f / 60.0f;
+*/
+
+// 5. UDP @ 2 second round trip with 25% packet loss and +/- 1 frame of jitter
+
+static const float PlayoutDelay = 0.1f;
+static const float Latency = 1.0f;
+static const float PacketLoss = 25.0f;
+static const float Jitter = 1.0f / 60.0f;
 
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
@@ -214,8 +247,10 @@ struct LockstepInternal
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
-        network_simulator->AddState( { Latency, PacketLoss, Jitter } );
-        network_simulator->SetTCPMode( true) ;
+        network_simulator->AddState( { Latency, Jitter, PacketLoss } );
+#ifdef TCP_MODE 
+        network_simulator->SetTCPMode( true );
+#endif // #ifdef TCP_MODE
     }
 
     ~LockstepInternal()
@@ -430,6 +465,10 @@ bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
         else if ( key == GLFW_KEY_F1 )
         {
             m_settings->deterministic = !m_settings->deterministic;
+        }
+        else if ( key == GLFW_KEY_F2 )
+        {
+            m_lockstep->network_simulator->SetTCPMode( !m_lockstep->network_simulator->GetTCPMode() );
         }
     }
 

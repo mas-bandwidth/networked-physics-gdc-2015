@@ -1,5 +1,28 @@
 WOULD BE NICE:
 
+    -------------------------------------------
+
+    Would be really cool to have a bunch of presets for network conditions, for cubes demos:
+
+        1. perfect
+        2. 50ms round trip, 1% packet loss
+        3. 100ms round trip, 2% packet loss
+        4. 250ms round trip, 5% packet loss
+        5. 500ms round trip, 10% packet loss
+        6. 1000ms round trip, 25% packet loss
+        7. 2000ms round trip, 50% packet loss
+
+    And so on.
+
+    Unfortunately, the TCP demo starts behaving crazy after a certain amount of loss,
+    such that it tends to get behind and never catches, up so it's not the best test case.
+
+    --------------------------------------------
+
+    Seems to work going from non-TCP to TCP mode.
+
+    But the other way breaks all packets getting through. Why?
+
     --------------------------------------------
 
     Should probably clean up the whole "RealSlidingWindow", vs. "SlidingWindow" thing.
