@@ -19,12 +19,12 @@ namespace game
 
 	struct Input
 	{
-		uint32_t left : 1;
-		uint32_t right : 1;
-		uint32_t up : 1;
-		uint32_t down : 1;
-		uint32_t push : 1;
-		uint32_t pull : 1;
+		bool left;
+		bool right;
+		bool up;
+		bool down;
+		bool push;
+		bool pull;
 	
 		Input()
 		{
@@ -36,17 +36,6 @@ namespace game
 			pull = 0;
 		}
 
-		template <typename T> bool Serialize( T & stream )
-		{
-			serialize_int( stream, left,  0, 1 );
-			serialize_int( stream, right, 0, 1 );
-			serialize_int( stream, up,    0, 1 );
-			serialize_int( stream, down,  0, 1 );
-			serialize_int( stream, push,  0, 1 );
-			serialize_int( stream, pull,  0, 1 );
-			return true;
-		}
-		
 		bool operator == ( const Input & other )
 		{
 			return left == other.left    &&
