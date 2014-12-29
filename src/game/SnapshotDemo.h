@@ -5,6 +5,10 @@
 
 #include "Demo.h"
 
+struct CubesInternal;
+struct CubesSettings;
+struct SnapshotInternal;
+
 class SnapshotDemo : public Demo
 {
 public:
@@ -29,7 +33,15 @@ public:
 
 private:
 
+    void Shutdown();
+
     core::Allocator * m_allocator;
+
+    CubesInternal * m_internal;
+
+    CubesSettings * m_settings;
+
+    SnapshotInternal * m_snapshot;
 };
 
 #endif // #ifdef CLIENT

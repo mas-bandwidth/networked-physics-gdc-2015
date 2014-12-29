@@ -1,27 +1,18 @@
 WOULD BE NICE:
 
     -------------------------------------------
+    
+    Bring back all the virtual go physics demos as it was being built back up
 
-    Would be really cool to have a bunch of presets for network conditions, for cubes demos:
+    They were really fun, especially the spinning stone controls, repeated drops etc.
 
-        1. perfect
-        2. 50ms round trip, 1% packet loss
-        3. 100ms round trip, 2% packet loss
-        4. 250ms round trip, 5% packet loss
-        5. 500ms round trip, 10% packet loss
-        6. 1000ms round trip, 25% packet loss
-        7. 2000ms round trip, 50% packet loss
+    Just need to get wireframe rendering back, shouldn't be too hard.
 
-    And so on.
+    -------------------------------------------
 
-    Unfortunately, the TCP demo starts behaving crazy after a certain amount of loss,
-    such that it tends to get behind and never catches, up so it's not the best test case.
+    Quat4f should be converted to behave like other vectorial types, eg. x(), y() etc. not public x,y,z,w floats.
 
-    --------------------------------------------
-
-    Seems to work going from non-TCP to TCP mode.
-
-    But the other way breaks all packets getting through. Why?
+    Should integrate the quat implementation into the vectorial library.
 
     --------------------------------------------
 
@@ -37,16 +28,6 @@ WOULD BE NICE:
 
     Real sliding window has sequence at head and trailing ack sequence and no holes.
     
-    --------------------------------------------
-
-    Macros to define packet factory would be nice
-
-    It's tedious and annoying code, and basically boilerplate once the packet types are defined.
-
-    --------------------------------------------
-
-    While determinism is disabled, flash "non-determinstic!" over the screen somehere?
-
     -------------------------------------------
 
     Would actually be cooler if display settings could be passed in on the command line,

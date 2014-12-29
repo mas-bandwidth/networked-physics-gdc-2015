@@ -13,13 +13,19 @@
 #include "network/Simulator.h"
 
 static const int MaxInputs = 256;
-static const int LeftPort = 1000;
-static const int RightPort = 1001;
 static const int MaxPacketSize = 1024;
 static const int PlayoutDelayBufferSize = 1024;
 
+static const int LeftPort = 1000;
+static const int RightPort = 1001;
+
+// todo: would be nice to have a simulation reset + each network preset below
+// assigned to the keys, 1,2,3,4,5.
+
+// 0. todo: Demonstration mode. 2 seconds latency. No packet loss. No jitter.
+
 /*
-// 1. TCP over LAN. No latency or packet loss. +/- 1 frame of jitter.
+// 1. TCP over LAN. No latency, packet loss or jitter.
 
 #define TCP_MODE
 
@@ -332,7 +338,7 @@ void LockstepDemo::Update()
 
     inputs.Insert( local_input );
 
-    // send an input packet to the left simulation (all inputs since last ack)
+    // send an input packet to the right simulation (all inputs since last ack)
 
     auto input_packet = (LockstepInputPacket*) m_lockstep->packet_factory.Create( LOCKSTEP_PACKET_INPUT );
 

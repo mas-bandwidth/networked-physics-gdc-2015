@@ -1,4 +1,24 @@
 
+Monday Morning, December 29th, 2014
+-----------------------------------
+
+    Setup "pm snapshot" shortcut.
+
+    Sketched out plans for snapshot R&D and article. Looking good!
+
+    Get the simulation running on the left and an empty, non-running simulation on the right.
+
+    Setup NumCubes static const int.
+
+    Setup packet structure for naive snapshots. sequence #, n cubes, bool interacting, vec3 pos, quat4f orientation per-cube.
+
+    Implement naive serialization function.
+
+    Sketch out first set of intended modes for snapshot demo.
+
+    Verify snapshot packets are getting across to right simulation with printf.
+
+
 Friday, December 26th, 2014
 ---------------------------
 

@@ -7,7 +7,7 @@
 #include "cubes/Hypercube.h"
 
 const int CubeSteps = 30;
-const int MaxCubes = 1024 * 4;
+const int MaxCubes = 1024;
 const int MaxViews = 4;
 const int MaxSimulations = 4;
 const int MaxSimFrames = 4;
