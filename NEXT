@@ -1,0 +1,103 @@
+NEXT
+
+    -------------------------------------------
+
+    Stateful synchronization demo
+
+    -------------------------------------------
+
+    Stateful synchronization article
+
+    -------------------------------------------
+
+    Write rest of article series
+
+    -------------------------------------------
+
+    Polish cube demo implementation as much as possible
+
+    Port to windows and make sure it runs on Win64
+
+    Release source code for singleplayer, lockstep, snapshot and stateful demos.
+
+    -------------------------------------------
+
+    Prepare GDC slides from article series
+
+    -------------------------------------------
+
+
+
+
+
+
+    --------------------------------------------------------------
+
+    Explore various different interpolation strategies to use for 2D linear motion.
+
+    Share this demo with Nathan (pro-bono) and try to get some involvement back with their project.
+
+    --------------------------------------------------------------
+
+    Return to PBR rendering
+
+    --------------------------------------------------------------
+
+    Convert DDS loading to use nvImage to load HDR uffizi cubemap.
+
+    Work on exposure and get the scene looking good with HDR, may need to bump up direct light intensity?
+
+    ----------------------------------
+
+    Get roughness working with this HDR cubemap, eg. use roughness to index the mip chain.
+
+    Look into a normalized BRDF function that accepts roughness, eg. microfacet model.
+
+    ----------------------------------
+
+    Get fresnel working so some reflection is visible even on the diffuse stone and more 
+    reflection is visible at grazing angles (quite important for realistic go stone visuals)
+
+    ----------------------------------
+
+    Reread Seb Legarde stuff again start to finish.
+
+    http://seblagarde.wordpress.com/2011/08/17/hello-world/
+
+    Dig in a bit deeper into the source material (especially Naty's siggraph talks)
+    and understand the math and physical reasoning behind it.
+
+    Start here:
+
+    http://renderwonk.com/publications/s2010-shading-course/hoffman/s2010_physically_based_shading_hoffman_a_notes.pdf
+
+    ----------------------------------
+
+    Continue studying trip through the graphics pipeline.
+
+    ----------------------------------
+
+    Identify areas where my math is weak and work to study those parts.
+
+    Khan Academy? Probably the best bet to start.
+
+    Get a desk so I can study.
+
+    ----------------------------------
+
+    Get go board rendering working
+
+    ----------------------------------
+
+    Render skybox and then in-game, render a cubemap from the center of a stone (size 35?)
+
+    Make sure this cubemap is captured in HDR, eg. pre-tonemapping.
+
+    This cubemap can then be input into CubeMapGen or cmft to get a correct radiance 
+    and irradiance cubemap including the go board in the scene, eg. reflected color of the wood.
+
+    ----------------------------------
+
+    Research raytracing signed distance fields for shadows
+
+    ----------------------------------

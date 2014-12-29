@@ -48,9 +48,9 @@ void ProcessCommandLine()
     {
         global.console->ExecuteCommand( "load lockstep" );
     }
-    else if ( strcmp( commandLineBuffer, "+load interpolation" ) == 0 )
+    else if ( strcmp( commandLineBuffer, "+load snapshot" ) == 0 )
     {
-        global.console->ExecuteCommand( "load interpolation" );
+        global.console->ExecuteCommand( "load snapshot" );
     }
     else if ( strcmp( commandLineBuffer, "+playback" ) == 0 )
     {

@@ -1,17 +1,17 @@
-#ifndef INTERPOLATION_DEMO_H
-#define INTERPOLATION_DEMO_H
+#ifndef SNAPSHOT_DEMO_H
+#define SNAPSHOT_DEMO_H
 
 #ifdef CLIENT
 
 #include "Demo.h"
 
-class InterpolationDemo : public Demo
+class SnapshotDemo : public Demo
 {
 public:
 
-    InterpolationDemo( core::Allocator & allocator );
+    SnapshotDemo( core::Allocator & allocator );
 
-    ~InterpolationDemo();
+    ~SnapshotDemo();
 
     virtual bool Initialize() override;
 
@@ -25,7 +25,7 @@ public:
 
     virtual bool CharEvent( unsigned int code ) override;
 
-    virtual const char * GetName() const override { return "interpolation"; }
+    virtual const char * GetName() const override { return "snapshot"; }
 
 private:
 
@@ -34,4 +34,4 @@ private:
 
 #endif // #ifdef CLIENT
 
-#endif // #ifndef INTERPOLATION_DEMO_H
+#endif // #ifndef SNAPSHOT_DEMO_H
