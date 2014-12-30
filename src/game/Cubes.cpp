@@ -183,9 +183,7 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
             view[i].objects.Update( deltaTime );
 
-            // todo: the current focus object per-view should be parameterized per-view
-
-            view::Object * player = view[i].objects.GetObject( 1 );
+            view::Object * player = view[i].objects.GetObject( 1 );     // todo: focus object should be configurable per-view
 
             math::Vector origin = player ? player->position : math::Vector(0,0,0);
 
@@ -291,9 +289,6 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
 bool CubesInternal::KeyEvent( int key, int scancode, int action, int mods )
 {
-    if ( mods != 0 )
-        return false;
-
     if ( action == GLFW_PRESS || action == GLFW_REPEAT )
     {
         switch ( key )
@@ -320,6 +315,13 @@ bool CubesInternal::KeyEvent( int key, int scancode, int action, int mods )
     }
 
     return false;
+}
+
+GameInstance * CubesInternal::GetGameInstance( int simulation_index )
+{
+    CORE_ASSERT( simulation_index >= 0 );
+    CORE_ASSERT( simulation_index < config.num_simulations );
+    return simulation[simulation_index].game_instance;
 }
 
 struct CubeVertex

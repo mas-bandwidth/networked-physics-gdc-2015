@@ -1,6 +1,10 @@
 WOULD BE NICE:
 
     -------------------------------------------
+
+    Rename m_internal to m_cubes and use m_internal for inner.
+
+    -------------------------------------------
     
     Bring back all the virtual go physics demos as it was being built back up
 

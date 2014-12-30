@@ -1,4 +1,16 @@
 
+Monday Evening, December 29th, 2014
+-----------------------------------
+
+    Need a way to access cube data per-simulation to copy it into the snapshot packet.
+
+    Each frame grab the cube state and send a packet.
+
+    On packet receive, compare sequence number and if more recent than previous, update recv sequence #.
+
+    If more recent, push snapshot data to view (how?)
+
+
 Monday Morning, December 29th, 2014
 -----------------------------------
 

@@ -2,13 +2,13 @@ DONE:
 
 TODO:
 
-    Need a way to access cube data per-simulation to copy it into the snapshot packet.
+    Work out how to best push snapshot data to view?
 
-    Each frame grab the cube state and send a packet.
+    Initially I just want to push directly to the view.
 
-    On packet receive, compare sequence number and if more recent than previous (or if first...)
+    But eventually, we're going to want to buffer and perform interpolation.
 
-    If sequence number is more recent, push it to simulation and update recv_sequence #
+    Just hammer it in initially?
 
     -------------------------------------------
 

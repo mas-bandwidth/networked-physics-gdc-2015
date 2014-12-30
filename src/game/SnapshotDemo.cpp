@@ -147,6 +147,7 @@ struct SnapshotInternal
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         network_simulator->AddState( { Latency, Jitter, PacketLoss } );
         send_sequence = 0;
+        recv_sequence = 0xFFFF;
         mode = SnapshotDefaultMode;
     }
 
@@ -162,6 +163,7 @@ struct SnapshotInternal
     SnapshotPacketFactory packet_factory;
     network::Simulator * network_simulator;
     uint16_t send_sequence;
+    uint16_t recv_sequence;
     SnapshotMode mode;
 };
 
@@ -223,13 +225,37 @@ void SnapshotDemo::Update()
 
     // send a snapshot packet to the right simulation
 
-    auto snapshot_packet = (SnapshotNaivePacket*) m_snapshot->packet_factory.Create( SNAPSHOT_NAIVE_PACKET );
+    auto game_instance = m_internal->GetGameInstance(0);
 
-    snapshot_packet->sequence = m_snapshot->send_sequence++;
+    const int num_active_objects = game_instance->GetNumActiveObjects();
 
-    // todo: fill the packet
+    if ( num_active_objects > 0 )
+    {
+        auto snapshot_packet = (SnapshotNaivePacket*) m_snapshot->packet_factory.Create( SNAPSHOT_NAIVE_PACKET );
 
-    m_snapshot->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+        snapshot_packet->sequence = m_snapshot->send_sequence++;
+
+        const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+
+        CORE_ASSERT( active_objects );
+
+        for ( int i = 0; i < num_active_objects; ++i )
+        {
+            auto & object = active_objects[i];
+            const int index = object.id;
+            const float x = object.position.x;
+            const float y = object.position.y;
+            const float z = object.position.z;
+            snapshot_packet->cubes[index].position = vectorial::vec3f( x,y,z );
+            snapshot_packet->cubes[index].orientation.x = object.orientation.x;
+            snapshot_packet->cubes[index].orientation.y = object.orientation.y;
+            snapshot_packet->cubes[index].orientation.z = object.orientation.z;
+            snapshot_packet->cubes[index].orientation.w = object.orientation.w;
+            snapshot_packet->cubes[index].interacting = object.enabled && object.authority == 0;
+        }
+
+        m_snapshot->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+    }
 
     // update the network simulator
 
@@ -270,11 +296,13 @@ void SnapshotDemo::Update()
 
             auto snapshot_packet = (SnapshotNaivePacket*) read_packet;
 
-            // todo: apply the snapshot to the right simulation immediately
-
-            if ( !snapshot_packet )
+            if ( core::sequence_greater_than( snapshot_packet->sequence, m_snapshot->recv_sequence ) )
             {
-                printf( "ohai\n" );
+                printf( "naive snapshot packet: %d\n", snapshot_packet->sequence );
+
+                // todo: apply the snapshot to the right simulation immediately
+
+                m_snapshot->recv_sequence = snapshot_packet->sequence;
             }
         }
 

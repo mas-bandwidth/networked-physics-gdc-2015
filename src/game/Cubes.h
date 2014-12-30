@@ -185,6 +185,8 @@ struct CubesInternal
 
     bool KeyEvent( int key, int scancode, int action, int mods );
 
+    GameInstance * GetGameInstance( int simulation_index );
+
     const game::Input GetLocalInput() const { return input; }
 
 #endif // #ifdef CLIENT
