@@ -42,7 +42,6 @@ namespace view
 		float scale;
 		float r,g,b;
  		uint32_t id : 20;
- 		uint32_t owner : 3;
 		uint32_t authority : 3;
 		uint32_t visible : 1;
 	};

@@ -19,21 +19,78 @@ static const int PlayoutDelayBufferSize = 1024;
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 
-// todo: would be nice to have a simulation reset + each network preset below
-// assigned to the keys, 1,2,3,4,5.
+enum LockstepModes
+{
+    LOCKSTEP_MODE_NON_DETERMINISTIC,
+    LOCKSTEP_MODE_DETERMINISTIC,
+    LOCKSTEP_MODE_TCP_100MS_1PC,
+    LOCKSTEP_MODE_TCP_200MS_2PC,
+    LOCKSTEP_MODE_TCP_250MS_5PC,
+    LOCKSTEP_MODE_UDP_2000MS_25PC,
+    LOCKSTEP_MODE_UDP_2000MS_50PC,
+    LOCKSTEP_NUM_MODES
+};
 
-// 0. todo: Demonstration mode. 2 seconds latency. No packet loss. No jitter.
+static const char * lockstep_mode_descriptions[] =
+{
+    "Deterministic Mode",
+    "Non-Determistic Mode",
+    "TCP at 100ms latency and 1%% packet loss (100ms playout delay buffer)",
+    "TCP at 200ms latency and 2%% packet loss (100ms playout delay buffer)",
+    "TCP at 250ms latency and 5%% packet loss (100ms playout delay buffer)",
+    "UDP at 2 seconds latency and 25%% packet loss (100ms playout delay buffer)",
+    "UDP at 2 seconds latency and 50%% packet loss (250ms playout delay buffer)",
+};
 
-/*
-// 1. TCP over LAN. No latency, packet loss or jitter.
+struct LockstepModeData
+{
+    bool tcp = true;
+    bool deterministic = true;
+    float playout_delay = 0.1f;
+    float latency = 0.0f;
+    float packet_loss = 0.0f;
+    float jitter = 0.0f;
+};
 
-#define TCP_MODE
+static LockstepModeData lockstep_mode_data[LOCKSTEP_NUM_MODES];
 
-static const float PlayoutDelay = 0.1f;
-static const float Latency = 1.0;
-static const float PacketLoss = 0.0f;
-static const float Jitter = 1.0f / 60.0f;
-*/
+static void InitLockstepModes()
+{
+    lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].tcp = true;
+    lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].deterministic = false;
+    lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].latency = 1.0f;     // note: this is one way latency. eg. RTT/2
+
+    lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].tcp = true;
+    lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].playout_delay = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].latency = 1.0f;
+
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_100MS_1PC].playout_delay = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_100MS_1PC].latency = 0.05f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_100MS_1PC].packet_loss = 1.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_100MS_1PC].jitter = 1.0f / 60.0f;
+
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_200MS_2PC].playout_delay = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_200MS_2PC].latency = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_200MS_2PC].packet_loss = 2.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_200MS_2PC].jitter = 1.0f / 60.0f;
+
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_250MS_5PC].playout_delay = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_250MS_5PC].latency = 0.125f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_250MS_5PC].packet_loss = 5.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_TCP_250MS_5PC].jitter = 1.0f / 60.0f;
+
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].tcp = false;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].playout_delay = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].latency = 1.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].packet_loss = 25.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].jitter = 1.0f / 60.0f;
+
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].tcp = false;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].playout_delay = 0.25f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].latency = 1.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].packet_loss = 50.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].jitter = 1.0f / 60.0f;
+}
 
 /*
 // 2. TCP @ 100ms round trip with 1% packet loss and +/- 1 frame of jitter
@@ -70,10 +127,7 @@ static const float Jitter = 1.0f / 60.0f;
 
 // 5. UDP @ 2 second round trip with 25% packet loss and +/- 1 frame of jitter
 
-static const float PlayoutDelay = 0.1f;
-static const float Latency = 1.0f;
-static const float PacketLoss = 25.0f;
-static const float Jitter = 1.0f / 60.0f;
+// 6. UDP @ 2 second round trip with 50% packet loss and 250ms playout delay
 
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
@@ -176,13 +230,14 @@ protected:
 
 struct LockstepPlayoutDelayBuffer
 {
-    LockstepPlayoutDelayBuffer( core::Allocator & allocator )
+    LockstepPlayoutDelayBuffer( core::Allocator & allocator, const LockstepModeData & mode_data )
         : input_queue( allocator )
     {
         stopped = true;
         start_time = 0.0;
         most_recent_input = 0;
         frame = 0;
+        playout_delay = mode_data.playout_delay;
         core::queue::reserve( input_queue, PlayoutDelayBufferSize );
     }
 
@@ -219,7 +274,7 @@ struct LockstepPlayoutDelayBuffer
 
         for ( int i = 0; i < MaxSimFrames; ++i )
         {
-            if ( time < ( start_time + ( frame + 0.5 ) * ( 1.0f / 60.0f ) + PlayoutDelay ) )
+            if ( time < ( start_time + ( frame + 0.5 ) * ( 1.0f / 60.0f ) + playout_delay ) )
                 break;
 
             if ( !core::queue::size( input_queue ) )
@@ -233,30 +288,35 @@ struct LockstepPlayoutDelayBuffer
 
             frame++;
         }
+    }
 
-        // todo: calculate remainder for interpolation
+    void Reset()
+    {
+        stopped = true;
+        start_time = 0.0;
+        most_recent_input = 0;
+        frame = 0;
+        core::queue::clear( input_queue );
     }
 
     bool stopped;
     double start_time;
     uint16_t most_recent_input;
     uint64_t frame;
+    float playout_delay;
     core::Queue<game::Input> input_queue;
 };
 
 struct LockstepInternal
 {
-    LockstepInternal( core::Allocator & allocator ) 
-        : packet_factory( allocator ), input_sliding_window( allocator, MaxInputs ), playout_delay_buffer( allocator )
+    LockstepInternal( core::Allocator & allocator, const LockstepModeData & mode_data ) 
+        : packet_factory( allocator ), input_sliding_window( allocator, MaxInputs ), playout_delay_buffer( allocator, mode_data )
     {
         this->allocator = &allocator;
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
-        network_simulator->AddState( { Latency, Jitter, PacketLoss } );
-#ifdef TCP_MODE 
-        network_simulator->SetTCPMode( true );
-#endif // #ifdef TCP_MODE
+        Reset( mode_data );
     }
 
     ~LockstepInternal()
@@ -265,6 +325,16 @@ struct LockstepInternal
         typedef network::Simulator NetworkSimulator;
         CORE_DELETE( *allocator, NetworkSimulator, network_simulator );
         network_simulator = nullptr;
+    }
+
+    void Reset( const LockstepModeData & mode_data )
+    {
+        input_sliding_window.Reset();
+        playout_delay_buffer.Reset();
+        network_simulator->Reset();
+        network_simulator->ClearStates();
+        network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
+        network_simulator->SetTCPMode( mode_data.tcp );
     }
 
     core::Allocator * allocator;
@@ -276,10 +346,11 @@ struct LockstepInternal
 
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
+    InitLockstepModes();
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
-    m_lockstep = CORE_NEW( *m_allocator, LockstepInternal, *m_allocator );
+    m_lockstep = CORE_NEW( *m_allocator, LockstepInternal, *m_allocator, lockstep_mode_data[GetMode()] );
 }
 
 LockstepDemo::~LockstepDemo()
@@ -288,6 +359,7 @@ LockstepDemo::~LockstepDemo()
     CORE_DELETE( *m_allocator, LockstepInternal, m_lockstep );
     CORE_DELETE( *m_allocator, CubesSettings, m_settings );
     m_settings = nullptr;
+    m_lockstep = nullptr;
     m_allocator = nullptr;
 }
 
@@ -305,12 +377,18 @@ bool LockstepDemo::Initialize()
 
     m_internal->Initialize( *m_allocator, config, m_settings );
 
+    m_settings->deterministic = lockstep_mode_data[GetMode()].deterministic;
+
     return true;
 }
 
 void LockstepDemo::Shutdown()
 {
     CORE_ASSERT( m_allocator );
+
+    CORE_ASSERT( m_lockstep );
+    m_lockstep->Reset( lockstep_mode_data[GetMode()] );
+
     if ( m_internal )
     {
         m_internal->Free( *m_allocator );
@@ -460,30 +538,27 @@ void LockstepDemo::Render()
 
 bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
 {
-    if ( action == GLFW_PRESS && mods == 0 )
-    {
-        if ( key == GLFW_KEY_BACKSPACE )
-        {
-            Shutdown();
-            Initialize();
-            return true;
-        }
-        else if ( key == GLFW_KEY_F1 )
-        {
-            m_settings->deterministic = !m_settings->deterministic;
-        }
-        else if ( key == GLFW_KEY_F2 )
-        {
-            m_lockstep->network_simulator->SetTCPMode( !m_lockstep->network_simulator->GetTCPMode() );
-        }
-    }
-
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
 bool LockstepDemo::CharEvent( unsigned int code )
 {
     return false;
+}
+
+int LockstepDemo::GetDefaultMode() const
+{
+    return LOCKSTEP_MODE_DETERMINISTIC;
+}
+
+int LockstepDemo::GetNumModes() const
+{
+    return LOCKSTEP_NUM_MODES;
+}
+
+const char * LockstepDemo::GetModeDescription( int mode ) const
+{
+    return lockstep_mode_descriptions[mode];
 }
 
 #endif // #ifdef CLIENT

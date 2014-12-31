@@ -2,6 +2,7 @@
 
 #ifdef CLIENT
 
+#include "core/Memory.h"
 #include "Global.h"
 #include "Mesh.h"
 #include "Model.h"
@@ -63,48 +64,53 @@ enum StoneColor
     WHITE
 };
 
+// todo: bring back cool normals visualization mode. top-down with rotation
+
 enum StoneMode
 {
-    SINGLE_STONE,
-    ROTATING_STONES
+    STONE_MODE_SINGLE_STONE,
+    STONE_MODE_HDR_TEST,
+    STONE_NUM_MODES
 };
 
-static bool stoneColor = WHITE;
-static int stoneSize = NumStoneSizes - 1;
-static int stoneMode = SINGLE_STONE;
+const char * stone_mode_description[] = 
+{
+    "Go Stone",
+    "HDR Test",
+};
 
-static GLuint cubemap_texture = 0;
+struct StoneInternal
+{
+    bool stone_color = WHITE;
+    int stone_size = NumStoneSizes - 1;
 
-static bool stoneDirty = true;
-static Model * stoneModel = nullptr;
+    GLuint cubemap_texture = 0;
 
-static bool rotating = false;
-static float rotationSpeed = 1.0f;
-static double rotationAngle = 0.0;
+    bool stone_dirty = true;
+    
+    Model * stone_model = nullptr;
+
+    bool rotating = true;
+    float rotation_speed = 1.0f;
+    double rotation_angle = 0.0;
+};
 
 StoneDemo::StoneDemo( core::Allocator & allocator )
 {
-    stoneDirty = true;
     m_allocator = &allocator;
+    m_internal = nullptr;
 }
 
 StoneDemo::~StoneDemo()
 {
-    if ( stoneModel )
-    {
-        DestroyModel( *m_allocator, stoneModel );
-        stoneModel = nullptr;
-    }
-
-    if ( cubemap_texture )
-    {
-        glDeleteTextures( 1, &cubemap_texture );
-        cubemap_texture = 0;
-    }
+    Shutdown();
+    m_allocator = nullptr;
 }
 
 bool StoneDemo::Initialize()
 {
+    m_internal = CORE_NEW( *m_allocator, StoneInternal );
+
 #if 0
     const char * filename = "data/cubemaps/uffizi.dds";
 
@@ -162,13 +168,30 @@ bool StoneDemo::Initialize()
     return true;
 }
 
+void StoneDemo::Shutdown()
+{
+    if ( m_internal->stone_model )
+    {
+        DestroyModel( *m_allocator, m_internal->stone_model );
+        m_internal->stone_model = nullptr;
+    }
+
+    if ( m_internal->cubemap_texture )
+    {
+        glDeleteTextures( 1, &m_internal->cubemap_texture );
+        m_internal->cubemap_texture = 0;
+    }
+
+    CORE_DELETE( *m_allocator, StoneInternal, m_internal );
+}
+
 void StoneDemo::Update()
 {
-    const float targetRotationSpeed = rotating ? 1.0f : 0.0f;
+    const float targetRotationSpeed = m_internal->rotating ? 1.0f : 0.0f;
 
-    rotationSpeed += ( targetRotationSpeed - rotationSpeed ) * 0.999f;
+    m_internal->rotation_speed += ( targetRotationSpeed - m_internal->rotation_speed ) * 0.125f;
 
-    rotationAngle += global.timeBase.deltaTime * rotationSpeed * 20;
+    m_internal->rotation_angle += global.timeBase.deltaTime * m_internal->rotation_speed * 20;
 }
 
 bool StoneDemo::Clear()
@@ -181,24 +204,24 @@ void StoneDemo::Render()
 {
     glEnable( GL_DEPTH_TEST );
 
-    if ( stoneDirty )
+    if ( m_internal->stone_dirty )
     {
-        if ( stoneModel )
+        if ( m_internal->stone_model )
         {
-            DestroyModel( *m_allocator, stoneModel );
-            stoneModel = nullptr;
+            DestroyModel( *m_allocator, m_internal->stone_model );
+            m_internal->stone_model = nullptr;
         }
 
-        const char * stoneName = ( stoneColor == WHITE ) ? white_stones[stoneSize] : black_stones[stoneSize];
-        const StoneData * stoneData = global.stoneManager->GetStoneData( stoneName );
-        if ( !stoneData )
+        const char * stone_name = ( m_internal->stone_color == WHITE ) ? white_stones[m_internal->stone_size] : black_stones[m_internal->stone_size];
+        const StoneData * stone_data = global.stoneManager->GetStoneData( stone_name );
+        if ( !stone_data )
             return;
 
-        Mesh * stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
+        Mesh * stoneMesh = global.meshManager->GetMesh( stone_data->mesh_filename );
         if ( !stoneMesh )
         {
-            global.meshManager->LoadMesh( stoneData->mesh_filename );
-            stoneMesh = global.meshManager->GetMesh( stoneData->mesh_filename );
+            global.meshManager->LoadMesh( stone_data->mesh_filename );
+            stoneMesh = global.meshManager->GetMesh( stone_data->mesh_filename );
             if ( !stoneMesh )
                 return;
         }
@@ -207,28 +230,28 @@ void StoneDemo::Render()
         if ( !shader )
             return;
 
-        stoneModel = CreateModel( *m_allocator, shader, stoneMesh );
+        m_internal->stone_model = CreateModel( *m_allocator, shader, stoneMesh );
 
-        if ( stoneModel )
-            stoneDirty = false;
+        if ( m_internal->stone_model )
+            m_internal->stone_dirty = false;
     }
 
-    if ( !stoneModel )
+    if ( !m_internal->stone_model )
         return;
 
-    glUseProgram( stoneModel->shader );
+    glUseProgram( m_internal->stone_model->shader );
 
     glActiveTexture( GL_TEXTURE0 );
 
-    glBindTexture( GL_TEXTURE_CUBE_MAP, cubemap_texture );
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_internal->cubemap_texture );
 
-    int location = glGetUniformLocation( stoneModel->shader, "CubeMap" );
+    int location = glGetUniformLocation( m_internal->stone_model->shader, "CubeMap" );
     if ( location >= 0 )
         glUniform1i( location, 0 );
 
-    switch ( stoneMode )
+    switch ( GetMode() )
     {
-        case SINGLE_STONE:        
+        case STONE_MODE_SINGLE_STONE:        
         {
             mat4 projectionMatrix = glm::perspective( 50.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 100.0f );
 
@@ -240,11 +263,11 @@ void StoneDemo::Render()
 
             vec4 lightPosition = vec4(0,0,10,1);
 
-            int location = glGetUniformLocation( stoneModel->shader, "EyePosition" );
+            int location = glGetUniformLocation( m_internal->stone_model->shader, "EyePosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &eyePosition[0] );
 
-            location = glGetUniformLocation( stoneModel->shader, "LightPosition" );
+            location = glGetUniformLocation( m_internal->stone_model->shader, "LightPosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &lightPosition[0] );
 
@@ -261,11 +284,11 @@ void StoneDemo::Render()
             instanceData[0].metallic = 1.0f;
             instanceData[0].gloss = 0.5f;
 
-            DrawModels( *stoneModel, NumInstances, instanceData );
+            DrawModels( *m_internal->stone_model, NumInstances, instanceData );
         }
         break;
 
-        case ROTATING_STONES:
+        case STONE_MODE_HDR_TEST:
         {
             mat4 projectionMatrix = glm::perspective( 40.0f, (float) global.displayWidth / (float) global.displayHeight, 0.1f, 250.0f );
              
@@ -285,11 +308,11 @@ void StoneDemo::Render()
 
             vec4 lightPosition = vec4(0,0,100,1);
 
-            int location = glGetUniformLocation( stoneModel->shader, "EyePosition" );
+            int location = glGetUniformLocation( m_internal->stone_model->shader, "EyePosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &eyePosition[0] );
 
-            location = glGetUniformLocation( stoneModel->shader, "LightPosition" );
+            location = glGetUniformLocation( m_internal->stone_model->shader, "LightPosition" );
             if ( location >= 0 )
                 glUniform3fv( location, 1, &lightPosition[0] );
 
@@ -304,7 +327,7 @@ void StoneDemo::Render()
                     const float x = -( (Size-1)/2.0 * 2.2f ) + 2.2f * i;
                     const float y = -( (Size-1)/2.0 * 2.2f ) + 2.2f * j;
 
-                    mat4 rotation = glm::rotate( mat4(1), -(float)rotationAngle, vec3(0.0f,0.0f,1.0f));
+                    mat4 rotation = glm::rotate( mat4(1), -(float)m_internal->rotation_angle, vec3(0.0f,0.0f,1.0f));
 
                     mat4 modelMatrix = rotation * glm::translate( mat4(1), vec3( x, y, 0.0f ) );
 
@@ -327,7 +350,7 @@ void StoneDemo::Render()
                 metallic += 1.0f / float(Size-1);
             }
 
-            DrawModels( *stoneModel, NumInstances, instanceData );
+            DrawModels( *m_internal->stone_model, NumInstances, instanceData );
         }
         break;
     }
@@ -343,39 +366,31 @@ bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )
     {
         if ( key == GLFW_KEY_UP )
         {
-            stoneSize++;
-            if ( stoneSize > NumStoneSizes - 1 )
-                stoneSize = NumStoneSizes - 1;
-            stoneDirty = true;
+            m_internal->stone_size++;
+            if ( m_internal->stone_size > NumStoneSizes - 1 )
+                m_internal->stone_size = NumStoneSizes - 1;
+            m_internal->stone_dirty = true;
             return true;
         }        
         else if ( key == GLFW_KEY_DOWN )
         {
-            stoneSize--;
-            if ( stoneSize < 0 )
-                stoneSize = 0;
-            stoneDirty = true;
+            m_internal->stone_size--;
+            if ( m_internal->stone_size < 0 )
+                m_internal->stone_size = 0;
+            m_internal->stone_dirty = true;
             return true;
         }
         else if ( key == GLFW_KEY_LEFT )
         {
-            stoneColor = BLACK;
-            stoneDirty = true;
+            m_internal->stone_color = BLACK;
+            m_internal->stone_dirty = true;
             return true;
         }
         else if ( key == GLFW_KEY_RIGHT )
         {
-            stoneColor = WHITE;
-            stoneDirty = true;
+            m_internal->stone_color = WHITE;
+            m_internal->stone_dirty = true;
             return true;
-        }
-        else if ( key == GLFW_KEY_1 )
-        {
-            stoneMode = SINGLE_STONE;
-        }
-        else if ( key == GLFW_KEY_2 )
-        {
-            stoneMode = ROTATING_STONES;
         }
     }
 
@@ -384,13 +399,28 @@ bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )
 
 bool StoneDemo::CharEvent( unsigned int code )
 {
-    if ( code == GLFW_KEY_SPACE )
+    if ( code == GLFW_KEY_SPACE && GetMode() == STONE_MODE_HDR_TEST )
     {
-        rotating = !rotating;
+        m_internal->rotating = !m_internal->rotating;
         return true;
     }
 
     return false;
+}
+
+int StoneDemo::GetDefaultMode() const
+{
+    return STONE_MODE_SINGLE_STONE;
+}
+
+int StoneDemo::GetNumModes() const
+{
+    return STONE_NUM_MODES;
+}
+
+const char * StoneDemo::GetModeDescription( int mode ) const
+{
+    return stone_mode_description[mode];
 }
 
 #endif // #ifdef CLIENT

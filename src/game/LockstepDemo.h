@@ -19,6 +19,8 @@ public:
 
     virtual bool Initialize() override;
 
+    virtual void Shutdown() override;
+
     virtual void Update() override;
 
     virtual bool Clear() override;
@@ -31,9 +33,13 @@ public:
 
     virtual const char * GetName() const override { return "lockstep"; }
 
-private:
+    virtual int GetDefaultMode() const override;
 
-    void Shutdown();
+    virtual int GetNumModes() const override;
+
+    virtual const char * GetModeDescription( int mode ) const override;
+
+private:
 
     core::Allocator * m_allocator;
 

@@ -5,6 +5,8 @@
 
 #include "Demo.h"
 
+struct StoneInternal;
+
 class StoneDemo : public Demo
 {
 public:
@@ -14,6 +16,8 @@ public:
     ~StoneDemo();
 
     virtual bool Initialize() override;
+
+    virtual void Shutdown() override;
 
     virtual void Update() override;
 
@@ -27,9 +31,17 @@ public:
 
     virtual const char * GetName() const override { return "stone"; }
 
+    virtual int GetDefaultMode() const override;
+
+    virtual int GetNumModes() const override;
+
+    virtual const char * GetModeDescription( int mode ) const override;
+
 private:
 
     core::Allocator * m_allocator;
+
+    StoneInternal * m_internal;
 };
 
 #endif // #ifdef CLIENT

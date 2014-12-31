@@ -175,11 +175,11 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
                 // either from a simulation, or it should be passed in explicitly by the demo (eg. snapshot interpolation)
 
                 simulation[i].game_instance->GetViewPacket( view[i].packet );
-            }
 
-            getViewObjectUpdates( view[i].updates, view[i].packet );
-                
-            view[i].objects.UpdateObjects( view[i].updates, view[i].packet.objectCount );
+                getViewObjectUpdates( view[i].updates, view[i].packet );
+                    
+                view[i].objects.UpdateObjects( view[i].updates, view[i].packet.objectCount );
+            }
 
             view[i].objects.Update( deltaTime );
 

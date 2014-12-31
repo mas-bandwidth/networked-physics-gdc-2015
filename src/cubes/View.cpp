@@ -410,7 +410,6 @@ namespace view
 		for ( int i = 0; i < (int) viewPacket.objectCount; ++i )
 		{
 			updates[i].id = viewPacket.object[i].id;
-			updates[i].owner = viewPacket.object[i].owner;
 			updates[i].authority = viewPacket.object[i].authority;
 			updates[i].position = viewPacket.object[i].position;
 			updates[i].orientation = viewPacket.object[i].orientation;

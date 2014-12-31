@@ -18,6 +18,8 @@ public:
 
     virtual bool Initialize() override;
 
+    virtual void Shutdown() override;
+
     virtual void Update() override;
 
     virtual bool Clear() override;
@@ -29,6 +31,12 @@ public:
     virtual bool CharEvent( unsigned int code ) override;
 
     virtual const char * GetName() const override { return "cubes"; }
+
+    virtual int GetDefaultMode() const override { return 0; }
+
+    virtual int GetNumModes() const override { return 0; }
+
+    virtual const char * GetModeDescription( int mode ) const override { return ""; }
 
 private:
 

@@ -1,4 +1,52 @@
 
+Tuesday, December 30th, 2014
+----------------------------
+
+    Standardized virtual shutdown method for all demos
+
+    Standardize delete to call shutdown/initialize on current demo (if exists)
+
+    Strange behavior with delete for snapshot demo. Doesn't seem to reset right side?
+
+    Strange behavior with delete for lockstep demo. Doesn't seem to clear simulation,
+    eg. the simulation starts right away.
+
+    In both cases I think it is caused by not clearing the network simulator (old packets)
+
+    Fixed.
+
+    Standardize concept of mode across all demos. 
+
+    Mode can be selected via 1,2,3,4,5 etc.
+
+    Each demo needs to specify specify # of modes and initial mode # (default 0)
+
+    Each demo can register descriptions for each mode.
+
+    Each demo needs a "SetMode( int mode )" method.
+
+    Demo manager should keep track of mode setting and check against 1,2,3,4,5 etc.
+    and pass through to set the mode if the key pressed is within range for that demo.
+
+    Get modes working for stone demo.
+
+    Get modes working for lockstep demo.
+
+    Make mode change reset demo.
+
+    Convert all modes in lockstep and verify working.
+
+    Boom. Nice!
+
+    Setup mode data for snapshot demo.
+
+    Rework snapshot demo so it passes mode data to reset
+
+    Get the 60pps snapshots running with jitter.
+
+    Get the 10pps snapshots running without interpolation.
+
+
 Monday Evening, December 29th, 2014
 -----------------------------------
 
@@ -9,6 +57,28 @@ Monday Evening, December 29th, 2014
     On packet receive, compare sequence number and if more recent than previous, update recv sequence #.
 
     If more recent, push snapshot data to view (how?)
+
+    Work out how to best push snapshot data to view?
+
+    Initially I just want to push directly to the view.
+
+    But eventually, we're going to want to buffer and perform interpolation.
+
+    Just hammer it in initially?
+
+    Trick seems to be to create an ObjectUpdate for each cube,
+
+    Then pass in object updates to  void UpdateObjects( ObjectUpdate updates[], int updateCount, bool updateState = true );
+
+    Some hitches. Was caused by packet loss and jitter. Disabled.
+
+    Hacked this up. interacting not working quite right yet.
+
+    Fixed. Grey is MaxPlayers authority, not MaxPlayers - 1.
+
+    Orientation needs to be pushed.
+
+    OK. The basics are working.
 
 
 Monday Morning, December 29th, 2014

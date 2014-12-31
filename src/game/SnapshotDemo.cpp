@@ -18,21 +18,43 @@ static const int NumCubes = 900 + MaxPlayers;
 //static const int LeftPort = 1000;
 static const int RightPort = 1001;
 
-static const float Latency = 1.0;
-static const float PacketLoss = 1.0f;
-static const float Jitter = 1.0f / 60.0f;
-
 enum SnapshotMode
 {
     SNAPSHOT_MODE_NAIVE_60PPS,                  // 1. naive snapshots with uncompressed data no jitter @ 60pps
     SNAPSHOT_MODE_NAIVE_60PPS_JITTER,           // 2. naive snapshots with jitter +/2 frames @ 60pps
-    SNAPSHOT_MODE_NAIVE_10PPS_POPPING,          // 3. naive snapshots at 10pps (popping)
-    SNAPSHOT_MODE_NAIVE_10PPS_INTERPOLATION,    // 4. naive snapshots at 10pps with interpolation
+    SNAPSHOT_MODE_NAIVE_10PPS,                  // 3. naive snapshots at 10pps with interpolation
+    SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,   // 4. linear interpolation at 10pps
+    SNAPSHOT_MODE_HERMITE_INTERPOLATION_20PPS,  // 5. hermite interpolation at 10pps
     // ...
     SNAPSHOT_NUM_MODES
 };
 
-const SnapshotMode SnapshotDefaultMode = SNAPSHOT_MODE_NAIVE_60PPS;      // update this as working on each mode
+const char * snapshot_mode_descriptions[]
+{
+    "Snapshots at 60 packets per-second",
+    "Snapshots at 60 packets per-second (with jitter)",
+    "Snapshots at 10 packets per-second",
+    "Linear interpolation at 10 packets per-second",
+    "Hermite interpolation at 10 packets per-second",
+};
+
+struct SnapshotModeData
+{
+    float send_rate = 60.0f;
+    float latency = 0.0f;
+    float packet_loss = 0.0f;
+    float jitter = 0.0f;
+};
+
+static SnapshotModeData snapshot_mode_data[SNAPSHOT_NUM_MODES];
+
+static void InitSnapshotModes()
+{
+    snapshot_mode_data[SNAPSHOT_MODE_NAIVE_60PPS_JITTER].jitter = 2 * 1.0f / 60.0f;
+
+    snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].send_rate = 0.1f;
+    snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].jitter = 2 * 1.0f / 60.0f;
+}
 
 enum SnapshotPackets
 {
@@ -138,17 +160,14 @@ protected:
 
 struct SnapshotInternal
 {
-    SnapshotInternal( core::Allocator & allocator ) 
+    SnapshotInternal( core::Allocator & allocator, const SnapshotModeData & mode_data ) 
         : packet_factory( allocator )
     {
         this->allocator = &allocator;
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
-        network_simulator->AddState( { Latency, Jitter, PacketLoss } );
-        send_sequence = 0;
-        recv_sequence = 0xFFFF;
-        mode = SnapshotDefaultMode;
+        Reset( mode_data );
     }
 
     ~SnapshotInternal()
@@ -159,20 +178,31 @@ struct SnapshotInternal
         network_simulator = nullptr;
     }
 
+    void Reset( const SnapshotModeData & mode_data )
+    {
+        network_simulator->Reset();
+        network_simulator->ClearStates();
+        network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
+        send_sequence = 0;
+        recv_sequence = 0;
+        send_accumulator = 1.0f;
+    }
+
     core::Allocator * allocator;
     SnapshotPacketFactory packet_factory;
     network::Simulator * network_simulator;
     uint16_t send_sequence;
     uint16_t recv_sequence;
-    SnapshotMode mode;
+    float send_accumulator;
 };
 
 SnapshotDemo::SnapshotDemo( core::Allocator & allocator )
 {
+    InitSnapshotModes();
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
-    m_snapshot = CORE_NEW( *m_allocator, SnapshotInternal, *m_allocator );
+    m_snapshot = CORE_NEW( *m_allocator, SnapshotInternal, *m_allocator, snapshot_mode_data[GetMode()] );
 }
 
 SnapshotDemo::~SnapshotDemo()
@@ -180,6 +210,7 @@ SnapshotDemo::~SnapshotDemo()
     Shutdown();
     CORE_DELETE( *m_allocator, SnapshotInternal, m_snapshot );
     CORE_DELETE( *m_allocator, CubesSettings, m_settings );
+    m_snapshot = nullptr;
     m_settings = nullptr;
     m_allocator = nullptr;
 }
@@ -204,6 +235,10 @@ bool SnapshotDemo::Initialize()
 void SnapshotDemo::Shutdown()
 {
     CORE_ASSERT( m_allocator );
+
+    CORE_ASSERT( m_snapshot );
+    m_snapshot->Reset( snapshot_mode_data[GetMode()] );
+
     if ( m_internal )
     {
         m_internal->Free( *m_allocator );
@@ -225,36 +260,45 @@ void SnapshotDemo::Update()
 
     // send a snapshot packet to the right simulation
 
-    auto game_instance = m_internal->GetGameInstance(0);
+    m_snapshot->send_accumulator += global.timeBase.deltaTime;
 
-    const int num_active_objects = game_instance->GetNumActiveObjects();
-
-    if ( num_active_objects > 0 )
+    if ( m_snapshot->send_accumulator >= snapshot_mode_data[GetMode()].send_rate )
     {
-        auto snapshot_packet = (SnapshotNaivePacket*) m_snapshot->packet_factory.Create( SNAPSHOT_NAIVE_PACKET );
+        m_snapshot->send_accumulator = 0.0f;   
 
-        snapshot_packet->sequence = m_snapshot->send_sequence++;
+        auto game_instance = m_internal->GetGameInstance(0);
 
-        const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+        const int num_active_objects = game_instance->GetNumActiveObjects();
 
-        CORE_ASSERT( active_objects );
-
-        for ( int i = 0; i < num_active_objects; ++i )
+        if ( num_active_objects > 0 )
         {
-            auto & object = active_objects[i];
-            const int index = object.id;
-            const float x = object.position.x;
-            const float y = object.position.y;
-            const float z = object.position.z;
-            snapshot_packet->cubes[index].position = vectorial::vec3f( x,y,z );
-            snapshot_packet->cubes[index].orientation.x = object.orientation.x;
-            snapshot_packet->cubes[index].orientation.y = object.orientation.y;
-            snapshot_packet->cubes[index].orientation.z = object.orientation.z;
-            snapshot_packet->cubes[index].orientation.w = object.orientation.w;
-            snapshot_packet->cubes[index].interacting = object.enabled && object.authority == 0;
-        }
+            auto snapshot_packet = (SnapshotNaivePacket*) m_snapshot->packet_factory.Create( SNAPSHOT_NAIVE_PACKET );
 
-        m_snapshot->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+            snapshot_packet->sequence = m_snapshot->send_sequence++;
+
+            const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+
+            CORE_ASSERT( active_objects );
+
+            for ( int i = 0; i < num_active_objects; ++i )
+            {
+                auto & object = active_objects[i];
+                const int index = object.id - 1;
+                CORE_ASSERT( index >= 0 );
+                CORE_ASSERT( index < NumCubes );
+                const float x = object.position.x;
+                const float y = object.position.y;
+                const float z = object.position.z;
+                snapshot_packet->cubes[index].position = vectorial::vec3f( x,y,z );
+                snapshot_packet->cubes[index].orientation.x = object.orientation.x;
+                snapshot_packet->cubes[index].orientation.y = object.orientation.y;
+                snapshot_packet->cubes[index].orientation.z = object.orientation.z;
+                snapshot_packet->cubes[index].orientation.w = object.orientation.w;
+                snapshot_packet->cubes[index].interacting = object.authority == 0;
+            }
+
+            m_snapshot->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+        }
     }
 
     // update the network simulator
@@ -298,9 +342,32 @@ void SnapshotDemo::Update()
 
             if ( core::sequence_greater_than( snapshot_packet->sequence, m_snapshot->recv_sequence ) )
             {
-                printf( "naive snapshot packet: %d\n", snapshot_packet->sequence );
+                view::ObjectUpdate updates[NumCubes];
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    updates[i].id = i + 1;
 
-                // todo: apply the snapshot to the right simulation immediately
+                    updates[i].authority = snapshot_packet->cubes[i].interacting ? 0 : MaxPlayers;
+
+                    updates[i].position.x = snapshot_packet->cubes[i].position.x();
+                    updates[i].position.y = snapshot_packet->cubes[i].position.y();
+                    updates[i].position.z = snapshot_packet->cubes[i].position.z();
+
+                    updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x;
+                    updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y;
+                    updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z;
+                    updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w;
+
+                    updates[i].linearVelocity.zero();
+                    updates[i].angularVelocity.zero();
+
+                    updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
+                    updates[i].visible = true;
+
+                    view::getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
+                }
+
+                m_internal->view[1].objects.UpdateObjects( updates, NumCubes, true );
 
                 m_snapshot->recv_sequence = snapshot_packet->sequence;
             }
@@ -332,17 +399,6 @@ void SnapshotDemo::Render()
 
 bool SnapshotDemo::KeyEvent( int key, int scancode, int action, int mods )
 {
-    if ( action == GLFW_PRESS && mods == 0 )
-    {
-        // todo: sta
-        if ( key == GLFW_KEY_BACKSPACE )
-        {
-            Shutdown();
-            Initialize();
-            return true;
-        }
-    }
-
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
@@ -351,6 +407,21 @@ bool SnapshotDemo::CharEvent( unsigned int code )
     // ...
 
     return false;
+}
+
+int SnapshotDemo::GetDefaultMode() const
+{
+    return SNAPSHOT_MODE_NAIVE_60PPS;
+}
+
+int SnapshotDemo::GetNumModes() const
+{
+    return SNAPSHOT_NUM_MODES;
+}
+
+const char * SnapshotDemo::GetModeDescription( int mode ) const
+{
+    return snapshot_mode_descriptions[mode];
 }
 
 #endif // #ifdef CLIENT

@@ -13,6 +13,8 @@ public:
 
     virtual bool Initialize() = 0;
 
+    virtual void Shutdown() = 0;
+
     virtual bool Clear() = 0;
 
     virtual void Update() = 0;
@@ -24,6 +26,20 @@ public:
     virtual bool CharEvent( unsigned int code ) = 0;
 
     virtual const char * GetName() const = 0;
+
+    virtual int GetDefaultMode() const = 0;
+
+    virtual int GetNumModes() const = 0;
+
+    virtual const char * GetModeDescription( int mode ) const = 0;
+
+    void SetMode( int mode ) { m_mode = mode; }
+
+    int GetMode() const { return m_mode; }
+
+private:
+
+    int m_mode = 0;
 };
 
 #endif // #ifdef CLIENT

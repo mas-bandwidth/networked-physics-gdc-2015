@@ -2,6 +2,13 @@ WOULD BE NICE:
 
     -------------------------------------------
 
+    Would be cool to have "settings" per-demo.
+
+    These settings would generally be remembered across initialize/shutdown,
+    eg. rotation yes/no for the stones PBR mode would be remembered after backspace.
+
+    -------------------------------------------
+
     Rename m_internal to m_cubes and use m_internal for inner.
 
     -------------------------------------------
@@ -42,19 +49,7 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Demos could resize the window according to their needs
-
-    eg. the splitscreen demo could resize it wide
-
-    The overlay demo could have it normal width.
-
-    But this is overkill -- firstly, for my presentation I'm simply going to record videos ahead of time
-
-    No live demos. Keep the presentation completely smooth
-
-    -------------------------------------------
-
-    Idea: the quick console starts at the top center of the screen and grows centered
+    Idea: the quick console starts at the top center of the screen and grows centered?
 
     -------------------------------------------
 
@@ -64,6 +59,10 @@ WOULD BE NICE:
     Should stop the case where cubes in a big stack never come to rest
     and stay red, and then wake up other cubes while visually not moving 
     at all.
+
+    This would however lead to non-red colored cubes at rest on top of the player cube.
+
+    Is this desired? It's probably the best option.
 
     -------------------------------------------
     
@@ -147,21 +146,6 @@ WOULD BE NICE:
 
     ----------------------------------
 
-    The circle of activation looks a bit weird. Would probably look better
-    if it were based on manhattan distance, eg. a square of activation?
-
-    ----------------------------------
-
-    There was a bug with shadow render that rendered the outline of the cubes in grey
-    on top of the red cubes. This game a very convincing "glass" effect for the red
-    cubes.
-
-    This would be a nice effect to get working properly, eg. make the red cubes look like glass!
-
-    It works very well with the white reflection
-
-    ----------------------------------
-
     It would be much better to do the stencil shadows in a vertex shader instead!
 
     ----------------------------------
@@ -172,11 +156,9 @@ WOULD BE NICE:
 
     Needs to be fixed!
 
-    ----------------------------------
+    *** OR *** 
 
-    Would be nice if demos could specify whether they want to clear the screen or not.
-
-    For example, cubes demo does want to, but the stone demo does not.
+    Remove the activation system and simplify! I don't want to support that system anymore.
 
     ----------------------------------
 
@@ -193,6 +175,10 @@ WOULD BE NICE:
     ----------------------------------
 
     Consider renaming "ChannelStructure" to "ConnectionContext"?
+
+    ----------------------------------
+
+    I strongly dislike the "clientServer" namespace. Perhaps client_server:: instead?!
 
     ----------------------------------
 

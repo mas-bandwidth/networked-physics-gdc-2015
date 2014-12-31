@@ -52,12 +52,20 @@ namespace network
         }
     }
 
-    void Simulator::AddState( const SimulatorState & state )
+    int Simulator::AddState( const SimulatorState & state )
     {
         CORE_ASSERT( m_numStates < MaxSimulatorStates - 1 );
+        const int index = m_numStates;
         m_states[m_numStates++] = state;
         if ( m_numStates == 1 )
             m_state = m_states[0];
+        return index;
+    }
+
+    void Simulator::ClearStates()
+    {
+        m_state = SimulatorState();
+        m_numStates = 0;
     }
 
     void Simulator::SendPacket( const Address & address, protocol::Packet * packet )

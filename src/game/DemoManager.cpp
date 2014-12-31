@@ -90,6 +90,15 @@ bool DemoManager::ReloadDemo()
     return LoadDemo( demo_name );
 }
 
+void DemoManager::ResetDemo()
+{
+    if ( m_demo )
+    {
+        m_demo->Shutdown();
+        m_demo->Initialize();
+    }
+}
+
 Demo * DemoManager::GetDemo()
 {
     return m_demo;
@@ -103,6 +112,101 @@ bool DemoManager::KeyEvent( int key, int scancode, int action, int mods )
     {
         console_function_reload( "" );
         return true;
+    }
+
+    if ( key == GLFW_KEY_BACKSPACE && action == GLFW_PRESS && mods == 0 )
+    {
+        if ( m_demo )
+        {
+            ResetDemo();
+            return true;
+        }
+    }
+
+    if ( m_demo && action == GLFW_PRESS && mods == 0 )
+    {
+        const int num_modes = m_demo->GetNumModes();
+
+        if ( key == GLFW_KEY_1 )
+        {
+            if ( num_modes >= 1 )
+            {
+                m_demo->SetMode( 0 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_2 )
+        {
+            if ( num_modes >= 2 )
+            {
+                m_demo->SetMode( 1 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_3 )
+        {
+            if ( num_modes >= 3 )
+            {
+                m_demo->SetMode( 2 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_4 )
+        {
+            if ( num_modes >= 4 )
+            {
+                m_demo->SetMode( 3 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_5 )
+        {
+            if ( num_modes >= 5 )
+            {
+                m_demo->SetMode( 4 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_6 )
+        {
+            if ( num_modes >= 6 )
+            {
+                m_demo->SetMode( 5 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_7 )
+        {
+            if ( num_modes >= 7 )
+            {
+                m_demo->SetMode( 6 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_8 )
+        {
+            if ( num_modes >= 8 )
+            {
+                m_demo->SetMode( 7 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_9 )
+        {
+            if ( num_modes >= 9 )
+            {
+                m_demo->SetMode( 8 );
+                ResetDemo();
+            }
+        }
+        else if ( key == GLFW_KEY_0 )
+        {
+            if ( num_modes >= 10 )
+            {
+                m_demo->SetMode( 9 );
+                ResetDemo();
+            }
+        }
     }
 
     if ( m_demo )

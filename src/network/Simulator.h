@@ -69,7 +69,9 @@ namespace network
 
         void Reset();
 
-        void AddState( const SimulatorState & state );
+        int AddState( const SimulatorState & state );
+
+        void ClearStates();
 
         void SendPacket( const Address & address, protocol::Packet * packet );
 
