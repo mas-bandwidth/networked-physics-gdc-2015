@@ -1,23 +1,24 @@
 DONE:
 
 TODO:
-    
-    The authority color interpolation seems to be running at the 10fps speed.
-
-    It needs to be decoupled so it pumps every frame, even if new
-    view objects are not set on the view!
 
     -----------------------------------------------------------------------
 
-    Think through interpolation
+    Think through more interpolation
 
     What's the best way to buffer packets and interpolate?
 
     It's basically a playout delay buffer.
 
-    It needs to be smart enough not to allow any late snapshot that would
-    affect current interpolation, eg. once you start interpolating from A -> C
-    you can't allow B to pop up and affect that.
+    It needs to be smart enough not to allow any late snapshot in the buffer
+    that would affect current interpolation, eg. once you start interpolating 
+    from A -> C you can't allow B to pop up and affect that.
+
+    -----------------------------------------------------------------------
+
+    Implement the interpolation buffer
+
+    (It's basically got to be a sliding window with holes)
 
     -----------------------------------------------------------------------
 
@@ -41,6 +42,18 @@ TODO:
     Many objects are at rest. This is a big win.
 
     -----------------------------------------------------------------------
+
+    Next compress orientation. It's the biggest (16 bytes).
+
+    Can get it down to 32 bytes pretty easily.
+
+    Smallest three.
+
+    -----------------------------------------------------------------------
+
+    Compress linear and angular velocity.
+
+    Quantize them and 
     
 
 

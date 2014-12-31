@@ -2,6 +2,15 @@ WOULD BE NICE:
 
     -------------------------------------------
 
+    Can probably do without the default constructor for all serializable objects
+
+    This way a macro could just define the struct, and the user could setup defaults
+    in-place at declaration, eg. int num_objects = 0;
+
+    Would make event and message definitions much clearer.
+
+    -------------------------------------------
+
     Would be cool to have "settings" per-demo.
 
     These settings would generally be remembered across initialize/shutdown,
@@ -9,7 +18,7 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Rename m_internal to m_cubes and use m_internal for inner.
+    Rename m_internal to m_cubes and use m_internal consistently for demo inner class.
 
     -------------------------------------------
     

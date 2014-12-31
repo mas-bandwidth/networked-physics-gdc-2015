@@ -88,12 +88,8 @@ namespace view
 
 				assert( object );
 
-				const float tightness = ( object->authority == 0 ) ? ColorChangeTightnessDefault : ColorChangeTightnessAuthority;
+				object->authority = updates[i].authority;
 
-				object->r += ( updates[i].r - object->r ) * tightness;
-				object->g += ( updates[i].g - object->g ) * tightness;
-				object->b += ( updates[i].b - object->b ) * tightness;
-				
 				if ( updateState )
 				{
 					object->positionError = ( object->position + object->positionError ) - updates[i].position;
@@ -219,7 +215,7 @@ namespace view
 		}
 	}
 
-	void ObjectManager::Update( float deltaTime )
+	void ObjectManager::Update( float deltaTime, int maxPlayers )
 	{
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
 		{
@@ -257,6 +253,17 @@ namespace view
 					 	object->a = 1.0f - object->a;
 				}
 			}
+
+			// update color blend
+
+			const float tightness = ( object->authority == 0 ) ? ColorChangeTightnessAuthority : ColorChangeTightnessDefault;
+
+			float target_r, target_g, target_b;
+			getAuthorityColor( object->authority, target_r, target_g, target_b, maxPlayers );
+
+			object->r += ( target_r - object->r ) * tightness;
+			object->g += ( target_g - object->g ) * tightness;
+			object->b += ( target_b - object->b ) * tightness;
 		}
 	}
 
@@ -348,8 +355,6 @@ namespace view
 
 	void Camera::EaseIn( const math::Vector & new_lookat, const math::Vector & new_position )
 	{
-		// todo: need to handle denormals
-
 		if ( ( new_lookat - lookat ).lengthSquared() > 0.000001f )
 			lookat += ( new_lookat - lookat ) * 0.15f;
 

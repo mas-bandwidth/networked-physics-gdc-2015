@@ -115,7 +115,7 @@ namespace view
 
 		void ExtrapolateObjects( float deltaTime );
 
-		void Update( float deltaTime );
+		void Update( float deltaTime, int maxPlayers = MaxPlayers );
 
 		Object * GetObject( unsigned int id );
 

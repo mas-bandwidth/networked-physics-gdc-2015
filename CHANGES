@@ -1,4 +1,25 @@
 
+Wednesday, December 31st, 2014
+------------------------------
+
+    The authority color interpolation seems to be running at the 10fps speed.
+
+    It needs to be decoupled so it pumps every frame, even if new
+    view objects are not set on the view!
+
+    Get extrapolation demo working. It's related.
+
+    Tried it. Nope. We need to introduce smoothing and a bunch of other concepts.
+
+    Save it for the next article! (stateful synchronization)
+
+    Sketch out mode data for interpolation, eg. interpolation enum and setup.
+
+    Add code to naive snapshot to only serialize the linear/angular velocity if required.
+
+    eg. only if interpolation mode is hermite. otherwise, just position/orientation.
+
+
 Tuesday, December 30th, 2014
 ----------------------------
 

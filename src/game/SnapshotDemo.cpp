@@ -11,7 +11,7 @@
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
-static const int MaxPacketSize = 32 * 1024;         // this has to be really large for the worst case!
+static const int MaxPacketSize = 64 * 1024;         // this has to be really large for the worst case!
 
 static const int NumCubes = 900 + MaxPlayers;
 
@@ -23,8 +23,8 @@ enum SnapshotMode
     SNAPSHOT_MODE_NAIVE_60PPS,                  // 1. naive snapshots with uncompressed data no jitter @ 60pps
     SNAPSHOT_MODE_NAIVE_60PPS_JITTER,           // 2. naive snapshots with jitter +/2 frames @ 60pps
     SNAPSHOT_MODE_NAIVE_10PPS,                  // 3. naive snapshots at 10pps with interpolation
-    SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,   // 4. linear interpolation at 10pps
-    SNAPSHOT_MODE_HERMITE_INTERPOLATION_20PPS,  // 5. hermite interpolation at 10pps
+    SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,   // 5. linear interpolation at 10pps
+    SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS,  // 5. hermite interpolation at 10pps
     // ...
     SNAPSHOT_NUM_MODES
 };
@@ -38,12 +38,20 @@ const char * snapshot_mode_descriptions[]
     "Hermite interpolation at 10 packets per-second",
 };
 
+enum SnapshotInterpolation
+{
+    SNAPSHOT_INTERPOLATION_NONE,
+    SNAPSHOT_INTERPOLATION_LINEAR,
+    SNAPSHOT_INTERPOLATION_HERMITE
+};
+
 struct SnapshotModeData
 {
     float send_rate = 60.0f;
     float latency = 0.0f;
     float packet_loss = 0.0f;
     float jitter = 0.0f;
+    SnapshotInterpolation interpolation = SNAPSHOT_INTERPOLATION_NONE;
 };
 
 static SnapshotModeData snapshot_mode_data[SNAPSHOT_NUM_MODES];
@@ -52,8 +60,16 @@ static void InitSnapshotModes()
 {
     snapshot_mode_data[SNAPSHOT_MODE_NAIVE_60PPS_JITTER].jitter = 2 * 1.0f / 60.0f;
 
-    snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].send_rate = 0.1f;
+    snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].send_rate = 10.0f;
     snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].jitter = 2 * 1.0f / 60.0f;
+
+    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].send_rate = 10.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
+
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].send_rate = 10.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 }
 
 enum SnapshotPackets
@@ -68,6 +84,8 @@ struct CubeState
     bool interacting;
     vectorial::vec3f position;
     vectorial::quat4f orientation;
+    vectorial::vec3f linear_velocity;
+    vectorial::vec3f angular_velocity;
 };
 
 template <typename Stream> void serialize_vector( Stream & stream, vectorial::vec3f & vector )
@@ -97,20 +115,33 @@ template <typename Stream> void serialize_quaternion( Stream & stream, vectorial
 struct SnapshotNaivePacket : public protocol::Packet
 {
     uint16_t sequence;
+    bool has_velocity;
 
     SnapshotNaivePacket() : Packet( SNAPSHOT_NAIVE_PACKET )
     {
         sequence = 0;
+        has_velocity = false;
     }
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_uint16( stream, sequence );
+        serialize_bool( stream, has_velocity );
         for ( int i = 0; i < NumCubes; ++i )
         {
             serialize_bool( stream, cubes[i].interacting );
             serialize_vector( stream, cubes[i].position );
             serialize_quaternion( stream, cubes[i].orientation );
+            if ( has_velocity )
+            {
+                serialize_vector( stream, cubes[i].linear_velocity );
+                serialize_vector( stream, cubes[i].angular_velocity );
+            }
+            else if ( Stream::IsReading )
+            {
+                cubes[i].linear_velocity.zero();
+                cubes[i].angular_velocity.zero();
+            }
         }
     }
 
@@ -262,7 +293,7 @@ void SnapshotDemo::Update()
 
     m_snapshot->send_accumulator += global.timeBase.deltaTime;
 
-    if ( m_snapshot->send_accumulator >= snapshot_mode_data[GetMode()].send_rate )
+    if ( m_snapshot->send_accumulator >= 1.0f / snapshot_mode_data[GetMode()].send_rate )
     {
         m_snapshot->send_accumulator = 0.0f;   
 
@@ -275,6 +306,8 @@ void SnapshotDemo::Update()
             auto snapshot_packet = (SnapshotNaivePacket*) m_snapshot->packet_factory.Create( SNAPSHOT_NAIVE_PACKET );
 
             snapshot_packet->sequence = m_snapshot->send_sequence++;
+            
+            snapshot_packet->has_velocity = snapshot_mode_data[GetMode()].interpolation == SNAPSHOT_INTERPOLATION_HERMITE;
 
             const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
 
@@ -283,17 +316,27 @@ void SnapshotDemo::Update()
             for ( int i = 0; i < num_active_objects; ++i )
             {
                 auto & object = active_objects[i];
+
                 const int index = object.id - 1;
+
                 CORE_ASSERT( index >= 0 );
                 CORE_ASSERT( index < NumCubes );
-                const float x = object.position.x;
-                const float y = object.position.y;
-                const float z = object.position.z;
-                snapshot_packet->cubes[index].position = vectorial::vec3f( x,y,z );
+
+                snapshot_packet->cubes[index].position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
+
                 snapshot_packet->cubes[index].orientation.x = object.orientation.x;
                 snapshot_packet->cubes[index].orientation.y = object.orientation.y;
                 snapshot_packet->cubes[index].orientation.z = object.orientation.z;
                 snapshot_packet->cubes[index].orientation.w = object.orientation.w;
+
+                snapshot_packet->cubes[index].linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
+                                                                                  object.linearVelocity.y,
+                                                                                  object.linearVelocity.z );
+
+                snapshot_packet->cubes[index].angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
+                                                                                   object.angularVelocity.y,
+                                                                                   object.angularVelocity.z );
+
                 snapshot_packet->cubes[index].interacting = object.authority == 0;
             }
 
@@ -358,8 +401,13 @@ void SnapshotDemo::Update()
                     updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z;
                     updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w;
 
-                    updates[i].linearVelocity.zero();
-                    updates[i].angularVelocity.zero();
+                    updates[i].linearVelocity.x = snapshot_packet->cubes[i].linear_velocity.x();
+                    updates[i].linearVelocity.y = snapshot_packet->cubes[i].linear_velocity.y();
+                    updates[i].linearVelocity.z = snapshot_packet->cubes[i].linear_velocity.z();
+
+                    updates[i].angularVelocity.x = snapshot_packet->cubes[i].angular_velocity.x();
+                    updates[i].angularVelocity.y = snapshot_packet->cubes[i].angular_velocity.y();
+                    updates[i].angularVelocity.z = snapshot_packet->cubes[i].angular_velocity.z();
 
                     updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
                     updates[i].visible = true;
@@ -376,7 +424,6 @@ void SnapshotDemo::Update()
         m_snapshot->packet_factory.Destroy( read_packet );
         read_packet = nullptr;
     }
-
 
     // run the simulation
 
