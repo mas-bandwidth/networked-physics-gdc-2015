@@ -24,8 +24,8 @@ enum SnapshotMode
     SNAPSHOT_MODE_NAIVE_60PPS_JITTER,           // 2. naive snapshots with jitter +/2 frames @ 60pps
     SNAPSHOT_MODE_NAIVE_10PPS,                  // 3. naive snapshots at 10pps with interpolation
     SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,   // 5. linear interpolation at 10pps
-    SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS,  // 5. hermite interpolation at 10pps
-    // ...
+    SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS,  // 6. hermite interpolation at 10pps
+    SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS,  // 7. hermite extrapolation at 10pps
     SNAPSHOT_NUM_MODES
 };
 
@@ -36,13 +36,15 @@ const char * snapshot_mode_descriptions[]
     "Snapshots at 10 packets per-second",
     "Linear interpolation at 10 packets per-second",
     "Hermite interpolation at 10 packets per-second",
+    "Hermite extrapolation at 10 packets per-second",
 };
 
 enum SnapshotInterpolation
 {
     SNAPSHOT_INTERPOLATION_NONE,
     SNAPSHOT_INTERPOLATION_LINEAR,
-    SNAPSHOT_INTERPOLATION_HERMITE
+    SNAPSHOT_INTERPOLATION_HERMITE,
+    SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION
 };
 
 struct SnapshotModeData
@@ -70,6 +72,10 @@ static void InitSnapshotModes()
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].send_rate = 10.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].send_rate = 10.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION;
 }
 
 enum SnapshotPackets
@@ -106,10 +112,20 @@ template <typename Stream> void serialize_vector( Stream & stream, vectorial::ve
 
 template <typename Stream> void serialize_quaternion( Stream & stream, vectorial::quat4f & quaternion )
 {
-    serialize_float( stream, quaternion.x );
-    serialize_float( stream, quaternion.y );
-    serialize_float( stream, quaternion.z );
-    serialize_float( stream, quaternion.w );
+    float values[4];
+    if ( Stream::IsWriting )
+    {
+        values[0] = quaternion.x();
+        values[1] = quaternion.y();
+        values[2] = quaternion.z();
+        values[3] = quaternion.w();
+    }
+    serialize_float( stream, values[0] );
+    serialize_float( stream, values[1] );
+    serialize_float( stream, values[2] );
+    serialize_float( stream, values[3] );
+    if ( Stream::IsReading )
+        quaternion.load( values );
 }
 
 struct SnapshotNaivePacket : public protocol::Packet
@@ -227,6 +243,63 @@ struct SnapshotInternal
     float send_accumulator;
 };
 
+/*static*/ void SnapshotInterpolate_Linear( float t, 
+                                        const __restrict CubeState * a, 
+                                        const __restrict CubeState * b, 
+                                        __restrict CubeState * output )
+{
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        output[i].position = a[i].position * ( t - 1.0f ) + b[i].position * t;
+        output[i].orientation = a[i].orientation * ( t - 1.0f ) + b[i].orientation * t;
+        output[i].interacting = a[i].interacting;
+    }
+}
+
+/*static*/ void SnapshotInterpolate_Hermite( float t, 
+                                        const __restrict CubeState * a, 
+                                        const __restrict CubeState * b, 
+                                        __restrict CubeState * output )
+{
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        /*
+        math::hermite_spline( t, object->previousPosition, object->position, object->previousLinearVelocity * stepSize, object->linearVelocity * stepSize, object->interpolatedPosition );
+        math::Quaternion spin0 = 0.5f * math::Quaternion( 0, object->previousAngularVelocity.x, object->previousAngularVelocity.y, object->previousAngularVelocity.z ) * object->previousOrientation;
+        math::Quaternion spin1 = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation;
+        math::hermite_spline( t, object->previousOrientation, object->orientation, spin0 * stepSize, spin1 * stepSize, object->interpolatedOrientation );
+        */
+        output[i].interacting = a[i].interacting;
+    }
+}
+
+/*static*/ void SnapshotExtrapolate( float t, 
+                                     float extrapolation_dt,
+                                     const __restrict CubeState * a, 
+                                     const __restrict CubeState * b, 
+                                     __restrict CubeState * output )
+{
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        /*
+        math::Vector p0 = object->previousPosition + object->previousLinearVelocity * extrapolation_dt;
+        math::Vector p1 = object->position + object->linearVelocity * extrapolation_dt;
+        math::Vector t0 = object->previousLinearVelocity * stepSize;
+        math::Vector t1 = object->linearVelocity * stepSize;
+        math::hermite_spline( t, p0, p1, t0, t1, object->interpolatedPosition );
+
+        math::Quaternion q0 = object->previousOrientation;
+        math::Quaternion q1 = object->orientation;
+        math::Quaternion s0 = 0.5f * math::Quaternion( 0, object->previousAngularVelocity.x, object->previousAngularVelocity.y, object->previousAngularVelocity.z ) * object->previousOrientation * extrapolation_dt;
+        math::Quaternion s1 = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation * extrapolation_dt;
+        // todo: note these quaternions should be normalized!
+        math::hermite_spline( t, q0, q1, s0, s1, object->interpolatedOrientation );
+        */
+
+        output[i].interacting = a[i].interacting;
+    }
+}
+
 SnapshotDemo::SnapshotDemo( core::Allocator & allocator )
 {
     InitSnapshotModes();
@@ -306,7 +379,7 @@ void SnapshotDemo::Update()
             auto snapshot_packet = (SnapshotNaivePacket*) m_snapshot->packet_factory.Create( SNAPSHOT_NAIVE_PACKET );
 
             snapshot_packet->sequence = m_snapshot->send_sequence++;
-            
+
             snapshot_packet->has_velocity = snapshot_mode_data[GetMode()].interpolation == SNAPSHOT_INTERPOLATION_HERMITE;
 
             const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
@@ -324,10 +397,10 @@ void SnapshotDemo::Update()
 
                 snapshot_packet->cubes[index].position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
 
-                snapshot_packet->cubes[index].orientation.x = object.orientation.x;
-                snapshot_packet->cubes[index].orientation.y = object.orientation.y;
-                snapshot_packet->cubes[index].orientation.z = object.orientation.z;
-                snapshot_packet->cubes[index].orientation.w = object.orientation.w;
+                snapshot_packet->cubes[index].orientation = vectorial::quat4f( object.orientation.x, 
+                                                                               object.orientation.y, 
+                                                                               object.orientation.z,
+                                                                               object.orientation.w );
 
                 snapshot_packet->cubes[index].linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
                                                                                   object.linearVelocity.y,
@@ -396,10 +469,10 @@ void SnapshotDemo::Update()
                     updates[i].position.y = snapshot_packet->cubes[i].position.y();
                     updates[i].position.z = snapshot_packet->cubes[i].position.z();
 
-                    updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x;
-                    updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y;
-                    updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z;
-                    updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w;
+                    updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w();
+                    updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x();
+                    updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y();
+                    updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z();
 
                     updates[i].linearVelocity.x = snapshot_packet->cubes[i].linear_velocity.x();
                     updates[i].linearVelocity.y = snapshot_packet->cubes[i].linear_velocity.y();
@@ -415,7 +488,7 @@ void SnapshotDemo::Update()
                     view::getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
                 }
 
-                m_internal->view[1].objects.UpdateObjects( updates, NumCubes, true );
+                m_internal->view[1].objects.UpdateObjects( updates, NumCubes );
 
                 m_snapshot->recv_sequence = snapshot_packet->sequence;
             }

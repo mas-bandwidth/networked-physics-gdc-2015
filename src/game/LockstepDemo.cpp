@@ -92,43 +92,6 @@ static void InitLockstepModes()
     lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].jitter = 1.0f / 60.0f;
 }
 
-/*
-// 2. TCP @ 100ms round trip with 1% packet loss and +/- 1 frame of jitter
-
-#define TCP_MODE
-
-static const float PlayoutDelay = 0.1f;
-static const float Latency = 0.05f;
-static const float PacketLoss = 1.0f;
-static const float Jitter = 1.0f / 60.0f;
-*/
-
-/*
-// 3. TCP @ 200ms round trip with 2% packet loss and +/- 1 frame of jitter
-
-#define TCP_MODE
-
-static const float PlayoutDelay = 0.1f;
-static const float Latency = 0.1f;
-static const float PacketLoss = 2.0f;
-static const float Jitter = 1.0f / 60.0f;
-*/
-
-/*
-// 4. TCP @ 250ms round trip with 5% packet loss and +/- 1 frame of jitter
-
-#define TCP_MODE
-
-static const float PlayoutDelay = 0.1f;
-static const float Latency = 0.125f;
-static const float PacketLoss = 5.0f;
-static const float Jitter = 1.0f / 60.0f;
-*/
-
-// 5. UDP @ 2 second round trip with 25% packet loss and +/- 1 frame of jitter
-
-// 6. UDP @ 2 second round trip with 50% packet loss and 250ms playout delay
-
 typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
 
 enum LockstepPackets

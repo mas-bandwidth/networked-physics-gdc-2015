@@ -8,16 +8,6 @@
 
 namespace view
 {
-	ObjectManager::ObjectManager()
-	{
-		// ...
-	}
-
-	ObjectManager::~ObjectManager()
-	{
-		// ...
-	}
-
 	void ObjectManager::Reset()
 	{
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
@@ -29,12 +19,15 @@ namespace view
 		objects.clear();
 	}
 
-	void ObjectManager::UpdateObjects( ObjectUpdate updates[], int updateCount, bool updateState )
+	void ObjectManager::UpdateObjects( ObjectUpdate updates[], int updateCount )
 	{
 		assert( updates );
 
 		// 1. mark all objects as pending removal
 		//  - allows us to detect deleted objects in O(n) instead of O(n^2)
+
+		// todo: convert to flat array.
+		// todo: hot/cold split for "remove" flag.
 
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
 		{
@@ -61,12 +54,6 @@ namespace view
 				object->authority = updates[i].authority;
 				object->position = updates[i].position;
 				object->orientation = updates[i].orientation;
-				object->previousPosition = updates[i].position;
-				object->previousLinearVelocity = updates[i].linearVelocity;
-				object->previousAngularVelocity = updates[i].angularVelocity;
-				object->previousOrientation = updates[i].orientation;
-				object->positionError = math::Vector(0,0,0);
-				object->visualOrientation = updates[i].orientation;
 				object->linearVelocity = updates[i].linearVelocity;
 				object->angularVelocity = updates[i].angularVelocity;
 				object->scale = updates[i].scale;
@@ -90,25 +77,11 @@ namespace view
 
 				object->authority = updates[i].authority;
 
-				if ( updateState )
-				{
-					object->positionError = ( object->position + object->positionError ) - updates[i].position;
-					if ( object->positionError.lengthSquared() > 50.0f )
-					{
-						object->positionError = math::Vector(0,0,0);
-						object->visualOrientation = updates[i].orientation;
-					}
-
-					object->previousPosition = object->position;
-					object->previousLinearVelocity = object->linearVelocity;
-					object->previousAngularVelocity = object->angularVelocity;
-					object->previousOrientation = object->orientation;
-					object->position = updates[i].position;
-					object->orientation = updates[i].orientation;
-					object->linearVelocity = updates[i].linearVelocity;
-					object->angularVelocity = updates[i].angularVelocity;
-					object->scale = updates[i].scale;
-				}
+				object->position = updates[i].position;
+				object->orientation = updates[i].orientation;
+				object->linearVelocity = updates[i].linearVelocity;
+				object->angularVelocity = updates[i].angularVelocity;
+				object->scale = updates[i].scale;
 				
 				object->remove = false;
 
@@ -153,68 +126,6 @@ namespace view
 		}
 	}
 	
-	void ObjectManager::InterpolateObjects( double t, float stepSize, InterpolationMode interpolationMode )
-	{
-		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
-		{
- 			Object * object = itor->second;
-
-			assert( object );
-	
-            if ( interpolationMode == INTERPOLATE_None )
-            {
-                object->interpolatedPosition = object->position;
-                object->interpolatedOrientation = object->orientation;
-            }
-			if ( interpolationMode == INTERPOLATE_Linear )
-			{
-				object->interpolatedPosition = object->previousPosition + ( object->position - object->previousPosition ) * t;
-				object->interpolatedOrientation = math::slerp( object->previousOrientation, object->orientation, t );
-			}
-			else if ( interpolationMode == INTERPOLATE_Hermite )
-			{
-				math::hermite_spline( t, object->previousPosition, object->position, object->previousLinearVelocity * stepSize, object->linearVelocity * stepSize, object->interpolatedPosition );
-				math::Quaternion spin0 = 0.5f * math::Quaternion( 0, object->previousAngularVelocity.x, object->previousAngularVelocity.y, object->previousAngularVelocity.z ) * object->previousOrientation;
-				math::Quaternion spin1 = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation;
-				math::hermite_spline( t, object->previousOrientation, object->orientation, spin0 * stepSize, spin1 * stepSize, object->interpolatedOrientation );
-			}
-			else if ( interpolationMode == INTERPOLATE_Extrapolate )
-			{
-				math::Vector p0 = object->previousPosition + object->previousLinearVelocity * stepSize;
-				math::Vector p1 = object->position + object->linearVelocity * stepSize;
-				math::Vector t0 = object->previousLinearVelocity * stepSize;
-				math::Vector t1 = object->linearVelocity * stepSize;
-				math::hermite_spline( t, p0, p1, t0, t1, object->interpolatedPosition );
-
-				math::Quaternion q0 = object->previousOrientation;
-				math::Quaternion q1 = object->orientation;
-				math::Quaternion s0 = 0.5f * math::Quaternion( 0, object->previousAngularVelocity.x, object->previousAngularVelocity.y, object->previousAngularVelocity.z ) * object->previousOrientation * stepSize;
-				math::Quaternion s1 = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation * stepSize;
-				math::hermite_spline( t, q0, q1, s0, s1, object->interpolatedOrientation );
-			}
-		}
-	}
-
-	void ObjectManager::ExtrapolateObjects( float deltaTime )
-	{
-		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
-		{
- 			Object * object = itor->second;
-
-			assert( object );
-
-			object->position += object->linearVelocity * deltaTime;
-
-			math::Quaternion orientationSpin = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation;
-			object->orientation += orientationSpin * deltaTime;
-			object->orientation.normalize();
-
-			math::Quaternion visualOrientationSpin = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->visualOrientation;
-			object->visualOrientation += visualOrientationSpin * deltaTime;
-			object->visualOrientation.normalize();
-		}
-	}
-
 	void ObjectManager::Update( float deltaTime, int maxPlayers )
 	{
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
@@ -222,14 +133,6 @@ namespace view
  			Object * object = itor->second;
 
 			assert( object );
-
-			// todo: this smoothing code is not working properly. fix it and turn it back on
-			/*
-			// update error smoothing
-			
-			object->positionError *= ( 1.0f - PositionSmoothingTightness );
-			object->visualOrientation = math::slerp( object->visualOrientation, object->orientation, OrientationSmoothingTightness );
-			*/
 
 			// update alpha blend
 
@@ -276,7 +179,7 @@ namespace view
 			return NULL;
 	}
 
-    void ObjectManager::GetRenderState( Cubes & renderState, bool interpolation, bool smoothing )
+    void ObjectManager::GetRenderState( Cubes & renderState )
     {
         renderState.numCubes = objects.size();
 
@@ -288,32 +191,11 @@ namespace view
             Object * object = itor->second;
             assert( object );
             
-            math::Vector position;
-            math::Quaternion orientation;
-            if ( !interpolation )
-            {
-                if ( smoothing )
-                {
-                    position = object->position + object->positionError;                
-                    orientation = object->visualOrientation;
-                }
-                else
-                {
-                    position = object->position;
-                    orientation = object->orientation;
-                }
-            }
-            else
-            {
-                position = object->interpolatedPosition;
-                orientation = object->interpolatedOrientation;
-            }
-
             float translation_data[16];
             float rotation_data[16];
             float scale_data[16];
-            math::build_translation( translation_data, position );
-            math::build_rotation( rotation_data, orientation );
+            math::build_translation( translation_data, object->position );
+            math::build_rotation( rotation_data, object->orientation );
             math::build_scale( scale_data, object->scale * 0.5f );
             vectorial::mat4f translation;
             vectorial::mat4f rotation;
@@ -324,7 +206,7 @@ namespace view
 
             float inv_translation_data[16];
             float inv_scale_data[16];            
-            math::build_translation( inv_translation_data, -position );
+            math::build_translation( inv_translation_data, -object->position );
             math::build_scale( inv_scale_data, 1.0f / ( object->scale * 0.5f ) );
             vectorial::mat4f inv_translation;
             vectorial::mat4f inv_rotation = transpose( rotation );

@@ -1,9 +1,5 @@
 DONE:
 
-TODO:
-
-    -----------------------------------------------------------------------
-
     Think through more interpolation
 
     What's the best way to buffer packets and interpolate?
@@ -14,11 +10,34 @@ TODO:
     that would affect current interpolation, eg. once you start interpolating 
     from A -> C you can't allow B to pop up and affect that.
 
-    -----------------------------------------------------------------------
+    Will delay buffer implementation.
 
-    Implement the interpolation buffer
+    First I can design the data structures and the interpolation functions
+    which operate on them, to get a better idea of how the buffering should
+    be coded.
 
-    (It's basically got to be a sliding window with holes)
+    Upgraded quat4f to derive from vec4f so I get all its operators for free.
+
+    Also it's faster for linear operations (lerp!)
+
+    Implement linear interpolation function for an array of cubes
+
+    Sketch out mode data for hermite with extrapolation.
+
+    It seems the extrapolation is based on extrapolation and interpolation
+    with cubic splines, so it doesn't need 
+
+    Would be a good video to demonstrate extrapolation doesn't work so well
+    for rigid bodies (as previously mentioned...)
+
+    If this is mentioned after hermite, we are already sending lin/ang vel
+    so it makes sense, plus it is a cool video to see.
+
+TODO:
+
+    Implement hacked up hermite interpolation function for an array of cubes
+
+    Implement hacked up extrapolation for array of cubes.
 
     -----------------------------------------------------------------------
 
@@ -30,9 +49,55 @@ TODO:
 
     Note: Need to send linear and angular velocity for this one!
 
+    This should be noticeably higher quality than linear interpolation.
+
+    It has to be to justify the extra velocity bandwidth.
+
+    -----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     -----------------------------------------------------------------------
 
     At this point start investigating compression approaches
+
+    -----------------------------------------------------------------------
+
+    Network simulator could have a flag set to actually perform the serialization of packets.
+
+    Should be on by default.
+
+    Clean up code that is manually serializing packets. 
+
+    Let the network simulation do it for us instead. Less code!
+
+    Extend network simulation to keep track of bandwidth send, given
+    specific packet header size (eg: 24 bytes).
 
     -----------------------------------------------------------------------
 
@@ -53,21 +118,37 @@ TODO:
 
     Compress linear and angular velocity.
 
-    Quantize them and 
+    Restrict linear and angular velocity to some maximum.
+
+    Can be aggressive with linear velocity because can be bounded tightly.
+
+    Be aggressive with linear/ang velocity resolution. Can synchronize it
+    quite roughly. It's not actually used for extrapolation, just interpolation
+    so near enough is pretty good!
+
+    -----------------------------------------------------------------------
+
+    Finally... position...
+
+    Bound the position in xy
+
+    Bound position height (z) (i forget?)
+
+    Compress position to 1cm resolution.
+
+    How good is it?
+
+    Can we do better?
+
+    *** I'm thinking this needs two articles ***
+
+    -----------------------------------------------------------------------
+
+
     
 
 
 
-
-    -------------------------------------------
-
-    Network simulator could have a flag set to actually perform the serialization of packets.
-
-    Should be on by default.
-
-    Clean up code that is manually serializing packets. 
-
-    Let the network simulation do it for us instead. Less code!
 
     -------------------------------------------
 

@@ -55,15 +55,12 @@ namespace view
 			remove = 0;
 			visible = 0;
 			blending = 0;
-			positionError = math::Vector(0,0,0);
-	 		visualOrientation = math::Quaternion(1,0,0,0);
 		}
 
 		unsigned int id;
 		int authority;
 		float scale;
 		float r,g,b,a;
-		double t;
 		bool remove;
 		bool visible;
 		bool blending;
@@ -76,23 +73,6 @@ namespace view
 		math::Quaternion orientation;
 		math::Vector linearVelocity;
 		math::Vector angularVelocity;
-		math::Vector positionError;
-		math::Quaternion visualOrientation;
-		math::Vector previousPosition;
-		math::Vector previousLinearVelocity;
-		math::Vector previousAngularVelocity;
-		math::Quaternion previousOrientation;
-		math::Vector interpolatedPosition;
-		math::Quaternion interpolatedOrientation;
-	};
-
-	enum InterpolationMode
-	{
-        INTERPOLATE_None,
-		INTERPOLATE_Linear,
-		INTERPOLATE_Hermite,
-		INTERPOLATE_Extrapolate,
-		INTERPOLATE_Max
 	};
 
 	/*	
@@ -104,22 +84,15 @@ namespace view
 	{
 	public:
 
-		ObjectManager();
-		~ObjectManager();
-
 		void Reset();
 
-		void UpdateObjects( ObjectUpdate updates[], int updateCount, bool updateState = true );
+		void UpdateObjects( ObjectUpdate updates[], int updateCount );
 		
-		void InterpolateObjects( double t, float stepSize, InterpolationMode interpolationMode );
-
-		void ExtrapolateObjects( float deltaTime );
-
 		void Update( float deltaTime, int maxPlayers = MaxPlayers );
 
 		Object * GetObject( unsigned int id );
 
-		void GetRenderState( Cubes & renderState, bool interpolation = false, bool smoothing = false );
+		void GetRenderState( Cubes & renderState );
 
 	private:
 

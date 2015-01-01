@@ -1,5 +1,22 @@
 WOULD BE NICE:
 
+    ------------------------------------------- 
+
+    Once interpolation and extrapolation is working, strip out everything from the view
+    *except* for the smoothing (eg. error reduction for position and orientation)
+
+    Interpolation and extrapolation will always be done separately from the view
+
+    Simplify the view as much as possible
+
+    -------------------------------------------
+
+    Simplify the cube simulation as much as possible
+
+    We don't need any of the activation/deactivation support anymore
+
+    This should radically simplify everything
+
     -------------------------------------------
 
     Can probably do without the default constructor for all serializable objects
