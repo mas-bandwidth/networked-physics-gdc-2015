@@ -40,6 +40,8 @@ namespace protocol
 
         void Insert( const T & entry )
         {
+            // IMPORTANT: Assumption is that entries are very small.
+            // If this changes then this interface should also change!
             CORE_ASSERT( !IsFull() );
             m_entries[m_sequence%m_size] = entry;
             m_sequence++;

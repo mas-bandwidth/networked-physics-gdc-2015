@@ -89,16 +89,10 @@ namespace protocol
     {
         struct SendQueueEntry
         {
-            Message * message = nullptr;
+            Message * message;
             double timeLastSent;
-            uint64_t sequence : 16;                      // this is the message id      
-            uint64_t valid : 1;
-            uint64_t largeBlock : 1;
-            uint64_t measuredBits : 15;
-            SendQueueEntry()
-                : valid(0) {}
-            SendQueueEntry( Message * _message, uint16_t _sequence, bool _largeBlock )
-                : message( _message ), timeLastSent(-1), sequence( _sequence ), valid(1), largeBlock(_largeBlock), measuredBits(0) { CORE_ASSERT( _message ); }
+            uint32_t largeBlock : 1;
+            uint32_t measuredBits : 30;
         };
 
         struct SentPacketEntry
@@ -106,24 +100,15 @@ namespace protocol
             double timeSent;
             uint16_t * messageIds;
             uint64_t numMessageIds : 16;                 // number of messages in this packet
-            uint64_t sequence : 16;                      // this is the packet sequence #
             uint64_t blockId : 16;                       // block id. valid only when sending large block.
             uint64_t fragmentId : 16;                    // fragment id. valid only when sending large block.
             uint64_t acked : 1;                          // 1 if this sent packet has been acked
-            uint64_t valid : 1;                          // 1 if this entry is valid in the sliding window
             uint64_t largeBlock : 1;                     // 1 if this sent packet contains a large block fragment
-            SentPacketEntry() : valid(0) {}
         };
 
         struct ReceiveQueueEntry
         {
-            Message * message = nullptr;
-            uint32_t sequence : 16;                      // this is the message id      
-            uint32_t valid : 1;
-            ReceiveQueueEntry()
-                : valid(0) {}
-            ReceiveQueueEntry( Message * _message, uint16_t _sequence )
-                : message( _message ), sequence( _sequence ), valid(1) { CORE_ASSERT( _message ); }
+            Message * message;
         };
 
         struct SendFragmentData
@@ -134,6 +119,7 @@ namespace protocol
                 : timeLastSent(-1), acked(0) {}
         };
 
+        // todo: this can just become a bit array! much faster! less memory!
         struct ReceiveFragmentData
         {
             uint32_t received : 1;
@@ -190,6 +176,7 @@ namespace protocol
             uint16_t blockId;                           // block id being currently received.
             uint32_t blockSize;                         // block size in bytes.
             Block block;                                // the block being received.
+            // todo: bit array!
             ReceiveFragmentData * fragments;            // per-fragment data for receive. array of size max fragments
         };
 

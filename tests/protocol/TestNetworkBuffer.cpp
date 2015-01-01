@@ -4,12 +4,11 @@
 struct TestPacketData
 {
     TestPacketData()
-        : valid(0), sequence(0) {}
+        : sequence(0xFFFF) {}
 
     TestPacketData( uint16_t _sequence )
-        : valid(1), sequence( _sequence ) {}
+        : sequence( _sequence ) {}
 
-    uint32_t valid : 1;                     // is this packet entry valid?
     uint32_t sequence : 16;                 // packet sequence #
 };
 
@@ -28,15 +27,16 @@ void test_network_buffer()
 
         for ( int i = 0; i <= size*4; ++i )
         {
-            network_buffer.Insert( i );
+            auto entry = network_buffer.Insert( i );
+            entry->sequence = i;
             CORE_CHECK( network_buffer.GetSequence() == i + 1 );
         }
 
         for ( int i = 0; i <= size; ++i )
         {
-            // note: outside bounds of sliding window!
-            bool insert_succeeded = network_buffer.Insert( i );
-            CORE_CHECK( !insert_succeeded );
+            // note: outside bounds!
+            auto entry = network_buffer.Insert( i );
+            CORE_CHECK( !entry );
         }    
 
         int index = size*4;
@@ -44,7 +44,6 @@ void test_network_buffer()
         {
             auto entry = network_buffer.Find( index );
             CORE_CHECK( entry );
-            CORE_CHECK( entry->valid );
             CORE_CHECK( entry->sequence == index );
             index--;
         }

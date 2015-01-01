@@ -269,7 +269,7 @@ namespace protocol
 
     bool ReliableMessageChannel::CanSendMessage() const
     {
-        return m_sendQueue->HasSlotAvailable( m_sendMessageId );
+        return m_sendQueue->IsAvailable( m_sendMessageId );
     }
 
     void ReliableMessageChannel::SendMessage( Message * message )
@@ -304,19 +304,10 @@ namespace protocol
             printf( "sent large block %d\n", (int) m_sendMessageId );
 */
 
-        #ifndef NDEBUG
-        bool result = 
-        #endif
-            m_sendQueue->Insert( SendQueueEntry( message, m_sendMessageId, largeBlock ) );
-        CORE_ASSERT( result );
-
-        auto entry = m_sendQueue->Find( m_sendMessageId );
-
+        auto entry = m_sendQueue->Insert( m_sendMessageId );
         CORE_ASSERT( entry );
-        CORE_ASSERT( entry->valid );
-        CORE_ASSERT( entry->sequence == m_sendMessageId );
-        CORE_ASSERT( entry->message );
-        CORE_ASSERT( entry->message->GetId() == m_sendMessageId );
+        entry->message = message;
+        entry->largeBlock = largeBlock;
 
         if ( !largeBlock )
         {
@@ -370,9 +361,6 @@ namespace protocol
 
 //            printf( "dequeue for receive: %d\n", message->GetId() );
 
-        entry->valid = 0;
-        entry->message = nullptr;
-        
         m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED]++;
 
         m_receiveMessageId++;
@@ -469,7 +457,7 @@ namespace protocol
             uint8_t * dst = data->fragment;
             memcpy( dst, src, fragmentBytes );
 
-            auto sentPacketData = m_sentPackets->InsertFast( sequence );
+            auto sentPacketData = m_sentPackets->Insert( sequence );
             CORE_ASSERT( sentPacketData );
             sentPacketData->acked = 0;
             sentPacketData->largeBlock = 1;
@@ -534,7 +522,7 @@ namespace protocol
 
             // add sent packet data containing message ids included in this packet
 
-            auto sentPacketData = m_sentPackets->InsertFast( sequence );
+            auto sentPacketData = m_sentPackets->Insert( sequence );
             CORE_ASSERT( sentPacketData );
             sentPacketData->largeBlock = 0;
             sentPacketData->acked = 0;
@@ -727,7 +715,9 @@ namespace protocol
                     blockMessage->Connect( m_receiveLargeBlock.block );
                     blockMessage->SetId( m_receiveLargeBlock.blockId );
 
-                    m_receiveQueue->Insert( ReceiveQueueEntry( blockMessage, m_receiveLargeBlock.blockId ) );
+                    auto entry = m_receiveQueue->Insert( m_receiveLargeBlock.blockId );
+                    CORE_ASSERT( entry );
+                    entry->message = blockMessage;
 
                     m_receiveLargeBlock.active = false;
 
@@ -773,11 +763,8 @@ namespace protocol
                 }
                 else if ( !m_receiveQueue->Find( messageId ) )
                 {
-                    #ifndef NDEBUG
-                    bool result = 
-                    #endif
-                        m_receiveQueue->Insert( ReceiveQueueEntry( message, messageId ) );
-                    CORE_ASSERT( result );
+                    auto entry = m_receiveQueue->Insert( messageId );
+                    entry->message = message;
                     m_config.messageFactory->AddRef( message );
                 }
                 
@@ -835,7 +822,6 @@ namespace protocol
 
                     m_config.messageFactory->Release( sendQueueEntry->message );
                     sendQueueEntry->message = nullptr;
-                    sendQueueEntry->valid = 0;
                 }
             }
 
@@ -869,7 +855,6 @@ namespace protocol
 
                     m_config.messageFactory->Release( sendQueueEntry->message );                    
                     sendQueueEntry->message = nullptr;
-                    sendQueueEntry->valid = 0;
 
                     UpdateOldestUnackedMessageId();
                 }

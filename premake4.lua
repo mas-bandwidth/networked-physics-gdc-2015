@@ -316,8 +316,8 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j4 TestCore; make -j4 TestNetwork; make -j4 TestProtocol; make -j4 TestCubes; make -j4 TestVirtualGo" == 0 then
-                os.execute "cd bin; ./TestCore; ./TestNetwork; ./TestProtocol; ./TestCubes; ./TestVirtualGo"
+            if os.execute "make -j4 TestCore; make -j4 TestNetwork; make -j4 TestProtocol; make -j4 TestClientServer; make -j4 TestCubes; make -j4 TestVirtualGo" == 0 then
+                os.execute "cd bin; ./TestCore; ./TestNetwork; ./TestProtocol; ./TestClientServer; ./TestCubes; ./TestVirtualGo"
             end
         end
     }

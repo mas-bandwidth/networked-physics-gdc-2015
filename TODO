@@ -14,6 +14,12 @@ TODO:
 
     Rework the NetworkBuffer<T> with hold/cold split.
 
+    Rename NetworkBuffer<T> to SequenceBuffer<T>. More descriptive.
+
+    -----------------------------------------------------------------------
+
+    It seems that other tests are not running. eg. connection, client/server?!
+
     -----------------------------------------------------------------------
 
     Copy playout delay buffer and call it SnapshotInterpolationBuffer

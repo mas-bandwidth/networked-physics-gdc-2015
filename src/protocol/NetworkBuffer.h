@@ -5,6 +5,7 @@
 
 #include "core/Core.h"
 #include "core/Allocator.h"
+#include "protocol/BitArray.h"
 
 namespace protocol
 {
@@ -13,12 +14,14 @@ namespace protocol
     public:
 
         NetworkBuffer( core::Allocator & allocator, int size )
+            : m_exists( allocator, size )
         {
             CORE_ASSERT( size > 0 );
             m_size = size;
             m_first_entry = true;
             m_sequence = 0;
             m_allocator = &allocator;
+            m_entry_sequence = (uint16_t*) allocator.Allocate( sizeof(uint16_t) * size, alignof(uint16_t) );
             m_entries = (T*) allocator.Allocate( sizeof(T) * size, alignof(T) );
             Reset();
         }
@@ -27,6 +30,7 @@ namespace protocol
         {
             CORE_ASSERT( m_entries );
             CORE_ASSERT( m_allocator );
+            m_allocator->Free( m_entry_sequence );
             m_allocator->Free( m_entries );
             m_allocator = nullptr;
             m_entries = nullptr;
@@ -36,36 +40,12 @@ namespace protocol
         {
             m_first_entry = true;
             m_sequence = 0;
-            for ( int i = 0; i < m_size; ++i )
-                m_entries[i] = T();
+            m_exists.Clear();
+            memset( m_entry_sequence, 0, sizeof(uint16_t) * m_size );
+            // IMPORTANT: actual entries are left alone as they may be very large!
         }
 
-        bool Insert( const T & entry )
-        {
-            CORE_ASSERT( entry.valid );
-
-            if ( m_first_entry )
-            {
-                m_sequence = entry.sequence + 1;
-                m_first_entry = false;
-            }
-            else if ( core::sequence_greater_than( entry.sequence + 1, m_sequence ) )
-            {
-                m_sequence = entry.sequence + 1;
-            }
-            else if ( core::sequence_less_than( entry.sequence, m_sequence - m_size ) )
-            {
-                return false;
-            }
-
-            const int index = entry.sequence % m_size;
-
-            m_entries[index] = entry;
-
-            return true;
-        }
-
-        T * InsertFast( uint16_t sequence )
+        T * Insert( uint16_t sequence )
         {
             if ( m_first_entry )
             {
@@ -82,16 +62,18 @@ namespace protocol
             }
 
             const int index = sequence % m_size;
-            auto entry = &m_entries[index];
-            entry->valid = 1;
-            entry->sequence = sequence;
-            return entry;
+
+            m_exists.SetBit( index );
+
+            m_entry_sequence[index] = sequence;
+
+            return &m_entries[index];
         }
 
-        bool HasSlotAvailable( uint16_t sequence ) const
+        bool IsAvailable( uint16_t sequence ) const
         {
             const int index = sequence % m_size;
-            return !m_entries[index].valid;
+            return !m_exists.GetBit( index );
         }
 
         int GetIndex( uint16_t sequence ) const
@@ -103,7 +85,7 @@ namespace protocol
         const T * Find( uint16_t sequence ) const
         {
             const int index = sequence % m_size;
-            if ( m_entries[index].valid && m_entries[index].sequence == sequence )
+            if ( m_exists.GetBit( index ) && m_entry_sequence[index] == sequence )
                 return &m_entries[index];
             else
                 return nullptr;
@@ -112,7 +94,7 @@ namespace protocol
         T * Find( uint16_t sequence )
         {
             const int index = sequence % m_size;
-            if ( m_entries[index].valid && m_entries[index].sequence == sequence )
+            if ( m_exists.GetBit( index ) && m_entry_sequence[index] == sequence )
                 return &m_entries[index];
             else
                 return nullptr;
@@ -122,7 +104,7 @@ namespace protocol
         {
             CORE_ASSERT( index >= 0 );
             CORE_ASSERT( index < m_size );
-            return m_entries[index].valid ? &m_entries[index] : nullptr;
+            return m_exists.GetBit( index ) ? &m_entries[index] : nullptr;
         }
 
         uint16_t GetSequence() const 
@@ -142,6 +124,8 @@ namespace protocol
         bool m_first_entry;
         uint16_t m_sequence;
         int m_size;
+        BitArray m_exists;
+        uint16_t * m_entry_sequence;
         T * m_entries;
 
         NetworkBuffer( const NetworkBuffer<T> & other );
