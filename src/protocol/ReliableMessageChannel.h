@@ -7,7 +7,7 @@
 #include "BlockMessage.h"
 #include "MessageFactory.h"
 #include "MessageChannel.h"
-#include "SlidingWindow.h"
+#include "NetworkBuffer.h"
 #include <math.h>
 
 namespace protocol
@@ -229,9 +229,9 @@ namespace protocol
         uint16_t m_receiveMessageId;                                        // id for next message to be received
         uint16_t m_oldestUnackedMessageId;                                  // id for oldest unacked message in send queue
 
-        SlidingWindow<SendQueueEntry> * m_sendQueue;                        // message send queue
-        SlidingWindow<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
-        SlidingWindow<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
+        NetworkBuffer<SendQueueEntry> * m_sendQueue;                        // message send queue
+        NetworkBuffer<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
+        NetworkBuffer<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
 
         SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
         ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received

@@ -408,11 +408,6 @@ bool StoneDemo::CharEvent( unsigned int code )
     return false;
 }
 
-int StoneDemo::GetDefaultMode() const
-{
-    return STONE_MODE_SINGLE_STONE;
-}
-
 int StoneDemo::GetNumModes() const
 {
     return STONE_NUM_MODES;

@@ -27,8 +27,6 @@ public:
 
     virtual const char * GetName() const = 0;
 
-    virtual int GetDefaultMode() const = 0;
-
     virtual int GetNumModes() const = 0;
 
     virtual const char * GetModeDescription( int mode ) const = 0;

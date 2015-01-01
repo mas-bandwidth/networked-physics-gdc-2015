@@ -6,7 +6,7 @@
 #include "core/Core.h"
 #include "protocol/Stream.h"
 #include "protocol/Channel.h"
-#include "protocol/SlidingWindow.h"
+#include "protocol/NetworkBuffer.h"
 #include "protocol/ConnectionPacket.h"
 
 namespace protocol
@@ -50,8 +50,8 @@ namespace protocol
         uint32_t sequence : 16;                 // packet sequence #
     };
 
-    typedef SlidingWindow<SentPacketData> SentPackets;
-    typedef SlidingWindow<ReceivedPacketData> ReceivedPackets;
+    typedef NetworkBuffer<SentPacketData> SentPackets;
+    typedef NetworkBuffer<ReceivedPacketData> ReceivedPackets;
 
     class Connection
     {

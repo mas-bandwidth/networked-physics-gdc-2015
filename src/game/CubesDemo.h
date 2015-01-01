@@ -32,8 +32,6 @@ public:
 
     virtual const char * GetName() const override { return "cubes"; }
 
-    virtual int GetDefaultMode() const override { return 0; }
-
     virtual int GetNumModes() const override { return 0; }
 
     virtual const char * GetModeDescription( int mode ) const override { return ""; }

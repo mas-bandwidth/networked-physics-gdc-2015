@@ -8,7 +8,7 @@
 #include "Console.h"
 #include "core/Queue.h"
 #include "protocol/Stream.h"
-#include "protocol/RingBuffer.h"
+#include "protocol/SlidingWindow.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
@@ -92,7 +92,7 @@ static void InitLockstepModes()
     lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].jitter = 1.0f / 60.0f;
 }
 
-typedef protocol::RingBuffer<game::Input> LockstepInputSlidingWindow;
+typedef protocol::SlidingWindow<game::Input> LockstepInputSlidingWindow;
 
 enum LockstepPackets
 {
@@ -310,6 +310,7 @@ struct LockstepInternal
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
     InitLockstepModes();
+    SetMode( LOCKSTEP_MODE_DETERMINISTIC );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
@@ -507,11 +508,6 @@ bool LockstepDemo::KeyEvent( int key, int scancode, int action, int mods )
 bool LockstepDemo::CharEvent( unsigned int code )
 {
     return false;
-}
-
-int LockstepDemo::GetDefaultMode() const
-{
-    return LOCKSTEP_MODE_DETERMINISTIC;
 }
 
 int LockstepDemo::GetNumModes() const

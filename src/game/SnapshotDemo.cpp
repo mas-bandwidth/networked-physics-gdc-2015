@@ -7,7 +7,7 @@
 #include "vectorial/vec3f.h"
 #include "vectorial/quat4f.h"
 #include "protocol/Stream.h"
-#include "protocol/SlidingWindow.h"
+#include "protocol/NetworkBuffer.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
@@ -563,11 +563,6 @@ bool SnapshotDemo::CharEvent( unsigned int code )
     // ...
 
     return false;
-}
-
-int SnapshotDemo::GetDefaultMode() const
-{
-    return SNAPSHOT_MODE_NAIVE_60PPS;
 }
 
 int SnapshotDemo::GetNumModes() const

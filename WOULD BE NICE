@@ -2,12 +2,6 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    NetworkBuffer<T> -- with holes
-
-    SlidingWindow<T> -- without holes
-
-    -------------------------------------------
-
     Move connection stuff out of protocol into its own library
 
     This way network stuff can depend on serialization support, without circular dependency.

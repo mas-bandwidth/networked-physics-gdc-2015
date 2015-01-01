@@ -59,7 +59,7 @@ namespace virtualgo
 
         void UpdateTransform()
         {
-            orientation.toMatrix( rotation );
+            orientation.to_matrix( rotation );
             transposeRotation = transpose( rotation );
 
             inertiaTensorWorld = rotation * inertiaTensor * transposeRotation;

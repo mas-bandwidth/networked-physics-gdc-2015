@@ -6,11 +6,11 @@ DONE:
 
     Unit test the bit array class.
 
-TODO:    
-
     Rename SlidingWindow<T> to NetworkBuffer<T>
 
     Rename RingBuffer<T> to SlidingWindow<T>
+
+TODO:
 
     Rework the NetworkBuffer<T> with hold/cold split.
 

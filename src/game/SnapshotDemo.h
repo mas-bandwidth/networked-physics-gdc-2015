@@ -33,8 +33,6 @@ public:
 
     virtual const char * GetName() const override { return "snapshot"; }
 
-    virtual int GetDefaultMode() const override;
-
     virtual int GetNumModes() const override;
 
     virtual const char * GetModeDescription( int mode ) const override;

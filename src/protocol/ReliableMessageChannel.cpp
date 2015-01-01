@@ -179,9 +179,9 @@ namespace protocol
 
         m_allocator = config.allocator ? config.allocator : &core::memory::default_allocator();
 
-        m_sendQueue = CORE_NEW( *m_allocator, SlidingWindow<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
-        m_sentPackets = CORE_NEW( *m_allocator, SlidingWindow<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
-        m_receiveQueue = CORE_NEW( *m_allocator, SlidingWindow<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
+        m_sendQueue = CORE_NEW( *m_allocator, NetworkBuffer<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
+        m_sentPackets = CORE_NEW( *m_allocator, NetworkBuffer<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
+        m_receiveQueue = CORE_NEW( *m_allocator, NetworkBuffer<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
 
         const int maxMessageType = m_config.messageFactory->GetNumTypes() - 1;
 
@@ -208,9 +208,9 @@ namespace protocol
         CORE_ASSERT( m_sentPackets );
         CORE_ASSERT( m_receiveQueue );
 
-        CORE_DELETE( *m_allocator, SlidingWindow<SendQueueEntry>, m_sendQueue );
-        CORE_DELETE( *m_allocator, SlidingWindow<SentPacketEntry>, m_sentPackets );
-        CORE_DELETE( *m_allocator, SlidingWindow<ReceiveQueueEntry>, m_receiveQueue );
+        CORE_DELETE( *m_allocator, NetworkBuffer<SendQueueEntry>, m_sendQueue );
+        CORE_DELETE( *m_allocator, NetworkBuffer<SentPacketEntry>, m_sentPackets );
+        CORE_DELETE( *m_allocator, NetworkBuffer<ReceiveQueueEntry>, m_receiveQueue );
 
         CORE_ASSERT( m_sentPacketMessageIds );
         CORE_ASSERT( m_sendLargeBlock.fragments );
