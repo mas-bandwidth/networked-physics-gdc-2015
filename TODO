@@ -1,43 +1,36 @@
 DONE:
 
-    Think through more interpolation
-
-    What's the best way to buffer packets and interpolate?
-
-    It's basically a playout delay buffer.
-
-    It needs to be smart enough not to allow any late snapshot in the buffer
-    that would affect current interpolation, eg. once you start interpolating 
-    from A -> C you can't allow B to pop up and affect that.
-
-    Will delay buffer implementation.
-
-    First I can design the data structures and the interpolation functions
-    which operate on them, to get a better idea of how the buffering should
-    be coded.
-
-    Upgraded quat4f to derive from vec4f so I get all its operators for free.
-
-    Also it's faster for linear operations (lerp!)
-
-    Implement linear interpolation function for an array of cubes
-
-    Sketch out mode data for hermite with extrapolation.
-
-    It seems the extrapolation is based on extrapolation and interpolation
-    with cubic splines, so it doesn't need 
-
-    Would be a good video to demonstrate extrapolation doesn't work so well
-    for rigid bodies (as previously mentioned...)
-
-    If this is mentioned after hermite, we are already sending lin/ang vel
-    so it makes sense, plus it is a cool video to see.
-
 TODO:
 
     Implement hacked up hermite interpolation function for an array of cubes
 
     Implement hacked up extrapolation for array of cubes.
+
+    -----------------------------------------------------------------------
+
+    Copy playout delay buffer and call it SnapshotInterpolationBuffer
+
+    Derive it from the old sliding window with holes.
+
+    It's actually going to be memory intensive, as it needs 900 cube states
+    per-frame.
+
+    Therefore it should not buffer a lot of unnecessary stuff.
+
+    I think it only needs to hold 250ms of stuff.
+
+    At 60fps that is 15 frames only.
+
+    It would be nice if it naturally hot-cold split...
+
+    eg. had a separation of the index data for snapshot (exists, sequence)
+    and the actual data itself.
+
+    It would be very slow to iterate across this sliding window
+    if sequence and exists were 900 cube states apart.
+
+    Perhaps the sliding window needs to be refactored to have this hot-cold
+    split built in?
 
     -----------------------------------------------------------------------
 
