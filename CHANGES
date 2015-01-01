@@ -1,4 +1,40 @@
 
+Thursday Morning, January 1st, 2015
+-----------------------------------
+
+    Interpolation buffer. It's actually going to be memory intensive, as it needs 
+    900 cube states per-frame.
+
+    Therefore it should not buffer a lot of unnecessary stuff...
+
+    I think it only needs to hold 250ms of stuff.
+
+    At 60fps that is 15 frames only...
+
+    It would be nice if it naturally hot-cold split...
+
+    eg. had a separation of the index data for snapshot (exists, sequence)
+    and the actual data itself.
+
+    It would be very slow to iterate across this sliding window
+    if sequence and exists were 900 cube states apart.
+
+    Perhaps the sliding window needs to be refactored to have this hot-cold
+    split built in?
+
+    Rework the sliding window so it has a hot-cold split between data it
+    uses to maintain its state, and the data it stores.
+
+    This way the sliding window and the real sliding window can both store
+    the same data inside them. They are interchangeable.
+
+    This means I need an array of exists bits, and an array of sequence.
+
+    Work out what to call Sliding Window.
+
+    OK. I'm renaming "RealSlidingWindow" to "RingBuffer". Leaving "SlidingWindow" alone.
+
+
 Wednesday Evening, December 31st, 2014
 --------------------------------------
 
@@ -34,6 +70,19 @@ Wednesday Evening, December 31st, 2014
 
     If this is mentioned after hermite, we are already sending lin/ang vel
     so it makes sense, plus it is a cool video to see.
+
+    Implement hacked up hermite interpolation function for an array of cubes
+
+    Implement hacked up extrapolation for array of cubes.
+
+    Did some more research. There are alternative ways to interpolate quaternions.
+
+    Tim Sweeney suggests taking the logarithm of the quaternions, then just
+    interpolating them linearly, and then taking the exponent of the result.
+
+    He says this retains the correct angular motion for the quaternion.
+
+    http://www.flipcode.com/archives/Vector_Math_Quaternions.shtml
 
 
 Wednesday Morning, December 31st, 2014

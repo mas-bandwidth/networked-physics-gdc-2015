@@ -8,8 +8,9 @@ extern void test_packet_factory();
 extern void test_bitpacker();
 extern void test_stream();
 extern void test_stream_context();
+extern void test_bit_array();
+extern void test_ring_buffer();
 extern void test_sliding_window();
-extern void test_real_sliding_window();
 extern void test_generate_ack_bits();
 extern void test_block();
 
@@ -59,8 +60,9 @@ int main()
     test_bitpacker();
     test_stream();
     test_stream_context();
+    test_bit_array();
+    test_ring_buffer();
     test_sliding_window();
-    test_real_sliding_window();
     test_generate_ack_bits();
     test_block();
 

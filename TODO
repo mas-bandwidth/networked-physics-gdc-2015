@@ -1,36 +1,24 @@
 DONE:
 
-TODO:
+    Sketch out bit array class.
 
-    Implement hacked up hermite interpolation function for an array of cubes
+    Implement bit array class.
 
-    Implement hacked up extrapolation for array of cubes.
+    Unit test the bit array class.
+
+TODO:    
+
+    Rename SlidingWindow<T> to NetworkBuffer<T>
+
+    Rename RingBuffer<T> to SlidingWindow<T>
+
+    Rework the NetworkBuffer<T> with hold/cold split.
 
     -----------------------------------------------------------------------
 
     Copy playout delay buffer and call it SnapshotInterpolationBuffer
 
-    Derive it from the old sliding window with holes.
-
-    It's actually going to be memory intensive, as it needs 900 cube states
-    per-frame.
-
-    Therefore it should not buffer a lot of unnecessary stuff.
-
-    I think it only needs to hold 250ms of stuff.
-
-    At 60fps that is 15 frames only.
-
-    It would be nice if it naturally hot-cold split...
-
-    eg. had a separation of the index data for snapshot (exists, sequence)
-    and the actual data itself.
-
-    It would be very slow to iterate across this sliding window
-    if sequence and exists were 900 cube states apart.
-
-    Perhaps the sliding window needs to be refactored to have this hot-cold
-    split built in?
+    Derive it from new network buffer.
 
     -----------------------------------------------------------------------
 

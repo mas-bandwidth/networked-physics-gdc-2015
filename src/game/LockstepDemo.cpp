@@ -8,7 +8,7 @@
 #include "Console.h"
 #include "core/Queue.h"
 #include "protocol/Stream.h"
-#include "protocol/SlidingWindow.h"
+#include "protocol/RingBuffer.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
@@ -92,7 +92,7 @@ static void InitLockstepModes()
     lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].jitter = 1.0f / 60.0f;
 }
 
-typedef protocol::RealSlidingWindow<game::Input> LockstepInputSlidingWindow;
+typedef protocol::RingBuffer<game::Input> LockstepInputSlidingWindow;
 
 enum LockstepPackets
 {

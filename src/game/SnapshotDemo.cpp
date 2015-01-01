@@ -256,45 +256,81 @@ struct SnapshotInternal
     }
 }
 
-/*static*/ void SnapshotInterpolate_Hermite( float t, 
+inline void hermite_spline( float t,
+                            const vectorial::vec3f & p0, 
+                            const vectorial::vec3f & p1,
+                            const vectorial::vec3f & t0,
+                            const vectorial::vec3f & t1,
+                            vectorial::vec3f & output )
+{
+    const float t2 = t*t;
+    const float t3 = t2*t;
+    const float h1 =  2*t3 - 3*t2 + 1;
+    const float h2 = -2*t3 + 3*t2;
+    const float h3 =    t3 - 2*t2 + t;
+    const float h4 =    t3 - t2;
+    output = h1*p0 + h2*p1 + h3*t0 + h4*t1;
+}
+
+inline void hermite_spline( float t,
+                            const vectorial::quat4f & p0, 
+                            const vectorial::quat4f & p1,
+                            const vectorial::quat4f & t0,
+                            const vectorial::quat4f & t1,
+                            vectorial::quat4f & output )
+{
+    const float t2 = t*t;
+    const float t3 = t2*t;
+    const float h1 =  2*t3 - 3*t2 + 1;
+    const float h2 = -2*t3 + 3*t2;
+    const float h3 =    t3 - 2*t2 + t;
+    const float h4 =    t3 - t2;
+    vectorial::quat4f _p0 = p0;
+    vectorial::quat4f _p1 = p1;
+    vectorial::quat4f _t0 = t0;
+    vectorial::quat4f _t1 = t1;
+    if ( dot( _p0, _p1 ) < 0 )
+    {
+        _p0 = - _p0;
+        _t0 = - _t0;
+    }
+    output = normalize( h1*_p0 + h2*_p1 + h3*_t0 + h4*_t1 );
+}
+
+
+/*static*/ void SnapshotInterpolate_Hermite( float t, float step_size,          // todo: what exactly does "step_size" mean here?
                                         const __restrict CubeState * a, 
                                         const __restrict CubeState * b, 
                                         __restrict CubeState * output )
 {
     for ( int i = 0; i < NumCubes; ++i )
     {
-        /*
-        math::hermite_spline( t, object->previousPosition, object->position, object->previousLinearVelocity * stepSize, object->linearVelocity * stepSize, object->interpolatedPosition );
-        math::Quaternion spin0 = 0.5f * math::Quaternion( 0, object->previousAngularVelocity.x, object->previousAngularVelocity.y, object->previousAngularVelocity.z ) * object->previousOrientation;
-        math::Quaternion spin1 = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation;
-        math::hermite_spline( t, object->previousOrientation, object->orientation, spin0 * stepSize, spin1 * stepSize, object->interpolatedOrientation );
-        */
+        hermite_spline( t, a[i].position, b[i].position, a[i].linear_velocity * step_size, b[i].linear_velocity * step_size, output[i].position );
+        vectorial::quat4f spin_a = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation;
+        vectorial::quat4f spin_b = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation;
+        hermite_spline( t, a[i].orientation, b[i].orientation, spin_a * step_size, spin_b * step_size, output[i].orientation );
         output[i].interacting = a[i].interacting;
     }
 }
 
-/*static*/ void SnapshotExtrapolate( float t, 
-                                     float extrapolation_dt,
+/*static*/ void SnapshotExtrapolate( float t, float step_size,
                                      const __restrict CubeState * a, 
                                      const __restrict CubeState * b, 
                                      __restrict CubeState * output )
 {
     for ( int i = 0; i < NumCubes; ++i )
     {
-        /*
-        math::Vector p0 = object->previousPosition + object->previousLinearVelocity * extrapolation_dt;
-        math::Vector p1 = object->position + object->linearVelocity * extrapolation_dt;
-        math::Vector t0 = object->previousLinearVelocity * stepSize;
-        math::Vector t1 = object->linearVelocity * stepSize;
-        math::hermite_spline( t, p0, p1, t0, t1, object->interpolatedPosition );
+        vectorial::vec3f p0 = a[i].position + a[i].linear_velocity * step_size;
+        vectorial::vec3f p1 = b[i].position + b[i].linear_velocity * step_size;
+        vectorial::vec3f t0 = a[i].linear_velocity * step_size;
+        vectorial::vec3f t1 = b[i].linear_velocity * step_size;
+        hermite_spline( t, p0, p1, t0, t1, output[i].position );
 
-        math::Quaternion q0 = object->previousOrientation;
-        math::Quaternion q1 = object->orientation;
-        math::Quaternion s0 = 0.5f * math::Quaternion( 0, object->previousAngularVelocity.x, object->previousAngularVelocity.y, object->previousAngularVelocity.z ) * object->previousOrientation * extrapolation_dt;
-        math::Quaternion s1 = 0.5f * math::Quaternion( 0, object->angularVelocity.x, object->angularVelocity.y, object->angularVelocity.z ) * object->orientation * extrapolation_dt;
-        // todo: note these quaternions should be normalized!
-        math::hermite_spline( t, q0, q1, s0, s1, object->interpolatedOrientation );
-        */
+        vectorial::quat4f q0 = a[i].orientation;
+        vectorial::quat4f q1 = b[i].orientation;
+        vectorial::quat4f s0 = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation * step_size;
+        vectorial::quat4f s1 = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation * step_size;
+        hermite_spline( t, q0, q1, s0, s1, output[i].orientation );
 
         output[i].interacting = a[i].interacting;
     }
