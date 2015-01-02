@@ -53,6 +53,7 @@ struct SnapshotModeData
     float latency = 0.0f;
     float packet_loss = 0.0f;
     float jitter = 0.0f;
+    float playout_delay = 0.1f;
     SnapshotInterpolation interpolation = SNAPSHOT_INTERPOLATION_NONE;
 };
 
@@ -205,44 +206,6 @@ protected:
     }
 };
 
-struct SnapshotInternal
-{
-    SnapshotInternal( core::Allocator & allocator, const SnapshotModeData & mode_data ) 
-        : packet_factory( allocator )
-    {
-        this->allocator = &allocator;
-        network::SimulatorConfig networkSimulatorConfig;
-        networkSimulatorConfig.packetFactory = &packet_factory;
-        network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
-        Reset( mode_data );
-    }
-
-    ~SnapshotInternal()
-    {
-        CORE_ASSERT( network_simulator );
-        typedef network::Simulator NetworkSimulator;
-        CORE_DELETE( *allocator, NetworkSimulator, network_simulator );
-        network_simulator = nullptr;
-    }
-
-    void Reset( const SnapshotModeData & mode_data )
-    {
-        network_simulator->Reset();
-        network_simulator->ClearStates();
-        network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
-        send_sequence = 0;
-        recv_sequence = 0;
-        send_accumulator = 1.0f;
-    }
-
-    core::Allocator * allocator;
-    SnapshotPacketFactory packet_factory;
-    network::Simulator * network_simulator;
-    uint16_t send_sequence;
-    uint16_t recv_sequence;
-    float send_accumulator;
-};
-
 /*static*/ void SnapshotInterpolate_Linear( float t, 
                                         const __restrict CubeState * a, 
                                         const __restrict CubeState * b, 
@@ -298,7 +261,42 @@ inline void hermite_spline( float t,
 }
 
 
-/*static*/ void SnapshotInterpolate_Hermite( float t, float step_size,          // todo: what exactly does "step_size" mean here?
+#if 0
+
+                view::ObjectUpdate updates[NumCubes];
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    updates[i].id = i + 1;
+
+                    updates[i].authority = snapshot_packet->cubes[i].interacting ? 0 : MaxPlayers;
+
+                    updates[i].position.x = snapshot_packet->cubes[i].position.x();
+                    updates[i].position.y = snapshot_packet->cubes[i].position.y();
+                    updates[i].position.z = snapshot_packet->cubes[i].position.z();
+
+                    updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w();
+                    updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x();
+                    updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y();
+                    updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z();
+
+                    updates[i].linearVelocity.x = snapshot_packet->cubes[i].linear_velocity.x();
+                    updates[i].linearVelocity.y = snapshot_packet->cubes[i].linear_velocity.y();
+                    updates[i].linearVelocity.z = snapshot_packet->cubes[i].linear_velocity.z();
+
+                    updates[i].angularVelocity.x = snapshot_packet->cubes[i].angular_velocity.x();
+                    updates[i].angularVelocity.y = snapshot_packet->cubes[i].angular_velocity.y();
+                    updates[i].angularVelocity.z = snapshot_packet->cubes[i].angular_velocity.z();
+
+                    updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
+                    updates[i].visible = true;
+
+                    view::getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
+                }
+
+#endif
+
+
+/*static*/ void SnapshotInterpolate_Hermite( float t, float step_size,
                                         const __restrict CubeState * a, 
                                         const __restrict CubeState * b, 
                                         __restrict CubeState * output )
@@ -335,6 +333,133 @@ inline void hermite_spline( float t,
         output[i].interacting = a[i].interacting;
     }
 }
+
+struct SnapshotInterpolationBuffer
+{
+    SnapshotInterpolationBuffer( core::Allocator & allocator, const SnapshotModeData & mode_data )
+    {
+        stopped = true;
+        start_time = 0.0;
+        frame = 0;
+        playout_delay = mode_data.playout_delay;
+    }
+
+    void AddSnapshot( double time, uint16_t sequence, const CubeState * cube_state )
+    {
+        CORE_ASSERT( cube_state > 0 );
+
+        if ( stopped )
+        {
+            start_time = time;
+            stopped = false;
+        }
+
+        // todo: strip out any snapshots older than the current interpolation start snapshot
+
+        // todo: insert the cube state in the sliding window (eg. copy it across)
+
+        /*
+        const uint16_t first_input_sequence = sequence - num_inputs;
+
+        for ( int i = 0; i < num_inputs; ++i )
+        {
+            const uint16_t sequence = first_input_sequence + i;
+
+            if ( sequence == most_recent_input )
+            {
+                most_recent_input = sequence + 1;
+                core::queue::push_back( input_queue, inputs[i] );
+            }
+        }
+        */
+    }
+
+    void GetViewUpdate( double time, view::ObjectUpdate * object_update, int & num_object_updates )
+    {
+        num_object_updates = 0;
+
+        // todo
+    }
+
+    /*
+    void GetFrames( double time, int & num_frames, game::Input * frame_input )
+    {
+        num_frames = 0;
+
+        if ( stopped )
+            return;
+
+        for ( int i = 0; i < MaxSimFrames; ++i )
+        {
+            if ( time < ( start_time + ( frame + 0.5 ) * ( 1.0f / 60.0f ) + playout_delay ) )
+                break;
+
+            if ( !core::queue::size( input_queue ) )
+                break;
+
+            frame_input[i] = input_queue[0];
+
+            core::queue::pop_front( input_queue );
+
+            num_frames++;
+
+            frame++;
+        }
+    }
+    */
+
+    void Reset()
+    {
+        stopped = true;
+        start_time = 0.0;
+        frame = 0;
+    }
+
+    bool stopped;
+    double start_time;
+    uint64_t frame;
+    float playout_delay;
+};
+
+struct SnapshotInternal
+{
+    SnapshotInternal( core::Allocator & allocator, const SnapshotModeData & mode_data ) 
+        : packet_factory( allocator ), interpolation_buffer( allocator, mode_data )
+    {
+        this->allocator = &allocator;
+        network::SimulatorConfig networkSimulatorConfig;
+        networkSimulatorConfig.packetFactory = &packet_factory;
+        network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
+        Reset( mode_data );
+    }
+
+    ~SnapshotInternal()
+    {
+        CORE_ASSERT( network_simulator );
+        typedef network::Simulator NetworkSimulator;
+        CORE_DELETE( *allocator, NetworkSimulator, network_simulator );
+        network_simulator = nullptr;
+    }
+
+    void Reset( const SnapshotModeData & mode_data )
+    {
+        interpolation_buffer.Reset();
+        network_simulator->Reset();
+        network_simulator->ClearStates();
+        network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
+        send_sequence = 0;
+        recv_sequence = 0;
+        send_accumulator = 1.0f;
+    }
+
+    core::Allocator * allocator;
+    SnapshotPacketFactory packet_factory;
+    network::Simulator * network_simulator;
+    SnapshotInterpolationBuffer interpolation_buffer;
+    uint16_t send_sequence;
+    uint16_t recv_sequence;
+    float send_accumulator;
+};
 
 SnapshotDemo::SnapshotDemo( core::Allocator & allocator )
 {
@@ -492,46 +617,71 @@ void SnapshotDemo::Update()
 
             auto snapshot_packet = (SnapshotNaivePacket*) read_packet;
 
-            if ( core::sequence_greater_than( snapshot_packet->sequence, m_snapshot->recv_sequence ) )
+            if ( GetMode() <= SNAPSHOT_MODE_NAIVE_10PPS )
             {
-                view::ObjectUpdate updates[NumCubes];
-                for ( int i = 0; i < NumCubes; ++i )
+                // no interpolation buffer. just render directly to make a point.
+
+                if ( core::sequence_greater_than( snapshot_packet->sequence, m_snapshot->recv_sequence ) )
                 {
-                    updates[i].id = i + 1;
+                    view::ObjectUpdate updates[NumCubes];
 
-                    updates[i].authority = snapshot_packet->cubes[i].interacting ? 0 : MaxPlayers;
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        updates[i].id = i + 1;
 
-                    updates[i].position.x = snapshot_packet->cubes[i].position.x();
-                    updates[i].position.y = snapshot_packet->cubes[i].position.y();
-                    updates[i].position.z = snapshot_packet->cubes[i].position.z();
+                        updates[i].authority = snapshot_packet->cubes[i].interacting ? 0 : MaxPlayers;
 
-                    updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w();
-                    updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x();
-                    updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y();
-                    updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z();
+                        updates[i].position.x = snapshot_packet->cubes[i].position.x();
+                        updates[i].position.y = snapshot_packet->cubes[i].position.y();
+                        updates[i].position.z = snapshot_packet->cubes[i].position.z();
 
-                    updates[i].linearVelocity.x = snapshot_packet->cubes[i].linear_velocity.x();
-                    updates[i].linearVelocity.y = snapshot_packet->cubes[i].linear_velocity.y();
-                    updates[i].linearVelocity.z = snapshot_packet->cubes[i].linear_velocity.z();
+                        updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w();
+                        updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x();
+                        updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y();
+                        updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z();
 
-                    updates[i].angularVelocity.x = snapshot_packet->cubes[i].angular_velocity.x();
-                    updates[i].angularVelocity.y = snapshot_packet->cubes[i].angular_velocity.y();
-                    updates[i].angularVelocity.z = snapshot_packet->cubes[i].angular_velocity.z();
+                        updates[i].linearVelocity.x = snapshot_packet->cubes[i].linear_velocity.x();
+                        updates[i].linearVelocity.y = snapshot_packet->cubes[i].linear_velocity.y();
+                        updates[i].linearVelocity.z = snapshot_packet->cubes[i].linear_velocity.z();
 
-                    updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
-                    updates[i].visible = true;
+                        updates[i].angularVelocity.x = snapshot_packet->cubes[i].angular_velocity.x();
+                        updates[i].angularVelocity.y = snapshot_packet->cubes[i].angular_velocity.y();
+                        updates[i].angularVelocity.z = snapshot_packet->cubes[i].angular_velocity.z();
 
-                    view::getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
+                        updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
+                        updates[i].visible = true;
+
+                        view::getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
+                    }
+
+                    m_internal->view[1].objects.UpdateObjects( updates, NumCubes );
+
+                    m_snapshot->recv_sequence = snapshot_packet->sequence;
                 }
+            }
+            else
+            {
+                // send to interpolation buffer
 
-                m_internal->view[1].objects.UpdateObjects( updates, NumCubes );
-
-                m_snapshot->recv_sequence = snapshot_packet->sequence;
+                m_snapshot->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot_packet->cubes );
             }
         }
 
         m_snapshot->packet_factory.Destroy( read_packet );
         read_packet = nullptr;
+    }
+
+    // if we are an an interpolation mode, we need to grab the view updates for the right side from the interpolation buffer
+
+    if ( GetMode() >= SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS )
+    {
+        int num_object_updates = 0;
+
+        view::ObjectUpdate object_updates[NumCubes];
+
+        m_snapshot->interpolation_buffer.GetViewUpdate( global.timeBase.time, object_updates, num_object_updates );
+
+        m_internal->view[1].objects.UpdateObjects( object_updates, num_object_updates );
     }
 
     // run the simulation

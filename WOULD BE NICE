@@ -2,7 +2,11 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Perhaps SequenceBuffer<T> is a better name than SequenceBuffer<T>
+    Would be great to be able to quickly define a packet factory with macros.
+
+    It's all very boilerplate. Annoying to cut & paste code it each time.
+
+    Pass over all packet factories and convert to use the macros!
 
     -------------------------------------------
 
@@ -21,15 +25,6 @@ WOULD BE NICE:
     for serializing vectorial types.
 
     ------------------------------------------- 
-
-    Once interpolation and extrapolation is working, strip out everything from the view
-    *except* for the smoothing (eg. error reduction for position and orientation)
-
-    Interpolation and extrapolation will always be done separately from the view
-
-    Simplify the view as much as possible
-
-    -------------------------------------------
 
     Simplify the cube simulation as much as possible
 
@@ -64,6 +59,8 @@ WOULD BE NICE:
     They were really fun, especially the spinning stone controls, repeated drops etc.
 
     Just need to get wireframe rendering back, shouldn't be too hard.
+
+    Probably belongs under "Stone" demo, eg. build it up -- 1,2,3,4,5...
 
     -------------------------------------------
 

@@ -1,13 +1,30 @@
 DONE:
 
-TODO:
+    Copy playout delay buffer and call it SnapshotInterpolationBuffer
 
+    Add playout_delay to snapshot mode data.
+
+    Sketch out interface to get view objects for current time.
+
+    Hook up interface if not in non-interpolated modes.
+
+TODO:
 
     -----------------------------------------------------------------------
 
-    Copy playout delay buffer and call it SnapshotInterpolationBuffer
+    Convert view to use vectorial math types.
 
-    Derive it from new network buffer.
+    I'm sick of converting back and forth!!!!
+
+    -----------------------------------------------------------------------
+
+    Convert the interpolation methods to output directly to view object update.
+
+    Saves an extra conversion step / copy.
+
+    -----------------------------------------------------------------------
+
+    Now work out how to implement the interpolation buffer!
 
     -----------------------------------------------------------------------
 
@@ -25,6 +42,9 @@ TODO:
 
     -----------------------------------------------------------------------
 
+    Get extrapolation working @ 10pps
+
+    -----------------------------------------------------------------------
 
 
 
@@ -113,19 +133,3 @@ TODO:
     *** I'm thinking this needs two articles ***
 
     -----------------------------------------------------------------------
-
-
-    
-
-
-
-
-    -------------------------------------------
-
-    Would be great to be able to quickly define a packet factory with macros.
-
-    It's all very boilerplate. Annoying to cut & paste code it each time.
-
-    Pass over all packet factories and convert to use the macros!
-
-    --------------------------------------------
