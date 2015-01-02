@@ -4,7 +4,6 @@
 #include <math.h>
 #include "vectorial/vec3f.h"
 #include "vectorial/vec4f.h"
-#include "vectorial/mat4f.h"
 
 namespace vectorial 
 {
@@ -31,6 +30,7 @@ namespace vectorial
             return quat4f( axis.x() * s, axis.y() * s, axis.z() * s, c );
         }
 
+        /*
         void to_matrix( mat4f & matrix ) const
         {
             const float _w = w();
@@ -64,6 +64,7 @@ namespace vectorial
 
             matrix.load( array );
         }
+        */
 
         void to_axis_angle( vec3f & axis, float & angle, const float epsilonSquared = 0.001f * 0.001f ) const
         {

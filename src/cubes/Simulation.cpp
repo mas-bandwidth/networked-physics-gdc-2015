@@ -1,6 +1,6 @@
 /*
 	Networked Physics Demo
-	Copyright © 2008-2011 Glenn Fiedler
+	Copyright © 2008-2015 Glenn Fiedler
 	http://www.gafferongames.com/networking-for-game-programmers
 */
 

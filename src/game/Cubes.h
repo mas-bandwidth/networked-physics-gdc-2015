@@ -41,9 +41,9 @@ public:
 
     void ResizeDisplay( int displayWidth, int displayHeight );
     
-    void SetLightPosition( const math::Vector & position );
+    void SetLightPosition( const vectorial::vec3f & position );
 
-    void SetCamera( const math::Vector & position, const math::Vector & lookAt, const math::Vector & up );
+    void SetCamera( const vectorial::vec3f & position, const vectorial::vec3f & lookAt, const vectorial::vec3f & up );
 
     void ClearScreen();
 
@@ -66,11 +66,11 @@ private:
     int displayWidth;
     int displayHeight;
 
-    math::Vector cameraPosition;
-    math::Vector cameraLookAt;
-    math::Vector cameraUp;
+    vectorial::vec3f cameraPosition;
+    vectorial::vec3f cameraLookAt;
+    vectorial::vec3f cameraUp;
 
-    math::Vector lightPosition;
+    vectorial::vec3f lightPosition;
 
     uint32_t cubes_vao;
     uint32_t cubes_vbo;
@@ -173,7 +173,7 @@ struct CubesInternal
 
     void Free( core::Allocator & allocator );
 
-    void AddCube( GameInstance * gameInstance, int player, const math::Vector & position );
+    void AddCube( GameInstance * gameInstance, int player, const vectorial::vec3f & position );
 
     void Update( const CubesUpdateConfig & update_config );
 

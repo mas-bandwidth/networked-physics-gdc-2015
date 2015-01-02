@@ -1,6 +1,6 @@
 /*
 	Networked Physics Demo
-	Copyright © 2008-2011 Glenn Fiedler
+	Copyright © 2008-2015 Glenn Fiedler
 	http://www.gafferongames.com/networking-for-game-programmers
 */
 
@@ -8,62 +8,6 @@
 
 namespace cubes
 {
-	PacketQueue::PacketQueue()
-	{
-		delay = 0.0f;
-	}
-
-	PacketQueue::~PacketQueue()
-	{
-		Clear();
-	}
-
-	void PacketQueue::Clear()
-	{
-		for ( int i = 0; i < (int) queue.size(); ++i )
-			delete queue[i];
-		queue.clear();
-	}
-
-	void PacketQueue::QueuePacket( int sourceNodeId, int destinationNodeId, unsigned char * data, int bytes )
-	{
-		assert( bytes >= 0 );
-		Packet * packet = new Packet();
-		packet->timeInQueue = 0.0f;
-		packet->sourceNodeId = sourceNodeId;
-		packet->destinationNodeId = destinationNodeId;
-		packet->data.resize( bytes );
-		memcpy( &packet->data[0], data, bytes );
-		queue.push_back( packet );
-	}
-
-	void PacketQueue::SetDelay( float delay )
-	{
-		this->delay = delay;
-	}
-
-	void PacketQueue::Update( float deltaTime )
-	{
-		for ( int i = 0; i < (int) queue.size(); ++i )
-			queue[i]->timeInQueue += deltaTime;
-	}
-
-	PacketQueue::Packet * PacketQueue::PacketReadyToSend()
-	{
-		while ( queue.size() > 0 )
-		{
-			Packet * packet = queue[0];
-			if ( packet->timeInQueue >= delay )
-			{
-				queue.erase( queue.begin() );
-				return packet;			// important! it is your responsibility to delete the packet(!!!)
-			}
-			else
-				break;
-		}
-		return NULL;
-	}
-
 	// -------------------------------------------------------------
 	
 	// helper functions for compression
@@ -320,7 +264,7 @@ namespace cubes
  		z = math::floor( vector.z * res + 0.5f );
 	}
 	
-	void UnquantizeVector( const int32_t & x, const int32_t & y, const int32_t & z, math::Vector & vector, float res )
+	void DequantizeVector( const int32_t & x, const int32_t & y, const int32_t & z, math::Vector & vector, float res )
 	{
 		vector.x = x / res;
 		vector.y = y / res;

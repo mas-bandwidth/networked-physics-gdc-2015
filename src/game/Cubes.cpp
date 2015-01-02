@@ -45,14 +45,14 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
             simulation[i].game_instance->AddPlane( math::Vector(0,0,1), 0 );
 
-            AddCube( simulation[i].game_instance, 1, math::Vector(0,0,10) );
+            AddCube( simulation[i].game_instance, 1, vectorial::vec3f(0,0,10) );
 
             const float origin = -CubeSteps / 2.0f;
             const float z = hypercube::NonPlayerCubeSize / 2.0f;
             const int count = CubeSteps;
             for ( int y = 0; y < count; ++y )
                 for ( int x = 0; x < count; ++x )
-                    AddCube( simulation[i].game_instance, 0, math::Vector(x+origin,y+origin,z) );
+                    AddCube( simulation[i].game_instance, 0, vectorial::vec3f(x+origin,y+origin,z) );
 
             simulation[i].game_instance->InitializeEnd();
 
@@ -115,15 +115,17 @@ void CubesInternal::Free( core::Allocator & allocator )
 #endif // #ifdef CLIENT
 }
 
-void CubesInternal::AddCube( GameInstance * game_instance, int player, const math::Vector & position )
+void CubesInternal::AddCube( GameInstance * game_instance, int player, const vectorial::vec3f & position )
 {
     hypercube::DatabaseObject object;
-    cubes::CompressPosition( position, object.position );
+    // todo: convert to vectorial
+    math::Vector stupid_position( position.x(), position.y(), position.z() );
+    cubes::CompressPosition( stupid_position, object.position );
     cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
     object.enabled = player;
     object.session = 0;             // todo: do we still need sessions?
     object.player = player;
-    activation::ObjectId id = game_instance->AddObject( object, position.x, position.y );
+    activation::ObjectId id = game_instance->AddObject( object, position.x(), position.y() );
     if ( player )
         game_instance->DisableObject( id );
 }
@@ -185,11 +187,11 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
             view::Object * player = view[i].objects.GetObject( 1 );     // todo: focus object should be configurable per-view
 
-            math::Vector origin = player ? player->position : math::Vector(0,0,0);
+            vectorial::vec3f origin = player ? player->position : vectorial::vec3f(0,0,0);
 
-            math::Vector lookat = origin - math::Vector(0,0,1);
+            vectorial::vec3f lookat = origin - vectorial::vec3f(0,0,1);
 
-            math::Vector position = lookat + math::Vector(0,-11,5);
+            vectorial::vec3f position = lookat + vectorial::vec3f(0,-11,5);
 
             view[i].camera.EaseIn( lookat, position );
         }
@@ -227,7 +229,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
         
-        render.SetLightPosition( view[0].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+        render.SetLightPosition( view[0].camera.lookat + vectorial::vec3f( 25.0f, -50.0f, 100.0f ) );
 
         render.RenderCubes( view[0].cubes );
         
@@ -253,7 +255,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.SetCamera( view[0].camera.position, view[0].camera.lookat, view[0].camera.up );
         
-        render.SetLightPosition( view[0].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+        render.SetLightPosition( view[0].camera.lookat + vectorial::vec3f( 25.0f, -50.0f, 100.0f ) );
 
         render.RenderCubes( view[0].cubes );
         
@@ -269,7 +271,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.SetCamera( view[1].camera.position, view[1].camera.lookat, view[1].camera.up );
         
-        render.SetLightPosition( view[1].camera.lookat + math::Vector( 25.0f, -50.0f, 100.0f ) );
+        render.SetLightPosition( view[1].camera.lookat + vectorial::vec3f( 25.0f, -50.0f, 100.0f ) );
 
         render.RenderCubes( view[1].cubes );
         
@@ -611,12 +613,12 @@ void CubesRender::ResizeDisplay( int _displayWidth, int _displayHeight )
     displayHeight = _displayHeight;
 }
 
-void CubesRender::SetLightPosition( const math::Vector & position )
+void CubesRender::SetLightPosition( const vectorial::vec3f & position )
 {
     lightPosition = position;
 }
 
-void CubesRender::SetCamera( const math::Vector & position, const math::Vector & lookAt, const math::Vector & up )
+void CubesRender::SetCamera( const vectorial::vec3f & position, const vectorial::vec3f & lookAt, const vectorial::vec3f & up )
 {
     cameraPosition = position;
     cameraLookAt = lookAt;
@@ -666,14 +668,20 @@ void CubesRender::RenderCubes( const view::Cubes & cubes )
     const int light_location = glGetUniformLocation( shader, "LightPosition" );
 
     if ( eye_location >= 0 )
-        glUniform3fv( eye_location, 1, &cameraPosition[0] );
+    {
+        float data[3];
+        cameraPosition.store( data );
+        glUniform3fv( eye_location, 1, data );
+    }
 
     if ( light_location >= 0 )
-        glUniform3fv( light_location, 1, &lightPosition[0] );
+    {
+        float data[3];
+        lightPosition.store( data );
+        glUniform3fv( light_location, 1, data );
+    }
 
-    vectorial::mat4f viewMatrix = vectorial::mat4f::lookAt( vectorial::vec3f( cameraPosition.x, cameraPosition.y, cameraPosition.z ),
-                                                            vectorial::vec3f( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ),
-                                                            vectorial::vec3f( cameraUp.x, cameraUp.y, cameraUp.z ) );
+    vectorial::mat4f viewMatrix = vectorial::mat4f::lookAt( cameraPosition, cameraLookAt, cameraUp );
 
     vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, displayWidth / (float)displayHeight, 0.1f, 100.0f );
 
@@ -788,7 +796,7 @@ void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
 
     // generate shadow silhoutte vertices
 
-    vectorial::vec3f world_light( lightPosition.x, lightPosition.y, lightPosition.z );
+    vectorial::vec3f world_light = lightPosition;
     
     int vertex_index = 0;
     
@@ -859,9 +867,9 @@ void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
 
     glUseProgram( shader );
 
-    glm::mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x, cameraPosition.y, cameraPosition.z ), 
-                                        glm::vec3( cameraLookAt.x, cameraLookAt.y, cameraLookAt.z ), 
-                                        glm::vec3( cameraUp.x, cameraUp.y, cameraUp.z ) );
+    glm::mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x(), cameraPosition.y(), cameraPosition.z() ), 
+                                        glm::vec3( cameraLookAt.x(), cameraLookAt.y(), cameraLookAt.z() ), 
+                                        glm::vec3( cameraUp.x(), cameraUp.y(), cameraUp.z() ) );
 
     glm::mat4 projectionMatrix = glm::perspective( 40.0f, displayWidth / (float)displayHeight, 0.1f, 100.0f );
 

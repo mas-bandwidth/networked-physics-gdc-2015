@@ -14,6 +14,9 @@
   #include "vectorial/vec4f.h"
 #endif
 
+#ifndef VECTORIAL_QUAT4F_H
+  #include "vectorial/quat4f.h"
+#endif
 
 namespace vectorial {
     
@@ -43,6 +46,8 @@ namespace vectorial {
 
         static mat4f identity() { mat4f m; simd4x4f_identity(&m.value); return m; }
 
+        static mat4f scale( float s ) { mat4f m; simd4x4f_scale(&m.value, s); return m; }
+
         static mat4f perspective(float fovy, float aspect, float znear, float zfar) {
             simd4x4f m;
             simd4x4f_perspective(&m, fovy, aspect, znear, zfar);
@@ -64,6 +69,12 @@ namespace vectorial {
         static mat4f translation(vec3f pos) {
             simd4x4f m;
             simd4x4f_translation(&m, pos.x(), pos.y(), pos.z());
+            return m;            
+        }
+
+        static mat4f rotation(quat4f quat) {
+            simd4x4f m;
+            simd4x4f_rotation(&m, quat.x(), quat.y(), quat.z(), quat.w());
             return m;            
         }
 

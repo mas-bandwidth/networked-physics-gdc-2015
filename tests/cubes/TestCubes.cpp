@@ -391,67 +391,6 @@ struct Response
 	Response( ObjectId id ) { this->id = id; }
 };
 
-void test_response_queue_initial_conditions()
-{
-	printf( "test_response_queue_initial_conditions\n" );
-
-	ResponseQueue<Response> responseQueue;
-
-	Response response;
-	CORE_ASSERT( !responseQueue.PopResponse( response ) );
-
-	for ( int i = 0; i < 100; ++i )
-		CORE_ASSERT( !responseQueue.AlreadyQueued( i ) );
-}
-
-void test_response_queue_pop()
-{
-	printf( "test_response_queue_pop\n" );
-
-	ResponseQueue<Response> responseQueue;
-
-	Response a = 10;
-	Response b = 15;
-	Response c = 6;
-
-	responseQueue.QueueResponse( a );
-	responseQueue.QueueResponse( b );
-	responseQueue.QueueResponse( c );
-
-	Response response;
-	CORE_ASSERT( responseQueue.PopResponse( response ) );
-	CORE_ASSERT( response.id == a.id );
-
-	CORE_ASSERT( responseQueue.PopResponse( response ) );
-	CORE_ASSERT( response.id == b.id );
-
-	CORE_ASSERT( responseQueue.PopResponse( response ) );
-	CORE_ASSERT( response.id == c.id );
-}
-
-void test_response_queue_clear()
-{
-	printf( "test_response_queue_clear\n" );
-
-	ResponseQueue<Response> responseQueue;
-
-	Response a = 10;
-	Response b = 15;
-	Response c = 6;
-
-	responseQueue.QueueResponse( a );
-	responseQueue.QueueResponse( b );
-	responseQueue.QueueResponse( c );
-
-	responseQueue.Clear();
-
-	Response response;
-	CORE_ASSERT( !responseQueue.PopResponse( response ) );
-
-	for ( int i = 0; i < 100; ++i )
-		CORE_ASSERT( !responseQueue.AlreadyQueued( i ) );
-}
-
 void test_compress_position()
 {
 	printf( "test_compress_position\n" );

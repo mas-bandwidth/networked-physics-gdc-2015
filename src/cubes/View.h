@@ -10,6 +10,8 @@
 #include "ViewObject.h"
 #include "vectorial/vec3f.h"
 #include "vectorial/mat4f.h"
+#include "vectorial/quat4f.h"
+#include "core/Core.h"
 #include <map>				// todo: remove this
 
 namespace view
@@ -34,15 +36,11 @@ namespace view
 
 	struct ObjectUpdate
 	{
-		// todo: convert these guys to vectorial
-		math::Quaternion orientation;
-		math::Vector position;
-		math::Vector linearVelocity;
-		math::Vector angularVelocity;
+		vectorial::vec3f position;
+		vectorial::quat4f orientation;
 		float scale;
-		float r,g,b;
  		uint32_t id : 20;
-		uint32_t authority : 3;
+		uint32_t authority : core::BitsRequired<0,MaxPlayers+1>::result;
 		uint32_t visible : 1;
 	};
 
@@ -52,7 +50,7 @@ namespace view
 		{
 			this->id = 0;
 			authority = 0;
-			remove = 0;
+			remove = 0;					// todo: hot-cold split for remove flag would be a great idea
 			visible = 0;
 			blending = 0;
 		}
@@ -68,11 +66,10 @@ namespace view
 		float blend_start;
 		float blend_finish;
 
-		// todo: convert these guys to vectorial
-		math::Vector position;
-		math::Quaternion orientation;
-		math::Vector linearVelocity;
-		math::Vector angularVelocity;
+		vectorial::vec3f position;
+		vectorial::quat4f orientation;
+		vectorial::vec3f linear_velocity;
+		vectorial::vec3f angular_velocity;
 	};
 
 	/*	
@@ -88,7 +85,7 @@ namespace view
 
 		void UpdateObjects( ObjectUpdate updates[], int updateCount );
 		
-		void Update( float deltaTime, int maxPlayers = MaxPlayers );
+		void Update( float deltaTime );
 
 		Object * GetObject( unsigned int id );
 
@@ -105,16 +102,15 @@ namespace view
 
 	struct Camera
 	{
-		// todo: convert these guys to use vectorial
-		math::Vector position;
-		math::Vector lookat;
-		math::Vector up;
+		vectorial::vec3f position;
+		vectorial::vec3f lookat;
+		vectorial::vec3f up;
 
 		Camera();
 	
-		void EaseIn( const math::Vector & new_lookat, const math::Vector & new_position );
+		void EaseIn( const vectorial::vec3f & new_lookat, const vectorial::vec3f & new_position );
 	
-		void Snap( const math::Vector & new_lookat, const math::Vector & new_position );
+		void Snap( const vectorial::vec3f & new_lookat, const vectorial::vec3f & new_position );
 	};
 
 	// helper functions

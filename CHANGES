@@ -1,4 +1,38 @@
 
+Thursday Evening, January 1st, 2015
+-----------------------------------
+
+    Copy playout delay buffer and call it SnapshotInterpolationBuffer
+
+    Add playout_delay to snapshot mode data.
+
+    Sketch out interface to get view objects for current time.
+
+    Hook up interface if not in non-interpolated modes.
+
+    Convert view to use vectorial math types.
+
+    I'm sick of converting back and forth!!!!
+
+    Remove velocity from view. It no longer needs it!
+
+    Remove r,g,b from view update. It's now entirely a function of authority.
+
+    Finish converting last parts of View.cpp to vectorial.
+
+    Added vectorial::mat4f::scale method.
+
+    Added quaternion initializer for vectorial::mat4f
+
+    Seems like I also need to update cubes Render to use vectorial. Garrr.
+
+    Finish coverting Cubes.cpp to new stuff that is vectorial instead of old math.
+
+    Make sure everything still renders.
+
+    Yep. Working!
+
+
 Thursday Afternoon, January 1st, 2015
 -------------------------------------
 

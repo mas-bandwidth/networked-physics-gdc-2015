@@ -1,20 +1,6 @@
 DONE:
 
-    Copy playout delay buffer and call it SnapshotInterpolationBuffer
-
-    Add playout_delay to snapshot mode data.
-
-    Sketch out interface to get view objects for current time.
-
-    Hook up interface if not in non-interpolated modes.
-
 TODO:
-
-    -----------------------------------------------------------------------
-
-    Convert view to use vectorial math types.
-
-    I'm sick of converting back and forth!!!!
 
     -----------------------------------------------------------------------
 

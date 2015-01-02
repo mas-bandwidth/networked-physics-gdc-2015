@@ -630,28 +630,10 @@ void SnapshotDemo::Update()
                         updates[i].id = i + 1;
 
                         updates[i].authority = snapshot_packet->cubes[i].interacting ? 0 : MaxPlayers;
-
-                        updates[i].position.x = snapshot_packet->cubes[i].position.x();
-                        updates[i].position.y = snapshot_packet->cubes[i].position.y();
-                        updates[i].position.z = snapshot_packet->cubes[i].position.z();
-
-                        updates[i].orientation.w = snapshot_packet->cubes[i].orientation.w();
-                        updates[i].orientation.x = snapshot_packet->cubes[i].orientation.x();
-                        updates[i].orientation.y = snapshot_packet->cubes[i].orientation.y();
-                        updates[i].orientation.z = snapshot_packet->cubes[i].orientation.z();
-
-                        updates[i].linearVelocity.x = snapshot_packet->cubes[i].linear_velocity.x();
-                        updates[i].linearVelocity.y = snapshot_packet->cubes[i].linear_velocity.y();
-                        updates[i].linearVelocity.z = snapshot_packet->cubes[i].linear_velocity.z();
-
-                        updates[i].angularVelocity.x = snapshot_packet->cubes[i].angular_velocity.x();
-                        updates[i].angularVelocity.y = snapshot_packet->cubes[i].angular_velocity.y();
-                        updates[i].angularVelocity.z = snapshot_packet->cubes[i].angular_velocity.z();
-
+                        updates[i].position = snapshot_packet->cubes[i].position;
+                        updates[i].orientation = snapshot_packet->cubes[i].orientation;
                         updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
                         updates[i].visible = true;
-
-                        view::getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
                     }
 
                     m_internal->view[1].objects.UpdateObjects( updates, NumCubes );

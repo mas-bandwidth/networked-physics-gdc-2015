@@ -35,6 +35,13 @@ vectorial_inline void simd4x4f_identity(simd4x4f* m) {
 }
 
 
+vectorial_inline void simd4x4f_scale(simd4x4f* m, float s) {
+    *m = simd4x4f_create( simd4f_create(   s, 0.0f, 0.0f, 0.0f),
+                          simd4f_create(0.0f,    s, 0.0f, 0.0f),
+                          simd4f_create(0.0f, 0.0f,    s, 0.0f),
+                          simd4f_create(0.0f, 0.0f, 0.0f, 1.0f));
+}
+
 
 vectorial_inline void simd4x4f_uload(simd4x4f* m, float *f) {
 
@@ -183,6 +190,31 @@ vectorial_inline void simd4x4f_translation(simd4x4f* m, float x, float y, float 
                           simd4f_create(0.0f, 1.0f, 0.0f, 0.0f),
                           simd4f_create(0.0f, 0.0f, 1.0f, 0.0f),
                           simd4f_create(   x,    y,    z, 1.0f));
+}
+
+
+vectorial_inline void simd4x4f_rotation(simd4x4f* m, float x, float y, float z, float w) {
+
+    const float fTx  = 2.0f * x;
+    const float fTy  = 2.0f * y;
+    const float fTz  = 2.0f * z;
+
+    const float fTwx = fTx * w;
+    const float fTwy = fTy * w;
+    const float fTwz = fTz * w;
+
+    const float fTxx = fTx * x;
+    const float fTxy = fTy * x;
+    const float fTxz = fTz * x;
+
+    const float fTyy = fTy * y;
+    const float fTyz = fTz * y;
+    const float fTzz = fTz * z;
+
+    *m = simd4x4f_create( simd4f_create( 1.0f - ( fTyy + fTzz ), fTxy + fTwz, fTxz - fTwy, 0 ),
+                          simd4f_create( fTxy - fTwz, 1.0f - ( fTxx + fTzz ), fTyz + fTwx, 0 ),
+                          simd4f_create( fTxz + fTwy, fTyz - fTwx, 1.0f - ( fTxx + fTyy ), 0 ),
+                          simd4f_create( 0, 0, 0, 1 ));
 }
 
 

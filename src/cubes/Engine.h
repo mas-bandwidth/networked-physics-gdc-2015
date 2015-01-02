@@ -1,6 +1,6 @@
 /*
 	Networked Physics Demo
-	Copyright © 2008-2011 Glenn Fiedler
+	Copyright © 2008-2015 Glenn Fiedler
 	http://www.gafferongames.com/networking-for-game-programmers
 */
 
@@ -19,85 +19,6 @@ namespace cubes
 	using activation::ActiveId;
 	using activation::ActivationSystem;
 	
-	/*
-		Response queue is used to implement corrections.
-		Each object id may be in the queue only once, we pop objects off the front
-		of the queue when determining which corrections to include in a packet.
-	*/
-
-	template <typename T> class ResponseQueue
-	{
-	public:
-	
-		void Clear()
-		{
-			responses.clear();
-		}
-	
-		bool AlreadyQueued( ObjectId id )
-		{
-			for ( typename std::list<T>::iterator itor = responses.begin(); itor != responses.end(); ++itor )
-				if ( itor->id == id )
-					return true;
-			return false;
-		}
-	
-		void QueueResponse( const T & response )
-		{
-			assert( !AlreadyQueued( response.id ) );
-			responses.push_back( response );
-		}
-	
-		bool PopResponse( T & response )
-		{
-			if ( !responses.empty() )
-			{
-	 			response = *responses.begin();
-				responses.pop_front();
-				return true;
-			}
-			else
-				return false;
-		}
-	
-	private:
-	
-		std::list<T> responses;
-	};
-
-	/*
-		Packet queue is used to simulate a networked P2P mesh with node id [0,maxNodes-1]
-		Its job is to hold packets in various queues for some simulated latency time
-		before becoming ready to "send".
-	*/
-
-	class PacketQueue
-	{
-	public:
-	
-		struct Packet
-		{
-			float timeInQueue;
-			int sourceNodeId;
-			int destinationNodeId;
-			std::vector<unsigned char> data;
-		};
-	
-		PacketQueue();
-		~PacketQueue();
-	
-		void Clear();
-		void QueuePacket( int sourceNodeId, int destinationNodeId, unsigned char * data, int bytes );
-		void SetDelay( float delay );
-		void Update( float deltaTime );
-		Packet * PacketReadyToSend();
-	
-	private:
-	
-		float delay;						// number of seconds to delay packet sends (hold in queue)
-		std::vector<Packet*> queue;
-	};
-
 	/*
 		Priority set. 
 		Used to track n most important active objects to send,
@@ -198,7 +119,7 @@ namespace cubes
 	void DecompressOrientation( uint32_t compressed_orientation, math::Quaternion & orientation );
 
 	void QuantizeVector( const math::Vector & vector, int32_t & x, int32_t & y, int32_t & z, float res );
-	void UnquantizeVector( const int32_t & x, const int32_t & y, const int32_t & z, math::Vector & vector, float res );
+	void DequantizeVector( const int32_t & x, const int32_t & y, const int32_t & z, math::Vector & vector, float res );
 }
 
 #endif

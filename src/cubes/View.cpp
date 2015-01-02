@@ -1,6 +1,6 @@
 /*
 	Networked Physics Demo
-	Copyright © 2008-2011 Glenn Fiedler
+	Copyright © 2008-2015 Glenn Fiedler
 	http://www.gafferongames.com/networking-for-game-programmers
 */
 
@@ -26,7 +26,7 @@ namespace view
 		// 1. mark all objects as pending removal
 		//  - allows us to detect deleted objects in O(n) instead of O(n^2)
 
-		// todo: convert to flat array.
+		// todo: convert to bit array
 		// todo: hot/cold split for "remove" flag.
 
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
@@ -54,12 +54,8 @@ namespace view
 				object->authority = updates[i].authority;
 				object->position = updates[i].position;
 				object->orientation = updates[i].orientation;
-				object->linearVelocity = updates[i].linearVelocity;
-				object->angularVelocity = updates[i].angularVelocity;
 				object->scale = updates[i].scale;
-				object->r = updates[i].r;
-				object->g = updates[i].g;
-				object->b = updates[i].b;
+				getAuthorityColor( object->authority, object->r, object->g, object->b, MaxPlayers );
 				object->a = 0.0f;
 				object->visible = false;
 				
@@ -79,8 +75,6 @@ namespace view
 
 				object->position = updates[i].position;
 				object->orientation = updates[i].orientation;
-				object->linearVelocity = updates[i].linearVelocity;
-				object->angularVelocity = updates[i].angularVelocity;
 				object->scale = updates[i].scale;
 				
 				object->remove = false;
@@ -126,7 +120,7 @@ namespace view
 		}
 	}
 	
-	void ObjectManager::Update( float deltaTime, int maxPlayers )
+	void ObjectManager::Update( float deltaTime )
 	{
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
 		{
@@ -162,7 +156,7 @@ namespace view
 			const float tightness = ( object->authority == 0 ) ? ColorChangeTightnessAuthority : ColorChangeTightnessDefault;
 
 			float target_r, target_g, target_b;
-			getAuthorityColor( object->authority, target_r, target_g, target_b, maxPlayers );
+			getAuthorityColor( object->authority, target_r, target_g, target_b, MaxPlayers );
 
 			object->r += ( target_r - object->r ) * tightness;
 			object->g += ( target_g - object->g ) * tightness;
@@ -191,28 +185,13 @@ namespace view
             Object * object = itor->second;
             assert( object );
             
-            float translation_data[16];
-            float rotation_data[16];
-            float scale_data[16];
-            math::build_translation( translation_data, object->position );
-            math::build_rotation( rotation_data, object->orientation );
-            math::build_scale( scale_data, object->scale * 0.5f );
-            vectorial::mat4f translation;
-            vectorial::mat4f rotation;
-            vectorial::mat4f scale;            
-            translation.load( translation_data );
-            rotation.load( rotation_data );
-            scale.load( scale_data );
+            vectorial::mat4f translation = vectorial::mat4f::translation( object->position );
+            vectorial::mat4f rotation = vectorial::mat4f::rotation( object->orientation );
+            vectorial::mat4f scale = vectorial::mat4f::scale( object->scale * 0.5f );
 
-            float inv_translation_data[16];
-            float inv_scale_data[16];            
-            math::build_translation( inv_translation_data, -object->position );
-            math::build_scale( inv_scale_data, 1.0f / ( object->scale * 0.5f ) );
-            vectorial::mat4f inv_translation;
+            vectorial::mat4f inv_translation = vectorial::mat4f::translation( -object->position );
             vectorial::mat4f inv_rotation = transpose( rotation );
-            vectorial::mat4f inv_scale;
-            inv_translation.load( inv_translation_data );
-            inv_scale.load( inv_scale_data );
+            vectorial::mat4f inv_scale = vectorial::mat4f::scale( 1.0f / ( object->scale * 0.5f ) );
 
             renderState.cube[i].transform = translation * rotation * scale;
             renderState.cube[i].inverse_transform = inv_rotation * inv_translation * inv_scale;
@@ -230,27 +209,29 @@ namespace view
 
 	Camera::Camera()
 	{
-		position = math::Vector(0,0,0);
-		lookat = math::Vector(0,0,0);
-		up = math::Vector(0,0,1);
+		position = vectorial::vec3f::zero();
+		lookat = vectorial::vec3f::zero();
+		up = vectorial::vec3f(0,0,1);
 	}
 
-	void Camera::EaseIn( const math::Vector & new_lookat, const math::Vector & new_position )
+	void Camera::EaseIn( const vectorial::vec3f & new_lookat, const vectorial::vec3f & new_position )
 	{
-		if ( ( new_lookat - lookat ).lengthSquared() > 0.000001f )
+		const float epsilon = 0.00001f;
+
+		if ( vectorial::length_squared( new_lookat - lookat ) > epsilon )
 			lookat += ( new_lookat - lookat ) * 0.15f;
 
-		if ( ( new_position - position ).lengthSquared() > 0.000001f )
+		if ( vectorial::length_squared( new_position - position ) > epsilon )
 			position += ( new_position - position ) * 0.15f;
 		
-		up = ( position - lookat ).cross( math::Vector(1,0,0) );
+		up = vectorial::cross( position - lookat, vectorial::vec3f(1,0,0) );
 	}
 
-	void Camera::Snap( const math::Vector & new_lookat, const math::Vector & new_position )
+	void Camera::Snap( const vectorial::vec3f & new_lookat, const vectorial::vec3f & new_position )
 	{
 		lookat = new_lookat;
 		position = new_position;
-		up = ( position - lookat ).cross( math::Vector(1,0,0) );
+		up = vectorial::cross( position - lookat, vectorial::vec3f(1,0,0) );
 	}
 
 	// ------------------------------------------------------
@@ -298,13 +279,10 @@ namespace view
 		{
 			updates[i].id = viewPacket.object[i].id;
 			updates[i].authority = viewPacket.object[i].authority;
-			updates[i].position = viewPacket.object[i].position;
-			updates[i].orientation = viewPacket.object[i].orientation;
-			updates[i].linearVelocity = viewPacket.object[i].linearVelocity;
-			updates[i].angularVelocity = viewPacket.object[i].angularVelocity;
+			updates[i].position = vectorial::vec3f( viewPacket.object[i].position.x, viewPacket.object[i].position.y, viewPacket.object[i].position.z );
+			updates[i].orientation = vectorial::quat4f( viewPacket.object[i].orientation.x, viewPacket.object[i].orientation.y, viewPacket.object[i].orientation.z, viewPacket.object[i].orientation.w );
 			updates[i].scale = viewPacket.object[i].scale;
 			updates[i].visible = !viewPacket.object[i].pendingDeactivation;
-			getAuthorityColor( updates[i].authority, updates[i].r, updates[i].g, updates[i].b );
 		}
 	}
 }
