@@ -1,4 +1,4 @@
-#include "protocol/NetworkBuffer.h"
+#include "protocol/SequenceBuffer.h"
 #include "core/Memory.h"
 
 struct TestPacketData
@@ -12,48 +12,48 @@ struct TestPacketData
     uint32_t sequence : 16;                 // packet sequence #
 };
 
-void test_network_buffer()
+void test_sequence_buffer()
 {
-    printf( "test_network_buffer\n" );
+    printf( "test_sequence_buffer\n" );
 
     core::memory::initialize();
     {
         const int size = 256;
 
-        protocol::NetworkBuffer<TestPacketData> network_buffer( core::memory::default_allocator(), size );
+        protocol::SequenceBuffer<TestPacketData> sequence_buffer( core::memory::default_allocator(), size );
 
         for ( int i = 0; i < size; ++i )
-            CORE_CHECK( network_buffer.Find(i) == nullptr );
+            CORE_CHECK( sequence_buffer.Find(i) == nullptr );
 
         for ( int i = 0; i <= size*4; ++i )
         {
-            auto entry = network_buffer.Insert( i );
+            auto entry = sequence_buffer.Insert( i );
             entry->sequence = i;
-            CORE_CHECK( network_buffer.GetSequence() == i + 1 );
+            CORE_CHECK( sequence_buffer.GetSequence() == i + 1 );
         }
 
         for ( int i = 0; i <= size; ++i )
         {
             // note: outside bounds!
-            auto entry = network_buffer.Insert( i );
+            auto entry = sequence_buffer.Insert( i );
             CORE_CHECK( !entry );
         }    
 
         int index = size*4;
         for ( int i = 0; i < size; ++i )
         {
-            auto entry = network_buffer.Find( index );
+            auto entry = sequence_buffer.Find( index );
             CORE_CHECK( entry );
             CORE_CHECK( entry->sequence == index );
             index--;
         }
 
-        network_buffer.Reset();
+        sequence_buffer.Reset();
 
-        CORE_CHECK( network_buffer.GetSequence() == 0 );
+        CORE_CHECK( sequence_buffer.GetSequence() == 0 );
 
         for ( int i = 0; i < size; ++i )
-            CORE_CHECK( network_buffer.Find(i) == nullptr );
+            CORE_CHECK( sequence_buffer.Find(i) == nullptr );
     }
 
     core::memory::shutdown();
@@ -67,7 +67,7 @@ void test_generate_ack_bits()
     {
         const int size = 256;
 
-        protocol::NetworkBuffer<TestPacketData> received_packets( core::memory::default_allocator(), size );
+        protocol::SequenceBuffer<TestPacketData> received_packets( core::memory::default_allocator(), size );
 
         uint16_t ack = -1;
         uint32_t ack_bits = -1;

@@ -2,7 +2,7 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Perhaps SequenceBuffer<T> is a better name than NetworkBuffer<T>
+    Perhaps SequenceBuffer<T> is a better name than SequenceBuffer<T>
 
     -------------------------------------------
 

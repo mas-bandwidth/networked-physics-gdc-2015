@@ -7,7 +7,7 @@
 #include "vectorial/vec3f.h"
 #include "vectorial/quat4f.h"
 #include "protocol/Stream.h"
-#include "protocol/NetworkBuffer.h"
+#include "protocol/SequenceBuffer.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 

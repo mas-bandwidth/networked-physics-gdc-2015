@@ -1,6 +1,7 @@
 // Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
 #include "protocol/ReliableMessageChannel.h"
+#include "protocol/BitArray.h"
 #include "core/Memory.h"
 
 namespace protocol
@@ -179,9 +180,9 @@ namespace protocol
 
         m_allocator = config.allocator ? config.allocator : &core::memory::default_allocator();
 
-        m_sendQueue = CORE_NEW( *m_allocator, NetworkBuffer<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
-        m_sentPackets = CORE_NEW( *m_allocator, NetworkBuffer<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
-        m_receiveQueue = CORE_NEW( *m_allocator, NetworkBuffer<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
+        m_sendQueue = CORE_NEW( *m_allocator, SequenceBuffer<SendQueueEntry>, *m_allocator, m_config.sendQueueSize );
+        m_sentPackets = CORE_NEW( *m_allocator, SequenceBuffer<SentPacketEntry>, *m_allocator, m_config.sentPacketsSize );
+        m_receiveQueue = CORE_NEW( *m_allocator, SequenceBuffer<ReceiveQueueEntry>, *m_allocator, m_config.receiveQueueSize );
 
         const int maxMessageType = m_config.messageFactory->GetNumTypes() - 1;
 
@@ -193,8 +194,9 @@ namespace protocol
 
         m_maxBlockFragments = (int) ceil( m_config.maxLargeBlockSize / (float)m_config.blockFragmentSize );
 
-        m_sendLargeBlock.fragments = CORE_NEW_ARRAY( *m_allocator, SendFragmentData, m_maxBlockFragments );
-        m_receiveLargeBlock.fragments = CORE_NEW_ARRAY( *m_allocator, ReceiveFragmentData, m_maxBlockFragments );
+        m_sendLargeBlock.time_fragment_last_sent = CORE_NEW_ARRAY( *m_allocator, double, m_maxBlockFragments );
+        m_sendLargeBlock.acked_fragment = CORE_NEW( *m_allocator, BitArray, *m_allocator, m_maxBlockFragments );
+        m_receiveLargeBlock.received_fragment = CORE_NEW( *m_allocator, BitArray, *m_allocator, m_maxBlockFragments );
         m_sentPacketMessageIds = CORE_NEW_ARRAY( *m_allocator, uint16_t, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
 
         Reset();
@@ -208,24 +210,27 @@ namespace protocol
         CORE_ASSERT( m_sentPackets );
         CORE_ASSERT( m_receiveQueue );
 
-        CORE_DELETE( *m_allocator, NetworkBuffer<SendQueueEntry>, m_sendQueue );
-        CORE_DELETE( *m_allocator, NetworkBuffer<SentPacketEntry>, m_sentPackets );
-        CORE_DELETE( *m_allocator, NetworkBuffer<ReceiveQueueEntry>, m_receiveQueue );
+        CORE_DELETE( *m_allocator, SequenceBuffer<SendQueueEntry>, m_sendQueue );
+        CORE_DELETE( *m_allocator, SequenceBuffer<SentPacketEntry>, m_sentPackets );
+        CORE_DELETE( *m_allocator, SequenceBuffer<ReceiveQueueEntry>, m_receiveQueue );
 
         CORE_ASSERT( m_sentPacketMessageIds );
-        CORE_ASSERT( m_sendLargeBlock.fragments );
-        CORE_ASSERT( m_receiveLargeBlock.fragments );
+        CORE_ASSERT( m_sendLargeBlock.time_fragment_last_sent );
+        CORE_ASSERT( m_sendLargeBlock.acked_fragment );
+        CORE_ASSERT( m_receiveLargeBlock.received_fragment );
 
         CORE_DELETE_ARRAY( *m_allocator, m_sentPacketMessageIds, m_config.maxMessagesPerPacket * m_config.sendQueueSize );
-        CORE_DELETE_ARRAY( *m_allocator, m_sendLargeBlock.fragments, m_maxBlockFragments );
-        CORE_DELETE_ARRAY( *m_allocator, m_receiveLargeBlock.fragments, m_maxBlockFragments );
+        CORE_DELETE_ARRAY( *m_allocator, m_sendLargeBlock.time_fragment_last_sent, m_maxBlockFragments );
+        CORE_DELETE( *m_allocator, BitArray, m_sendLargeBlock.acked_fragment );
+        CORE_DELETE( *m_allocator, BitArray, m_receiveLargeBlock.received_fragment );
 
         m_sendQueue = nullptr;
         m_sentPackets = nullptr;
         m_receiveQueue = nullptr;
         m_sentPacketMessageIds = nullptr;
-        m_sendLargeBlock.fragments = nullptr;
-        m_receiveLargeBlock.fragments = nullptr;
+        m_sendLargeBlock.time_fragment_last_sent = nullptr;
+        m_sendLargeBlock.acked_fragment = nullptr;
+        m_receiveLargeBlock.received_fragment = nullptr;
     }
 
     void ReliableMessageChannel::Reset()
@@ -308,6 +313,8 @@ namespace protocol
         CORE_ASSERT( entry );
         entry->message = message;
         entry->largeBlock = largeBlock;
+        entry->measuredBits = 0;
+        entry->timeLastSent = -1.0;
 
         if ( !largeBlock )
         {
@@ -361,6 +368,8 @@ namespace protocol
 
 //            printf( "dequeue for receive: %d\n", message->GetId() );
 
+        m_receiveQueue->Remove( m_receiveMessageId );
+
         m_counters[RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED]++;
 
         m_receiveMessageId++;
@@ -412,7 +421,10 @@ namespace protocol
                 CORE_ASSERT( m_sendLargeBlock.numFragments >= 0 );
                 CORE_ASSERT( m_sendLargeBlock.numFragments <= m_maxBlockFragments );
 
-                memset( &m_sendLargeBlock.fragments[0], 0, sizeof( SendFragmentData ) * m_sendLargeBlock.numFragments );
+                m_sendLargeBlock.acked_fragment->Clear();
+
+                for ( int i = 0; i < m_maxBlockFragments; ++i )
+                    m_sendLargeBlock.time_fragment_last_sent[i] = -1.0;
             }
 
             CORE_ASSERT( m_sendLargeBlock.active );
@@ -420,11 +432,11 @@ namespace protocol
             int fragmentId = -1;
             for ( int i = 0; i < m_sendLargeBlock.numFragments; ++i )
             {
-                auto & fragment = m_sendLargeBlock.fragments[i];
-                if ( !fragment.acked && fragment.timeLastSent + m_config.resendRate < m_timeBase.time )
+                if ( !m_sendLargeBlock.acked_fragment->GetBit(i) && 
+                      m_sendLargeBlock.time_fragment_last_sent[i] + m_config.resendRate < m_timeBase.time )
                 {
                     fragmentId = i;
-                    fragment.timeLastSent = m_timeBase.time;
+                    m_sendLargeBlock.time_fragment_last_sent[i] = m_timeBase.time;
                     break;
                 }
             }
@@ -465,6 +477,7 @@ namespace protocol
             sentPacketData->fragmentId = fragmentId;
             sentPacketData->timeSent = m_timeBase.time;
             sentPacketData->messageIds = nullptr;
+            sentPacketData->numMessageIds = 0;
 
             return data;
         }
@@ -524,8 +537,10 @@ namespace protocol
 
             auto sentPacketData = m_sentPackets->Insert( sequence );
             CORE_ASSERT( sentPacketData );
-            sentPacketData->largeBlock = 0;
             sentPacketData->acked = 0;
+            sentPacketData->largeBlock = 0;
+            sentPacketData->blockId = 0;
+            sentPacketData->fragmentId = 0;
             sentPacketData->timeSent = m_timeBase.time;
             const int sentPacketIndex = m_sentPackets->GetIndex( sequence );
             sentPacketData->messageIds = &m_sentPacketMessageIds[sentPacketIndex*m_config.maxMessagesPerPacket];
@@ -645,7 +660,7 @@ namespace protocol
                 uint8_t * blockData = (uint8_t*) m_config.largeBlockAllocator->Allocate( data->blockSize );
                 m_receiveLargeBlock.block.Connect( *m_config.largeBlockAllocator, blockData, data->blockSize );
                 
-                memset( &m_receiveLargeBlock.fragments[0], 0, sizeof( ReceiveFragmentData ) * numFragments );
+                m_receiveLargeBlock.received_fragment->Clear();
             }
 
             CORE_ASSERT( m_receiveLargeBlock.active );
@@ -678,16 +693,14 @@ namespace protocol
                 return false;
             }
 
-            auto & fragment = m_receiveLargeBlock.fragments[data->fragmentId];
-
-            if ( !fragment.received )
+            if ( !m_receiveLargeBlock.received_fragment->GetBit( data->fragmentId ) )
             {
 /*
                 printf( "received fragment " << data->fragmentId << " of large block " << m_receiveLargeBlock.blockId
                      << " (" << m_receiveLargeBlock.numReceivedFragments+1 << "/" << m_receiveLargeBlock.numFragments << ")" << endl;
                      */
 
-                fragment.received = 1;
+                m_receiveLargeBlock.received_fragment->SetBit( data->fragmentId );
 
                 Block & block = m_receiveLargeBlock.block;
 
@@ -821,7 +834,8 @@ namespace protocol
 //                        printf( "acked message %d\n", messageId );
 
                     m_config.messageFactory->Release( sendQueueEntry->message );
-                    sendQueueEntry->message = nullptr;
+
+                    m_sendQueue->Remove( messageId );
                 }
             }
 
@@ -831,16 +845,14 @@ namespace protocol
         {
             CORE_ASSERT( sentPacket->fragmentId < m_sendLargeBlock.numFragments );
 
-            auto & fragment = m_sendLargeBlock.fragments[sentPacket->fragmentId];
-
-            if ( !fragment.acked )
+            if ( !m_sendLargeBlock.acked_fragment->GetBit( sentPacket->fragmentId ) )
             {
                 /*
                 printf( "acked fragment " << sentPacket->fragmentId << " of large block " << m_sendLargeBlock.blockId 
                      << " (" << m_sendLargeBlock.numAckedFragments+1 << "/" << m_sendLargeBlock.numFragments << ")" << endl;
                      */
 
-                fragment.acked = true;
+                m_sendLargeBlock.acked_fragment->SetBit( sentPacket->fragmentId );
                 
                 m_sendLargeBlock.numAckedFragments++;
 
@@ -854,7 +866,8 @@ namespace protocol
                     CORE_ASSERT( sendQueueEntry );
 
                     m_config.messageFactory->Release( sendQueueEntry->message );                    
-                    sendQueueEntry->message = nullptr;
+
+                    m_sendQueue->Remove( sentPacket->blockId );
 
                     UpdateOldestUnackedMessageId();
                 }

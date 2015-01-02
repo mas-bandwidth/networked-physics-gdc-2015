@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"LOCK",
+				"LOCKSTEP_MODE_DETERMINISTIC"
+			],
+			[
+				"SNAPSHOT",
+				"SNAPSHOT_INTERPOLATION_HERMITE"
+			],
+			[
+				"mode",
+				"snapshot_mode_data"
+			],
+			[
 				"snapshot",
 				"snapshot_mode_data"
 			],
@@ -501,27 +513,88 @@
 	],
 	"file_history":
 	[
+		"/Users/gaffer/git/protocol/src/Protocol/SlidingWindow.h",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestNetworkBuffer.cpp",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestConnection.cpp",
+		"/Users/gaffer/git/protocol/WOULD BE NICE",
+		"/Users/gaffer/git/protocol/src/Protocol/Connection.h",
+		"/Users/gaffer/git/protocol/src/Game/SnapshotDemo.cpp",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestProtocol.cpp",
+		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/src/Protocol/ReliableMessageChannel.cpp",
+		"/Users/gaffer/git/protocol/src/Protocol/ReliableMessageChannel.h",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestSlidingWindow.cpp",
+		"/Users/gaffer/git/protocol/src/Protocol/NetworkBuffer.h",
+		"/Users/gaffer/git/protocol/tests/Core/TestCore.cpp",
+		"/Users/gaffer/git/protocol/src/Game/ReplayManager.cpp",
+		"/Users/gaffer/git/protocol/build/TestNetwork.make",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestStream.cpp",
+		"/Users/gaffer/git/protocol/src/Game/StoneDemo.cpp",
+		"/Users/gaffer/git/protocol/tests/Cubes/TestCubes.cpp",
+		"/Users/gaffer/git/protocol/src/Game/DemoManager.cpp",
+		"/Users/gaffer/git/protocol/src/Game/CubesDemo.h",
+		"/Users/gaffer/git/protocol/src/Game/Demo.h",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/src/Game/LockstepDemo.cpp",
+		"/Users/gaffer/git/protocol/BUGS",
 		"/Users/gaffer/git/protocol/src/Game/LockstepDemo.h",
 		"/Users/gaffer/git/protocol/src/Game/SnapshotDemo.h",
-		"/Users/gaffer/git/protocol/src/Game/DemoManager.cpp",
-		"/Users/gaffer/git/protocol/src/Game/LockstepDemo.cpp",
-		"/Users/gaffer/git/protocol/src/Game/StoneDemo.cpp",
-		"/Users/gaffer/git/protocol/TODO",
-		"/Users/gaffer/git/protocol/src/Game/SnapshotDemo.cpp",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/external/ode/CHANGELOG.txt",
-		"/Users/gaffer/git/protocol/src/Protocol/SlidingWindow.h",
 		"/Users/gaffer/git/protocol/src/Game/StoneDemo.h",
+		"/Users/gaffer/git/protocol/tests/Network/TestAddress.cpp",
 		"/Users/gaffer/git/protocol/src/Game/DemoManager.h",
-		"/Users/gaffer/git/protocol/src/Game/Demo.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/TestProtocol/TestRingBuffer.d",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/TestProtocol/TestReliableMessageChannel.d",
+		"/Users/gaffer/git/protocol/tests/Network/TestPackets.h",
 		"/Users/gaffer/git/protocol/src/Protocol/Stream.h",
+		"/Users/gaffer/git/protocol/external/ode/tests/joints/slider.cpp",
+		"/Users/gaffer/git/protocol/build/TestCubes.make",
+		"/Users/gaffer/git/protocol/src/Protocol/BitArray.h",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestBitArray.cpp",
+		"/Users/gaffer/git/protocol/src/VirtualGo/RigidBody.h",
+		"/Users/gaffer/git/protocol/src/Protocol/RingBuffer.h",
+		"/Users/gaffer/git/protocol/src/Network/Interface.h",
+		"/Users/gaffer/git/protocol/NEXT",
+		"/Users/gaffer/git/protocol/src/Core/Allocator.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Activation.h",
+		"/Users/gaffer/git/protocol/tests/Protocol/TestRingBuffer.cpp",
+		"/Users/gaffer/git/protocol/src/VirtualGo/Biconvex.cpp",
+		"/Users/gaffer/git/protocol/external/ode/CHANGELOG.txt",
+		"/Users/gaffer/git/protocol/external/ode/ode/demo/demo_tracks.cpp",
+		"/Users/gaffer/git/protocol/src/VirtualGo/CollisionDetection.h",
+		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/DeferredTestReporter.cpp",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/ShaderManager.d",
+		"/Users/gaffer/git/protocol/external/ode/ode/demo/demo_transmission.cpp",
+		"/Users/gaffer/git/protocol/external/ode/ode/src/.deps/collision_trimesh_trimesh_new.Plo",
+		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/Makefile.in",
+		"/Users/gaffer/git/protocol/src/Cubes/Mathematics.h",
+		"/Users/gaffer/git/protocol/src/Game/Font.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
+		"/Users/gaffer/git/protocol/external/vectorial/vec4f.h",
+		"/Users/gaffer/git/protocol/external/vectorial/vec3f.h",
+		"/Users/gaffer/git/protocol/src/Cubes/View.h",
+		"/Users/gaffer/git/protocol/external/ode/GIMPACT/include/GIMPACT/gim_math.h",
+		"/Users/gaffer/git/protocol/external/ode/GIMPACT/src/gim_math.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Cubes.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Config.h",
+		"/Users/gaffer/git/protocol/src/Game/Cubes.h",
+		"/Users/gaffer/git/protocol/src/Cubes/View.cpp",
+		"/Users/gaffer/git/protocol/external/vectorial/quat4f.h",
+		"/Users/gaffer/git/protocol/build/obj/x64/Debug/Client/FontManager.d",
+		"/Users/gaffer/git/protocol/src/Protocol/Object.h",
+		"/Users/gaffer/git/protocol/data/shaders/Cubes.vert",
+		"/Users/gaffer/git/protocol/NOTES",
+		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_OBBCollider.cpp",
+		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_HybridModel.cpp",
+		"/Users/gaffer/git/protocol/external/vectorial/vec2f.h",
+		"/Users/gaffer/git/protocol/external/vectorial/simd4f_gnu.h",
+		"/Users/gaffer/git/protocol/external/vectorial/mat4f.h",
+		"/Users/gaffer/git/protocol/src/Core/Queue.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Hypercube.h",
+		"/Users/gaffer/git/protocol/external/ode/ou/LICENSE-ZLIB.TXT",
 		"/Users/gaffer/git/protocol/src/Network/Simulator.cpp",
 		"/Users/gaffer/git/protocol/src/Network/Simulator.h",
-		"/Users/gaffer/git/protocol/WOULD BE NICE",
 		"/Users/gaffer/git/protocol/src/Cubes/Simulation.cpp",
-		"/Users/gaffer/git/protocol/src/Game/CubesDemo.h",
-		"/Users/gaffer/git/protocol/src/Game/Cubes.h",
-		"/Users/gaffer/git/protocol/data/shaders/Cubes.vert",
 		"/Users/gaffer/git/protocol/external/ode/ou/LICENSE-LESSER.TXT",
 		"/Users/gaffer/git/protocol/build/ProfileClientServer.make",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/quickstep.cpp",
@@ -529,32 +602,18 @@
 		"/Users/gaffer/git/protocol/build/StoneTool.make",
 		"/Users/gaffer/git/protocol/tests/Protocol/SoakProtocol.cpp",
 		"/Users/gaffer/git/protocol/external/ode/ode-config",
-		"/Users/gaffer/git/protocol/src/Core/Queue.h",
 		"/Users/gaffer/git/protocol/src/Game/CubesDemo.cpp",
 		"/Users/gaffer/git/protocol/src/Core/Log.h",
-		"/Users/gaffer/git/protocol/premake4.lua",
 		"/Users/gaffer/git/protocol/src/Game/Game.cpp",
-		"/Users/gaffer/git/protocol/external/vectorial/quat4f.h",
 		"/Users/gaffer/git/protocol/SNAPSHOTS",
-		"/Users/gaffer/git/protocol/src/Cubes/View.h",
-		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
-		"/Users/gaffer/git/protocol/src/Game/Cubes.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/View.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Activation.h",
-		"/Users/gaffer/git/protocol/src/Cubes/Hypercube.h",
 		"/Users/gaffer/git/protocol/src/Core/Core.h",
 		"/Users/gaffer/git/protocol/src/Cubes/Activation.cpp",
 		"/Users/gaffer/git/protocol/src/Network/Address.h",
-		"/Users/gaffer/git/protocol/src/Cubes/Mathematics.h",
 		"/Users/gaffer/git/protocol/src/Game/InputManager.h",
 		"/Users/gaffer/git/protocol/data/shaders/Stone.vert",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/.deps/collision_quadtreespace.Plo",
-		"/Users/gaffer/git/protocol/external/vectorial/vec3f.h",
-		"/Users/gaffer/git/protocol/external/vectorial/vec2f.h",
 		"/Users/gaffer/git/protocol/src/Game/CommandLine.cpp",
 		"/Users/gaffer/git/protocol/external/ode/test-driver",
-		"/Users/gaffer/git/protocol/NEXT",
-		"/Users/gaffer/git/protocol/NOTES",
 		"/Users/gaffer/git/protocol/obj/x64/Debug/Network/Network.d",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/joints/.deps/hinge.Plo",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/joints/hinge.cpp",
@@ -567,18 +626,13 @@
 		"/Users/gaffer/git/protocol/src/Network/Address.cpp",
 		"/Users/gaffer/Desktop/hacker news",
 		"/Users/gaffer/Desktop/backup.txt",
-		"/Users/gaffer/git/protocol/src/Network/Interface.h",
 		"/Users/gaffer/git/protocol/src/Protocol/PacketFactory.h",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/fastdot.c",
-		"/Users/gaffer/git/protocol/src/Game/Font.cpp",
 		"/Users/gaffer/git/protocol/src/Core/Core.cpp",
-		"/Users/gaffer/git/protocol/tests/Network/TestAddress.cpp",
 		"/Users/gaffer/git/protocol/external/ode/ode/TODO",
 		"/Users/gaffer/Desktop/backup-gafferongames.com-12-25-2014/public_html/wp-config.php",
 		"/Users/gaffer/Downloads/backup-gafferongames.com-12-25-2014/public_html/wp-config.php",
 		"/Users/gaffer/git/protocol/src/Protocol/Channel.cpp",
-		"/Users/gaffer/git/protocol/tests/Core/TestCore.cpp",
-		"/Users/gaffer/git/protocol/src/Game/ReplayManager.cpp",
 		"/Users/gaffer/git/protocol/src/Game/ReplayManager.h",
 		"/Users/gaffer/git/protocol/src/Game/InputManager.cpp",
 		"/Users/gaffer/git/protocol/src/Protocol/DataBlockSender.cpp",
@@ -586,49 +640,7 @@
 		"/Users/gaffer/git/protocol/external/ode/bindings/python/TODO.txt",
 		"/Users/gaffer/git/protocol/external/nvImage/rgbe.h",
 		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/ReportAssert.h",
-		"/Users/gaffer/git/protocol/src/Protocol/ReliableMessageChannel.cpp",
-		"/Users/gaffer/git/protocol/external/ode/include/ode/compatibility.h",
-		"/Users/gaffer/git/protocol/external/ode/ode/src/.deps/capsule.Plo",
-		"/Users/gaffer/git/protocol/external/ode/ode/src/capsule.cpp",
-		"/Users/gaffer/git/protocol/external/ode/ode/demo/demo_kinematic.cpp",
-		"/Users/gaffer/git/protocol/tests/Protocol/TestSlidingWindow.cpp",
-		"/Users/gaffer/git/protocol/src/Protocol/ProtocolConstants.h",
-		"/Users/gaffer/git/protocol/external/ode/ode/src/lcp.cpp",
-		"/Users/gaffer/git/protocol/tests/ClientServer/TestCommon.h",
-		"/Users/gaffer/git/protocol/tests/Protocol/TestConnection.cpp",
-		"/Users/gaffer/git/protocol/tests/Protocol/TestPacketFactory.cpp",
-		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/.deps/DeferredTestResult.Plo",
-		"/Users/gaffer/git/protocol/external/ode/drawstuff/textures/ground.ppm",
-		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/TestReporterStdout.cpp",
-		"/Users/gaffer/git/protocol/external/ode/tests/joints/universal.cpp",
-		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_IceHook.h",
-		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_HybridModel.cpp",
-		"/Users/gaffer/git/protocol/external/ode/OPCODE/.deps/OPC_HybridModel.Plo",
-		"/Users/gaffer/git/protocol/src/Protocol/Packet.h",
-		"/Users/gaffer/git/protocol/build/SoakProtocol.make",
-		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_SphereTriOverlap.h",
-		"/Users/gaffer/git/protocol/src/Cubes/Config.h",
-		"/Users/gaffer/git/protocol/tests/Protocol/TestStream.cpp",
-		"/Users/gaffer/git/protocol/tests/Network/TestPackets.h",
-		"/Users/gaffer/git/protocol/tests/Protocol/TestProtocol.cpp",
-		"/Users/gaffer/git/protocol/Core.make",
-		"/Users/gaffer/git/protocol/build/TestProtocol.make",
-		"/Users/gaffer/git/protocol/Network.make",
-		"/Users/gaffer/git/protocol/src/Protocol/Object.h",
-		"/Users/gaffer/git/protocol/data/shaders/Phong.frag",
-		"/Users/gaffer/git/protocol/external/ode/bindings/python/setup.py",
-		"/Users/gaffer/git/protocol/src/ClientServer/Client.cpp",
-		"/Users/gaffer/git/protocol/src/ClientServer/Client.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerConstants.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerContext.cpp",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerContext.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerDataBlock.cpp",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerDataBlock.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/ClientServerEnums.h",
-		"/Users/gaffer/git/protocol/src/ClientServer/Server.cpp",
-		"/Users/gaffer/git/protocol/src/Network/DNSResolver.cpp",
-		"/Users/gaffer/git/protocol/src/Core/Config.h",
-		"/Users/gaffer/git/protocol/src/Core/Array.h"
+		"/Users/gaffer/git/protocol/external/ode/include/ode/compatibility.h"
 	],
 	"find":
 	{
@@ -639,6 +651,7 @@
 		"height": 93.0,
 		"where_history":
 		[
+			"-CHANGES,-TODO,-WOULDBENICE",
 			"-CHANGES,-TODO",
 			"<open files>",
 			"-CHANGES,-TODO",
@@ -678,6 +691,42 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"NetworkBuffer",
+			"NetworkBuffer.h",
+			"network_buffer",
+			"NetworkBuffer",
+			"test_connection()",
+			"valid",
+			"GetAtIndex",
+			"HasSlotAvailable",
+			".valid",
+			"GetDefaultMode",
+			"RingBuffer",
+			"Lockstep",
+			"ring_buffer",
+			"NetorkBuffer",
+			"SlidingWindow.h",
+			"slidingWindow.",
+			"Sliding",
+			"SlidingWindow.h",
+			"slidingWindow.",
+			"SlidingWindow<",
+			"printf",
+			"sliding_window",
+			"SlidingWindow.h",
+			"quat4f( ",
+			"updateState",
+			"getViewObjectUpdates",
+			"computer",
+			"normalize",
+			"extrapolation",
+			"Extar",
+			"Extrapolate",
+			"ColorChangeTightnessDefault",
+			"authority",
+			"->r",
+			"->Update(",
+			"->Update",
 			"accumulator",
 			"SnapshotDemo",
 			"LockstepInternal );",
@@ -769,43 +818,7 @@
 			"dSINGLE",
 			"display",
 			"displayWidth",
-			"displayWidthglob",
-			"displayWidth",
-			"ResizeDisplay",
-			"ResizeDIsplay",
-			"BeginScene",
-			"render_scene",
-			"Clear(",
-			"demo->Clear",
-			"GetDEmo",
-			"bool interpolation",
-			"GetViewPacket",
-			"mergeViewObjectSets",
-			"numSS",
-			"CORE_DELETE_ARRAY",
-			"origin",
-			"+load cubes",
-			"+demo cubes",
-			"\"+demo cubes",
-			"\"Cubes\"",
-			"CubesInternal",
-			"DebugVertex",
-			"Steps",
-			"glm::",
-			"DEBUG_SHADOW",
-			"CAPTURE",
-			"UpdateCapture",
-			"cubes",
-			"Thread",
-			"Window",
-			"buffer",
-			"TGA",
-			"SerializeBytes",
-			"align",
-			"RecordCommandLine",
-			"playback",
-			"Abort",
-			"IsOverflow"
+			"displayWidthglob"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -813,6 +826,13 @@
 		"regex": false,
 		"replace_history":
 		[
+			"SequenceBuffer",
+			"sequence_buffer",
+			"SequenceBuffer",
+			"sliding_window",
+			"network_buffer.",
+			"NetworkBuffer<",
+			"ring_buffer",
 			"CORE_ASSERT",
 			"CORE_ASSERT_CLOSE",
 			"CORE_ASSERT",
@@ -892,7 +912,7 @@
 	"project": "Protocol.sublime-project",
 	"replace":
 	{
-		"height": 48.0
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -901,16 +921,192 @@
 		"selected_items":
 		[
 			[
+				"testnet",
+				"tests/Protocol/TestNetworkBuffer.cpp"
+			],
+			[
+				"networkbuffer.h",
+				"src/Protocol/NetworkBuffer.h"
+			],
+			[
+				"testnetworkbuffer.cpp",
+				"tests/Protocol/TestNetworkBuffer.cpp"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
+			],
+			[
 				"todo",
 				"TODO"
+			],
+			[
+				"reliablemessagechannel.h",
+				"src/Protocol/ReliableMessageChannel.h"
+			],
+			[
+				"reliablemessagechannel.cpp",
+				"src/Protocol/ReliableMessageChannel.cpp"
+			],
+			[
+				"woludbe",
+				"WOULD BE NICE"
+			],
+			[
+				"slidingwindow.h",
+				"src/Protocol/SlidingWindow.h"
+			],
+			[
+				"slidingwindow.cpp",
+				"tests/Protocol/TestSlidingWindow.cpp"
+			],
+			[
+				"lockstepdemo.cpp",
+				"src/Game/LockstepDemo.cpp"
+			],
+			[
+				"bugs",
+				"BUGS"
+			],
+			[
+				"demomanager.cpp",
+				"src/Game/DemoManager.cpp"
+			],
+			[
+				"lockstep",
+				"src/Game/LockstepDemo.cpp"
+			],
+			[
+				"testprotocol.cpp",
+				"tests/Protocol/TestProtocol.cpp"
+			],
+			[
+				"slidingwind",
+				"src/Protocol/SlidingWindow.h"
+			],
+			[
+				"testslid",
+				"tests/Protocol/TestSlidingWindow.cpp"
+			],
+			[
+				"wouldbenice",
+				"WOULD BE NICE"
+			],
+			[
+				"testcubes.cpp",
+				"tests/Cubes/TestCubes.cpp"
+			],
+			[
+				"rigidbody.h",
+				"src/VirtualGo/RigidBody.h"
+			],
+			[
+				"bitarray.h",
+				"src/Protocol/BitArray.h"
+			],
+			[
+				"allocator.h",
+				"src/Core/Allocator.h"
+			],
+			[
+				"wouldbe",
+				"WOULD BE NICE"
+			],
+			[
+				"would",
+				"WOULD BE NICE"
+			],
+			[
+				"testring",
+				"tests/Protocol/TestRingBuffer.cpp"
+			],
+			[
+				"ringbuffer.h",
+				"src/Protocol/RingBuffer.h"
+			],
+			[
+				"bit",
+				"src/Protocol/BitArray.h"
 			],
 			[
 				"changes",
 				"CHANGES"
 			],
 			[
-				"lockstepdemo.cpp",
-				"src/Game/LockstepDemo.cpp"
+				"wouldbencie",
+				"WOULD BE NICE"
+			],
+			[
+				"testcore.cpp",
+				"tests/Core/TestCore.cpp"
+			],
+			[
+				"testsli",
+				"tests/Protocol/TestSlidingWindow.cpp"
+			],
+			[
+				"slid",
+				"src/Protocol/SlidingWindow.h"
+			],
+			[
+				"slidnigwindow.h",
+				"src/Protocol/SlidingWindow.h"
+			],
+			[
+				"vec4f.h",
+				"external/vectorial/vec4f.h"
+			],
+			[
+				"math",
+				"src/Cubes/Mathematics.h"
+			],
+			[
+				"math.h",
+				"external/ode/GIMPACT/include/GIMPACT/gim_math.h"
+			],
+			[
+				"wuoldbenice",
+				"WOULD BE NICE"
+			],
+			[
+				"snapshotdemo.cpp",
+				"src/Game/SnapshotDemo.cpp"
+			],
+			[
+				"quat4f.h",
+				"external/vectorial/quat4f.h"
+			],
+			[
+				"view.cpp",
+				"src/Cubes/View.cpp"
+			],
+			[
+				"view.h",
+				"src/Cubes/View.h"
+			],
+			[
+				"cubes.cpp",
+				"src/Game/Cubes.cpp"
+			],
+			[
+				"viwe.cpp",
+				"src/Cubes/View.cpp"
+			],
+			[
+				"quatf.h",
+				"external/vectorial/quat4f.h"
+			],
+			[
+				"cubes.h",
+				"src/Game/Cubes.h"
+			],
+			[
+				"hyper",
+				"src/Cubes/Hypercube.h"
+			],
+			[
+				"game.h",
+				"src/Cubes/Game.h"
 			],
 			[
 				"stonedemo.cpp",
@@ -925,28 +1121,12 @@
 				"src/Game/LockstepDemo.h"
 			],
 			[
-				"demomanager.cpp",
-				"src/Game/DemoManager.cpp"
-			],
-			[
-				"snapshotdemo.cpp",
-				"src/Game/SnapshotDemo.cpp"
-			],
-			[
-				"wouldbenice",
-				"WOULD BE NICE"
-			],
-			[
 				"simulator.h",
 				"src/Network/Simulator.h"
 			],
 			[
 				"simulator.cpp",
 				"src/Network/Simulator.cpp"
-			],
-			[
-				"cubes.h",
-				"src/Game/Cubes.h"
 			],
 			[
 				"demomanager.h",
@@ -989,28 +1169,12 @@
 				"src/Game/CubesDemo.cpp"
 			],
 			[
-				"game.h",
-				"src/Cubes/Game.h"
-			],
-			[
-				"cubes.cpp",
-				"src/Game/Cubes.cpp"
-			],
-			[
 				"hy",
 				"src/Cubes/Hypercube.h"
 			],
 			[
-				"view.cpp",
-				"src/Cubes/View.cpp"
-			],
-			[
 				"game.cpp",
 				"src/Game/Game.cpp"
-			],
-			[
-				"view.h",
-				"src/Cubes/View.h"
 			],
 			[
 				"core.h",
@@ -1021,16 +1185,8 @@
 				"src/Cubes/Activation.h"
 			],
 			[
-				"math",
-				"src/Cubes/Mathematics.h"
-			],
-			[
 				"hyp",
 				"src/Cubes/Hypercube.h"
-			],
-			[
-				"quat4f.h",
-				"external/vectorial/quat4f.h"
 			],
 			[
 				"vec3fh",
@@ -1049,18 +1205,6 @@
 				"TODO"
 			],
 			[
-				"woludbe",
-				"WOULD BE NICE"
-			],
-			[
-				"wouldbe",
-				"WOULD BE NICE"
-			],
-			[
-				"premake4.lua",
-				"premake4.lua"
-			],
-			[
 				"commandline.cpp",
 				"src/Game/CommandLine.cpp"
 			],
@@ -1073,16 +1217,8 @@
 				"CHANGES"
 			],
 			[
-				"lockstep",
-				"src/Game/LockstepDemo.cpp"
-			],
-			[
 				"lockstep.",
 				"src/Game/LockstepDemo.cpp"
-			],
-			[
-				"slidingwindow.h",
-				"src/Protocol/SlidingWindow.h"
 			],
 			[
 				"lockstep.cpp",
@@ -1109,10 +1245,6 @@
 				"src/Game/InputManager.cpp"
 			],
 			[
-				"testcore.cpp",
-				"tests/Core/TestCore.cpp"
-			],
-			[
 				"lcokstep",
 				"src/Game/LockstepDemo.cpp"
 			],
@@ -1135,14 +1267,6 @@
 			[
 				"core.cpp",
 				"src/Core/Core.cpp"
-			],
-			[
-				"testprotocol.cpp",
-				"tests/Protocol/TestProtocol.cpp"
-			],
-			[
-				"testslid",
-				"tests/Protocol/TestSlidingWindow.cpp"
 			],
 			[
 				"object.h",
@@ -1199,14 +1323,6 @@
 			[
 				"main.cpp",
 				"external/ode/tests/main.cpp"
-			],
-			[
-				"bugs",
-				"BUGS"
-			],
-			[
-				"would",
-				"WOULD BE NICE"
 			],
 			[
 				"chang",
@@ -1315,102 +1431,6 @@
 			[
 				"interpolationdemo.h",
 				"src/Game/InterpolationDemo.h"
-			],
-			[
-				"cubedemo.h",
-				"src/Game/CubesDemo.h"
-			],
-			[
-				"cubedemo",
-				"src/Game/CubesDemo.cpp"
-			],
-			[
-				"cubes.frag",
-				"data/shaders/Cubes.frag"
-			],
-			[
-				"config.h",
-				"src/Cubes/Config.h"
-			],
-			[
-				"debug.vert",
-				"data/shaders/Debug.vert"
-			],
-			[
-				"server.cpp",
-				"src/ClientServer/Server.cpp"
-			],
-			[
-				"shadow.frag",
-				"data/shaders/Shadow.frag"
-			],
-			[
-				"shadow.vert",
-				"data/shaders/Shadow.vert"
-			],
-			[
-				"model.cpp",
-				"src/Game/Model.cpp"
-			],
-			[
-				"activation.cpp",
-				"src/Cubes/Activation.cpp"
-			],
-			[
-				"config",
-				"src/Cubes/Config.h"
-			],
-			[
-				"activation.h",
-				"src/Cubes/Activation.h"
-			],
-			[
-				"cubes",
-				"data/shaders/Cubes.vert"
-			],
-			[
-				"model.h",
-				"src/Game/Model.h"
-			],
-			[
-				"mesh.cpp",
-				"src/Game/MeshManager.cpp"
-			],
-			[
-				"font.cpp",
-				"src/Game/Font.cpp"
-			],
-			[
-				"cubeslit.vert",
-				"data/shaders/CubesLit.vert"
-			],
-			[
-				"cubeslit.frag",
-				"data/shaders/CubesLit.frag"
-			],
-			[
-				"meshmanager.cpp",
-				"src/Game/MeshManager.cpp"
-			],
-			[
-				"stone.cp",
-				"src/Game/StoneDemo.cpp"
-			],
-			[
-				"client.cpp",
-				"src/ClientServer/Client.cpp"
-			],
-			[
-				"mathem",
-				"src/Cubes/Mathematics.h"
-			],
-			[
-				"cubeunlit.vert",
-				"data/shaders/CubeUnlit.vert"
-			],
-			[
-				"cubelit.vert",
-				"data/shaders/CubeLit.vert"
 			]
 		],
 		"width": 0.0

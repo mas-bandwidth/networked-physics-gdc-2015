@@ -99,7 +99,7 @@ namespace clientServer
 
         ClientServerContext m_clientServerContext;
 
-        const void * m_context[protocol::MaxContexts];          // todo: urgh
+        const void * m_context[protocol::MaxContexts];
 
     public:
 

@@ -118,7 +118,9 @@ namespace protocol
         for ( int i = 0; i < m_numChannels; ++i )
             packet->channelData[i] = m_channels[i]->GetData( packet->sequence );
 
-        m_sentPackets->Insert( packet->sequence );
+        auto entry = m_sentPackets->Insert( packet->sequence );
+        CORE_ASSERT( entry );
+        entry->acked = 0;
 
         m_counters[CONNECTION_COUNTER_PACKETS_WRITTEN]++;
 

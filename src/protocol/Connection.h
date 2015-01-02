@@ -6,7 +6,7 @@
 #include "core/Core.h"
 #include "protocol/Stream.h"
 #include "protocol/Channel.h"
-#include "protocol/NetworkBuffer.h"
+#include "protocol/SequenceBuffer.h"
 #include "protocol/ConnectionPacket.h"
 
 namespace protocol
@@ -25,33 +25,10 @@ namespace protocol
         const void ** context = nullptr;
     };
 
-    struct SentPacketData
-    {
-        SentPacketData()
-            : valid(0), acked(0), sequence(0) {}
-
-        SentPacketData( uint16_t _sequence )
-            : valid(1), acked(0), sequence( _sequence ) {}
-
-        uint32_t valid : 1;                     // is this packet entry valid?
-        uint32_t acked : 1;                     // has packet been acked?
-        uint32_t sequence : 16;                 // packet sequence #
-    };
-
-    struct ReceivedPacketData
-    {
-        ReceivedPacketData()
-            : valid(0), sequence(0) {}
-
-        ReceivedPacketData( uint16_t _sequence )
-            : valid(1), sequence( _sequence ) {}
-
-        uint32_t valid : 1;                     // is this packet entry valid?
-        uint32_t sequence : 16;                 // packet sequence #
-    };
-
-    typedef NetworkBuffer<SentPacketData> SentPackets;
-    typedef NetworkBuffer<ReceivedPacketData> ReceivedPackets;
+    struct SentPacketData { uint8_t acked; };
+    struct ReceivedPacketData {};
+    typedef SequenceBuffer<SentPacketData> SentPackets;
+    typedef SequenceBuffer<ReceivedPacketData> ReceivedPackets;
 
     class Connection
     {

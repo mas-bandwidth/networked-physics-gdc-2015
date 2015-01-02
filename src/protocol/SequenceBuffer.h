@@ -1,7 +1,7 @@
 // Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
 
-#ifndef PROTOCOL_NETWORK_BUFFER_H
-#define PROTOCOL_NETWORK_BUFFER_H
+#ifndef PROTOCOL_SEQUENCE_BUFFER_H
+#define PROTOCOL_SEQUENCE_BUFFER_H
 
 #include "core/Core.h"
 #include "core/Allocator.h"
@@ -9,11 +9,11 @@
 
 namespace protocol
 {
-    template <typename T> class NetworkBuffer
+    template <typename T> class SequenceBuffer
     {
     public:
 
-        NetworkBuffer( core::Allocator & allocator, int size )
+        SequenceBuffer( core::Allocator & allocator, int size )
             : m_exists( allocator, size )
         {
             CORE_ASSERT( size > 0 );
@@ -26,7 +26,7 @@ namespace protocol
             Reset();
         }
 
-        ~NetworkBuffer()
+        ~SequenceBuffer()
         {
             CORE_ASSERT( m_entries );
             CORE_ASSERT( m_allocator );
@@ -68,6 +68,13 @@ namespace protocol
             m_entry_sequence[index] = sequence;
 
             return &m_entries[index];
+        }
+
+        void Remove( uint16_t sequence )
+        {
+            const int index = sequence % m_size;
+
+            m_exists.ClearBit( index );
         }
 
         bool IsAvailable( uint16_t sequence ) const
@@ -128,11 +135,11 @@ namespace protocol
         uint16_t * m_entry_sequence;
         T * m_entries;
 
-        NetworkBuffer( const NetworkBuffer<T> & other );
-        NetworkBuffer<T> & operator = ( const NetworkBuffer<T> & other );
+        SequenceBuffer( const SequenceBuffer<T> & other );
+        SequenceBuffer<T> & operator = ( const SequenceBuffer<T> & other );
     };
 
-    template <typename T> void GenerateAckBits( const NetworkBuffer<T> & packets, 
+    template <typename T> void GenerateAckBits( const SequenceBuffer<T> & packets, 
                                                 uint16_t & ack,
                                                 uint32_t & ack_bits )
     {

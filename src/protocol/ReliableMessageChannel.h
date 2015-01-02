@@ -7,7 +7,7 @@
 #include "BlockMessage.h"
 #include "MessageFactory.h"
 #include "MessageChannel.h"
-#include "NetworkBuffer.h"
+#include "SequenceBuffer.h"
 #include <math.h>
 
 namespace protocol
@@ -111,27 +111,12 @@ namespace protocol
             Message * message;
         };
 
-        struct SendFragmentData
-        {
-            double timeLastSent;
-            uint32_t acked : 1;
-            SendFragmentData()
-                : timeLastSent(-1), acked(0) {}
-        };
-
-        // todo: this can just become a bit array! much faster! less memory!
-        struct ReceiveFragmentData
-        {
-            uint32_t received : 1;
-            ReceiveFragmentData()
-                : received(0) {}
-        };
-
         struct SendLargeBlockData
         {
             SendLargeBlockData()
             {
-                fragments = nullptr;
+                acked_fragment = nullptr;
+                time_fragment_last_sent = nullptr;
                 Reset();
             }
 
@@ -149,14 +134,15 @@ namespace protocol
             int numAckedFragments;                      // number of acked fragments in current block being sent
             int blockSize;                              // send block size in bytes
             uint16_t blockId;                           // the message id for the current large block being sent
-            SendFragmentData * fragments;               // per-fragment data for send. array of size max fragments
+            BitArray * acked_fragment;                  // has fragment n been received?
+            double * time_fragment_last_sent;           // time fragment last sent in seconds.
         };
 
         struct ReceiveLargeBlockData
         {
             ReceiveLargeBlockData()
             {
-                fragments = nullptr;
+                received_fragment = nullptr;
                 Reset();
             }
 
@@ -175,9 +161,8 @@ namespace protocol
             int numReceivedFragments;                   // number of fragments received.
             uint16_t blockId;                           // block id being currently received.
             uint32_t blockSize;                         // block size in bytes.
+            BitArray * received_fragment;               // has fragment n been received?
             Block block;                                // the block being received.
-            // todo: bit array!
-            ReceiveFragmentData * fragments;            // per-fragment data for receive. array of size max fragments
         };
 
     public:
@@ -216,9 +201,9 @@ namespace protocol
         uint16_t m_receiveMessageId;                                        // id for next message to be received
         uint16_t m_oldestUnackedMessageId;                                  // id for oldest unacked message in send queue
 
-        NetworkBuffer<SendQueueEntry> * m_sendQueue;                        // message send queue
-        NetworkBuffer<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
-        NetworkBuffer<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
+        SequenceBuffer<SendQueueEntry> * m_sendQueue;                        // message send queue
+        SequenceBuffer<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
+        SequenceBuffer<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
 
         SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
         ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received

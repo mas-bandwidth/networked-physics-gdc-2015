@@ -1,4 +1,39 @@
 
+Thursday Afternoon, January 1st, 2015
+-------------------------------------
+
+    Sketch out bit array class.
+
+    Implement bit array class.
+
+    Unit test the bit array class.
+
+    Rename SlidingWindow<T> to NetworkBuffer<T>
+
+    Rename RingBuffer<T> to SlidingWindow<T>
+
+    Rework the NetworkBuffer<T> with hold/cold split.
+
+    Rename NetworkBuffer<T> to SequenceBuffer<T>. More descriptive.
+
+    Soak protocol hangs on large block receive. Something is wrong.
+
+    Check failed: ( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == NumAcks + 1 ), function test_connection, file ../tests/Protocol/TestConnection.cpp, line 69
+
+    Get all tests passing again.
+
+    Was an old sequence/valid combo in the connection sequence buffers going wrong.
+
+    Improved the large block recieve by using a bit array for the received fragments. Saves memory.
+
+    Could probably also save memory on the send, eg. hot/cold split between time last sent
+    and the acked array.
+
+    OK. I'm going to do that too.
+
+    Done. Back to snapshots!
+
+
 Thursday Morning, January 1st, 2015
 -----------------------------------
 

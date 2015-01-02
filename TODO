@@ -1,24 +1,7 @@
 DONE:
 
-    Sketch out bit array class.
-
-    Implement bit array class.
-
-    Unit test the bit array class.
-
-    Rename SlidingWindow<T> to NetworkBuffer<T>
-
-    Rename RingBuffer<T> to SlidingWindow<T>
-
 TODO:
 
-    Rework the NetworkBuffer<T> with hold/cold split.
-
-    Rename NetworkBuffer<T> to SequenceBuffer<T>. More descriptive.
-
-    -----------------------------------------------------------------------
-
-    It seems that other tests are not running. eg. connection, client/server?!
 
     -----------------------------------------------------------------------
 
