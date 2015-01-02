@@ -1,4 +1,12 @@
 
+Late Thursday Night, January 1st, 2015
+--------------------------------------
+
+    Convert the interpolation methods to output directly to view object update.
+
+    Saves an extra conversion step / copy.
+
+
 Thursday Evening, January 1st, 2015
 -----------------------------------
 

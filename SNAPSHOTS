@@ -13,6 +13,8 @@ SNAPSHOTS
 
     Sequence number. Discard older packets. sequence_more_recent function.
 
+    *** DONE ***
+
     --------------------------
 
     Try reducing the send rate to 10 packets per-second
@@ -21,29 +23,27 @@ SNAPSHOTS
 
     There is no simulation running on the right side, so what can we do?
 
+    *** DONE ***
+
     Linear interpolation.
 
     Hermite interpolation.
 
-    Can we do better? Probably. My math isn't good enough. 
+    ^--- Try the log/exp method from Tim Sweeney.
 
-    Also, I'm interpolating the quaternions across splines linearly, which is wrong.
+    *** SHOULD BE HERE SHORTLY ***
 
     --------------------------
 
-    Nyquist limit.
+    Nyquist limit for interpolation.
 
     May be able to do better if you also send the direction of rotation,
     then you could ensure the interpolation takes the longest rotation path
     where appropriate.
 
-    But the easiest way is to just limit the maximum speed of rotation.
+    But the easiest way is to just limit the maximum speed of rotation to something reasonable.
 
-    --------------------------
-
-    Playout delay buffer properties.
-
-    Basically the same as lockstep buffer?
+    Binary search to find it.
 
     --------------------------
 
@@ -53,9 +53,13 @@ SNAPSHOTS
 
     Calculate bandwidth used now.
 
+    Functions to do this already exist in the cube project (can be reduced to make easier, and tightened so the bound is a LOT smaller)
+
     --------------------------
 
     Compress the quaternion with smallest three.
+
+    Functions to do this already exist in the cube project.
 
     --------------------------
 

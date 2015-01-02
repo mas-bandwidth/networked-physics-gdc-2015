@@ -30,42 +30,6 @@ namespace vectorial
             return quat4f( axis.x() * s, axis.y() * s, axis.z() * s, c );
         }
 
-        /*
-        void to_matrix( mat4f & matrix ) const
-        {
-            const float _w = w();
-            const float _x = x();
-            const float _y = y();
-            const float _z = z();
-
-            const float fTx  = 2.0f * _x;
-            const float fTy  = 2.0f * _y;
-            const float fTz  = 2.0f * _z;
-
-            const float fTwx = fTx * _w;
-            const float fTwy = fTy * _w;
-            const float fTwz = fTz * _w;
-
-            const float fTxx = fTx * _x;
-            const float fTxy = fTy * _x;
-            const float fTxz = fTz * _x;
-
-            const float fTyy = fTy * _y;
-            const float fTyz = fTz * _y;
-            const float fTzz = fTz * _z;
-
-            const float array[] = 
-            {
-                1.0f - ( fTyy + fTzz ), fTxy + fTwz, fTxz - fTwy, 0,
-                fTxy - fTwz, 1.0f - ( fTxx + fTzz ), fTyz + fTwx, 0, 
-                fTxz + fTwy, fTyz - fTwx, 1.0f - ( fTxx + fTyy ), 0,
-                0, 0, 0, 1 
-            };
-
-            matrix.load( array );
-        }
-        */
-
         void to_axis_angle( vec3f & axis, float & angle, const float epsilonSquared = 0.001f * 0.001f ) const
         {
             const float squareLength = length_squared( *this );
