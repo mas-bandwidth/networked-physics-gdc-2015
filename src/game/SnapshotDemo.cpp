@@ -51,11 +51,11 @@ enum SnapshotInterpolation
 
 struct SnapshotModeData
 {
+    float playout_delay = 0.25f;        // one lost packet = no problem. two lost packets in a row = hitch
     float send_rate = 60.0f;
     float latency = 0.0f;
     float packet_loss = 0.0f;
     float jitter = 0.0f;
-    float playout_delay = 0.25f;
     SnapshotInterpolation interpolation = SNAPSHOT_INTERPOLATION_NONE;
 };
 
@@ -69,15 +69,18 @@ static void InitSnapshotModes()
     snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].jitter = 2 * 1.0f / 60.0f;
 
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].send_rate = 10.0f;
-//    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
 
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].send_rate = 10.0f;
-//    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].send_rate = 10.0f;
-//    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION;
 }
 
@@ -88,13 +91,17 @@ enum SnapshotPackets
     SNAPSHOT_NUM_PACKETS
 };
 
+//#define SERIALIZE_ANGULAR_VELOCITY
+
 struct CubeState
 {
     bool interacting;
     vectorial::vec3f position;
     vectorial::quat4f orientation;
     vectorial::vec3f linear_velocity;
+#ifdef SERIALIZE_ANGULAR_VELOCITY
     vectorial::vec3f angular_velocity;
+#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
 };
 
 template <typename Stream> void serialize_vector( Stream & stream, vectorial::vec3f & vector )
@@ -154,12 +161,16 @@ struct SnapshotNaivePacket : public protocol::Packet
             if ( has_velocity )
             {
                 serialize_vector( stream, cubes[i].linear_velocity );
+#ifdef SERIALIZE_ANGULAR_VELOCITY
                 serialize_vector( stream, cubes[i].angular_velocity );
+#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
             }
             else if ( Stream::IsReading )
             {
                 cubes[i].linear_velocity.zero();
+#ifdef SERIALIZE_ANGULAR_VELOCITY
                 cubes[i].angular_velocity.zero();
+#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
             }
         }
     }
@@ -218,11 +229,6 @@ static void InterpolateSnapshot_Linear( float t,
         output[i].id = i + 1;
         output[i].position = a[i].position + ( b[i].position - a[i].position ) * t;
         output[i].orientation = vectorial::slerp( t, a[i].orientation, b[i].orientation );
-        //output[i].orientation = vectorial::quat4f::identity();
-        /*
-        output[i].orientation = a[i].orientation + ( b[i].orientation - a[i].orientation ) * t;
-        output[i].orientation = normalize( output[i].orientation );
-        */
         output[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
         output[i].authority = a[i].interacting ? 0 : MaxPlayers;
         output[i].visible = true;
@@ -268,35 +274,6 @@ inline void hermite_spline( float t,
     output = normalize( h1*p0 + h2*p1 + h3*t0 + h4*t1 );
 }
 
-inline void hermite_spline_ln_exp( float t,
-                                   vectorial::quat4f p0, 
-                                   vectorial::quat4f p1,
-                                   vectorial::quat4f t0,
-                                   vectorial::quat4f t1,
-                                   vectorial::quat4f & output )
-{
-    p0 = vectorial::ln( p0 );
-    p1 = vectorial::ln( p1 );
-//    t0 = vectorial::ln( t0 );
-//    t1 = vectorial::ln( t1 );
-
-    if ( dot( p0, p1 ) < 0 )
-    {
-        p0 = - p0;
-        t0 = - t0;
-    }
-
-    const float t2 =  t*t;
-    const float t3 = t2*t;
-    const float h1 =  2*t3 - 3*t2 + 1;
-    const float h2 = -2*t3 + 3*t2;
-    const float h3 =    t3 - 2*t2 + t;
-    const float h4 =    t3 - t2;
-
-    output = vectorial::exp( h1*p0 + h2*p1 + h3*t0 + h4*t1 );
-//    output = vectorial::normalize( vectorial::exp( h1*p0 + h2*p1 + h3*t0 + h4*t1 ) );
-}
-
 static void InterpolateSnapshot_Hermite( float t, float step_size,
                                          const __restrict CubeState * a, 
                                          const __restrict CubeState * b, 
@@ -307,20 +284,6 @@ static void InterpolateSnapshot_Hermite( float t, float step_size,
         hermite_spline( t, a[i].position, b[i].position, a[i].linear_velocity * step_size, b[i].linear_velocity * step_size, output[i].position );
 
         output[i].orientation = vectorial::slerp( t, a[i].orientation, b[i].orientation );
-
-        /*
-        vectorial::quat4f spin_a = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation;
-        vectorial::quat4f spin_b = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation;
-        hermite_spline( t, a[i].orientation, b[i].orientation, spin_a * step_size, spin_b * step_size, output[i].orientation );
-        */
-
-        //output[i].orientation = vectorial::quat4f::identity();
-
-        /*
-        vectorial::quat4f spin_a = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation;
-        vectorial::quat4f spin_b = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation;
-        hermite_spline_ln_exp( t, a[i].orientation, b[i].orientation, spin_a * step_size, spin_b * step_size, output[i].orientation );
-        */
 
         output[i].id = i + 1;
         output[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
@@ -342,11 +305,7 @@ static void InterpolateSnapshot_Hermite_WithExtrapolation( float t, float step_s
         vectorial::vec3f t1 = b[i].linear_velocity * step_size;
         hermite_spline( t, p0, p1, t0, t1, output[i].position );
 
-        vectorial::quat4f q0 = a[i].orientation;
-        vectorial::quat4f q1 = b[i].orientation;
-        vectorial::quat4f s0 = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation * step_size;
-        vectorial::quat4f s1 = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation * step_size;
-        hermite_spline( t, q0, q1, s0, s1, output[i].orientation );
+        output[i].orientation = vectorial::slerp( t, a[i].orientation, b[i].orientation );
 
         output[i].id = i + 1;
         output[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
@@ -585,8 +544,6 @@ void SnapshotDemo::Update()
                 CORE_ASSERT( index >= 0 );
                 CORE_ASSERT( index < NumCubes );
 
-                // todo: yuck! convert the active object to use vectorial!
-
                 snapshot_packet->cubes[index].position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
 
                 snapshot_packet->cubes[index].orientation = vectorial::quat4f( object.orientation.x, 
@@ -598,9 +555,11 @@ void SnapshotDemo::Update()
                                                                                   object.linearVelocity.y,
                                                                                   object.linearVelocity.z );
 
+#ifdef SERIALIZE_ANGULAR_VELOCITY
                 snapshot_packet->cubes[index].angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
                                                                                    object.angularVelocity.y,
                                                                                    object.angularVelocity.z );
+#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
 
                 snapshot_packet->cubes[index].interacting = object.authority == 0;
             }
@@ -693,7 +652,8 @@ void SnapshotDemo::Update()
 
         m_snapshot->interpolation_buffer.GetViewUpdate( snapshot_mode_data[GetMode()], global.timeBase.time, object_updates, num_object_updates );
 
-        m_internal->view[1].objects.UpdateObjects( object_updates, num_object_updates );
+        if ( num_object_updates > 0 )
+            m_internal->view[1].objects.UpdateObjects( object_updates, num_object_updates );
     }
 
     // run the simulation

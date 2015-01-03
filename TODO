@@ -1,20 +1,30 @@
 DONE:
 
-TODO:
-
     Don't send angular velocity for hermite (not used)
 
-    Don't send lin/ang velocity for linear interpolation (not used)
+    Added #ifdef so I could easily bring this back (for example if hermite is working)
 
-    -----------------------------------------------------------------------
+    Turn +/-2 frames jitter and 5% packet loss on for linear and hermite interpolation
 
-    Design algorithm for interpolation, considering packet loss, jitter etc.
+    5% seems is too much. Seems that 2% is more reasonable.
+
+    Once looking good at 2%, try increasing to 5% but don't use 5% if it is necessary
+    to increase the amount of playout delay to compensate.
+
+    Fixed so if no objects exist in object update, it's not pushed to view, otherwise
+    simulation resets on missing interpolation snapshot and camera weirds out.
+
+TODO:
+
+    ----------------------------------------------------------------------
 
     Think hard. Grab a pen and paper, and design how it should work!
 
     -----------------------------------------------------------------------
 
-    Write article. Compression is a second article unless work so far is very short.
+    Write article. 
+
+    Leave compression related work for a second article, It will likely make this article too long!
 
     -----------------------------------------------------------------------
 
