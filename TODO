@@ -1,100 +1,55 @@
 DONE:
 
-    Setup snapshot structure, eg. payload for interpolation sequence buffer.
-
-    Setup sequence buffer.
-
-    First just have a sequence # at which you want to render
-    equivalent to playout buffer delay time.
-
-    If this sequence entry doesn't exist return empty set.
-
-    OK. This seems to be working fine.
-
-    Next, take this sequence # and the next one. If either don't
-    exist then return empty set, otherwise interpolate between.
-
-    This is also working.
-
-    Hook up so it chooses between hermite, interpolation, extrapolation
-    functions according to mode.
-
-    There seems to be some jitter on time.
-
-    I don't think this is actually the fault of the interpolator,
-    but is something wrong with what it is being fed.
-
-    Same artifacts are visible for hermite and linear -- and nothing could be
-    wrong with the linear interpolation, it's trivial!
-
 TODO:
 
-    -------------------------------------------------------
+    Don't send angular velocity for hermite (not used)
 
-    Get all the interpolation modes working flawlessly before moving forward.
-
-    -------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
+    Don't send lin/ang velocity for linear interpolation (not used)
 
     -----------------------------------------------------------------------
 
-    Finally, design algorithm to intelligently pick out a start/finish
-    sequence # for interpolation, and only go to another set once this
-    interpolation has finished, and be smart enough to move forward
-    by n sequences to look for the finish sample (limit this n)
+    Design algorithm for interpolation, considering packet loss, jitter etc.
 
-    Also, might be smart to go back frame-1, frame-2 etc, in case
-    the previous frame is there, but current is not, and you can lerp
-    from frame - 1 to frame + 1.
-
-    So basically a bidirectional search from start sequence #.
+    Think hard. Grab a pen and paper, and design how it should work!
 
     -----------------------------------------------------------------------
 
-    Nope. The bidirectional makes no sense. You *have* to start from the end of the previous
-    interpolation, otherwise it is discontinuous. Of course, this is no problem because the
-    previous interpolation end sequence is guaranteed to exist!
-
-    So it's really only a forward search for a suitable interpolation end point from the current
-    one.
-
-    And really it should only be a search for a very small n, eg. 3 or so. 
-
-    Basically, the playout delay divided by send rate would be a good number for max search.
+    Write article. Compression is a second article unless work so far is very short.
 
     -----------------------------------------------------------------------
 
-    Think hard. Grab a pen and paper, and design the interpolation buffer!
 
-    -----------------------------------------------------------------------
 
-    Implement the interpolation buffer and hook it up to lerp/extrap functions
-    according to the current snapshot mode interpolation enum.
 
-    -----------------------------------------------------------------------
 
-    Get linear interpolation working @ 10pps
 
-    -----------------------------------------------------------------------
 
-    Get hermite interpolation working @ 10pps
 
-    -----------------------------------------------------------------------
 
-    Get hermite extrapolation working @ 10pps
 
-    -----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

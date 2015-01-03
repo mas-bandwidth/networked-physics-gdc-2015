@@ -217,8 +217,12 @@ static void InterpolateSnapshot_Linear( float t,
     {
         output[i].id = i + 1;
         output[i].position = a[i].position + ( b[i].position - a[i].position ) * t;
+        output[i].orientation = vectorial::slerp( t, a[i].orientation, b[i].orientation );
+        //output[i].orientation = vectorial::quat4f::identity();
+        /*
         output[i].orientation = a[i].orientation + ( b[i].orientation - a[i].orientation ) * t;
         output[i].orientation = normalize( output[i].orientation );
+        */
         output[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
         output[i].authority = a[i].interacting ? 0 : MaxPlayers;
         output[i].visible = true;
@@ -242,28 +246,55 @@ inline void hermite_spline( float t,
 }
 
 inline void hermite_spline( float t,
-                            const vectorial::quat4f & p0, 
-                            const vectorial::quat4f & p1,
-                            const vectorial::quat4f & t0,
-                            const vectorial::quat4f & t1,
+                            vectorial::quat4f p0, 
+                            vectorial::quat4f p1,
+                            vectorial::quat4f t0,
+                            vectorial::quat4f t1,
                             vectorial::quat4f & output )
 {
-    const float t2 = t*t;
+    if ( dot( p0, p1 ) < 0 )
+    {
+        p0 = - p0;
+        t0 = - t0;
+    }
+
+    const float t2 =  t*t;
     const float t3 = t2*t;
     const float h1 =  2*t3 - 3*t2 + 1;
     const float h2 = -2*t3 + 3*t2;
     const float h3 =    t3 - 2*t2 + t;
     const float h4 =    t3 - t2;
-    vectorial::quat4f _p0 = p0;
-    vectorial::quat4f _p1 = p1;
-    vectorial::quat4f _t0 = t0;
-    vectorial::quat4f _t1 = t1;
-    if ( dot( _p0, _p1 ) < 0 )
+
+    output = normalize( h1*p0 + h2*p1 + h3*t0 + h4*t1 );
+}
+
+inline void hermite_spline_ln_exp( float t,
+                                   vectorial::quat4f p0, 
+                                   vectorial::quat4f p1,
+                                   vectorial::quat4f t0,
+                                   vectorial::quat4f t1,
+                                   vectorial::quat4f & output )
+{
+    p0 = vectorial::ln( p0 );
+    p1 = vectorial::ln( p1 );
+//    t0 = vectorial::ln( t0 );
+//    t1 = vectorial::ln( t1 );
+
+    if ( dot( p0, p1 ) < 0 )
     {
-        _p0 = - _p0;
-        _t0 = - _t0;
+        p0 = - p0;
+        t0 = - t0;
     }
-    output = normalize( h1*_p0 + h2*_p1 + h3*_t0 + h4*_t1 );
+
+    const float t2 =  t*t;
+    const float t3 = t2*t;
+    const float h1 =  2*t3 - 3*t2 + 1;
+    const float h2 = -2*t3 + 3*t2;
+    const float h3 =    t3 - 2*t2 + t;
+    const float h4 =    t3 - t2;
+
+    output = vectorial::exp( h1*p0 + h2*p1 + h3*t0 + h4*t1 );
+//    output = vectorial::normalize( vectorial::exp( h1*p0 + h2*p1 + h3*t0 + h4*t1 ) );
 }
 
 static void InterpolateSnapshot_Hermite( float t, float step_size,
@@ -275,9 +306,21 @@ static void InterpolateSnapshot_Hermite( float t, float step_size,
     {
         hermite_spline( t, a[i].position, b[i].position, a[i].linear_velocity * step_size, b[i].linear_velocity * step_size, output[i].position );
 
+        output[i].orientation = vectorial::slerp( t, a[i].orientation, b[i].orientation );
+
+        /*
         vectorial::quat4f spin_a = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation;
         vectorial::quat4f spin_b = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation;
         hermite_spline( t, a[i].orientation, b[i].orientation, spin_a * step_size, spin_b * step_size, output[i].orientation );
+        */
+
+        //output[i].orientation = vectorial::quat4f::identity();
+
+        /*
+        vectorial::quat4f spin_a = 0.5f * vectorial::quat4f( a[i].angular_velocity.x(), a[i].angular_velocity.y(), a[i].angular_velocity.z(), 0 ) * a[i].orientation;
+        vectorial::quat4f spin_b = 0.5f * vectorial::quat4f( b[i].angular_velocity.x(), b[i].angular_velocity.y(), b[i].angular_velocity.z(), 0 ) * b[i].orientation;
+        hermite_spline_ln_exp( t, a[i].orientation, b[i].orientation, spin_a * step_size, spin_b * step_size, output[i].orientation );
+        */
 
         output[i].id = i + 1;
         output[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
@@ -357,39 +400,14 @@ struct SnapshotInterpolationBuffer
         if ( interpolation_time <= 0 )          // too early for anything yet.
             return;
 
-        double frames_since_start = interpolation_time * mode_data.send_rate;
+        const double frames_since_start = interpolation_time * mode_data.send_rate;
 
-        float frame_alpha = frames_since_start - floor( frames_since_start );
-
-        //printf( "frame alpha = %f\n", frame_alpha );
+        const float frame_alpha = frames_since_start - floor( frames_since_start );
 
         CORE_ASSERT( frame_alpha >= 0.0 );
         CORE_ASSERT( frame_alpha <= 1.0 );
 
-        uint16_t interpolation_sequence = (uint16_t) frames_since_start;
-
-        /*
-        auto snapshot = snapshots.Find( interpolation_sequence );
-
-        if ( snapshot )
-        {
-            // hack: to make sure the basic idea is correct here -- lets just point sample
-
-            num_object_updates = NumCubes;
-
-            for ( int i = 0; i < NumCubes; ++i )
-            {
-                object_update[i].id = i + 1;
-                object_update[i].authority = snapshot->cubes[i].interacting ? 0 : MaxPlayers;
-                object_update[i].position = snapshot->cubes[i].position;
-                object_update[i].orientation = snapshot->cubes[i].orientation;
-                object_update[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
-                object_update[i].visible = true;
-            }
-
-            return;
-        }
-        */
+        uint16_t interpolation_sequence = (uint16_t) uint64_t( floor( frames_since_start ) );
 
         uint16_t interpolation_sequence_a = interpolation_sequence;
         uint16_t interpolation_sequence_b = interpolation_sequence + 1;
@@ -417,27 +435,17 @@ struct SnapshotInterpolationBuffer
 
             return;
         }
-
-        // todo: find start
-
-        // todo: work out what 
-
-        // todo: work out what the alpha is
-
-        // todo: perform the blend according to mode
     }
 
     void Reset()
     {
         stopped = true;
         start_time = 0.0;
+        snapshots.Reset();
     }
 
     bool stopped;
     double start_time;
-    uint16_t start_sequence;
-    uint16_t interpolation_start_sequence;
-    uint16_t interpolation_finish_sequence;
     float playout_delay;
     protocol::SequenceBuffer<Snapshot> snapshots;
 };

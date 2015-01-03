@@ -1,5 +1,7 @@
 WOULD BE NICE:
 
+    Research and work out the math for performing hermite interpolation on quaternions.
+
     -------------------------------------------
 
     Would be great to be able to quickly define a packet factory with macros.
