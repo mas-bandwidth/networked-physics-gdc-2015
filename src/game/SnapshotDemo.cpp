@@ -69,17 +69,17 @@ static void InitSnapshotModes()
     snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].jitter = 2 * 1.0f / 60.0f;
 
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].send_rate = 10.0f;
-//    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
 
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].send_rate = 10.0f;
-//    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].send_rate = 10.0f;
-//    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION;
 }
@@ -344,6 +344,19 @@ struct SnapshotInterpolationBuffer
         if ( time <= 0 )
             return;
 
+        // if we are interpolating but the interpolation start time is too old,
+        // go back to the not interpolating state, so we can find a new start point.
+
+        if ( interpolating )
+        {
+            const int n = (int) floor( mode_data.playout_delay / ( 1.0f / mode_data.send_rate ) );
+
+            uint16_t interpolation_sequence = (uint16_t) uint64_t( floor( frames_since_start ) );
+
+            if ( core::sequence_difference( interpolation_sequence, interpolation_start_sequence ) > n )
+                interpolating = false;
+        }
+
         // if not interpolating, attempt to find an interpolation start point. 
         // if start point exists, go into interpolating mode and set end point to start point
         // so we can reuse code below to find a suitable end point on first time through.
@@ -369,6 +382,11 @@ struct SnapshotInterpolationBuffer
 
         if ( !interpolating )
             return;
+
+        if ( time < interpolation_start_time )
+            time = interpolation_start_time;
+
+        CORE_ASSERT( time >= interpolation_start_time );
 
         // if current time is >= end time, we need to start a new interpolation
         // from the previous end time to the next sample that exists up to n samples
@@ -712,7 +730,7 @@ void SnapshotDemo::Update()
         else
         {
             if ( m_snapshot->interpolation_buffer.interpolating )
-                printf( "no objects\n" );
+                printf( "no snapshot to interpolate towards!\n" );
         }
     }
 

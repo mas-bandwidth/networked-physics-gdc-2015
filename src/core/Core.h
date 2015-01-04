@@ -198,6 +198,11 @@ namespace core
             return value;
     }
 
+    template <typename T> T abs( const T & value )
+    {
+        return value < 0 ? -value : value;
+    }
+
     inline bool sequence_greater_than( uint16_t s1, uint16_t s2 )
     {
         return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
@@ -207,6 +212,20 @@ namespace core
     inline bool sequence_less_than( uint16_t s1, uint16_t s2 )
     {
         return sequence_greater_than( s2, s1 );
+    }
+
+    inline int sequence_difference( uint16_t _s1, uint16_t _s2 )
+    {
+        int s1 = _s1;
+        int s2 = _s2;
+        if ( abs( s1 - s2 ) >= 32786 )
+        {
+            if ( s1 > s2 )
+                s2 += 65536;
+            else
+                s1 += 65536;
+        }
+        return s1 - s2;
     }
 
     uint16_t generate_id();

@@ -1,6 +1,57 @@
 
-Saturday, January 3rd, 2014
----------------------------
+Saturday Evening, January 3rd, 2014
+-----------------------------------
+
+    With playout delay at 250ms, code can get stuck, presumably
+    missing two in a row.
+
+    Basically, I think we need to detect if we are without snapshot,
+    and the snapshot start sequence is older than the current ideal
+    start snapshot, and that snapshot exists, that we can move forward!
+
+    Confirmed that something is wrong. Increasing packet loss to 25%
+    and it gets stuck within a few seconds.
+
+    Track down why it's getting stuck.  
+
+    Pretty sure because it doesn't look ahead more than n.
+
+    So this settles it. Code needs to look for a new interpolation
+    start sequence if start sequence gets too old.
+
+    Added new sequence function: sequence_difference
+
+    Gets the signed diffrence between two sequence numbers,
+    assuming they are relatively close to each other, relative
+    to the max sequence # / 2 that is.
+
+    Using this to check when the old sequence is out of date
+    and going into non-interpolation mode.
+
+    Seems to be weirding out though... it's somewhat relient but then hits another
+    condition where it blows up. Why?!
+
+    Fixed. Was just a really close epsilon issue to do with floor. Stupid floating point.
+
+    Seems necessary to have 3 frames in a row before hitch, otherwise hitches happen
+    frequently enough at 5% to be annoying.
+
+    Perhaps at 2% the hitch would not be a problem @ 250.
+
+    Nope. Even at 2% you definitely need 3 frames!
+
+    Need to add clamp to maximum angular velocity.
+
+    We're getting rotational glitches at full speed, eg. 
+    it rotates right back around (short path)
+
+    Clamped linear velocity too. 
+
+    Got decent bounds so the motion looks good, not damped.
+
+
+Saturday Morning, January 3rd, 2014
+-----------------------------------
 
     Don't send angular velocity for hermite (not used)
 

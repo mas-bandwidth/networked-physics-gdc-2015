@@ -12,7 +12,7 @@ const int MaxViewObjects = 1024;
 const float ColorChangeTightnessDefault = 0.1f;
 const float ColorChangeTightnessAuthority = 0.25f;
 const float ShadowAlphaThreshold = 0.15f;
-const float PositionSmoothingTightness = 0.025f;
-const float OrientationSmoothingTightness = 0.015f;
+const float MaxLinearSpeed = 40;
+const float MaxAngularSpeed = 20.0f;
 
 #endif

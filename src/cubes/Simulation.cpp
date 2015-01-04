@@ -187,6 +187,40 @@ namespace cubes
 				const float linearVelocityLengthSquared = linearVelocity[0]*linearVelocity[0] + linearVelocity[1]*linearVelocity[1] + linearVelocity[2]*linearVelocity[2];
 				const float angularVelocityLengthSquared = angularVelocity[0]*angularVelocity[0] + angularVelocity[1]*angularVelocity[1] + angularVelocity[2]*angularVelocity[2];
 
+				if ( linearVelocityLengthSquared > MaxLinearSpeed * MaxLinearSpeed )
+				{
+					const float linearSpeed = sqrt( linearVelocityLengthSquared );
+
+					const float scale = MaxLinearSpeed / linearSpeed;
+
+					dReal clampedLinearVelocity[3];
+
+					clampedLinearVelocity[0] = linearVelocity[0] * scale;
+					clampedLinearVelocity[1] = linearVelocity[1] * scale;
+					clampedLinearVelocity[2] = linearVelocity[2] * scale;
+
+					dBodySetLinearVel( impl->objects[i].body, clampedLinearVelocity[0], clampedLinearVelocity[1], clampedLinearVelocity[2] );
+
+					linearVelocity = &clampedLinearVelocity[0];
+				}
+
+				if ( angularVelocityLengthSquared > MaxAngularSpeed * MaxAngularSpeed )
+				{
+					const float angularSpeed = sqrt( angularVelocityLengthSquared );
+
+					const float scale = MaxAngularSpeed / angularSpeed;
+
+					dReal clampedAngularVelocity[3];
+
+					clampedAngularVelocity[0] = angularVelocity[0] * scale;
+					clampedAngularVelocity[1] = angularVelocity[1] * scale;
+					clampedAngularVelocity[2] = angularVelocity[2] * scale;
+
+					dBodySetAngularVel( impl->objects[i].body, clampedAngularVelocity[0], clampedAngularVelocity[1], clampedAngularVelocity[2] );
+
+					angularVelocity = &clampedAngularVelocity[0];
+				}
+
 				if ( linearVelocityLengthSquared < impl->config.LinearRestThresholdSquared && angularVelocityLengthSquared < impl->config.AngularRestThresholdSquared )
 					impl->objects[i].timeAtRest += deltaTime;
 				else

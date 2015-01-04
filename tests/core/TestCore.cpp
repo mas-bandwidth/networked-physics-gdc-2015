@@ -17,6 +17,12 @@ void test_sequence()
     CORE_CHECK( core::sequence_less_than( 0, 0 ) == false );
     CORE_CHECK( core::sequence_less_than( 0, 1 ) == true );
     CORE_CHECK( core::sequence_less_than( -1, 0 ) == true );
+
+    CORE_CHECK( core::sequence_difference( 0, 0 ) == 0 );
+    CORE_CHECK( core::sequence_difference( 0, 1 ) == -1 );
+    CORE_CHECK( core::sequence_difference( 0, 65535 ) == +1 );
+    CORE_CHECK( core::sequence_difference( 65535, 0 ) == -1 );
+    CORE_CHECK( core::sequence_difference( 65535, 65534 ) == +1 );
 }
 
 void test_endian()
