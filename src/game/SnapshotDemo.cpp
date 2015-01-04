@@ -525,7 +525,6 @@ struct SnapshotInternal
 SnapshotDemo::SnapshotDemo( core::Allocator & allocator )
 {
     InitSnapshotModes();
-//    SetMode( SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );

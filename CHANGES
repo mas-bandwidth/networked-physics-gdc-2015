@@ -1,4 +1,31 @@
 
+Sunday Morning, January 4th, 2014
+---------------------------------
+
+    Converting all videos to webm so they work in firefox.
+
+    Doing this with this command line:
+
+        parallel 'ffmpeg -loglevel quiet -i {} -c:v libvpx -b:v 2M -c:a libvorbis {.}.webm' ::: *.mov
+
+    Seems to be working so well, it's taking up the entirity of my CPU!!! :D
+
+    Upload webm videos
+
+    Convert all articles to fall back to webm
+
+    Verify articles have videos in firefox
+
+    Sketch out remainder of series articles so people can see what is coming
+    (with password protection tease...) :D
+
+    Restructure Assets/Cube Videos/... so they are split
+    up according to the article. This way I can easily
+    create a bunch of new videos for an article and run
+    a command to convert all videos from *.mov to *.mp4
+    and *.webm without reconverting old videos (slow)
+
+
 Late Saturday Evening, January 3rd, 2014
 ----------------------------------------
 
