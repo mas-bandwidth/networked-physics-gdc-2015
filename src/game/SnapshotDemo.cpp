@@ -51,11 +51,12 @@ enum SnapshotInterpolation
 
 struct SnapshotModeData
 {
-    float playout_delay = 0.25f;        // one lost packet = no problem. two lost packets in a row = hitch
+    float playout_delay = 0.35f;        // one lost packet = no problem. two lost packets in a row = hitch
     float send_rate = 60.0f;
     float latency = 0.0f;
     float packet_loss = 0.0f;
     float jitter = 0.0f;
+    float extrapolation = 0.2f;
     SnapshotInterpolation interpolation = SNAPSHOT_INTERPOLATION_NONE;
 };
 
@@ -274,7 +275,8 @@ inline void hermite_spline( float t,
     output = normalize( h1*p0 + h2*p1 + h3*t0 + h4*t1 );
 }
 
-static void InterpolateSnapshot_Hermite( float t, float step_size,
+static void InterpolateSnapshot_Hermite( float t, 
+                                         float step_size,
                                          const __restrict CubeState * a, 
                                          const __restrict CubeState * b, 
                                          __restrict view::ObjectUpdate * output )
@@ -292,15 +294,17 @@ static void InterpolateSnapshot_Hermite( float t, float step_size,
     }
 }
 
-static void InterpolateSnapshot_Hermite_WithExtrapolation( float t, float step_size,
+static void InterpolateSnapshot_Hermite_WithExtrapolation( float t, 
+                                                           float step_size,
+                                                           float extrapolation,
                                                            const __restrict CubeState * a, 
                                                            const __restrict CubeState * b, 
                                                            __restrict view::ObjectUpdate * output )
 {
     for ( int i = 0; i < NumCubes; ++i )
     {
-        vectorial::vec3f p0 = a[i].position + a[i].linear_velocity * step_size;
-        vectorial::vec3f p1 = b[i].position + b[i].linear_velocity * step_size;
+        vectorial::vec3f p0 = a[i].position + a[i].linear_velocity * extrapolation;
+        vectorial::vec3f p1 = b[i].position + b[i].linear_velocity * extrapolation;
         vectorial::vec3f t0 = a[i].linear_velocity * step_size;
         vectorial::vec3f t1 = b[i].linear_velocity * step_size;
         hermite_spline( t, p0, p1, t0, t1, output[i].position );
@@ -325,6 +329,7 @@ struct SnapshotInterpolationBuffer
         : snapshots( allocator, NumSnapshots )
     {
         stopped = true;
+        interpolating = false;
         start_time = 0.0;
         playout_delay = mode_data.playout_delay;
     }
@@ -335,6 +340,7 @@ struct SnapshotInterpolationBuffer
 
         if ( stopped )
         {
+            printf( "start time = %f\n", time );
             start_time = time;
             stopped = false;
         }
@@ -349,46 +355,108 @@ struct SnapshotInterpolationBuffer
     {
         num_object_updates = 0;
 
+        // we have not received a packet yet. nothing to display!
+
         if ( stopped )
             return;
 
-        const double time_since_start = time - start_time;
+        // if time minus playout delay is negative, it's too early to display anything
 
-        const double interpolation_time = time_since_start - playout_delay;
+        time -= ( start_time + playout_delay );
 
-        if ( interpolation_time <= 0 )          // too early for anything yet.
+        const double frames_since_start = time * mode_data.send_rate;
+
+        if ( time <= 0 )
             return;
 
-        const double frames_since_start = interpolation_time * mode_data.send_rate;
+        // if not interpolating, attempt to find an interpolation start point. 
+        // if start point exists, go into interpolating mode and set end point to start point
+        // so we can reuse code below to find a suitable end point on first time through.
+        // if no interpolation start point is found, return.
 
-        const float frame_alpha = frames_since_start - floor( frames_since_start );
+        if ( !interpolating )
+        {
+            uint16_t interpolation_sequence = (uint16_t) uint64_t( floor( frames_since_start ) );
 
-        CORE_ASSERT( frame_alpha >= 0.0 );
-        CORE_ASSERT( frame_alpha <= 1.0 );
+            auto snapshot = snapshots.Find( interpolation_sequence );
 
-        uint16_t interpolation_sequence = (uint16_t) uint64_t( floor( frames_since_start ) );
+            if ( snapshot )
+            {
+                interpolation_start_sequence = interpolation_sequence;
+                interpolation_end_sequence = interpolation_sequence;
 
-        uint16_t interpolation_sequence_a = interpolation_sequence;
-        uint16_t interpolation_sequence_b = interpolation_sequence + 1;
+                interpolation_start_time = frames_since_start * ( 1.0 / mode_data.send_rate );
+                interpolation_end_time = interpolation_start_time;
 
-        auto snapshot_a = snapshots.Find( interpolation_sequence_a );
-        auto snapshot_b = snapshots.Find( interpolation_sequence_b );
+                interpolating = true;
+            }
+        }
+
+        if ( !interpolating )
+            return;
+
+        // if current time is >= end time, we need to start a new interpolation
+        // from the previous end time to the next sample that exists up to n samples
+        // ahead, where n is the # of frames in the playout delay buffer, rounded up.
+
+        if ( time >= interpolation_end_time )
+        {
+            const int n = (int) floor( mode_data.playout_delay / ( 1.0f / mode_data.send_rate ) );
+
+            interpolation_start_sequence = interpolation_end_sequence;
+            interpolation_start_time = interpolation_end_time;
+
+            for ( int i = 0; i < n; ++i )
+            {
+                auto snapshot = snapshots.Find( interpolation_start_sequence + 1 + i );
+
+                if ( snapshot )
+                {
+                    interpolation_end_sequence = interpolation_start_sequence + 1 + i;
+                    interpolation_end_time = interpolation_start_time + ( 1.0 / mode_data.send_rate ) * ( 1 + i );
+                    break;
+                }
+            }
+        }
+
+        // if current time is still > end time, we couldn't start a new interpolation so return.
+
+        if ( time >= interpolation_end_time )
+        {
+            printf( "nothing to interpolate\n" );
+            return;
+        }
+
+        // we are in a valid interpolation, calculate t by looking at current time 
+        // relative to interpolation start/end times and perform the interpolation.
+
+        CORE_ASSERT( time >= interpolation_start_time );
+        CORE_ASSERT( time <= interpolation_end_time );
+        CORE_ASSERT( interpolation_start_time < interpolation_end_time );
+
+        const float t = ( time - interpolation_start_time ) / ( interpolation_end_time - interpolation_start_time );
+
+        auto snapshot_a = snapshots.Find( interpolation_start_sequence );
+        auto snapshot_b = snapshots.Find( interpolation_end_sequence );
+
+        CORE_ASSERT( snapshot_a );
+        CORE_ASSERT( snapshot_b );
 
         if ( snapshot_a && snapshot_b )
         {
             if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_LINEAR )
             {
-                InterpolateSnapshot_Linear( frame_alpha, snapshot_a->cubes, snapshot_b->cubes, object_update );            
+                InterpolateSnapshot_Linear( t, snapshot_a->cubes, snapshot_b->cubes, object_update );            
                 num_object_updates = NumCubes;
             }
             else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE )
             {
-                InterpolateSnapshot_Hermite( frame_alpha, 1.0f / mode_data.send_rate, snapshot_a->cubes, snapshot_b->cubes, object_update );                
+                InterpolateSnapshot_Hermite( t, 1.0f / mode_data.send_rate, snapshot_a->cubes, snapshot_b->cubes, object_update );                
                 num_object_updates = NumCubes;
             }
             else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION )
             {
-                InterpolateSnapshot_Hermite_WithExtrapolation( frame_alpha, 1.0f / mode_data.send_rate, snapshot_a->cubes, snapshot_b->cubes, object_update );                
+                InterpolateSnapshot_Hermite_WithExtrapolation( t, 1.0f / mode_data.send_rate, mode_data.extrapolation, snapshot_a->cubes, snapshot_b->cubes, object_update );
                 num_object_updates = NumCubes;
             }
 
@@ -399,11 +467,21 @@ struct SnapshotInterpolationBuffer
     void Reset()
     {
         stopped = true;
+        interpolating = false;
+        interpolation_start_sequence = 0;
+        interpolation_start_time = 0.0;
+        interpolation_end_sequence = 0;
+        interpolation_end_time = 0.0;
         start_time = 0.0;
         snapshots.Reset();
     }
 
     bool stopped;
+    bool interpolating;
+    uint16_t interpolation_start_sequence;
+    uint16_t interpolation_end_sequence;
+    double interpolation_start_time;
+    double interpolation_end_time;
     double start_time;
     float playout_delay;
     protocol::SequenceBuffer<Snapshot> snapshots;
@@ -529,7 +607,7 @@ void SnapshotDemo::Update()
 
             snapshot_packet->sequence = m_snapshot->send_sequence++;
 
-            snapshot_packet->has_velocity = snapshot_mode_data[GetMode()].interpolation == SNAPSHOT_INTERPOLATION_HERMITE;
+            snapshot_packet->has_velocity = snapshot_mode_data[GetMode()].interpolation >= SNAPSHOT_INTERPOLATION_HERMITE;
 
             const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
 

@@ -77,7 +77,10 @@ namespace vectorial
         return quat4f( t*a[0], t*a[1], t*a[2], 0.5*log( norm(q) ) );
     }
 
-    // todo: nlerp
+    static inline quat4f nlerp( float t, const quat4f & a, const quat4f & b ) 
+    {
+        return ( dot( a, b ) >= 0 ) ? normalize( a + ( b - a ) * t ) : normalize( a + ( -b - a ) * t );
+    }
 
     static inline quat4f slerp( float t, const quat4f & a, const quat4f & b ) 
     {

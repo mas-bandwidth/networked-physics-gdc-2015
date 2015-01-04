@@ -1,91 +1,83 @@
 DONE:
 
-    Don't send angular velocity for hermite (not used)
-
-    Added #ifdef so I could easily bring this back (for example if hermite is working)
-
-    Turn +/-2 frames jitter and 5% packet loss on for linear and hermite interpolation
-
-    5% seems is too much. Seems that 2% is more reasonable.
-
-    Once looking good at 2%, try increasing to 5% but don't use 5% if it is necessary
-    to increase the amount of playout delay to compensate.
-
-    Fixed so if no objects exist in object update, it's not pushed to view, otherwise
-    simulation resets on missing interpolation snapshot and camera weirds out.
-
 TODO:
 
-    ----------------------------------------------------------------------
+    Capture videos.
 
-    Think hard. Grab a pen and paper, and design how it should work!
+        1. Jitter @ 60pps without interpolation
 
-    -----------------------------------------------------------------------
+        2. 10pps no interpolation
+
+        3. 10pps with linear interpolation
+
+        4. 10pps with hermite interpolation
 
     Write article. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    -----------------------------------------------------------------------
 
     Leave compression related work for a second article, It will likely make this article too long!
 
     -----------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    Create new demo framework. "pm compression"
 
     -----------------------------------------------------------------------
 
@@ -106,6 +98,14 @@ TODO:
 
     -----------------------------------------------------------------------
 
+    Implement a graph showing the bandwidth in the bottom right.
+
+    It should display both average bandwidth up/down as well as 
+
+    This should all come from the simluator.
+
+    -----------------------------------------------------------------------
+
     First obvious win is if the object is at rest, send one bit
     and don't send lin/ang velocity.
 
@@ -121,15 +121,17 @@ TODO:
 
     -----------------------------------------------------------------------
 
-    Compress linear and angular velocity.
+    Compress linear velocity.
 
-    Restrict linear and angular velocity to some maximum.
+    Restrict linear velocity to some maximum (may already be done...)
 
-    Can be aggressive with linear velocity because can be bounded tightly.
+    Make the linear velocity bound as tight as possible.
 
-    Be aggressive with linear/ang velocity resolution. Can synchronize it
-    quite roughly. It's not actually used for extrapolation, just interpolation
-    so near enough is pretty good!
+    Be aggressive with reducing linear velocity resolution. 
+
+    Can synchronize it quite roughly. 
+
+    It's not actually used for extrapolation, just interpolation so near enough is pretty good!
 
     -----------------------------------------------------------------------
 
@@ -145,6 +147,50 @@ TODO:
 
     Can we do better?
 
-    *** I'm thinking this needs two articles ***
+    -----------------------------------------------------------------------
+
+    Delta encoding.
+
+    On left side buffer snapshots indexed by sequence #
+
+    Right side keep track of most recent snapshot sequence # received
+    (I believe the sequence buffer does this for us...)
+
+    Right side send ack packets back to left side, if snapshots received
+    that frame, with sequence # of most recent snapshot received.
+
+    Left side keep track of most recent ack from right side in sequence #
+
+    -------------------------------------------------------------------------
+
+    Now when sending snapshots from left -> right, encode relative to base 
+    snapshot # (pass base # and pointer to snapshot buffer into packet...)
+
+    On serialize write, compare each object against base.
+
+    If object is identical write one bit 0 indicating it has not changed.
+
+    -----------------------------------------------------------------------
+
+    Next, do the math. 
+
+    Cost of indexing only the changed set of objects vs. 900 bits for yes/no.
+
+    Write function to determine which approach is the best encoding,
+    given the # of different cubes, vs. the # of total cubes.
+
+    Extend the serialize function to use this encoding.
+
+    -----------------------------------------------------------------------
+
+    Next sort the cubes in order of id.
+
+    Now write the cubes using a variable bit encoding for delta id.
+
+    Is this effective?
+
+    -----------------------------------------------------------------------
+
+    Now encode position
 
     -----------------------------------------------------------------------

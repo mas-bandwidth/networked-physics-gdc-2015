@@ -1,4 +1,28 @@
 
+Saturday, January 3rd, 2014
+---------------------------
+
+    Don't send angular velocity for hermite (not used)
+
+    Added #ifdef so I could easily bring this back (for example if hermite is working)
+
+    Turn +/-2 frames jitter and 5% packet loss on for linear and hermite interpolation
+
+    5% seems is too much. Seems that 2% is more reasonable.
+
+    Once looking good at 2%, try increasing to 5% but don't use 5% if it is necessary
+    to increase the amount of playout delay to compensate.
+
+    Fixed so if no objects exist in object update, it's not pushed to view, otherwise
+    simulation resets on missing interpolation snapshot and camera weirds out.
+
+    Added nlerp to quaternion because it's easy.
+
+    Get the interpolation buffer handling up to n missing samples.
+
+    Fixed some bugs in the extrapolation. Step size and amount of extrapolation were unnecessarily linked.
+
+
 Friday, January 2nd, 2014
 -------------------------
 
