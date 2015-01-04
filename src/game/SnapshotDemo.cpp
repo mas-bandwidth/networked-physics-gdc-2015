@@ -17,7 +17,6 @@ static const int NumCubes = 900 + MaxPlayers;
 
 static const int NumSnapshots = 64;
 
-//static const int LeftPort = 1000;
 static const int RightPort = 1001;
 
 enum SnapshotMode
@@ -70,17 +69,17 @@ static void InitSnapshotModes()
     snapshot_mode_data[SNAPSHOT_MODE_NAIVE_10PPS].jitter = 2 * 1.0f / 60.0f;
 
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].send_rate = 10.0f;
-    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+//    snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
 
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].send_rate = 10.0f;
-    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+//    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].send_rate = 10.0f;
-    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
+//    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION;
 }
@@ -92,7 +91,7 @@ enum SnapshotPackets
     SNAPSHOT_NUM_PACKETS
 };
 
-//#define SERIALIZE_ANGULAR_VELOCITY
+#define SERIALIZE_ANGULAR_VELOCITY
 
 struct CubeState
 {
@@ -252,29 +251,6 @@ inline void hermite_spline( float t,
     output = h1*p0 + h2*p1 + h3*t0 + h4*t1;
 }
 
-inline void hermite_spline( float t,
-                            vectorial::quat4f p0, 
-                            vectorial::quat4f p1,
-                            vectorial::quat4f t0,
-                            vectorial::quat4f t1,
-                            vectorial::quat4f & output )
-{
-    if ( dot( p0, p1 ) < 0 )
-    {
-        p0 = - p0;
-        t0 = - t0;
-    }
-
-    const float t2 =  t*t;
-    const float t3 = t2*t;
-    const float h1 =  2*t3 - 3*t2 + 1;
-    const float h2 = -2*t3 + 3*t2;
-    const float h3 =    t3 - 2*t2 + t;
-    const float h4 =    t3 - t2;
-
-    output = normalize( h1*p0 + h2*p1 + h3*t0 + h4*t1 );
-}
-
 static void InterpolateSnapshot_Hermite( float t, 
                                          float step_size,
                                          const __restrict CubeState * a, 
@@ -340,7 +316,6 @@ struct SnapshotInterpolationBuffer
 
         if ( stopped )
         {
-            printf( "start time = %f\n", time );
             start_time = time;
             stopped = false;
         }
@@ -414,6 +389,7 @@ struct SnapshotInterpolationBuffer
                 {
                     interpolation_end_sequence = interpolation_start_sequence + 1 + i;
                     interpolation_end_time = interpolation_start_time + ( 1.0 / mode_data.send_rate ) * ( 1 + i );
+                    interpolation_step_size = ( 1.0 / mode_data.send_rate ) * ( 1 + i );
                     break;
                 }
             }
@@ -422,10 +398,7 @@ struct SnapshotInterpolationBuffer
         // if current time is still > end time, we couldn't start a new interpolation so return.
 
         if ( time >= interpolation_end_time )
-        {
-            printf( "nothing to interpolate\n" );
             return;
-        }
 
         // we are in a valid interpolation, calculate t by looking at current time 
         // relative to interpolation start/end times and perform the interpolation.
@@ -436,31 +409,33 @@ struct SnapshotInterpolationBuffer
 
         const float t = ( time - interpolation_start_time ) / ( interpolation_end_time - interpolation_start_time );
 
+        CORE_ASSERT( t >= 0 );
+        CORE_ASSERT( t <= 1 );
+
         auto snapshot_a = snapshots.Find( interpolation_start_sequence );
         auto snapshot_b = snapshots.Find( interpolation_end_sequence );
 
         CORE_ASSERT( snapshot_a );
         CORE_ASSERT( snapshot_b );
 
-        if ( snapshot_a && snapshot_b )
+        if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_LINEAR )
         {
-            if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_LINEAR )
-            {
-                InterpolateSnapshot_Linear( t, snapshot_a->cubes, snapshot_b->cubes, object_update );            
-                num_object_updates = NumCubes;
-            }
-            else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE )
-            {
-                InterpolateSnapshot_Hermite( t, 1.0f / mode_data.send_rate, snapshot_a->cubes, snapshot_b->cubes, object_update );                
-                num_object_updates = NumCubes;
-            }
-            else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION )
-            {
-                InterpolateSnapshot_Hermite_WithExtrapolation( t, 1.0f / mode_data.send_rate, mode_data.extrapolation, snapshot_a->cubes, snapshot_b->cubes, object_update );
-                num_object_updates = NumCubes;
-            }
-
-            return;
+            InterpolateSnapshot_Linear( t, snapshot_a->cubes, snapshot_b->cubes, object_update );            
+            num_object_updates = NumCubes;
+        }
+        else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE )
+        {
+            InterpolateSnapshot_Hermite( t, interpolation_step_size, snapshot_a->cubes, snapshot_b->cubes, object_update );                
+            num_object_updates = NumCubes;
+        }
+        else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION )
+        {
+            InterpolateSnapshot_Hermite_WithExtrapolation( t, interpolation_step_size, mode_data.extrapolation, snapshot_a->cubes, snapshot_b->cubes, object_update );
+            num_object_updates = NumCubes;
+        }
+        else
+        {
+            CORE_ASSERT( false );
         }
     }
 
@@ -472,6 +447,7 @@ struct SnapshotInterpolationBuffer
         interpolation_start_time = 0.0;
         interpolation_end_sequence = 0;
         interpolation_end_time = 0.0;
+        interpolation_step_size = 0.0;
         start_time = 0.0;
         snapshots.Reset();
     }
@@ -482,6 +458,7 @@ struct SnapshotInterpolationBuffer
     uint16_t interpolation_end_sequence;
     double interpolation_start_time;
     double interpolation_end_time;
+    double interpolation_step_size;
     double start_time;
     float playout_delay;
     protocol::SequenceBuffer<Snapshot> snapshots;
@@ -732,6 +709,11 @@ void SnapshotDemo::Update()
 
         if ( num_object_updates > 0 )
             m_internal->view[1].objects.UpdateObjects( object_updates, num_object_updates );
+        else
+        {
+            if ( m_snapshot->interpolation_buffer.interpolating )
+                printf( "no objects\n" );
+        }
     }
 
     // run the simulation

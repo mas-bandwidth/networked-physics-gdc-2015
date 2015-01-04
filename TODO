@@ -2,6 +2,8 @@ DONE:
 
 TODO:
 
+    ------------------------------------------------------
+
     Capture videos.
 
         1. Jitter @ 60pps without interpolation
@@ -12,8 +14,11 @@ TODO:
 
         4. 10pps with hermite interpolation
 
+    ------------------------------------------------------
+
     Write article. 
 
+    ------------------------------------------------------
 
 
 

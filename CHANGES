@@ -22,6 +22,36 @@ Saturday, January 3rd, 2014
 
     Fixed some bugs in the extrapolation. Step size and amount of extrapolation were unnecessarily linked.
 
+    There still seems to be some position hitches with hermite.
+
+    What the fuck.
+
+    Is it dropped frames? Nope. can't be, left side doesn't hitch.
+
+    I think it's caused by interpolation problems, *OR* late packets...
+
+    I don't see it with no packet loss. Caused by packet loss?
+
+    Verified that orientation hitches occurs with linearized hermite on quat,
+    even with zero packet loss. Something else.
+
+    Checking if jitter causes it, or packet loss causes it?
+
+    Occurs with jitter off.
+
+    Turning off packet loss again...
+
+    Confirmed. Does not occur with packet loss off.
+
+    But playout delay is so large, this should not be an issue.
+
+    My guess is that there is something funny with alpha calculation
+    in the case where it has to interpolate between samples 2 or 3 apart?
+
+    Yes. It's the hermite not having the correct step size passed in!!!!
+
+    FIXED!!!
+
 
 Friday, January 2nd, 2014
 -------------------------
