@@ -4,42 +4,9 @@ TODO:
 
     ------------------------------------------------------
 
-    Capture videos.
-
-        1. Jitter @ 60pps without interpolation
-
-        2. 10pps no interpolation
-
-        3. 10pps with linear interpolation
-
-        4. 10pps with hermite interpolation
-
-    ------------------------------------------------------
-
     Write article. 
 
     ------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
