@@ -7,6 +7,7 @@
 #include "CubesDemo.h"
 #include "LockstepDemo.h"
 #include "SnapshotDemo.h"
+#include "CompressionDemo.h"
 #include "Render.h"
 #include "Global.h"
 #include "Console.h"
@@ -50,6 +51,10 @@ bool DemoManager::LoadDemo( const char * name )
     else if ( strcmp( name, "snapshot" ) == 0 )
     {
         m_demo = CORE_NEW( *m_allocator, SnapshotDemo, *m_allocator );
+    }
+    else if ( strcmp( name, "compression" ) == 0 )
+    {
+        m_demo = CORE_NEW( *m_allocator, CompressionDemo, *m_allocator );
     }
     else
     {

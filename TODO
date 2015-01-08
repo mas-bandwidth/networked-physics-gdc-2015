@@ -1,50 +1,28 @@
 DONE:
 
+    Create new demo framework "pm compression" by copying across from snapshot.
+
+    Take useful common stuff and move into Snapshot.h
+
+    First mode, uncompressed.
+
 TODO:
 
     -----------------------------------------------------------------------
 
-    Create new demo framework. "pm compression"
-
-    -----------------------------------------------------------------------
-
-    At this point start investigating compression approaches
-
-    -----------------------------------------------------------------------
-
-    Network simulator could have a flag set to actually perform the serialization of packets.
-
-    Should be on by default.
-
-    Clean up code that is manually serializing packets. 
-
-    Let the network simulation do it for us instead. Less code!
-
-    Extend network simulation to keep track of bandwidth send, given
-    specific packet header size (eg: 24 bytes).
-
-    -----------------------------------------------------------------------
-
-    Implement a graph showing the bandwidth in the bottom right.
-
-    It should display both average bandwidth up/down as well as 
-
-    This should all come from the simluator.
-
-    -----------------------------------------------------------------------
-
-    First obvious win is if the object is at rest, send one bit
-    and don't send lin/ang velocity.
-
-    Many objects are at rest. This is a big win.
-
-    -----------------------------------------------------------------------
-
-    Next compress orientation. It's the biggest (16 bytes).
+    First compress orientation. It's the biggest (16 bytes).
 
     Can get it down to 32 bytes pretty easily.
 
+    Don't compress 8.8.8.8 (!!!)
+
     Smallest three.
+
+    -----------------------------------------------------------------------
+
+    If the object is at rest, send one bit and don't send linear velocity.
+
+    Many objects are at rest so this reduces bandwidth.
 
     -----------------------------------------------------------------------
 
@@ -73,6 +51,27 @@ TODO:
     How good is it?
 
     Can we do better?
+
+    -----------------------------------------------------------------------
+
+    Network simulator could have a flag set to actually perform the serialization of packets.
+
+    Should be on by default.
+
+    Clean up code that is manually serializing packets. 
+
+    Let the network simulation do it for us instead. Less code!
+
+    Extend network simulation to keep track of bandwidth send, given
+    specific packet header size (eg: set to 24 bytes).
+
+    -----------------------------------------------------------------------
+
+    Implement a graph showing the bandwidth in the bottom right.
+
+    It should display both average bandwidth up/down as well as 
+
+    This should all come from the simluator.
 
     -----------------------------------------------------------------------
 
