@@ -12,7 +12,7 @@ namespace cubes
 {	
 	// simulation internal implementation
 	
-	const int MaxContacts = 8;
+	const int MaxContacts = 16;
 
 	struct SimulationImpl
 	{

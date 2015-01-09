@@ -1,77 +1,43 @@
 DONE:
 
-    Create new demo framework "pm compression" by copying across from snapshot.
-
-    Take useful common stuff and move into Snapshot.h
-
-    First mode, uncompressed.
-
 TODO:
 
     -----------------------------------------------------------------------
 
-    First compress orientation. It's the biggest (16 bytes).
+    Generalize serialize compressed quaternion down to n bits per-smallest 3
 
-    Can get it down to 32 bytes pretty easily.
-
-    Don't compress 8.8.8.8 (!!!)
-
-    Smallest three.
+    Reduce quaternion bits down to minimum we can get away with
 
     -----------------------------------------------------------------------
 
-    If the object is at rest, send one bit and don't send linear velocity.
+    Bound the position on the left side so it doesn't go outside of xy and z bounds
 
-    Many objects are at rest so this reduces bandwidth.
+    Generalize serialize compressed vector to take a vector min/max argument
 
-    -----------------------------------------------------------------------
-
-    Compress linear velocity.
-
-    Restrict linear velocity to some maximum (may already be done...)
-
-    Make the linear velocity bound as tight as possible.
-
-    Be aggressive with reducing linear velocity resolution. 
-
-    Can synchronize it quite roughly. 
-
-    It's not actually used for extrapolation, just interpolation so near enough is pretty good!
+    Send position compressed within separate bounds for xy and z (0,max height)
 
     -----------------------------------------------------------------------
 
-    Finally... position...
+    Add this point we need to start measuring bandwidth usage.
 
-    Bound the position in xy
+    Extend simulator so it actually performs packet serialization
 
-    Bound position height (z) (i forget?)
+    Clean up existing code that is manually serializing packets.
 
-    Compress position to 1cm resolution.
+    Implement bandwidth tracking for all packets sent over simulator,
+    take as input a header size, default to 24 bytes.
 
-    How good is it?
+    Track sliding window of bandwidth sent across the simulator,
+    initially just keep track of kbps average.
 
-    Can we do better?
-
-    -----------------------------------------------------------------------
-
-    Network simulator could have a flag set to actually perform the serialization of packets.
-
-    Should be on by default.
-
-    Clean up code that is manually serializing packets. 
-
-    Let the network simulation do it for us instead. Less code!
-
-    Extend network simulation to keep track of bandwidth send, given
-    specific packet header size (eg: set to 24 bytes).
+    Render this using debug text at the bottom middle of the screen
 
     -----------------------------------------------------------------------
 
-    Implement a graph showing the bandwidth in the bottom right.
+    Extend to a graph of packet size, on each packet recieved a new
+    entry is added to this graph (eg. like net graph 3)
 
-    It should display both average bandwidth up/down as well as 
-
-    This should all come from the simluator.
+    Visualize this graph bottom middle of screen in light blue
 
     -----------------------------------------------------------------------
 
@@ -117,6 +83,18 @@ TODO:
 
     -----------------------------------------------------------------------
 
-    Now encode position
+    Now encode position relative to previous position
+
+    -----------------------------------------------------------------------
+
+    Encode orientation relative to previous orientation
+
+    -----------------------------------------------------------------------
+
+    Encode linear velocity relative to previous linear velocity
+
+    -----------------------------------------------------------------------
+
+    Ready to write next article
 
     -----------------------------------------------------------------------

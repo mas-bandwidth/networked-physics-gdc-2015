@@ -1,6 +1,14 @@
 WOULD BE NICE:
 
-    Research and work out the math for performing hermite interpolation on quaternions.
+    -------------------------------------------
+    
+    Normalize in place method for quaternion, vector etc.
+
+    -------------------------------------------
+
+    Would be really nice if the window title was adjusted as demos were loaded
+
+    eg. "Client - Compression", "Client - Snapshot", "Client - Lockstep" etc.
 
     -------------------------------------------
 

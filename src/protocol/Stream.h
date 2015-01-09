@@ -3,6 +3,7 @@
 #ifndef PROTOCOL_STREAM_H
 #define PROTOCOL_STREAM_H
 
+#include <math.h>
 #include "core/Core.h"
 #include "core/Allocator.h"
 #include "protocol/ProtocolConstants.h"
@@ -434,6 +435,38 @@ template <typename Stream> void serialize_float( Stream & stream, float & value 
     if ( Stream::IsReading )
         value = tmp.float_value;
 }
+
+template <typename Stream> inline void internal_serialize_float( Stream & stream, float & value, float min, float max, float res )
+{
+    const float delta = max - min;
+    const float values = delta / res;
+    const uint32_t maxIntegerValue = (uint32_t) ceil( values );
+    const int bits = core::bits_required( 0, maxIntegerValue );
+    
+    uint32_t integerValue = 0;
+    
+    if ( Stream::IsWriting )
+    {
+        float normalizedValue = core::clamp( ( value - min ) / delta, 0.0f, 1.0f );
+        integerValue = (uint32_t) floor( normalizedValue * maxIntegerValue + 0.5f );
+    }
+    
+    stream.SerializeBits( integerValue, bits );
+
+    if ( Stream::IsReading )
+    {
+        const float normalizedValue = integerValue / float( maxIntegerValue );
+        value = normalizedValue * delta + min;
+    }
+}
+
+#define serialize_compressed_float( stream, value, min, max, res )                                        \
+do                                                                                                        \
+{                                                                                                         \
+    internal_serialize_float( stream, value, min, max, res );                                             \
+}                                                                                                         \
+while(0)
+
 
 template <typename Stream> void serialize_double( Stream & stream, double & value )
 {

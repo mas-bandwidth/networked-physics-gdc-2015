@@ -1,5 +1,51 @@
 
-Sunday Afternoon, January 4th, 2014
+Thursday, January 8th, 2015
+---------------------------
+
+    Create new demo framework "pm compression" by copying across from snapshot.
+
+    Take useful common stuff and move into Snapshot.h
+
+    First mode, uncompressed.
+
+    Getting some hitches at 60fps with 5% packet loss. WHY?!
+
+    Sketch out compression modes:
+
+        1. Uncompressed
+
+        2. Compress orientation
+
+        3. Compress at rest
+
+        4. Compress linear velocity
+
+        5. Compress position
+
+    Convert across compress/decompress orientation to vectorial::quat4f
+
+    Hook up snapshot serialize function that works according to compress mode.
+
+    First compress orientation. It's the biggest (16 bytes).
+
+    Can get it down to 32 bytes pretty easily.
+
+    If the object is at rest, send one bit and don't send linear velocity.
+
+    Many objects are at rest so this reduces bandwidth.
+
+    Compress linear velocity.
+
+    Reduce linear velocity resolution until it I see visual artifacts, then back up one
+
+    Can basically not send velocity @ 60pps (no interpolation), so dropped back to 10pps for now. 
+
+    Will go back up to 60pps once measurement is taken.
+
+    Compress position
+
+
+Sunday Afternoon, January 4th, 2015
 -----------------------------------
 
     Write article (password protected)
@@ -13,9 +59,9 @@ Sunday Afternoon, January 4th, 2014
         Marc Hartsuiker
         Margaret Moser
         Michael Dwan
+ 
 
-
-Sunday Morning, January 4th, 2014
+Sunday Morning, January 4th, 2015
 ---------------------------------
 
     Converting all videos to webm so they work in firefox.
@@ -42,7 +88,7 @@ Sunday Morning, January 4th, 2014
     and *.webm without reconverting old videos (slow)
 
 
-Late Saturday Evening, January 3rd, 2014
+Late Saturday Evening, January 3rd, 2015
 ----------------------------------------
 
     Capture videos.
@@ -66,7 +112,7 @@ Late Saturday Evening, January 3rd, 2014
     (If you want to read this, please donate...)
 
 
-Saturday Evening, January 3rd, 2014
+Saturday Evening, January 3rd, 2015
 -----------------------------------
 
     With playout delay at 250ms, code can get stuck, presumably
@@ -117,7 +163,7 @@ Saturday Evening, January 3rd, 2014
     Got decent bounds so the motion looks good, not damped.
 
 
-Saturday Morning, January 3rd, 2014
+Saturday Morning, January 3rd, 2015
 -----------------------------------
 
     Don't send angular velocity for hermite (not used)
@@ -171,7 +217,7 @@ Saturday Morning, January 3rd, 2014
     FIXED!!!
 
 
-Friday, January 2nd, 2014
+Friday, January 2nd, 2015
 -------------------------
 
     There is still some jitter in the interpolation.

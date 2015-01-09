@@ -21,8 +21,8 @@ static const int RightPort = 1001;
 
 enum LockstepModes
 {
-    LOCKSTEP_MODE_NON_DETERMINISTIC,
     LOCKSTEP_MODE_DETERMINISTIC,
+    LOCKSTEP_MODE_NON_DETERMINISTIC,
     LOCKSTEP_MODE_TCP_100MS_1PC,
     LOCKSTEP_MODE_TCP_200MS_2PC,
     LOCKSTEP_MODE_TCP_250MS_5PC,
@@ -58,11 +58,11 @@ static void InitLockstepModes()
 {
     lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].tcp = true;
     lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].deterministic = false;
-    lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].latency = 1.0f;     // note: this is one way latency. eg. RTT/2
+    lockstep_mode_data[LOCKSTEP_MODE_NON_DETERMINISTIC].latency = 0.0f;
 
     lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].tcp = true;
     lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].playout_delay = 0.1f;
-    lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].latency = 1.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_DETERMINISTIC].latency = 0.0f;
 
     lockstep_mode_data[LOCKSTEP_MODE_TCP_100MS_1PC].playout_delay = 0.1f;
     lockstep_mode_data[LOCKSTEP_MODE_TCP_100MS_1PC].latency = 0.05f;
@@ -310,7 +310,6 @@ struct LockstepInternal
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
     InitLockstepModes();
-    SetMode( LOCKSTEP_MODE_DETERMINISTIC );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );

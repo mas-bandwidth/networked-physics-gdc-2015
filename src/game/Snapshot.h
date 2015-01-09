@@ -1,6 +1,8 @@
 #ifndef GAME_SNAPSHOT_H
 #define GAME_SNAPSHOT_H
 
+#include <float.h>
+#include <stdlib.h>
 #include "Cubes.h"
 #include "vectorial/vec3f.h"
 #include "vectorial/quat4f.h"
@@ -50,6 +52,22 @@ template <typename Stream> inline void serialize_vector( Stream & stream, vector
         vector.load( values );
 }
 
+template <typename Stream> inline void serialize_compressed_vector( Stream & stream, vectorial::vec3f & vector, float maximum, float resolution )
+{
+    float values[3];
+    if ( Stream::IsWriting )
+    {
+        values[0] = vector.x();
+        values[1] = vector.y();
+        values[2] = vector.z();
+    }
+    serialize_compressed_float( stream, values[0], -maximum, maximum, resolution );
+    serialize_compressed_float( stream, values[1], -maximum, maximum, resolution );
+    serialize_compressed_float( stream, values[2], -maximum, maximum, resolution );
+    if ( Stream::IsReading )
+        vector.load( values );
+}
+
 template <typename Stream> inline void serialize_quaternion( Stream & stream, vectorial::quat4f & quaternion )
 {
     float values[4];
@@ -67,6 +85,191 @@ template <typename Stream> inline void serialize_quaternion( Stream & stream, ve
     if ( Stream::IsReading )
         quaternion.load( values );
 }
+
+inline void compress_orientation( const vectorial::quat4f & orientation, uint32_t & compressed_orientation )
+{
+    uint32_t largest = 0;
+    float a,b,c;
+    a = 0;
+    b = 0;
+    c = 0;
+
+    const float w = orientation.w();
+    const float x = orientation.x();
+    const float y = orientation.y();
+    const float z = orientation.z();
+
+    #ifdef DEBUG
+    const float epsilon = 0.0001f;
+    const float length_squared = vectorial::length_squared( orientation );
+    assert( length_squared >= 1.0f - epsilon && length_squared <= 1.0f + epsilon );
+    #endif
+
+    const float abs_w = fabs( w );
+    const float abs_x = fabs( x );
+    const float abs_y = fabs( y );
+    const float abs_z = fabs( z );
+
+    float largest_value = abs_x;
+
+    if ( abs_y > largest_value )
+    {
+        largest = 1;
+        largest_value = abs_y;
+    }
+
+    if ( abs_z > largest_value )
+    {
+        largest = 2;
+        largest_value = abs_z;
+    }
+
+    if ( abs_w > largest_value )
+    {
+        largest = 3;
+        largest_value = abs_w;
+    }
+
+    switch ( largest )
+    {
+        case 0:
+            if ( x >= 0 )
+            {
+                a = y;
+                b = z;
+                c = w;
+            }
+            else
+            {
+                a = -y;
+                b = -z;
+                c = -w;
+            }
+            break;
+
+        case 1:
+            if ( y >= 0 )
+            {
+                a = x;
+                b = z;
+                c = w;
+            }
+            else
+            {
+                a = -x;
+                b = -z;
+                c = -w;
+            }
+            break;
+
+        case 2:
+            if ( z >= 0 )
+            {
+                a = x;
+                b = y;
+                c = w;
+            }
+            else
+            {
+                a = -x;
+                b = -y;
+                c = -w;
+            }
+            break;
+
+        case 3:
+            if ( w >= 0 )
+            {
+                a = x;
+                b = y;
+                c = z;
+            }
+            else
+            {
+                a = -x;
+                b = -y;
+                c = -z;
+            }
+            break;
+
+        default:
+            assert( false );
+    }
+
+    const float minimum = - 1.0f / 1.414214f;       // 1.0f / sqrt(2)
+    const float maximum = + 1.0f / 1.414214f;
+
+    const float normal_a = ( a - minimum ) / ( maximum - minimum ); 
+    const float normal_b = ( b - minimum ) / ( maximum - minimum );
+    const float normal_c = ( c - minimum ) / ( maximum - minimum );
+
+    // todo: convert to 8 bits per-component. saves 6 bits per-orientation. probably enough res!
+
+    uint32_t integer_a = math::floor( normal_a * 1024.0f + 0.5f );
+    uint32_t integer_b = math::floor( normal_b * 1024.0f + 0.5f );
+    uint32_t integer_c = math::floor( normal_c * 1024.0f + 0.5f );
+
+    compressed_orientation = ( largest << 30 ) | ( integer_a << 20 ) | ( integer_b << 10 ) | integer_c;
+}
+
+inline void decompress_orientation( uint32_t compressed_orientation, vectorial::quat4f & orientation )
+{
+    uint32_t largest = compressed_orientation >> 30;
+    uint32_t integer_a = ( compressed_orientation >> 20 ) & ( (1<<10) - 1 );
+    uint32_t integer_b = ( compressed_orientation >> 10 ) & ( (1<<10) - 1 );
+    uint32_t integer_c = ( compressed_orientation ) & ( (1<<10) - 1 );
+
+    const float minimum = - 1.0f / 1.414214f;       // note: 1.0f / sqrt(2)
+    const float maximum = + 1.0f / 1.414214f;
+
+    const float a = integer_a / 1024.0f * ( maximum - minimum ) + minimum;
+    const float b = integer_b / 1024.0f * ( maximum - minimum ) + minimum;
+    const float c = integer_c / 1024.0f * ( maximum - minimum ) + minimum;
+
+    switch ( largest )
+    {
+        case 0:
+        {
+            // (?) y z w
+
+            orientation = vectorial::quat4f( sqrtf( 1 - a*a - b*b - c*c ), a, b, c );
+        }
+        break;
+
+        case 1:
+        {
+            // x (?) z w
+
+            orientation = vectorial::quat4f( a, sqrtf( 1 - a*a - b*b - c*c ), b, c );
+        }
+        break;
+
+        case 2:
+        {
+            // x y (?) w
+
+            orientation = vectorial::quat4f( a, b, sqrtf( 1 - a*a - b*b - c*c ), c );
+        }
+        break;
+
+        case 3:
+        {
+            // x y z (?)
+
+            orientation = vectorial::quat4f( a, b, c, sqrtf( 1 - a*a - b*b - c*c ) );
+        }
+        break;
+
+        default:
+        {
+            assert( false );
+            orientation = vectorial::quat4f::identity();
+        }
+    }
+
+    orientation = vectorial::normalize( orientation );
+}
+
 
 static void InterpolateSnapshot_Linear( float t, 
                                         const __restrict CubeState * a, 
@@ -199,13 +402,13 @@ struct SnapshotInterpolationBuffer
 
         time -= ( start_time + playout_delay );
 
-        const double frames_since_start = time * mode_data.send_rate;
-
         if ( time <= 0 )
             return;
 
         // if we are interpolating but the interpolation start time is too old,
         // go back to the not interpolating state, so we can find a new start point.
+
+        const double frames_since_start = time * mode_data.send_rate;
 
         if ( interpolating )
         {

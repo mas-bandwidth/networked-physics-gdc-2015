@@ -5,6 +5,7 @@
 #include "Cubes.h"
 #include "Global.h"
 #include "Snapshot.h"
+#include "protocol/Stream.h"
 #include "protocol/SequenceBuffer.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
@@ -13,36 +14,37 @@ static const int RightPort = 1001;
 
 enum SnapshotMode
 {
-    COMPRESSION_MODE_UNCOMPRESSED_60PPS,
+    COMPRESSION_MODE_UNCOMPRESSED,
+    COMPRESSION_MODE_ORIENTATION,
+    COMPRESSION_MODE_AT_REST,
+    COMPRESSION_MODE_VELOCITY,
+    COMPRESSION_MODE_POSITION,
     COMPRESSION_NUM_MODES
 };
 
 const char * compression_mode_descriptions[]
 {
-    "Uncompressed 60 packets per-second",
-    // ...
+    "Uncompressed",
+    "Compress orientation",
+    "Compress at rest",
+    "Compress velocity",
+    "Compress position",
 };
 
 struct CompressionModeData : public SnapshotModeData
 {
     CompressionModeData()
     {
-        playout_delay = 0.085f;        // one lost packet = no problem. two lost packets in a row = hitch
-        send_rate = 60.0f;
+        playout_delay = 0.35f;        // one lost packet = no problem. two lost packets in a row = hitch
+        send_rate = 10.0f;
         latency = 0.0f;
         packet_loss = 5.0f;
         jitter = 2 / 60.0f;
-        extrapolation = 0.2f;
         interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
     }
 };
 
 static CompressionModeData compression_mode_data[COMPRESSION_NUM_MODES];
-
-static void InitCompressionModes()
-{
-//    compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED_60PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
-}
 
 enum CompressionPackets
 {
@@ -54,37 +56,142 @@ enum CompressionPackets
 struct CompressionSnapshotPacket : public protocol::Packet
 {
     uint16_t sequence;
-    bool has_velocity;
+    int compression_mode;
 
     CompressionSnapshotPacket() : Packet( COMPRESSION_SNAPSHOT_PACKET )
     {
         sequence = 0;
-        has_velocity = false;
+        compression_mode = COMPRESSION_MODE_UNCOMPRESSED;
     }
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_uint16( stream, sequence );
-        serialize_bool( stream, has_velocity );
-        for ( int i = 0; i < NumCubes; ++i )
+
+        serialize_int( stream, compression_mode, 0, COMPRESSION_NUM_MODES - 1 );
+
+        switch ( compression_mode )
         {
-            serialize_bool( stream, cubes[i].interacting );
-            serialize_vector( stream, cubes[i].position );
-            serialize_quaternion( stream, cubes[i].orientation );
-            if ( has_velocity )
+            case COMPRESSION_MODE_UNCOMPRESSED:
             {
-                serialize_vector( stream, cubes[i].linear_velocity );
-#ifdef SERIALIZE_ANGULAR_VELOCITY
-                serialize_vector( stream, cubes[i].angular_velocity );
-#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+                    serialize_vector( stream, cubes[i].position );
+                    serialize_quaternion( stream, cubes[i].orientation );
+                    serialize_vector( stream, cubes[i].linear_velocity );
+                }
             }
-            else if ( Stream::IsReading )
+            break;
+
+            case COMPRESSION_MODE_ORIENTATION:
             {
-                cubes[i].linear_velocity.zero();
-#ifdef SERIALIZE_ANGULAR_VELOCITY
-                cubes[i].angular_velocity.zero();
-#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+                    serialize_vector( stream, cubes[i].position );
+
+                    uint32_t compressed_orientation;
+                    if ( Stream::IsWriting )
+                        compress_orientation( cubes[i].orientation, compressed_orientation );
+                    serialize_uint32( stream, compressed_orientation );
+                    if ( Stream::IsReading )
+                        decompress_orientation( compressed_orientation, cubes[i].orientation );
+
+                    serialize_quaternion( stream, cubes[i].orientation );
+                    serialize_vector( stream, cubes[i].linear_velocity );
+                }
             }
+            break;
+
+            case COMPRESSION_MODE_AT_REST:
+            {
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+                    serialize_vector( stream, cubes[i].position );
+
+                    uint32_t compressed_orientation;
+                    if ( Stream::IsWriting )
+                        compress_orientation( cubes[i].orientation, compressed_orientation );
+                    serialize_uint32( stream, compressed_orientation );
+                    if ( Stream::IsReading )
+                        decompress_orientation( compressed_orientation, cubes[i].orientation );
+
+                    serialize_quaternion( stream, cubes[i].orientation );
+
+                    bool at_rest;
+                    if ( Stream::IsWriting )
+                        at_rest = length_squared( cubes[i].linear_velocity ) == 0.0f;
+                    serialize_bool( stream, at_rest );
+                    if ( !at_rest )
+                        serialize_vector( stream, cubes[i].linear_velocity );
+                    else if ( Stream::IsReading )
+                        cubes[i].linear_velocity = vectorial::vec3f::zero();
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_VELOCITY:
+            {
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+                    serialize_vector( stream, cubes[i].position );
+
+                    uint32_t compressed_orientation;
+                    if ( Stream::IsWriting )
+                        compress_orientation( cubes[i].orientation, compressed_orientation );
+                    serialize_uint32( stream, compressed_orientation );
+                    if ( Stream::IsReading )
+                        decompress_orientation( compressed_orientation, cubes[i].orientation );
+
+                    serialize_quaternion( stream, cubes[i].orientation );
+
+                    bool at_rest;
+                    if ( Stream::IsWriting )
+                        at_rest = length_squared( cubes[i].linear_velocity ) == 0.0f;
+                    serialize_bool( stream, at_rest );
+                    if ( !at_rest )
+                        serialize_compressed_vector( stream, cubes[i].linear_velocity, MaxLinearSpeed, 1.0f );
+                    else if ( Stream::IsReading )
+                        cubes[i].linear_velocity = vectorial::vec3f::zero();
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_POSITION:
+            {
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+
+                    // todo: vector min/max
+                    serialize_compressed_vector( stream, cubes[i].position, 40, 0.01f );
+
+                    uint32_t compressed_orientation;
+                    if ( Stream::IsWriting )
+                        compress_orientation( cubes[i].orientation, compressed_orientation );
+                    serialize_uint32( stream, compressed_orientation );
+                    if ( Stream::IsReading )
+                        decompress_orientation( compressed_orientation, cubes[i].orientation );
+
+                    serialize_quaternion( stream, cubes[i].orientation );
+
+                    bool at_rest;
+                    if ( Stream::IsWriting )
+                        at_rest = length_squared( cubes[i].linear_velocity ) == 0.0f;
+                    serialize_bool( stream, at_rest );
+                    if ( !at_rest )
+                        serialize_compressed_vector( stream, cubes[i].linear_velocity, MaxLinearSpeed, 1.0f );
+                    else if ( Stream::IsReading )
+                        cubes[i].linear_velocity = vectorial::vec3f::zero();
+                }
+            }
+            break;
+
+            default:
+                break;
         }
     }
 
@@ -174,7 +281,6 @@ struct CompressionInternal
 
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
 {
-    InitCompressionModes();
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
@@ -252,7 +358,7 @@ void CompressionDemo::Update()
 
             snapshot_packet->sequence = m_compression->send_sequence++;
 
-            snapshot_packet->has_velocity = compression_mode_data[GetMode()].interpolation >= SNAPSHOT_INTERPOLATION_HERMITE;
+            snapshot_packet->compression_mode = GetMode();
 
             const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
 
