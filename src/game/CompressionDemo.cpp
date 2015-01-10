@@ -46,6 +46,11 @@ struct CompressionModeData : public SnapshotModeData
 
 static CompressionModeData compression_mode_data[COMPRESSION_NUM_MODES];
 
+static void InitCompressionModes()
+{
+//    compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED]
+}
+
 enum CompressionPackets
 {
     COMPRESSION_SNAPSHOT_PACKET,
@@ -91,14 +96,8 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     serialize_bool( stream, cubes[i].interacting );
                     serialize_vector( stream, cubes[i].position );
 
-                    uint32_t compressed_orientation;
-                    if ( Stream::IsWriting )
-                        compress_orientation( cubes[i].orientation, compressed_orientation );
-                    serialize_uint32( stream, compressed_orientation );
-                    if ( Stream::IsReading )
-                        decompress_orientation( compressed_orientation, cubes[i].orientation );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 10 );
 
-                    serialize_quaternion( stream, cubes[i].orientation );
                     serialize_vector( stream, cubes[i].linear_velocity );
                 }
             }
@@ -111,14 +110,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     serialize_bool( stream, cubes[i].interacting );
                     serialize_vector( stream, cubes[i].position );
 
-                    uint32_t compressed_orientation;
-                    if ( Stream::IsWriting )
-                        compress_orientation( cubes[i].orientation, compressed_orientation );
-                    serialize_uint32( stream, compressed_orientation );
-                    if ( Stream::IsReading )
-                        decompress_orientation( compressed_orientation, cubes[i].orientation );
-
-                    serialize_quaternion( stream, cubes[i].orientation );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 10 );
 
                     bool at_rest;
                     if ( Stream::IsWriting )
@@ -139,14 +131,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     serialize_bool( stream, cubes[i].interacting );
                     serialize_vector( stream, cubes[i].position );
 
-                    uint32_t compressed_orientation;
-                    if ( Stream::IsWriting )
-                        compress_orientation( cubes[i].orientation, compressed_orientation );
-                    serialize_uint32( stream, compressed_orientation );
-                    if ( Stream::IsReading )
-                        decompress_orientation( compressed_orientation, cubes[i].orientation );
-
-                    serialize_quaternion( stream, cubes[i].orientation );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 10 );
 
                     bool at_rest;
                     if ( Stream::IsWriting )
@@ -167,16 +152,9 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     serialize_bool( stream, cubes[i].interacting );
 
                     // todo: vector min/max
-                    serialize_compressed_vector( stream, cubes[i].position, 40, 0.01f );
+                    serialize_compressed_vector( stream, cubes[i].position, 40, 0.001 );
 
-                    uint32_t compressed_orientation;
-                    if ( Stream::IsWriting )
-                        compress_orientation( cubes[i].orientation, compressed_orientation );
-                    serialize_uint32( stream, compressed_orientation );
-                    if ( Stream::IsReading )
-                        decompress_orientation( compressed_orientation, cubes[i].orientation );
-
-                    serialize_quaternion( stream, cubes[i].orientation );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
 
                     bool at_rest;
                     if ( Stream::IsWriting )
@@ -247,6 +225,7 @@ struct CompressionInternal
         this->allocator = &allocator;
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
+        networkSimulatorConfig.maxPacketSize = MaxPacketSize;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         Reset( mode_data );
     }
@@ -281,6 +260,7 @@ struct CompressionInternal
 
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
 {
+    InitCompressionModes();
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
@@ -409,35 +389,16 @@ void CompressionDemo::Update()
         if ( !packet )
             break;
 
-        auto port = packet->GetAddress().GetPort();
-        auto type = packet->GetType();
-
-        // IMPORTANT: Make sure we actually serialize read/write the packet.
-        // Otherwise we're just passing around pointers to structs. LAME! :D
-
-        uint8_t buffer[MaxPacketSize];
-
-        protocol::WriteStream write_stream( buffer, MaxPacketSize );
-        packet->SerializeWrite( write_stream );
-        write_stream.Flush();
-        CORE_CHECK( !write_stream.IsOverflow() );
-
-        m_compression->packet_factory.Destroy( packet );
-        packet = nullptr;
-
-        protocol::ReadStream read_stream( buffer, MaxPacketSize );
-        auto read_packet = m_compression->packet_factory.Create( type );
-        read_packet->SerializeRead( read_stream );
-        CORE_CHECK( !read_stream.IsOverflow() );
+        const auto port = packet->GetAddress().GetPort();
+        const auto type = packet->GetType();
 
         if ( type == COMPRESSION_SNAPSHOT_PACKET && port == RightPort )
         {
-            auto snapshot_packet = (CompressionSnapshotPacket*) read_packet;
+            auto snapshot_packet = (CompressionSnapshotPacket*) packet;
             m_compression->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot_packet->cubes );
         }
 
-        m_compression->packet_factory.Destroy( read_packet );
-        read_packet = nullptr;
+        m_compression->packet_factory.Destroy( packet );
     }
 
     // if we are an an interpolation mode, we need to grab the view updates for the right side from the interpolation buffer

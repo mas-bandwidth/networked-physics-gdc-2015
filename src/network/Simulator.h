@@ -24,6 +24,9 @@ namespace network
         protocol::PacketFactory * packetFactory;
         int stateChance;                    // 1 in n chance to change state per-update
         int numPackets;                     // number of packets to buffer
+        int maxPacketSize;                  // maximum packet size in bytes
+        int packetHeaderSize;               // packet header size in bytes (for bandwidth calculations)
+        bool serializePackets;              // if true then serialize read/writ packets
 
         SimulatorConfig()
         {   
@@ -31,6 +34,9 @@ namespace network
             packetFactory = nullptr;        // packet factory. must be specified -- we need it to destroy buffered packets in destructor.
             stateChance = 1000;             // 1 in every 1000 chance per-update by default
             numPackets = 1024;              // buffer up to 1024 packets by default
+            serializePackets = true;
+            maxPacketSize = 1024;
+            packetHeaderSize = 24;
         }
     };
 
@@ -57,8 +63,6 @@ namespace network
         }
     };
 
-    // todo: do we actually get any value implementing the interface? I don't think we do
-
     class Simulator : public Interface
     {
     public:
@@ -79,13 +83,33 @@ namespace network
 
         void Update( const core::TimeBase & timeBase );
 
-        // todo: this stuff simply doesn't belong here
-        uint32_t GetMaxPacketSize() const;
-        protocol::PacketFactory & GetPacketFactory() const;
-        void SetContext( const void ** context ) {}        // not needed, we don't actually serialize the packets
+        void SetContext( const void ** context ) { m_context = context; }
 
-        void SetTCPMode( bool value ) { Reset(); m_tcpMode = value; }
-        bool GetTCPMode() const { return m_tcpMode; }
+        uint32_t GetMaxPacketSize() const
+        {
+            return m_config.maxPacketSize;
+        }
+
+        protocol::PacketFactory & GetPacketFactory() const
+        {
+            CORE_ASSERT( m_config.packetFactory );
+            return *m_config.packetFactory;
+        }
+
+        void SetTCPMode( bool value ) 
+        {
+            Reset(); 
+            m_tcpMode = value; 
+        }
+
+        bool GetTCPMode() const 
+        { 
+            return m_tcpMode; 
+        }
+
+    protected:
+
+        protocol::Packet * SerializePacket( protocol::Packet * input );
 
     private:
 
@@ -98,6 +122,8 @@ namespace network
 
         const SimulatorConfig m_config;
 
+        const void ** m_context;
+
         core::Allocator * m_allocator;
 
         core::TimeBase m_timeBase;
@@ -108,7 +134,7 @@ namespace network
         PacketData * m_packets;
 
         bool m_tcpMode;         // note: simulate TCP behavior. deliver packets reliably and in-order. 
-                                // delay packets until simulated retransmission of lost packets @ 3X RTT
+                                // delay packets until simulated retransmission of lost packets @ 2X RTT
 
         int m_numStates;
         SimulatorState m_state;

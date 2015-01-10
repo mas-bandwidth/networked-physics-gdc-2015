@@ -53,6 +53,7 @@ void test_reliable_message_channel_messages()
             network::SimulatorConfig simulatorConfig;
             simulatorConfig.packetFactory = &packetFactory;
             network::Simulator simulator( simulatorConfig );
+            simulator.SetContext( context );
             simulator.AddState( { 1.0f, 1.0f, 25 } );
 
             int iteration = 0;
@@ -63,24 +64,8 @@ void test_reliable_message_channel_messages()
                 CORE_CHECK( writePacket );
                 CORE_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
-                uint8_t buffer[MaxPacketSize];
-
-                protocol::WriteStream writeStream( buffer, MaxPacketSize );
-                writeStream.SetContext( context );
-                writePacket->SerializeWrite( writeStream );
-                writeStream.Flush();
-                packetFactory.Destroy( writePacket );
+                simulator.SendPacket( address, writePacket );
                 writePacket = nullptr;
-
-                protocol::ReadStream readStream( buffer, MaxPacketSize );
-                readStream.SetContext( context );
-                auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-                CORE_CHECK( readPacket );
-                CORE_CHECK( readPacket->GetType() == PACKET_CONNECTION );
-                readPacket->SerializeRead( readStream );
-
-                simulator.SendPacket( address, readPacket );
-                readPacket = nullptr;
 
                 simulator.Update( timeBase );
 
@@ -190,6 +175,7 @@ void test_reliable_message_channel_small_blocks()
         network::SimulatorConfig simulatorConfig;
         simulatorConfig.packetFactory = &packetFactory;
         network::Simulator simulator( simulatorConfig );
+        simulator.SetContext( context );
         simulator.AddState( { 1.0f, 1.0f, 25 } );
 
         while ( true )
@@ -198,24 +184,8 @@ void test_reliable_message_channel_small_blocks()
             CORE_CHECK( writePacket );
             CORE_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
-            uint8_t buffer[MaxPacketSize];
-
-            protocol::WriteStream writeStream( buffer, MaxPacketSize );
-            writeStream.SetContext( context );
-            writePacket->SerializeWrite( writeStream );
-            writeStream.Flush();
-
-            packetFactory.Destroy( writePacket );
+            simulator.SendPacket( address, writePacket );
             writePacket = nullptr;
-
-            protocol::ReadStream readStream( buffer, MaxPacketSize );
-            readStream.SetContext( context );
-            auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-            CORE_CHECK( readPacket );
-            CORE_CHECK( readPacket->GetType() == PACKET_CONNECTION );
-            readPacket->SerializeRead( readStream );
-
-            simulator.SendPacket( address, readPacket );
 
             simulator.Update( timeBase );
 
@@ -323,6 +293,7 @@ void test_reliable_message_channel_large_blocks()
         network::SimulatorConfig simulatorConfig;
         simulatorConfig.packetFactory = &packetFactory;
         network::Simulator simulator( simulatorConfig );
+        simulator.SetContext( context );
         simulator.AddState( { 1.0f, 1.0f, 25 } );
 
         while ( true )
@@ -331,24 +302,7 @@ void test_reliable_message_channel_large_blocks()
             CORE_CHECK( writePacket );
             CORE_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
-            uint8_t buffer[MaxPacketSize];
-
-            protocol::WriteStream writeStream( buffer, MaxPacketSize );
-            writeStream.SetContext( context );
-            writePacket->SerializeWrite( writeStream );
-            writeStream.Flush();
-
-            packetFactory.Destroy( writePacket );
-            writePacket = nullptr;
-
-            protocol::ReadStream readStream( buffer, MaxPacketSize );
-            readStream.SetContext( context );
-            auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-            CORE_CHECK( readPacket );
-            CORE_CHECK( readPacket->GetType() == PACKET_CONNECTION );
-            readPacket->SerializeRead( readStream );
-
-            simulator.SendPacket( address, readPacket );
+            simulator.SendPacket( address, writePacket );
 
             simulator.Update( timeBase );
 
@@ -471,6 +425,7 @@ void test_reliable_message_channel_mixture()
         network::SimulatorConfig simulatorConfig;
         simulatorConfig.packetFactory = &packetFactory;
         network::Simulator simulator( simulatorConfig );
+        simulator.SetContext( context );
         simulator.AddState( { 1.0f, 1.0f, 25 } );
 
         while ( true )
@@ -479,22 +434,7 @@ void test_reliable_message_channel_mixture()
             CORE_CHECK( writePacket );
             CORE_CHECK( writePacket->GetType() == PACKET_CONNECTION );
 
-            uint8_t buffer[MaxPacketSize];
-
-            protocol::WriteStream writeStream( buffer, MaxPacketSize );
-            writeStream.SetContext( context );
-            writePacket->SerializeWrite( writeStream );
-            writeStream.Flush();
-
-            packetFactory.Destroy( writePacket );
-            writePacket = nullptr;
-
-            protocol::ReadStream readStream( buffer, MaxPacketSize );
-            readStream.SetContext( context );
-            auto readPacket = packetFactory.Create( PACKET_CONNECTION );
-            readPacket->SerializeRead( readStream );
-
-            simulator.SendPacket( address, readPacket );
+            simulator.SendPacket( address, writePacket );
 
             simulator.Update( timeBase );
 

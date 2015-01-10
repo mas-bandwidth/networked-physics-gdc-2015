@@ -13,7 +13,6 @@
 #include "network/Simulator.h"
 
 static const int MaxInputs = 256;
-static const int MaxPacketSize = 1024;
 static const int PlayoutDelayBufferSize = 1024;
 
 static const int LeftPort = 1000;
@@ -412,29 +411,11 @@ void LockstepDemo::Update()
         auto port = packet->GetAddress().GetPort();
         auto type = packet->GetType();
 
-        // IMPORTANT: Make sure we actually serialize read/write the packet.
-        // Otherwise we're just passing around pointers to structs. LAME! :D
-
-        uint8_t buffer[MaxPacketSize];
-
-        protocol::WriteStream write_stream( buffer, MaxPacketSize );
-        packet->SerializeWrite( write_stream );
-        write_stream.Flush();
-        CORE_CHECK( !write_stream.IsOverflow() );
-
-        m_lockstep->packet_factory.Destroy( packet );
-        packet = nullptr;
-
-        protocol::ReadStream read_stream( buffer, MaxPacketSize );
-        auto read_packet = m_lockstep->packet_factory.Create( type );
-        read_packet->SerializeRead( read_stream );
-        CORE_CHECK( !read_stream.IsOverflow() );
-
         if ( type == LOCKSTEP_PACKET_INPUT && port == RightPort )
         {
             // input packet for right simulation
 
-            auto input_packet = (LockstepInputPacket*) read_packet;
+            auto input_packet = (LockstepInputPacket*) packet;
 
             if ( !m_lockstep->network_simulator->GetTCPMode() )
             {
@@ -456,13 +437,12 @@ void LockstepDemo::Update()
         {
             // ack packet for left simulation
 
-            auto ack_packet = (LockstepAckPacket*) read_packet;
+            auto ack_packet = (LockstepAckPacket*) packet;
 
             inputs.Ack( ack_packet->ack );
         }
 
-        m_lockstep->packet_factory.Destroy( read_packet );
-        read_packet = nullptr;
+        m_lockstep->packet_factory.Destroy( packet );
     }
 
     // if any input packets were received this frame, send an ack packet back to the left simulation

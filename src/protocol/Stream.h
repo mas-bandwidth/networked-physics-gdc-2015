@@ -208,6 +208,11 @@ namespace protocol
             return m_aborted;
         }
 
+        int GetBytesRead() const
+        {
+            return m_reader.GetBytesRead();
+        }
+
     private:
 
         BitReader m_reader;

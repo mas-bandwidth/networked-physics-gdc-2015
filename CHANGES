@@ -1,4 +1,22 @@
 
+Friday January 9th, 2015
+------------------------
+
+    Generalize serialize compressed quaternion down to n bits per-smallest 3
+
+    Reduce quaternion bits down to minimum we can get away with (try 8, 7, 6...)
+
+    Can't seem to go very far. See artifacts with 8.
+
+    9 is fine. Don't see any artifacts.
+
+    Had to increase position resolution to 0.001, eg. 1/10th of a centimeter.
+
+    Bisect until it's not visible...
+
+    Try 0.005... nope. 0.0025 = nope. 0.001 it is.
+
+    
 Thursday, January 8th, 2015
 ---------------------------
 

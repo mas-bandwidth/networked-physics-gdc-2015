@@ -90,6 +90,11 @@ namespace protocol
             return m_bitsRead;
         }
 
+        int GetBytesRead() const
+        {
+            return ( m_wordIndex + 1 ) * 4;     // note: +1 so it matches bytes written
+        }
+
         int GetBitsRemaining() const
         {
             return m_numBits - m_bitsRead;

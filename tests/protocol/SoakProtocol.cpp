@@ -70,10 +70,11 @@ void soak_test()
 
     const int MaxPacketSize = 4096;
 
-#if !PROFILE
     network::SimulatorConfig simulatorConfig;
+    simulatorConfig.maxPacketSize = MaxPacketSize;
     simulatorConfig.packetFactory = &packetFactory;
     network::Simulator simulator( simulatorConfig );
+    simulator.SetContext( context );
     simulator.AddState( { 0.0f, 0.0f, 0.0f } );
     simulator.AddState( { 0.1f, 0.01f, 1.0f } );
     simulator.AddState( { 0.1f, 0.01f, 1.0f } );
@@ -82,7 +83,6 @@ void soak_test()
     simulator.AddState( { 0.5f, 0.25f, 25.0f } );
     simulator.AddState( { 1.0f, 0.50f, 50.0f } );
     simulator.AddState( { 1.0f, 1.00f, 100.0f } );
-#endif
 
     network::Address address( "::1" );
 
@@ -153,8 +153,6 @@ void soak_test()
 
         protocol::ConnectionPacket * writePacket = connection.WritePacket();
 
-#if !PROFILE
-
         simulator.SendPacket( writePacket->GetAddress(), writePacket );
 
         simulator.Update( timeBase );
@@ -165,54 +163,10 @@ void soak_test()
             if ( !packet )
                 break;
 
-            uint8_t buffer[MaxPacketSize];
-
-            protocol::WriteStream writeStream( buffer, MaxPacketSize );
-            writeStream.SetContext( context );
-            packet->SerializeWrite( writeStream );
-            writeStream.Flush();
-            CORE_CHECK( !writeStream.IsOverflow() );
+            connection.ReadPacket( static_cast<protocol::ConnectionPacket*>( packet ) );
 
             packetFactory.Destroy( packet );
-            packet = nullptr;
-
-            protocol::ReadStream readStream( buffer, MaxPacketSize );
-            readStream.SetContext( context );
-            auto readPacket = (protocol::ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
-            readPacket->SerializeRead( readStream );
-            CORE_CHECK( !readStream.IsOverflow() );
-
-            connection.ReadPacket( static_cast<protocol::ConnectionPacket*>( readPacket ) );
-
-            packetFactory.Destroy( readPacket );
-            readPacket = nullptr;
         }
-
-#else
-
-        uint8_t buffer[MaxPacketSize];
-
-        protocol::WriteStream writeStream( buffer, MaxPacketSize );
-        writeStream.SetContext( context );
-        writePacket->SerializeWrite( writeStream );
-        writeStream.Flush();
-        CORE_CHECK( !writeStream.IsOverflow() );
-
-        packetFactory.Destroy( writePacket );
-        writePacket = nullptr;
-
-        protocol::ReadStream readStream( buffer, MaxPacketSize );
-        readStream.SetContext( context );
-        auto readPacket = (protocol::ConnectionPacket*) packetFactory.Create( PACKET_CONNECTION );
-        readPacket->SerializeRead( readStream );
-        CORE_CHECK( !readStream.IsOverflow() );
-
-        connection.ReadPacket( static_cast<protocol::ConnectionPacket*>( readPacket ) );
-
-        packetFactory.Destroy( readPacket );
-        readPacket = nullptr;
-
-#endif
 
         connection.Update( timeBase );
 

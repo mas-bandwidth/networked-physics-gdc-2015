@@ -1,28 +1,17 @@
 DONE:
 
+    Extend simulator so it actually performs packet serialization
+
+    Clean up existing demo code that is manually serializing packets.
+
+    Go across all unit tests and soak tests and remove manual packet serialize.
+
+    Disable simulator packet serialization with client/server. It's not necessary,
+    the packets are already being properly simulated via network interface (BSD).
+
 TODO:
 
     -----------------------------------------------------------------------
-
-    Generalize serialize compressed quaternion down to n bits per-smallest 3
-
-    Reduce quaternion bits down to minimum we can get away with
-
-    -----------------------------------------------------------------------
-
-    Bound the position on the left side so it doesn't go outside of xy and z bounds
-
-    Generalize serialize compressed vector to take a vector min/max argument
-
-    Send position compressed within separate bounds for xy and z (0,max height)
-
-    -----------------------------------------------------------------------
-
-    Add this point we need to start measuring bandwidth usage.
-
-    Extend simulator so it actually performs packet serialization
-
-    Clean up existing code that is manually serializing packets.
 
     Implement bandwidth tracking for all packets sent over simulator,
     take as input a header size, default to 24 bytes.
@@ -30,7 +19,7 @@ TODO:
     Track sliding window of bandwidth sent across the simulator,
     initially just keep track of kbps average.
 
-    Render this using debug text at the bottom middle of the screen
+    Render this using debug text at the bottom middle of the screen in light blue
 
     -----------------------------------------------------------------------
 
@@ -40,6 +29,14 @@ TODO:
     Visualize this graph bottom middle of screen in light blue
 
     -----------------------------------------------------------------------
+
+    Bound the position on the left side so it doesn't go outside of xy and z bounds
+
+    Generalize serialize compressed vector to take a vector min/max argument
+
+    Send position compressed within separate bounds for xy and z (0,max height)
+
+    ----------------------------------------------------------------------
 
     Delta encoding.
 

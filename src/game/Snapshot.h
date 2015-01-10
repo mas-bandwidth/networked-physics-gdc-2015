@@ -40,11 +40,7 @@ template <typename Stream> inline void serialize_vector( Stream & stream, vector
 {
     float values[3];
     if ( Stream::IsWriting )
-    {
-        values[0] = vector.x();
-        values[1] = vector.y();
-        values[2] = vector.z();
-    }
+        vector.store( values );
     serialize_float( stream, values[0] );
     serialize_float( stream, values[1] );
     serialize_float( stream, values[2] );
@@ -56,11 +52,7 @@ template <typename Stream> inline void serialize_compressed_vector( Stream & str
 {
     float values[3];
     if ( Stream::IsWriting )
-    {
-        values[0] = vector.x();
-        values[1] = vector.y();
-        values[2] = vector.z();
-    }
+        vector.store( values );
     serialize_compressed_float( stream, values[0], -maximum, maximum, resolution );
     serialize_compressed_float( stream, values[1], -maximum, maximum, resolution );
     serialize_compressed_float( stream, values[2], -maximum, maximum, resolution );
@@ -72,18 +64,205 @@ template <typename Stream> inline void serialize_quaternion( Stream & stream, ve
 {
     float values[4];
     if ( Stream::IsWriting )
-    {
-        values[0] = quaternion.x();
-        values[1] = quaternion.y();
-        values[2] = quaternion.z();
-        values[3] = quaternion.w();
-    }
+        quaternion.store( values );
     serialize_float( stream, values[0] );
     serialize_float( stream, values[1] );
     serialize_float( stream, values[2] );
     serialize_float( stream, values[3] );
     if ( Stream::IsReading )
         quaternion.load( values );
+}
+
+template <typename Stream> inline void serialize_compressed_quaternion( Stream & stream, vectorial::quat4f & quaternion, int component_bits )
+{
+    CORE_ASSERT( component_bits > 1 );
+    CORE_ASSERT( component_bits <= 31 );
+
+    const float minimum = - 1.0f / 1.414214f;       // 1.0f / sqrt(2)
+    const float maximum = + 1.0f / 1.414214f;
+
+    const float scale = float( ( 1 << component_bits ) - 1 );
+
+    if ( Stream::IsWriting )
+    {
+        float values[4];
+        quaternion.store( values );
+
+        const float x = values[0];
+        const float y = values[1];
+        const float z = values[2];
+        const float w = values[3];
+
+        const float abs_x = fabs( x );
+        const float abs_y = fabs( y );
+        const float abs_z = fabs( z );
+        const float abs_w = fabs( w );
+
+        float largest_value = abs_x;
+
+        uint32_t largest = 0;
+
+        float a,b,c;
+
+        if ( abs_y > largest_value )
+        {
+            largest = 1;
+            largest_value = abs_y;
+        }
+
+        if ( abs_z > largest_value )
+        {
+            largest = 2;
+            largest_value = abs_z;
+        }
+
+        if ( abs_w > largest_value )
+        {
+            largest = 3;
+            largest_value = abs_w;
+        }
+
+        switch ( largest )
+        {
+            case 0:
+                if ( x >= 0 )
+                {
+                    a = y;
+                    b = z;
+                    c = w;
+                }
+                else
+                {
+                    a = -y;
+                    b = -z;
+                    c = -w;
+                }
+                break;
+
+            case 1:
+                if ( y >= 0 )
+                {
+                    a = x;
+                    b = z;
+                    c = w;
+                }
+                else
+                {
+                    a = -x;
+                    b = -z;
+                    c = -w;
+                }
+                break;
+
+            case 2:
+                if ( z >= 0 )
+                {
+                    a = x;
+                    b = y;
+                    c = w;
+                }
+                else
+                {
+                    a = -x;
+                    b = -y;
+                    c = -w;
+                }
+                break;
+
+            case 3:
+                if ( w >= 0 )
+                {
+                    a = x;
+                    b = y;
+                    c = z;
+                }
+                else
+                {
+                    a = -x;
+                    b = -y;
+                    c = -z;
+                }
+                break;
+
+            default:
+                assert( false );
+        }
+
+        const float normal_a = ( a - minimum ) / ( maximum - minimum ); 
+        const float normal_b = ( b - minimum ) / ( maximum - minimum );
+        const float normal_c = ( c - minimum ) / ( maximum - minimum );
+
+        uint32_t integer_a = math::floor( normal_a * scale + 0.5f );
+        uint32_t integer_b = math::floor( normal_b * scale + 0.5f );
+        uint32_t integer_c = math::floor( normal_c * scale + 0.5f );
+
+        serialize_bits( stream, largest, 2 );
+        serialize_bits( stream, integer_a, component_bits );
+        serialize_bits( stream, integer_b, component_bits );
+        serialize_bits( stream, integer_c, component_bits );
+    }
+    else
+    {
+        uint32_t largest;
+        uint32_t integer_a;
+        uint32_t integer_b;
+        uint32_t integer_c;
+
+        serialize_bits( stream, largest, 2 );
+        serialize_bits( stream, integer_a, component_bits );
+        serialize_bits( stream, integer_b, component_bits );
+        serialize_bits( stream, integer_c, component_bits );
+
+        const float minimum = - 1.0f / 1.414214f;       // note: 1.0f / sqrt(2)
+        const float maximum = + 1.0f / 1.414214f;
+
+        const float inverse_scale = 1.0f / scale;
+
+        const float a = integer_a * inverse_scale * ( maximum - minimum ) + minimum;
+        const float b = integer_b * inverse_scale * ( maximum - minimum ) + minimum;
+        const float c = integer_c * inverse_scale * ( maximum - minimum ) + minimum;
+
+        switch ( largest )
+        {
+            case 0:
+            {
+                // (?) y z w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( sqrtf( 1 - a*a - b*b - c*c ), a, b, c ) );
+            }
+            break;
+
+            case 1:
+            {
+                // x (?) z w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, sqrtf( 1 - a*a - b*b - c*c ), b, c ) );
+            }
+            break;
+
+            case 2:
+            {
+                // x y (?) w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, b, sqrtf( 1 - a*a - b*b - c*c ), c ) );
+            }
+            break;
+
+            case 3:
+            {
+                // x y z (?)
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, b, c, sqrtf( 1 - a*a - b*b - c*c ) ) );
+            }
+            break;
+
+            default:
+            {
+                assert( false );
+                quaternion = vectorial::quat4f::identity();
+            }
+        }
+    }
 }
 
 inline void compress_orientation( const vectorial::quat4f & orientation, uint32_t & compressed_orientation )

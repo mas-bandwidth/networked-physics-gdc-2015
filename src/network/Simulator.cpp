@@ -21,6 +21,8 @@ namespace network
         m_numStates = 0;
 
         m_tcpMode = false;
+
+        m_context = nullptr;
     }
 
     Simulator::~Simulator()
@@ -139,6 +141,8 @@ namespace network
             {
                 auto packet = m_packets[index].packet;
                 m_packets[index].packet = nullptr;
+                if ( m_config.serializePackets )
+                    packet = SerializePacket( packet );
                 m_packetNumberReceive++;
                 return packet;
             }
@@ -160,6 +164,8 @@ namespace network
             {
                 auto packet = oldestPacket->packet;
                 oldestPacket->packet = nullptr;
+                if ( m_config.serializePackets )
+                    packet = SerializePacket( packet );
                 return packet;
             }
         }
@@ -178,14 +184,60 @@ namespace network
         }
     }
 
-    uint32_t Simulator::GetMaxPacketSize() const
+    protocol::Packet * Simulator::SerializePacket( protocol::Packet * input )
     {
-        return 0xFFFFFFFF;
-    }
+        CORE_ASSERT( input );
 
-    protocol::PacketFactory & Simulator::GetPacketFactory() const
-    {
-        CORE_ASSERT( m_config.packetFactory );
-        return *m_config.packetFactory;
+        const int packetType = input->GetType();
+        const auto packetAddress = input->GetAddress();
+
+        int bytes = 0;
+        uint8_t buffer[m_config.maxPacketSize];
+
+        // serialize write
+        {
+            typedef protocol::WriteStream Stream;
+
+            Stream stream( buffer, m_config.maxPacketSize );
+
+            stream.SetContext( m_context );
+
+            input->SerializeWrite( stream );
+
+            stream.Check( 0x51246234 );
+
+            stream.Flush();
+
+            CORE_ASSERT( !stream.IsOverflow() );
+
+            bytes = stream.GetBytesWritten();
+
+            CORE_ASSERT( bytes <= m_config.maxPacketSize );
+
+            // todo: store the packet bytes + header bytes in a sliding window that we can use for bandwidth calculation!
+
+            m_config.packetFactory->Destroy( input );
+        }
+
+        // serialize read
+        {
+            protocol::Packet * packet = m_config.packetFactory->Create( packetType );
+
+            packet->SetAddress( packetAddress );
+
+            typedef protocol::ReadStream Stream;
+
+            Stream stream( buffer, m_config.maxPacketSize );
+
+            stream.SetContext( m_context );
+
+            packet->SerializeRead( stream );
+
+            stream.Check( 0x51246234 );
+
+            CORE_ASSERT( !stream.IsOverflow() );
+
+            return packet;
+        }
     }
 }

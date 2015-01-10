@@ -83,6 +83,7 @@ void soak_test()
 
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packetFactory;
+        networkSimulatorConfig.serializePackets = false;
         serverInfo[i].networkSimulator = CORE_NEW( core::memory::default_allocator(), network::Simulator, networkSimulatorConfig );
         serverInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );
         serverInfo[i].networkSimulator->AddState( { 0.1f, 0.1f, 5.0f } );
@@ -127,6 +128,7 @@ void soak_test()
         clientInfo[i].networkInterface = CORE_NEW( core::memory::default_allocator(), network::BSDSocket, bsdSocketConfig );
 
         network::SimulatorConfig networkSimulatorConfig;
+        networkSimulatorConfig.serializePackets = false;
         networkSimulatorConfig.packetFactory = &packetFactory;
         clientInfo[i].networkSimulator = CORE_NEW( core::memory::default_allocator(), network::Simulator, networkSimulatorConfig );
         clientInfo[i].networkSimulator->AddState( { 0.0f, 0.0f, 0.0f } );

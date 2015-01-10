@@ -152,6 +152,7 @@ struct SnapshotInternal
         this->allocator = &allocator;
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
+        networkSimulatorConfig.maxPacketSize = MaxPacketSize;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         Reset( mode_data );
     }
@@ -318,29 +319,11 @@ void SnapshotDemo::Update()
         auto port = packet->GetAddress().GetPort();
         auto type = packet->GetType();
 
-        // IMPORTANT: Make sure we actually serialize read/write the packet.
-        // Otherwise we're just passing around pointers to structs. LAME! :D
-
-        uint8_t buffer[MaxPacketSize];
-
-        protocol::WriteStream write_stream( buffer, MaxPacketSize );
-        packet->SerializeWrite( write_stream );
-        write_stream.Flush();
-        CORE_CHECK( !write_stream.IsOverflow() );
-
-        m_snapshot->packet_factory.Destroy( packet );
-        packet = nullptr;
-
-        protocol::ReadStream read_stream( buffer, MaxPacketSize );
-        auto read_packet = m_snapshot->packet_factory.Create( type );
-        read_packet->SerializeRead( read_stream );
-        CORE_CHECK( !read_stream.IsOverflow() );
-
         if ( type == SNAPSHOT_NAIVE_PACKET && port == RightPort )
         {
             // naive snapshot packet for right simulation
 
-            auto snapshot_packet = (SnapshotNaivePacket*) read_packet;
+            auto snapshot_packet = (SnapshotNaivePacket*) packet;
 
             if ( GetMode() <= SNAPSHOT_MODE_NAIVE_10PPS )
             {
@@ -373,8 +356,7 @@ void SnapshotDemo::Update()
             }
         }
 
-        m_snapshot->packet_factory.Destroy( read_packet );
-        read_packet = nullptr;
+        m_snapshot->packet_factory.Destroy( packet );
     }
 
     // if we are an an interpolation mode, we need to grab the view updates for the right side from the interpolation buffer
