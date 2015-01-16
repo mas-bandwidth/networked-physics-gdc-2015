@@ -84,6 +84,41 @@ namespace vectorial {
             return m;            
         }
 
+        static quat4f quaternion(mat4f matrix) {
+            // From http://www.insomniacgames.com/converting-a-rotation-matrix-to-a-quaternion/
+            float t;
+            quat4f q;
+            float m[4][4];
+            matrix.store( &m[0][0] );
+            if ( m[2][2] < 0 ) 
+            {
+                if ( m[0][0] > m[1][1] )
+                {
+                    t = 1 + m[0][0] - m[1][1] - m[2][2];
+                    q = quat4f( t, m[0][1] + m[1][0], m[2][0] + m[0][2], m[1][2] - m[2][1] );
+                }
+                else 
+                {
+                    t = 1 - m[0][0] + m[1][1] - m[2][2];
+                    q = quat4f( m[0][1] + m[1][0], t, m[1][2] + m[2][1], m[2][0] - m[0][2] );
+                }
+            } 
+            else 
+            {
+                if ( m[0][0] < -m[1][1] )
+                {
+                    t = 1 - m[0][0] - m[1][1] + m[2][2];
+                    q = quat4f( m[2][0] + m[0][2], m[1][2] + m[2][1], t, m[0][1] - m[1][0] );
+                }
+                else 
+                {
+                    t = 1 + m[0][0] + m[1][1] + m[2][2];
+                    q = quat4f( m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0], t );
+                }
+            }
+            q *= 0.5f / sqrtf( t );
+            return q;
+        }
     };
     
     

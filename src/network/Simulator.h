@@ -4,8 +4,10 @@
 #define NETWORK_SIMULATOR_H
 
 #include "core/Core.h"
+#include "core/Memory.h"
 #include "network/Constants.h"
 #include "network/Interface.h"
+#include "protocol/SlidingWindow.h"
 
 namespace core { class Allocator; }
 
@@ -27,16 +29,20 @@ namespace network
         int maxPacketSize;                  // maximum packet size in bytes
         int packetHeaderSize;               // packet header size in bytes (for bandwidth calculations)
         bool serializePackets;              // if true then serialize read/writ packets
+        float bandwidthTime;                // time over which bandwidth average is calculated
+        int bandwidthSize;                  // number of entries in bandwidth sliding window
 
         SimulatorConfig()
         {   
-            allocator = nullptr;            // allocator used for allocations with the same life cycle as this object.
+            allocator = &core::memory::default_allocator();
             packetFactory = nullptr;        // packet factory. must be specified -- we need it to destroy buffered packets in destructor.
             stateChance = 1000;             // 1 in every 1000 chance per-update by default
             numPackets = 1024;              // buffer up to 1024 packets by default
-            serializePackets = true;
-            maxPacketSize = 1024;
-            packetHeaderSize = 24;
+            serializePackets = true;        // by default serialize write and read packets.
+            maxPacketSize = 1024;           // default max packet size is 1024 bytes.
+            packetHeaderSize = 24;          // default packet header bytes for bandwidth calculation to 24 bytes (IP + UDP header)
+            bandwidthTime = 1.0f;           // calculate average bandwidth over the last second
+            bandwidthSize = 256;            // default bandwidth sliding window to 256 entries (increase if you sent lots of packets)
         }
     };
 
@@ -62,6 +68,14 @@ namespace network
             packetLoss = _packetLoss;
         }
     };
+
+    struct BandwidthEntry
+    {
+        double time = 0.0;
+        int packetSize = 0;
+    };
+
+    typedef protocol::SlidingWindow<BandwidthEntry> BandwidthSlidingWindow;
 
     class Simulator : public Interface
     {
@@ -107,9 +121,14 @@ namespace network
             return m_tcpMode; 
         }
 
+        float GetBandwidth() const
+        {
+            return m_bandwidth;     // kbps
+        }
+
     protected:
 
-        protocol::Packet * SerializePacket( protocol::Packet * input );
+        protocol::Packet * SerializePacket( protocol::Packet * input, int & packetSize );
 
     private:
 
@@ -124,8 +143,6 @@ namespace network
 
         const void ** m_context;
 
-        core::Allocator * m_allocator;
-
         core::TimeBase m_timeBase;
 
         uint32_t m_packetNumberSend;
@@ -136,9 +153,13 @@ namespace network
         bool m_tcpMode;         // note: simulate TCP behavior. deliver packets reliably and in-order. 
                                 // delay packets until simulated retransmission of lost packets @ 2X RTT
 
+        float m_bandwidth;
+
         int m_numStates;
         SimulatorState m_state;
         SimulatorState m_states[MaxSimulatorStates];
+
+        BandwidthSlidingWindow m_bandwidthSlidingWindow;
 
         Simulator( const Simulator & other );
         const Simulator & operator = ( const Simulator & other );

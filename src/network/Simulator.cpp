@@ -6,19 +6,21 @@
 
 namespace network
 {
-    Simulator::Simulator( const SimulatorConfig & config ) : m_config( config )
+    Simulator::Simulator( const SimulatorConfig & config ) 
+        : m_config( config ), m_bandwidthSlidingWindow( *config.allocator, config.bandwidthSize )
     {
+        CORE_ASSERT( m_config.allocator );
         CORE_ASSERT( m_config.numPackets > 0 );
         CORE_ASSERT( m_config.packetFactory );
 
-        m_allocator = m_config.allocator ? m_config.allocator : &core::memory::default_allocator();
-
-        m_packets = CORE_NEW_ARRAY( *m_allocator, PacketData, config.numPackets );
+        m_packets = CORE_NEW_ARRAY( *m_config.allocator, PacketData, config.numPackets );
 
         m_packetNumberSend = 0;
         m_packetNumberReceive = 0;
 
         m_numStates = 0;
+
+        m_bandwidth = 0.0f;
 
         m_tcpMode = false;
 
@@ -27,12 +29,12 @@ namespace network
 
     Simulator::~Simulator()
     {
-        CORE_ASSERT( m_allocator );
+        CORE_ASSERT( m_config.allocator );
         CORE_ASSERT( m_packets );
 
         Reset();
 
-        CORE_DELETE_ARRAY( *m_allocator, m_packets, m_config.numPackets );
+        CORE_DELETE_ARRAY( *m_config.allocator, m_packets, m_config.numPackets );
 
         m_packets = nullptr;
     }
@@ -79,6 +81,14 @@ namespace network
         const bool loss = core::random_float( 0.0f, 100.0f ) <= m_state.packetLoss;
 
         const float jitter = core::random_float( -m_state.jitter, +m_state.jitter );
+
+        if ( m_config.serializePackets )
+        {
+            BandwidthEntry entry;
+            entry.time = m_timeBase.time;
+            packet = SerializePacket( packet, entry.packetSize );
+            m_bandwidthSlidingWindow.Insert( entry );
+        }
 
         if ( m_tcpMode )
         {
@@ -141,8 +151,6 @@ namespace network
             {
                 auto packet = m_packets[index].packet;
                 m_packets[index].packet = nullptr;
-                if ( m_config.serializePackets )
-                    packet = SerializePacket( packet );
                 m_packetNumberReceive++;
                 return packet;
             }
@@ -164,8 +172,6 @@ namespace network
             {
                 auto packet = oldestPacket->packet;
                 oldestPacket->packet = nullptr;
-                if ( m_config.serializePackets )
-                    packet = SerializePacket( packet );
                 return packet;
             }
         }
@@ -179,12 +185,35 @@ namespace network
 
         if ( m_numStates && ( rand() % m_config.stateChance ) == 0 )
         {
-            int stateIndex = rand() % m_numStates;
+            const int stateIndex = rand() % m_numStates;
             m_state = m_states[stateIndex];
         }
+
+        while ( !m_bandwidthSlidingWindow.IsEmpty() )
+        {
+            const uint16_t sequence = m_bandwidthSlidingWindow.GetAck() + 1;
+            const BandwidthEntry & entry = m_bandwidthSlidingWindow.Get( sequence );
+            if ( entry.time >= timeBase.time - m_config.bandwidthTime )
+                break;
+            m_bandwidthSlidingWindow.Ack( sequence );
+        }
+
+        uint64_t bytes = 0;
+        int numEntries = 0;
+        uint16_t sequence = m_bandwidthSlidingWindow.GetBegin();
+        while ( sequence != m_bandwidthSlidingWindow.GetEnd() )
+        {
+            const BandwidthEntry & entry = m_bandwidthSlidingWindow.Get( sequence );
+            CORE_ASSERT( entry.time >= timeBase.time - m_config.bandwidthTime );
+            bytes += entry.packetSize;
+            numEntries++;
+            sequence++;
+        }
+
+        m_bandwidth = numEntries > 0 ? bytes / double(numEntries) * 8 / ( 1024.0 * 1024.0 ) : 0.0f;
     }
 
-    protocol::Packet * Simulator::SerializePacket( protocol::Packet * input )
+    protocol::Packet * Simulator::SerializePacket( protocol::Packet * input, int & packetSize )
     {
         CORE_ASSERT( input );
 
@@ -204,8 +233,6 @@ namespace network
 
             input->SerializeWrite( stream );
 
-            stream.Check( 0x51246234 );
-
             stream.Flush();
 
             CORE_ASSERT( !stream.IsOverflow() );
@@ -213,8 +240,6 @@ namespace network
             bytes = stream.GetBytesWritten();
 
             CORE_ASSERT( bytes <= m_config.maxPacketSize );
-
-            // todo: store the packet bytes + header bytes in a sliding window that we can use for bandwidth calculation!
 
             m_config.packetFactory->Destroy( input );
         }
@@ -233,9 +258,9 @@ namespace network
 
             packet->SerializeRead( stream );
 
-            stream.Check( 0x51246234 );
-
             CORE_ASSERT( !stream.IsOverflow() );
+
+            packetSize = bytes + m_config.packetHeaderSize;
 
             return packet;
         }

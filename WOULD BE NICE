@@ -1,6 +1,14 @@
 WOULD BE NICE:
 
     -------------------------------------------
+
+    All protocol object configs should avoid pattern where they setup the allocator post-initializer list
+
+    This way proper object initialization from initializer list can occur.
+
+    If work needs to be done in config to get defaults, then it should be done atomically in the config object ctor
+
+    -------------------------------------------
     
     Normalize in place method for quaternion, vector etc.
 

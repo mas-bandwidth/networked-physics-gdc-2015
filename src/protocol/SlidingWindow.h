@@ -61,9 +61,9 @@ namespace protocol
             return core::sequence_greater_than( sequence, m_ack ) && core::sequence_less_than( sequence, m_sequence );
         }
 
-        const T * Get( uint16_t sequence ) const
+        const T & Get( uint16_t sequence ) const
         {
-            CORE_ASSERT( IsValid() );
+            CORE_ASSERT( IsValid( sequence ) );
             return m_entries[sequence%m_size];
         }
 
