@@ -13,6 +13,6 @@ const float ColorChangeTightnessDefault = 0.1f;
 const float ColorChangeTightnessAuthority = 0.25f;
 const float ShadowAlphaThreshold = 0.15f;
 const float MaxLinearSpeed = 40;
-const float MaxAngularSpeed = 20.0f;
+const float MaxAngularSpeed = 15.0f;
 
 #endif

@@ -21,6 +21,7 @@ namespace network
         m_numStates = 0;
 
         m_bandwidth = 0.0f;
+        m_smoothedBandwidth = 0.0f;
 
         m_tcpMode = false;
 
@@ -210,7 +211,13 @@ namespace network
             sequence++;
         }
 
-        m_bandwidth = numEntries > 0 ? bytes / double(numEntries) * 8 / ( 1024.0 * 1024.0 ) : 0.0f;
+        m_bandwidth = ( numEntries > 0 ) ? ( bytes * 8.0 / m_config.bandwidthTime / 1000.0 ) : 0.0f;
+
+        const float difference = m_bandwidth - m_smoothedBandwidth;
+        if ( fabs( difference ) > 0.001f )
+            m_smoothedBandwidth += difference * m_config.bandwidthTightness;
+        else
+            m_smoothedBandwidth = m_bandwidth;
     }
 
     protocol::Packet * Simulator::SerializePacket( protocol::Packet * input, int & packetSize )

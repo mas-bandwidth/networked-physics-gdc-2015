@@ -14,6 +14,12 @@ Friday January 16th, 2015
     Track sliding window of bandwidth sent across the simulator,
     initially just keep track of kbps average.
 
+    There are two network simulators getting update pumps in the compression demo
+
+    Which is the second one? It's not having any packets sent over it?!
+
+    It's the one from the inactive game client.
+
 
 Saturday January 10th, 2015
 ---------------------------

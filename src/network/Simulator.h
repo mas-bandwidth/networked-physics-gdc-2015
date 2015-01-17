@@ -31,18 +31,20 @@ namespace network
         bool serializePackets;              // if true then serialize read/writ packets
         float bandwidthTime;                // time over which bandwidth average is calculated
         int bandwidthSize;                  // number of entries in bandwidth sliding window
+        float bandwidthTightness;           // tightness for smoothing bandwidth (exp smoothed moving avg.)
 
         SimulatorConfig()
         {   
             allocator = &core::memory::default_allocator();
-            packetFactory = nullptr;        // packet factory. must be specified -- we need it to destroy buffered packets in destructor.
+            packetFactory = nullptr;        // packet factory. must be specified
             stateChance = 1000;             // 1 in every 1000 chance per-update by default
             numPackets = 1024;              // buffer up to 1024 packets by default
             serializePackets = true;        // by default serialize write and read packets.
             maxPacketSize = 1024;           // default max packet size is 1024 bytes.
             packetHeaderSize = 24;          // default packet header bytes for bandwidth calculation to 24 bytes (IP + UDP header)
-            bandwidthTime = 1.0f;           // calculate average bandwidth over the last second
+            bandwidthTime = 2.5f;           // time over which to calculate average bandwidth in seconds
             bandwidthSize = 256;            // default bandwidth sliding window to 256 entries (increase if you sent lots of packets)
+            bandwidthTightness = 0.5f;
         }
     };
 
@@ -126,6 +128,11 @@ namespace network
             return m_bandwidth;     // kbps
         }
 
+        float GetSmoothedBandwidth() const
+        {
+            return m_smoothedBandwidth;
+        }
+
     protected:
 
         protocol::Packet * SerializePacket( protocol::Packet * input, int & packetSize );
@@ -154,6 +161,7 @@ namespace network
                                 // delay packets until simulated retransmission of lost packets @ 2X RTT
 
         float m_bandwidth;
+        float m_smoothedBandwidth;
 
         int m_numStates;
         SimulatorState m_state;

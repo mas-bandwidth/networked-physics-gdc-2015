@@ -1,4 +1,5 @@
 [
+    [ "data/fonts/Bandwidth.font", "assets/fonts/AnonymousPro/AnonymousProBold.ttf", 100 ],
     [ "data/fonts/Console.font", "assets/fonts/InputMono/InputMono-Medium.ttf", 32 ],
     [ "data/fonts/FPS.font",     "assets/fonts/InputMono/InputMono-Bold.ttf",   50 ]
 ]

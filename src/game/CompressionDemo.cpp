@@ -5,6 +5,8 @@
 #include "Cubes.h"
 #include "Global.h"
 #include "Snapshot.h"
+#include "Font.h"
+#include "FontManager.h"
 #include "protocol/Stream.h"
 #include "protocol/SequenceBuffer.h"
 #include "protocol/PacketFactory.h"
@@ -434,6 +436,24 @@ void CompressionDemo::Render()
     render_config.render_mode = CUBES_RENDER_SPLITSCREEN;
 
     m_internal->Render( render_config );
+
+    const float bandwidth = m_compression->network_simulator->GetBandwidth();
+
+    char bandwidth_string[256];
+    if ( bandwidth < 512 )
+        snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %d kbps", (int) bandwidth );
+    else
+        snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %.2f mbps", bandwidth / 1000 );
+
+    Font * font = global.fontManager->GetFont( "Bandwidth" );
+    if ( font )
+    {
+        const float text_x = global.displayWidth - font->GetTextWidth( bandwidth_string ) - 5;
+        const float text_y = 5;
+        font->Begin();
+        font->DrawText( text_x, text_y, bandwidth_string, Color( 0.27f,0.81f,1.0f ) );
+        font->End();
+    }
 }
 
 bool CompressionDemo::KeyEvent( int key, int scancode, int action, int mods )
