@@ -21,7 +21,6 @@ namespace network
         m_numStates = 0;
 
         m_bandwidth = 0.0f;
-        m_smoothedBandwidth = 0.0f;
 
         m_tcpMode = false;
 
@@ -88,6 +87,8 @@ namespace network
             BandwidthEntry entry;
             entry.time = m_timeBase.time;
             packet = SerializePacket( packet, entry.packetSize );
+            if ( m_bandwidthSlidingWindow.IsFull() )
+                m_bandwidthSlidingWindow.Ack( m_bandwidthSlidingWindow.GetAck() + 1 );
             m_bandwidthSlidingWindow.Insert( entry );
         }
 
@@ -190,34 +191,22 @@ namespace network
             m_state = m_states[stateIndex];
         }
 
-        while ( !m_bandwidthSlidingWindow.IsEmpty() )
+        if ( !m_bandwidthSlidingWindow.IsEmpty() )
         {
-            const uint16_t sequence = m_bandwidthSlidingWindow.GetAck() + 1;
-            const BandwidthEntry & entry = m_bandwidthSlidingWindow.Get( sequence );
-            if ( entry.time >= timeBase.time - m_config.bandwidthTime )
-                break;
-            m_bandwidthSlidingWindow.Ack( sequence );
+            uint64_t bytes = 0;
+            int numEntries = 0;
+            const BandwidthEntry & beginEntry = m_bandwidthSlidingWindow.Get( m_bandwidthSlidingWindow.GetBegin() );
+            const BandwidthEntry & endEntry = m_bandwidthSlidingWindow.Get( m_bandwidthSlidingWindow.GetEnd() - 1 );
+            uint16_t sequence = m_bandwidthSlidingWindow.GetBegin();
+            while ( sequence != m_bandwidthSlidingWindow.GetEnd() )
+            {
+                const BandwidthEntry & entry = m_bandwidthSlidingWindow.Get( sequence );
+                bytes += entry.packetSize;
+                numEntries++;
+                sequence++;
+            }
+            m_bandwidth = bytes * 8.0 / ( endEntry.time - beginEntry.time ) / 1000.0;
         }
-
-        uint64_t bytes = 0;
-        int numEntries = 0;
-        uint16_t sequence = m_bandwidthSlidingWindow.GetBegin();
-        while ( sequence != m_bandwidthSlidingWindow.GetEnd() )
-        {
-            const BandwidthEntry & entry = m_bandwidthSlidingWindow.Get( sequence );
-            CORE_ASSERT( entry.time >= timeBase.time - m_config.bandwidthTime );
-            bytes += entry.packetSize;
-            numEntries++;
-            sequence++;
-        }
-
-        m_bandwidth = ( numEntries > 0 ) ? ( bytes * 8.0 / m_config.bandwidthTime / 1000.0 ) : 0.0f;
-
-        const float difference = m_bandwidth - m_smoothedBandwidth;
-        if ( fabs( difference ) > 0.001f )
-            m_smoothedBandwidth += difference * m_config.bandwidthTightness;
-        else
-            m_smoothedBandwidth = m_bandwidth;
     }
 
     protocol::Packet * Simulator::SerializePacket( protocol::Packet * input, int & packetSize )

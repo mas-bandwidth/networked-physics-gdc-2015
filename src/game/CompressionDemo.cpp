@@ -21,6 +21,7 @@ enum SnapshotMode
     COMPRESSION_MODE_AT_REST,
     COMPRESSION_MODE_VELOCITY,
     COMPRESSION_MODE_POSITION,
+    COMPRESSION_MODE_NO_VELOCITY,
     COMPRESSION_NUM_MODES
 };
 
@@ -31,6 +32,7 @@ const char * compression_mode_descriptions[]
     "Compress at rest",
     "Compress velocity",
     "Compress position",
+    "Compress no velocity"
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -38,7 +40,7 @@ struct CompressionModeData : public SnapshotModeData
     CompressionModeData()
     {
         playout_delay = 0.35f;        // one lost packet = no problem. two lost packets in a row = hitch
-        send_rate = 10.0f;
+        send_rate = 60.0f;
         latency = 0.0f;
         packet_loss = 5.0f;
         jitter = 2 / 60.0f;
@@ -50,7 +52,7 @@ static CompressionModeData compression_mode_data[COMPRESSION_NUM_MODES];
 
 static void InitCompressionModes()
 {
-//    compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED]
+    compression_mode_data[COMPRESSION_MODE_NO_VELOCITY].interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
 }
 
 enum CompressionPackets
@@ -166,6 +168,20 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         serialize_compressed_vector( stream, cubes[i].linear_velocity, MaxLinearSpeed, 1.0f );
                     else if ( Stream::IsReading )
                         cubes[i].linear_velocity = vectorial::vec3f::zero();
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_NO_VELOCITY:
+            {
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+
+                    // todo: vector min/max
+                    serialize_compressed_vector( stream, cubes[i].position, 40, 0.001 );
+                    
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
                 }
             }
             break;
@@ -448,7 +464,7 @@ void CompressionDemo::Render()
     Font * font = global.fontManager->GetFont( "Bandwidth" );
     if ( font )
     {
-        const float text_x = global.displayWidth - font->GetTextWidth( bandwidth_string ) - 5;
+        const float text_x = ( global.displayWidth - font->GetTextWidth( bandwidth_string ) ) / 2;
         const float text_y = 5;
         font->Begin();
         font->DrawText( text_x, text_y, bandwidth_string, Color( 0.27f,0.81f,1.0f ) );

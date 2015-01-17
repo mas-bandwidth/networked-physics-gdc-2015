@@ -1,4 +1,37 @@
 
+Saturday January 17th, 2015
+---------------------------
+
+    Render this using debug text showing the amount of bandwidth
+
+    If the amount is greater than 512kbps then display as megabits, eg. 0.5 megabits and above
+
+    Add smoothing to the bandwidth
+
+    Maximum rotation speed appears to not be working for the cube rolling,
+    getting shortest path twists with compression 5.
+
+    Reduced maximum angular speed from 20 to 15.
+
+    I am getting a fluctuating bandwidth reading.
+
+    I believe this is because I'm getting at 10pps calculations with one packet
+    dropping off the end.
+
+    To fix I should calculate average bandwidth over the last n entries, where
+    n is the size of the sliding window.
+
+    I will set this size to 256.
+
+    Nope. It's too delayed. 64 works pretty well.
+
+    Made sure to increase to 60 packets per-second as well for compression demo.
+
+    Works well.
+
+    Added new compression mode for not sending linear velocity (sending at high rate)
+
+
 Friday January 16th, 2015
 -------------------------
 

@@ -1,34 +1,8 @@
 DONE:
 
-    Render this using debug text showing the amount of bandwidth
-
-    If the amount is greater than 512kbps then display as megabits, eg. 0.5 megabits and above
-
-    Add smoothing to the bandwidth
-
-    Maximum rotation speed appears to not be working for the cube rolling,
-    getting shortest path twists with compression 5.
-
-    Reduced maximum angular speed from 20 to 15.
-
 TODO:
 
-    I am getting a fluctuating bandwidth reading.
-
-    I believe this is because I'm getting at 10pps calculations with one packet
-    dropping off the end.
-
-    To fix I should calculate average bandwidth over the last n entries, where
-    n is the size of the sliding window.
-
-    I will set this size to 256.
-
-    -----------------------------------------------------------------------
-
-    Extend to a graph of packet size, on each packet recieved a new
-    entry is added to this graph (eg. like net graph 3)
-
-    Visualize this graph bottom middle of screen in light blue
+    Center the bandwidth text at the top of the screen
 
     -----------------------------------------------------------------------
 
@@ -37,6 +11,15 @@ TODO:
     Generalize serialize compressed vector to take a vector min/max argument
 
     Send position compressed within separate bounds for xy and z (0,max height)
+
+    -----------------------------------------------------------------------
+
+    Need to widen out the sliding window to say 256 entries so I have something to render
+
+    Then I need to take only the most recent n in the window for avg. bandwidth calc,
+    while having the history for say 256 for rendering packet size histogram.
+
+    Visualize graph of packet in light blue, one vertical line per-packet.
 
     ----------------------------------------------------------------------
 
