@@ -12,6 +12,7 @@
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
+static const int LeftPort = 1000;
 static const int RightPort = 1001;
 
 enum SnapshotMode
@@ -22,6 +23,7 @@ enum SnapshotMode
     COMPRESSION_MODE_VELOCITY,
     COMPRESSION_MODE_POSITION,
     COMPRESSION_MODE_NO_VELOCITY,
+    COMPRESSION_MODE_DELTA,
     COMPRESSION_NUM_MODES
 };
 
@@ -33,6 +35,7 @@ const char * compression_mode_descriptions[]
     "Compress velocity",
     "Compress position",
     "Compress no velocity"
+    "Compress delta"
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -151,12 +154,14 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
             case COMPRESSION_MODE_POSITION:
             {
+                const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
+                const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
+
                 for ( int i = 0; i < NumCubes; ++i )
                 {
                     serialize_bool( stream, cubes[i].interacting );
 
-                    // todo: vector min/max
-                    serialize_compressed_vector( stream, cubes[i].position, 40, 0.001 );
+                    serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
 
                     serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
 
@@ -174,12 +179,14 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
             case COMPRESSION_MODE_NO_VELOCITY:
             {
+                const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
+                const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
+
                 for ( int i = 0; i < NumCubes; ++i )
                 {
                     serialize_bool( stream, cubes[i].interacting );
 
-                    // todo: vector min/max
-                    serialize_compressed_vector( stream, cubes[i].position, 40, 0.001 );
+                    serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
                     
                     serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
                 }
@@ -401,6 +408,9 @@ void CompressionDemo::Update()
 
     // receive packets from the simulator (with latency, packet loss and jitter applied...)
 
+    bool received_snapshot_this_frame = false;
+    uint16_t ack_sequence = 0;
+
     while ( true )
     {
         auto packet = m_compression->network_simulator->ReceivePacket();
@@ -414,9 +424,28 @@ void CompressionDemo::Update()
         {
             auto snapshot_packet = (CompressionSnapshotPacket*) packet;
             m_compression->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot_packet->cubes );
+            if ( !received_snapshot_this_frame || ( received_snapshot_this_frame && core::sequence_greater_than( snapshot_packet->sequence, ack_sequence ) ) )
+            {
+                received_snapshot_this_frame = true;
+                ack_sequence = snapshot_packet->sequence;
+            }        
+        }
+        else if ( type == COMPRESSION_ACK_PACKET && port == LeftPort )
+        {
+            auto ack_packet = (CompressionAckPacket*) packet;
+            printf( "received ack packet: %d\n", ack_packet->ack );
         }
 
         m_compression->packet_factory.Destroy( packet );
+    }
+
+    // if any snapshots packets were received this frame, send an ack packet back to the left simulation
+
+    if ( received_snapshot_this_frame )
+    {
+        auto ack_packet = (CompressionAckPacket*) m_compression->packet_factory.Create( COMPRESSION_ACK_PACKET );
+        ack_packet->ack = ack_sequence;
+        m_compression->network_simulator->SendPacket( network::Address( "::1", LeftPort ), ack_packet );
     }
 
     // if we are an an interpolation mode, we need to grab the view updates for the right side from the interpolation buffer

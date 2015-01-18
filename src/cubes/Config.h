@@ -14,5 +14,7 @@ const float ColorChangeTightnessAuthority = 0.25f;
 const float ShadowAlphaThreshold = 0.15f;
 const float MaxLinearSpeed = 40;
 const float MaxAngularSpeed = 15.0f;
+const float PositionBoundXY = 40;
+const float PositionBoundZ = 40;
 
 #endif

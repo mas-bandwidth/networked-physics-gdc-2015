@@ -1,4 +1,17 @@
 
+Sunday January 18th, 2015
+-------------------------
+
+    Setup ack packet.
+
+    If a snapshot is received by the right side in a frame, send the most recent
+    ack sequence # back in an ack packet (only one per-frame...)
+
+    Copy this code from the lockstep demo
+
+    Add printfs to verify ack packets are being sent back
+
+
 Saturday January 17th, 2015
 ---------------------------
 
@@ -30,6 +43,12 @@ Saturday January 17th, 2015
     Works well.
 
     Added new compression mode for not sending linear velocity (sending at high rate)
+
+    Center the bandwidth text at the top of the screen
+
+    Generalize serialize compressed vector to take a vector min/max argument
+
+    Bound the position so it doesn't go outside of xy and z bounds
 
 
 Friday January 16th, 2015

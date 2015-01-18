@@ -60,6 +60,18 @@ template <typename Stream> inline void serialize_compressed_vector( Stream & str
         vector.load( values );
 }
 
+template <typename Stream> inline void serialize_compressed_vector( Stream & stream, vectorial::vec3f & vector, const vectorial::vec3f & minimum, const vectorial::vec3f & maximum, float resolution )
+{
+    float values[3];
+    if ( Stream::IsWriting )
+        vector.store( values );
+    serialize_compressed_float( stream, values[0], minimum.x(), maximum.x(), resolution );
+    serialize_compressed_float( stream, values[1], minimum.y(), maximum.y(), resolution );
+    serialize_compressed_float( stream, values[2], minimum.z(), maximum.z(), resolution );
+    if ( Stream::IsReading )
+        vector.load( values );
+}
+
 template <typename Stream> inline void serialize_quaternion( Stream & stream, vectorial::quat4f & quaternion )
 {
     float values[4];

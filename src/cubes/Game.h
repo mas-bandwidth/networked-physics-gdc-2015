@@ -12,6 +12,7 @@
 #include "Activation.h"
 #include "Engine.h"
 #include "ViewObject.h"
+#include "vectorial/vec3f.h"
 
 namespace game
 {
@@ -779,6 +780,9 @@ namespace game
 			if ( GetFlag( FLAG_Pause ) )
 				return;
 				
+            const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
+            const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
+
 			for ( int i = 0; i < numActiveObjects; ++i )
 			{
 				ActiveObject * activeObject = &activeObjects.GetObject( i );
@@ -788,6 +792,12 @@ namespace game
 				simulation->GetObjectState( activeObject->activeId, simObjectState );
 				
 				activeObject->SimulationToActive( simObjectState );
+
+				vectorial::vec3f position( activeObject->position.x, activeObject->position.y, activeObject->position.z );
+
+				position = vectorial::clamp( position, position_min, position_max );
+
+				activeObject->position = math::Vector( position.x(), position.y(), position.z() );
 
 				float x,y;
 				activeObject->GetPositionXY( x, y );

@@ -2,6 +2,12 @@ WOULD BE NICE:
 
     -------------------------------------------
 
+    Cubes demo should directly query that input keys are down, vs. relying on events
+
+    This way it properly handles keys held down across demo resets
+
+    -------------------------------------------
+
     All protocol object configs should avoid pattern where they setup the allocator post-initializer list
 
     This way proper object initialization from initializer list can occur.

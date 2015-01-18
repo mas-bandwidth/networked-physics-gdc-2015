@@ -14,6 +14,15 @@
 
 namespace vectorial {
     
+    template <typename T> T clamp( const T & value, const T & min, const T & max )
+    {
+        if ( value < min )
+            return min;
+        else if ( value > max )
+            return max;
+        else
+            return value;
+    }
 
     class vec3f {
     public:
@@ -40,8 +49,19 @@ namespace vectorial {
         static vec3f xAxis() { return vec3f(1.0f, 0.0f, 0.0f); }
         static vec3f yAxis() { return vec3f(0.0f, 1.0f, 0.0f); }
         static vec3f zAxis() { return vec3f(0.0f, 0.0f, 1.0f); }
-
     };
+
+    vectorial_inline vec3f clamp( vec3f input, vec3f min, vec3f max )
+    {
+        // todo: would be nicer to do this with simd instructions instead
+        float values[3];
+        input.store( values );
+        values[0] = vectorial::clamp( values[0], min.x(), max.x() );
+        values[1] = vectorial::clamp( values[1], min.y(), max.y() );
+        values[2] = vectorial::clamp( values[2], min.z(), max.z() );
+        input.load( values );
+        return input;
+    }
 
     vectorial_inline vec3f operator-(const vec3f& lhs) {
         return vec3f( simd4f_sub(simd4f_zero(), lhs.value) );

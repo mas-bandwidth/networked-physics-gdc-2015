@@ -2,38 +2,23 @@ DONE:
 
 TODO:
 
-    Center the bandwidth text at the top of the screen
-
-    -----------------------------------------------------------------------
-
-    Bound the position on the left side so it doesn't go outside of xy and z bounds
-
-    Generalize serialize compressed vector to take a vector min/max argument
-
-    Send position compressed within separate bounds for xy and z (0,max height)
-
-    -----------------------------------------------------------------------
-
-    Need to widen out the sliding window to say 256 entries so I have something to render
-
-    Then I need to take only the most recent n in the window for avg. bandwidth calc,
-    while having the history for say 256 for rendering packet size histogram.
-
-    Visualize graph of packet in light blue, one vertical line per-packet.
-
     ----------------------------------------------------------------------
-
-    Delta encoding.
 
     On left side buffer snapshots indexed by sequence #
 
+    Left side keep track of most recent ack from right side in sequence #
+
+    Can probably do this just with a sliding window, as I always want to
+    buffer all snapshots, and I always want to remove anything older than
+    the ack.
+
+    In this case I think I need to ack sequence - 1, because I want to
+    retain the ack sequence for delta encoding.
+
+    ----------------------------------------------------------------------
+
     Right side keep track of most recent snapshot sequence # received
     (I believe the sequence buffer does this for us...)
-
-    Right side send ack packets back to left side, if snapshots received
-    that frame, with sequence # of most recent snapshot received.
-
-    Left side keep track of most recent ack from right side in sequence #
 
     -------------------------------------------------------------------------
 
@@ -46,7 +31,22 @@ TODO:
 
     -----------------------------------------------------------------------
 
-    Next, do the math. 
+    Widen out the sliding window to 256 entries so I have something to render
+
+    Adjust code so the # of entries for bandwidth average is specified, eg. 64.
+
+    Then I need to take only the most recent n in the window for avg. bandwidth calc,
+    while having the history for say 256 or 512 for rendering packet size histogram.
+
+    Visualize graph of packet in light blue, one vertical line per-packet.
+
+    -----------------------------------------------------------------------
+
+    Verify bandwidth spikes initially with delta encoding but hits steady state
+
+    -----------------------------------------------------------------------
+
+    Next, do the math on object ids...
 
     Cost of indexing only the changed set of objects vs. 900 bits for yes/no.
 
@@ -80,3 +80,4 @@ TODO:
     Ready to write next article
 
     -----------------------------------------------------------------------
+    
