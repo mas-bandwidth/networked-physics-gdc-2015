@@ -4,23 +4,36 @@ TODO:
 
     ----------------------------------------------------------------------
 
-    On left side buffer snapshots indexed by sequence #
+    Insert snapshot to the sliding window on send.
 
-    Left side keep track of most recent ack from right side in sequence #
+    Should blow up after 256
 
-    Can probably do this just with a sliding window, as I always want to
-    buffer all snapshots, and I always want to remove anything older than
-    the ack.
+    On receive ack, ack sequence - 1 (necessary, because we want to keep ack)
 
-    In this case I think I need to ack sequence - 1, because I want to
-    retain the ack sequence for delta encoding.
+    Should no longer blow up
+
+    On receive snapshot, insert snapshot into sequence buffer
 
     ----------------------------------------------------------------------
 
-    Right side keep track of most recent snapshot sequence # received
-    (I believe the sequence buffer does this for us...)
+    Extend simulator to have context set, context ptr would have two parts
 
-    -------------------------------------------------------------------------
+    for serialize write, it is the pointer to the sliding window.
+
+    for serialize read, it is the the pointer to the sequence buffer.
+
+    ----------------------------------------------------------------------
+
+    It should now be possible to perform the serialization for all compressed
+    packets in-place vs. copying across packet data, eg. serialize in place
+    to the serialize write from the sliding window, and serialize read directly
+    into the sequence buffer.
+
+    This way the packets themselves only need to include the sequence #
+    and then the actual data is serialized directly in/out of the buffers
+    without any copies.
+
+    ----------------------------------------------------------------------
 
     Now when sending snapshots from left -> right, encode relative to base 
     snapshot # (pass base # and pointer to snapshot buffer into packet...)

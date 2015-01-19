@@ -11,6 +11,19 @@ Sunday January 18th, 2015
 
     Add printfs to verify ack packets are being sent back
 
+    Sliding window needs a fast insert method that returns the pointer to entry
+
+    Add sliding window and sequence buffer objects to compression struct.
+
+    Bandwidth graph is still jittery. Why? We are sending 60 packets per-second
+    and we don't have any packet loss or anything that should break it....
+
+    AH. It's the acks being counted...
+
+    Simulator needs a way to flag packets being sent as not counting towards bandwidth.
+
+    Done. Bandwidth is steady again.
+
 
 Saturday January 17th, 2015
 ---------------------------

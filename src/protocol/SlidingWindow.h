@@ -47,6 +47,13 @@ namespace protocol
             m_sequence++;
         }
 
+        T & Insert( uint16_t & sequence )
+        {
+            CORE_ASSERT( !IsFull() );
+            sequence = m_sequence;
+            m_sequence++;
+        }
+
         void Ack( uint16_t ack )
         {
             if ( !core::sequence_greater_than( ack, m_ack ) )

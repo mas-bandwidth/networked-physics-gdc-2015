@@ -42,7 +42,7 @@ namespace network
             serializePackets = true;        // by default serialize write and read packets.
             maxPacketSize = 1024;           // default max packet size is 1024 bytes.
             packetHeaderSize = 24;          // default packet header bytes for bandwidth calculation to 24 bytes (IP + UDP header)
-            bandwidthSize = 32;             // default bandwidth sliding window to 256 entries (increase if you sent lots of packets)
+            bandwidthSize = 64;             // default bandwidth sliding window to 256 entries (increase if you sent lots of packets)
         }
     };
 
@@ -90,6 +90,8 @@ namespace network
         int AddState( const SimulatorState & state );
 
         void ClearStates();
+
+        void SetBandwidthExclude( bool flag ) { m_bandwidthExclude = flag; }
 
         void SendPacket( const Address & address, protocol::Packet * packet );
 
@@ -150,8 +152,8 @@ namespace network
 
         PacketData * m_packets;
 
-        bool m_tcpMode;         // note: simulate TCP behavior. deliver packets reliably and in-order. 
-                                // delay packets until simulated retransmission of lost packets @ 2X RTT
+        bool m_tcpMode;
+        bool m_bandwidthExclude;
 
         float m_bandwidth;
 

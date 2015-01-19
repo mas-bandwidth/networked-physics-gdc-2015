@@ -452,7 +452,7 @@ void LockstepDemo::Update()
         auto ack_packet = (LockstepAckPacket*) m_lockstep->packet_factory.Create( LOCKSTEP_PACKET_ACK );
 
         ack_packet->ack = ack_sequence;
-    
+
         m_lockstep->network_simulator->SendPacket( network::Address( "::1", LeftPort ), ack_packet );
     }
 

@@ -8,12 +8,14 @@
 #include "Font.h"
 #include "FontManager.h"
 #include "protocol/Stream.h"
+#include "protocol/SlidingWindow.h"
 #include "protocol/SequenceBuffer.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
+static const int MaxSnapshots = 256;
 
 enum SnapshotMode
 {
@@ -242,6 +244,9 @@ protected:
     }
 };
 
+typedef protocol::SlidingWindow<Snapshot> SnapshotSlidingWindow;
+typedef protocol::SequenceBuffer<Snapshot> SnapshotSequenceBuffer;
+
 struct CompressionInternal
 {
     CompressionInternal( core::Allocator & allocator, const SnapshotModeData & mode_data ) 
@@ -252,6 +257,8 @@ struct CompressionInternal
         networkSimulatorConfig.packetFactory = &packet_factory;
         networkSimulatorConfig.maxPacketSize = MaxPacketSize;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
+        snapshot_sliding_window = CORE_NEW( allocator, SnapshotSlidingWindow, allocator, MaxSnapshots );
+        snapshot_sequence_buffer = CORE_NEW( allocator, SnapshotSequenceBuffer, allocator, MaxSnapshots );
         Reset( mode_data );
     }
 
@@ -260,7 +267,10 @@ struct CompressionInternal
         CORE_ASSERT( network_simulator );
         typedef network::Simulator NetworkSimulator;
         CORE_DELETE( *allocator, NetworkSimulator, network_simulator );
+        CORE_DELETE( *allocator, SnapshotSlidingWindow, snapshot_sliding_window );
         network_simulator = nullptr;
+        snapshot_sliding_window = nullptr;
+        snapshot_sequence_buffer = nullptr;
     }
 
     void Reset( const SnapshotModeData & mode_data )
@@ -269,18 +279,22 @@ struct CompressionInternal
         network_simulator->Reset();
         network_simulator->ClearStates();
         network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
+        snapshot_sliding_window->Reset();
+        snapshot_sequence_buffer->Reset();
         send_sequence = 0;
         recv_sequence = 0;
         send_accumulator = 1.0f;
     }
 
     core::Allocator * allocator;
-    SnapshotPacketFactory packet_factory;
-    network::Simulator * network_simulator;
-    SnapshotInterpolationBuffer interpolation_buffer;
     uint16_t send_sequence;
     uint16_t recv_sequence;
     float send_accumulator;
+    network::Simulator * network_simulator;
+    SnapshotSlidingWindow * snapshot_sliding_window;
+    SnapshotSequenceBuffer * snapshot_sequence_buffer;
+    SnapshotPacketFactory packet_factory;
+    SnapshotInterpolationBuffer interpolation_buffer;
 };
 
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
@@ -445,7 +459,9 @@ void CompressionDemo::Update()
     {
         auto ack_packet = (CompressionAckPacket*) m_compression->packet_factory.Create( COMPRESSION_ACK_PACKET );
         ack_packet->ack = ack_sequence;
+        m_compression->network_simulator->SetBandwidthExclude( true );
         m_compression->network_simulator->SendPacket( network::Address( "::1", LeftPort ), ack_packet );
+        m_compression->network_simulator->SetBandwidthExclude( false );
     }
 
     // if we are an an interpolation mode, we need to grab the view updates for the right side from the interpolation buffer

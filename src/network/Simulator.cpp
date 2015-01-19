@@ -18,11 +18,12 @@ namespace network
         m_packetNumberSend = 0;
         m_packetNumberReceive = 0;
 
-        m_numStates = 0;
+        m_tcpMode = false;
+        m_bandwidthExclude = false;
 
         m_bandwidth = 0.0f;
 
-        m_tcpMode = false;
+        m_numStates = 0;
 
         m_context = nullptr;
     }
@@ -87,9 +88,12 @@ namespace network
             BandwidthEntry entry;
             entry.time = m_timeBase.time;
             packet = SerializePacket( packet, entry.packetSize );
-            if ( m_bandwidthSlidingWindow.IsFull() )
-                m_bandwidthSlidingWindow.Ack( m_bandwidthSlidingWindow.GetAck() + 1 );
-            m_bandwidthSlidingWindow.Insert( entry );
+            if ( !m_bandwidthExclude )
+            {
+                if ( m_bandwidthSlidingWindow.IsFull() )
+                    m_bandwidthSlidingWindow.Ack( m_bandwidthSlidingWindow.GetAck() + 1 );
+                m_bandwidthSlidingWindow.Insert( entry );
+            }
         }
 
         if ( m_tcpMode )
