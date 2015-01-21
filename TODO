@@ -1,25 +1,23 @@
 DONE:
 
+    So for each object 1 bit, that's n bits = 900 bits, or 113 bytes.
+
+    If we have to identify one out of 900 objects, that's 10 bits per-id
+
+    So 10 * 90 = 900, so the break even point is 90 objects.
+
+    Less than 90 changed objects in a packet, send individual ids
+
+    More than 90 changed objects, send one bit per-object
+
 TODO:
 
-    -----------------------------------------------------------------------
-
-    Do the math on object ids...
-
-    Cost of indexing only the changed set of objects vs. 900 bits for yes/no.
-
-    Write function to determine which approach is the best encoding,
-    given the # of different cubes, vs. the # of total cubes.
-
-    Extend the serialize function to use this encoding.
+    Implement this code.
 
     -----------------------------------------------------------------------
 
-    Next in the case where sending cube ids sort the cubes in order of id.
-
-    Now write the cubes that have changed using a variable bit encoding for delta id.
-
-    Is this effective?
+    Now write the cubes that have changed using a variable bit encoding from
+    previous id, eg. one bit if the next object is 
 
     -----------------------------------------------------------------------
 

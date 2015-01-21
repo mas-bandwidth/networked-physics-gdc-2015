@@ -33,6 +33,7 @@ enum SnapshotMode
     COMPRESSION_MODE_POSITION,
     COMPRESSION_MODE_NO_VELOCITY,
     COMPRESSION_MODE_DELTA_NOT_CHANGED,
+    COMPRESSION_MODE_DELTA_CUBE_INDEX,
     COMPRESSION_NUM_MODES
 };
 
@@ -267,7 +268,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                     if ( Stream::IsWriting )
                         changed = cubes[i] != base_cubes[i];
-                        
+
                     serialize_bool( stream, changed );
 
                     if ( changed )
