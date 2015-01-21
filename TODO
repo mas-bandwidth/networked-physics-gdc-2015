@@ -2,64 +2,9 @@ DONE:
 
 TODO:
 
-    ----------------------------------------------------------------------
-
-    Insert snapshot to the sliding window on send.
-
-    Should blow up after 256
-
-    On receive ack, ack sequence - 1 (necessary, because we want to keep ack)
-
-    Should no longer blow up
-
-    On receive snapshot, insert snapshot into sequence buffer
-
-    ----------------------------------------------------------------------
-
-    Extend simulator to have context set, context ptr would have two parts
-
-    for serialize write, it is the pointer to the sliding window.
-
-    for serialize read, it is the the pointer to the sequence buffer.
-
-    ----------------------------------------------------------------------
-
-    It should now be possible to perform the serialization for all compressed
-    packets in-place vs. copying across packet data, eg. serialize in place
-    to the serialize write from the sliding window, and serialize read directly
-    into the sequence buffer.
-
-    This way the packets themselves only need to include the sequence #
-    and then the actual data is serialized directly in/out of the buffers
-    without any copies.
-
-    ----------------------------------------------------------------------
-
-    Now when sending snapshots from left -> right, encode relative to base 
-    snapshot # (pass base # and pointer to snapshot buffer into packet...)
-
-    On serialize write, compare each object against base.
-
-    If object is identical write one bit 0 indicating it has not changed.
-
     -----------------------------------------------------------------------
 
-    Widen out the sliding window to 256 entries so I have something to render
-
-    Adjust code so the # of entries for bandwidth average is specified, eg. 64.
-
-    Then I need to take only the most recent n in the window for avg. bandwidth calc,
-    while having the history for say 256 or 512 for rendering packet size histogram.
-
-    Visualize graph of packet in light blue, one vertical line per-packet.
-
-    -----------------------------------------------------------------------
-
-    Verify bandwidth spikes initially with delta encoding but hits steady state
-
-    -----------------------------------------------------------------------
-
-    Next, do the math on object ids...
+    Do the math on object ids...
 
     Cost of indexing only the changed set of objects vs. 900 bits for yes/no.
 
@@ -70,27 +15,49 @@ TODO:
 
     -----------------------------------------------------------------------
 
-    Next sort the cubes in order of id.
+    Next in the case where sending cube ids sort the cubes in order of id.
 
-    Now write the cubes using a variable bit encoding for delta id.
+    Now write the cubes that have changed using a variable bit encoding for delta id.
 
     Is this effective?
 
     -----------------------------------------------------------------------
 
-    Now encode position relative to previous position
+    Split position into grid cells xyz and intra cell fractional bits
+
+    Use this to reduce cost of position sync
+
+    Extend delta encoding to have one bit if cell index has changed,
+    therefore in the common case bit is 0, not changed and we only
+    need to send fractional bits for the position
+
+    -----------------------------------------------------------------------
+
+    Can we do even better? If the average position change is smaller than
+    the cell size in RTT (it is), then we can recognize this and encode
+    that smaller.
+
+    Lets say cell size is large (4 meters sq)
+
+    eg. if has moved 25cm-50cm or less then can encode with much less bits
+
+    If this is a common case, this is a big win for moving cubes.
+
+    Ideally, come up with some technique to determine the average position
+    difference, maybe even graph the distribution while the game is running
+    at a given RTT.
+
+    This would make a cool diagram.
 
     -----------------------------------------------------------------------
 
     Encode orientation relative to previous orientation
 
-    -----------------------------------------------------------------------
-
-    Encode linear velocity relative to previous linear velocity
-
-    -----------------------------------------------------------------------
-
-    Ready to write next article
+    If the orientation is within 10 degrees, encode with much less bits,
+    otherwise just serialize the existing full size quaternion smallest 3.
 
     -----------------------------------------------------------------------
-    
+
+    Ready to write "Snapshot Compression" article
+
+    -----------------------------------------------------------------------

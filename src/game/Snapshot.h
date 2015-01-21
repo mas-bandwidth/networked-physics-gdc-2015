@@ -34,6 +34,25 @@ struct CubeState
 #ifdef SERIALIZE_ANGULAR_VELOCITY
     vectorial::vec3f angular_velocity;
 #endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
+
+    bool operator == ( const CubeState & other ) const
+    {
+        if ( interacting != other.interacting )
+            return false;
+
+        if ( length_squared( position - other.position ) > 0.0001f )
+            return false;
+
+        if ( length_squared( orientation - other.orientation ) > 0.0001f )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const CubeState & other ) const
+    {
+        return ! ( *this == other );
+    }
 };
 
 template <typename Stream> inline void serialize_vector( Stream & stream, vectorial::vec3f & vector )
@@ -367,6 +386,49 @@ struct SnapshotModeData
     float extrapolation = 0.2f;
     SnapshotInterpolation interpolation = SNAPSHOT_INTERPOLATION_NONE;
 };
+
+inline bool GetSnapshot( GameInstance * game_instance, Snapshot & snapshot )
+{
+    const int num_active_objects = game_instance->GetNumActiveObjects();
+
+    if ( num_active_objects == 0 )
+        return false;
+
+    const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+
+    CORE_ASSERT( active_objects );
+
+    for ( int i = 0; i < num_active_objects; ++i )
+    {
+        auto & object = active_objects[i];
+
+        const int index = object.id - 1;
+
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < NumCubes );
+
+        snapshot.cubes[index].position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
+
+        snapshot.cubes[index].orientation = vectorial::quat4f( object.orientation.x, 
+                                                               object.orientation.y, 
+                                                               object.orientation.z,
+                                                               object.orientation.w );
+
+        snapshot.cubes[index].linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
+                                                                  object.linearVelocity.y,
+                                                                  object.linearVelocity.z );
+
+#ifdef SERIALIZE_ANGULAR_VELOCITY
+        snapshot.cubes[index].angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
+                                                                   object.angularVelocity.y,
+                                                                   object.angularVelocity.z );
+#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
+
+        snapshot.cubes[index].interacting = object.authority == 0;
+    }
+
+    return true;
+}
 
 struct SnapshotInterpolationBuffer
 {

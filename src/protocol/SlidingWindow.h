@@ -40,8 +40,6 @@ namespace protocol
 
         void Insert( const T & entry )
         {
-            // IMPORTANT: Assumption is that entries are very small.
-            // If this changes then this interface should also change!
             CORE_ASSERT( !IsFull() );
             m_entries[m_sequence%m_size] = entry;
             m_sequence++;
@@ -49,9 +47,12 @@ namespace protocol
 
         T & Insert( uint16_t & sequence )
         {
+            // IMPORTANT: Use this insert when T is large to avoid copy!
             CORE_ASSERT( !IsFull() );
+            T & entry = m_entries[m_sequence%m_size];
             sequence = m_sequence;
             m_sequence++;
+            return entry;
         }
 
         void Ack( uint16_t ack )

@@ -1,4 +1,89 @@
 
+Tuesday January 20th, 2015
+--------------------------
+
+    Add base (uint16_t) and initial (bool) to snapshot packet.
+
+    Fill these in appropriately on packet send.
+
+    This means I need to track whether an ack has been received yet.
+
+    When an ack exists, base should be snapshot sliding window ack + 1
+
+    Add function to fill snapshot from current simulation state.
+
+    Rework existing compression demo to use this function to grab snapshot
+
+    To make sure initial snapshot is valid may need to pump activation system after world init.
+
+    Setup a new context pointer to the initial snapshot state.
+
+    In compression demo grab initial state immediately after initialize
+    and stash it away somewhere. Assert that it is valid!
+
+    When calculating delta, if initial is true, encode with snapshot_base
+    pointing to initial snapshot state.
+
+    On serialize write, compare each object against base.
+
+    If initial, base is a memset(0) cube struct.
+
+    If object is identical (memcmp), write bit 0 indicating not changed.
+
+    Otherwise write bit 1 and serialize rest of cube data.
+
+    Write code on serialize read.
+
+    If not changed, memcpy across the cube data from the base.
+
+    Otherwise serialize the whole cube in-place.
+
+    Delta encoding should be working now!
+
+    Kinda working but doesn't seem to be exactly correct yet!
+
+    Suspect some issues with uninitialized data and memcmp.
+
+    Potentially issue with w coord for vec3.
+
+    Also potentially issue with linear velocity (unused)
+
+    Added == operator that only checks interacting, orientation, position.
+
+    It's working great now!
+
+
+Monday January 19th, 2015
+-------------------------
+
+    Insert snapshot to the sliding window on send.
+
+    Should blow up after 256
+
+    On receive ack, ack sequence - 1 (necessary, because we want to keep ack)
+
+    Should no longer blow up
+
+    Extend simulator to have context set, context ptr would have two parts
+
+    for serialize write, it is the pointer to the sliding window.
+
+    for serialize read, it is the the pointer to the sequence buffer.
+
+    On receive snapshot, insert snapshot into sequence buffer
+
+    It should now be possible to perform the serialization for all compressed
+    packets in-place vs. copying across packet data, eg. serialize in place
+    to the serialize write from the sliding window, and serialize read directly
+    into the sequence buffer.
+
+    This way the packets themselves only need to include the sequence #
+    and then the actual data is serialized directly in/out of the buffers
+    without any copies.
+
+    Done. Works fine!
+
+
 Sunday January 18th, 2015
 -------------------------
 

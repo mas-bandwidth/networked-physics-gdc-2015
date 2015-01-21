@@ -64,6 +64,8 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
             simulation[i].game_instance->SetFlag( game::FLAG_Push );
             simulation[i].game_instance->SetFlag( game::FLAG_Pull );
+
+            simulation[i].game_instance->Update( 1.0f / 60.0f );        // IMPORTANT: give simulation one initial update so objects activate!
         }
     }
     else
