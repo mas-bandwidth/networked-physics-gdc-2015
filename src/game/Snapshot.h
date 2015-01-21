@@ -296,6 +296,101 @@ template <typename Stream> inline void serialize_compressed_quaternion( Stream &
     }
 }
 
+template <typename Stream> void serialize_index_relative( Stream & stream, int previous, int & current )
+{
+    uint32_t difference;
+    if ( Stream::IsWriting )
+    {
+        CORE_ASSERT( previous < current );
+        difference = current - previous;
+        CORE_ASSERT( difference >= 0 );
+    }
+
+    // todo: one bit means -- consecutive. not a 1 bit value 0,1
+
+    bool oneBit;
+    if ( Stream::IsWriting )
+        oneBit = difference == 1;
+    serialize_bool( stream, oneBit );
+    if ( oneBit )
+    {
+        if ( Stream::IsReading )
+            current = previous + 1;
+        return;
+    }
+
+    // todo: next bit means, 2 or more, eg. 2-6 (2 bits)
+
+    /*
+
+    bool twoBits;
+    if ( Stream::IsWriting )
+        twoBits = difference == difference <= 4;
+    serialize_bool( stream, twoBits );
+    if ( twoBits )
+    {
+        serialize_int( stream, difference, 1, 4 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    bool fourBits;
+    if ( Stream::IsWriting )
+        fourBits = difference == difference <= 16;
+    serialize_bool( stream, fourBits );
+    if ( fourBits )
+    {
+        serialize_int( stream, difference, 1, 16 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    bool eightBits;
+    if ( Stream::IsWriting )
+        eightBits = difference == difference <= 256;
+    serialize_bool( stream, eightBits );
+    if ( eightBits )
+    {
+        serialize_int( stream, difference, 1, 256 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    bool twelveBits;
+    if ( Stream::IsWriting )
+        twelveBits = difference <= 4096;
+    serialize_bool( stream, twelveBits );
+    if ( twelveBits )
+    {
+        serialize_int( stream, difference, 1, 4096 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    bool sixteenBits;
+    if ( Stream::IsWriting ) 
+        sixteenBits = difference <= 65535;
+    serialize_bool( stream, sixteenBits );
+    if ( sixteenBits )
+    {
+        serialize_int( stream, difference, 1, 65536 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    uint32_t value = current;
+    serialize_uint32( stream, value );
+    if ( Stream::IsReading )
+        current = (decltype(current)) value;
+    */
+}
+
+
 static void InterpolateSnapshot_Linear( float t, 
                                         const __restrict CubeState * a, 
                                         const __restrict CubeState * b, 

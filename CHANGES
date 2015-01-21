@@ -52,6 +52,26 @@ Tuesday January 20th, 2015
 
     It's working great now!
 
+    Optimize object index sending...
+
+    So for each object 1 bit, that's n bits = 900 bits, or 113 bytes.
+
+    If we have to identify one out of 900 objects, that's 10 bits per-id
+
+    So 10 * 90 = 900, so the break even point is 90 objects.
+
+    Less than 90 changed objects in a packet, send individual ids
+
+    More than 90 changed objects, send one bit per-object
+
+    Iterate across all cubes first, and detect set that have changed.
+
+    Count the number of changed.
+
+    If # changed is > 90 then use the one bit approach,
+
+    otherwise serialize the indices (10 bits per)
+
 
 Monday January 19th, 2015
 -------------------------

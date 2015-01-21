@@ -32,8 +32,8 @@ enum SnapshotMode
     COMPRESSION_MODE_VELOCITY,
     COMPRESSION_MODE_POSITION,
     COMPRESSION_MODE_NO_VELOCITY,
-    COMPRESSION_MODE_DELTA_NOT_CHANGED,
-    COMPRESSION_MODE_DELTA_CUBE_INDEX,
+    COMPRESSION_MODE_DELTA,
+    COMPRESSION_MODE_DELTA_WITH_INDICES,
     COMPRESSION_NUM_MODES
 };
 
@@ -45,7 +45,8 @@ const char * compression_mode_descriptions[]
     "Compress velocity",
     "Compress position",
     "Compress no velocity",
-    "Compress delta not changed"
+    "Compress delta",
+    "Compress delta with indices",
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -93,10 +94,13 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
+        const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
+        const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
+
         SnapshotSlidingWindow * snapshot_sliding_window = (SnapshotSlidingWindow*) stream.GetContext( CONTEXT_SNAPSHOT_SLIDING_WINDOW );
         SnapshotSequenceBuffer * snapshot_sequence_buffer = (SnapshotSequenceBuffer*) stream.GetContext( CONTEXT_SNAPSHOT_SEQUENCE_BUFFER );
         Snapshot * initial_snapshot = (Snapshot*) stream.GetContext( CONTEXT_INITIAL_SNAPSHOT );
-        
+
         serialize_uint16( stream, sequence );
 
         serialize_int( stream, compression_mode, 0, COMPRESSION_NUM_MODES - 1 );
@@ -196,9 +200,6 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
             case COMPRESSION_MODE_POSITION:
             {
-                const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
-                const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
-
                 for ( int i = 0; i < NumCubes; ++i )
                 {
                     serialize_bool( stream, cubes[i].interacting );
@@ -221,9 +222,6 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
             case COMPRESSION_MODE_NO_VELOCITY:
             {
-                const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
-                const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
-
                 for ( int i = 0; i < NumCubes; ++i )
                 {
                     serialize_bool( stream, cubes[i].interacting );
@@ -235,7 +233,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_DELTA_NOT_CHANGED:
+            case COMPRESSION_MODE_DELTA:
             {
                 CORE_ASSERT( initial_snapshot );
 
@@ -273,9 +271,6 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                     if ( changed )
                     {
-                        const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
-                        const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
-
                         serialize_bool( stream, cubes[i].interacting );
 
                         serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
@@ -285,6 +280,126 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     else if ( Stream::IsReading )
                     {
                         memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                    }
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_DELTA_WITH_INDICES:
+            {
+                CORE_ASSERT( initial_snapshot );
+
+                CubeState * base_cubes = nullptr;
+
+                if ( initial )
+                {
+                    base_cubes = initial_snapshot->cubes;
+                }
+                else
+                {
+                    if ( Stream::IsWriting )
+                    {
+                        CORE_ASSERT( snapshot_sliding_window );
+                        auto & entry = snapshot_sliding_window->Get( base_sequence );
+                        base_cubes = (CubeState*) &entry.cubes[0];
+                    }
+                    else
+                    {
+                        CORE_ASSERT( snapshot_sequence_buffer );
+                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( entry );
+                        base_cubes = (CubeState*) &entry->cubes[0];
+                    }
+                }
+
+                const int MaxIndex = 89;
+
+                int num_changed = 0;
+                bool use_indices = false;
+                bool changed[MaxCubes];
+                if ( Stream::IsWriting )
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        changed[i] = cubes[i] != base_cubes[i];
+                        if ( changed[i] )
+                            num_changed++;
+                    }
+                    if ( num_changed < MaxIndex )
+                        use_indices = true;
+                }
+
+                serialize_bool( stream, use_indices );
+
+                if ( use_indices )
+                {
+                    serialize_int( stream, num_changed, 0, MaxIndex + 1 );
+
+                    if ( Stream::IsWriting )
+                    {
+                        int num_written = 0;
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( changed[i] )
+                            {
+                                serialize_int( stream, i, 0, NumCubes - 1 );
+
+                                serialize_bool( stream, cubes[i].interacting );
+
+                                serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
+                                
+                                serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+
+                                num_written++;
+                            }
+                        }
+
+                        CORE_ASSERT( num_written == num_changed );
+                    }
+                    else
+                    {
+                        memset( changed, 0, sizeof( changed ) );
+
+                        for ( int i = 0; i < num_changed; ++i )
+                        {
+                            int index;
+                            serialize_int( stream, index, 0, MaxCubes - 1 );
+
+                            serialize_bool( stream, cubes[index].interacting );
+
+                            serialize_compressed_vector( stream, cubes[index].position, position_min, position_max, 0.001 );
+                            
+                            serialize_compressed_quaternion( stream, cubes[index].orientation, 9 );
+
+                            changed[index] = true;
+                        }
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( !changed[i] )
+                                memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                        }
+                    }
+                }
+                else
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        serialize_bool( stream, changed[i] );
+
+                        if ( changed[i] )
+                        {
+                            serialize_bool( stream, cubes[i].interacting );
+
+                            serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
+                            
+                            serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                        }
+                        else if ( Stream::IsReading )
+                        {
+                            memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                        }
                     }
                 }
             }
