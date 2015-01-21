@@ -1,4 +1,23 @@
 
+Wednesday January 21st, 2015
+----------------------------
+
+    Design and code serialize_index_relative function
+
+    It should only need one bit if the index is + 1
+
+    It should have 2 bits for 2-6...
+
+    3 bits for 7-...
+
+    and so on.
+
+    After a point (say >127), just serialialize the whole 10 bits.
+
+    Now write the cubes that have changed using a variable bit encoding from
+    previous id, eg. one bit if the next object is 
+
+
 Tuesday January 20th, 2015
 --------------------------
 

@@ -2,29 +2,6 @@ DONE:
 
 TODO:
 
-    Design and code serialize_index_relative function
-
-    It should only need one bit if the index is + 1
-
-    It should have 2 bits for 2-6...
-
-    3 bits for 7-...
-
-    and so on.
-
-    After a point (say >127), just serialialize the whole 10 bits.
-
-    -----------------------------------------------------------------------
-
-    Now write the cubes that have changed using a variable bit encoding from
-    previous id, eg. one bit if the next object is 
-
-    Ideally, variable bit encoding should only care up to a stride of 128,
-    above this just serialize the whole 10 bits (should be very few of those)
-
-    Also, increase the max index to 256 -- with relative encoding, it's
-    more efficient to just send indices vs. all bits in most cases.
-
     -----------------------------------------------------------------------
 
     Split position into grid cells xyz and intra cell fractional bits

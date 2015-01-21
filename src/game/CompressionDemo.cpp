@@ -33,7 +33,8 @@ enum SnapshotMode
     COMPRESSION_MODE_POSITION,
     COMPRESSION_MODE_NO_VELOCITY,
     COMPRESSION_MODE_DELTA,
-    COMPRESSION_MODE_DELTA_WITH_INDICES,
+    COMPRESSION_MODE_DELTA_ABSOLUTE_INDICES,
+    COMPRESSION_MODE_DELTA_RELATIVE_INDICES,
     COMPRESSION_NUM_MODES
 };
 
@@ -46,7 +47,8 @@ const char * compression_mode_descriptions[]
     "Compress position",
     "Compress no velocity",
     "Compress delta",
-    "Compress delta with indices",
+    "Compress delta absolute indices",
+    "Compress delta relative indices",
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -285,7 +287,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_DELTA_WITH_INDICES:
+            case COMPRESSION_MODE_DELTA_ABSOLUTE_INDICES:
             {
                 CORE_ASSERT( initial_snapshot );
 
@@ -373,6 +375,146 @@ struct CompressionSnapshotPacket : public protocol::Packet
                             serialize_compressed_quaternion( stream, cubes[index].orientation, 9 );
 
                             changed[index] = true;
+                        }
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( !changed[i] )
+                                memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                        }
+                    }
+                }
+                else
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        serialize_bool( stream, changed[i] );
+
+                        if ( changed[i] )
+                        {
+                            serialize_bool( stream, cubes[i].interacting );
+
+                            serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
+                            
+                            serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                        }
+                        else if ( Stream::IsReading )
+                        {
+                            memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                        }
+                    }
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_DELTA_RELATIVE_INDICES:
+            {
+                CORE_ASSERT( initial_snapshot );
+
+                CubeState * base_cubes = nullptr;
+
+                if ( initial )
+                {
+                    base_cubes = initial_snapshot->cubes;
+                }
+                else
+                {
+                    if ( Stream::IsWriting )
+                    {
+                        CORE_ASSERT( snapshot_sliding_window );
+                        auto & entry = snapshot_sliding_window->Get( base_sequence );
+                        base_cubes = (CubeState*) &entry.cubes[0];
+                    }
+                    else
+                    {
+                        CORE_ASSERT( snapshot_sequence_buffer );
+                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( entry );
+                        base_cubes = (CubeState*) &entry->cubes[0];
+                    }
+                }
+
+                const int MaxIndex = 89;
+
+                int num_changed = 0;
+                bool use_indices = false;
+                bool changed[MaxCubes];
+                if ( Stream::IsWriting )
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        changed[i] = cubes[i] != base_cubes[i];
+                        if ( changed[i] )
+                            num_changed++;
+                    }
+                    if ( num_changed < MaxIndex )
+                        use_indices = true;
+                }
+
+                serialize_bool( stream, use_indices );
+
+                if ( use_indices )
+                {
+                    serialize_int( stream, num_changed, 0, MaxIndex + 1 );
+
+                    if ( Stream::IsWriting )
+                    {
+                        int num_written = 0;
+
+                        bool first = true;
+                        int previous_index = 0;
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( changed[i] )
+                            {
+                                if ( first )
+                                {
+                                    serialize_int( stream, i, 0, NumCubes - 1 );
+                                    first = false;
+                                }
+                                else
+                                {   
+                                    serialize_index_relative( stream, previous_index, i );
+                                }
+
+                                serialize_bool( stream, cubes[i].interacting );
+
+                                serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
+                                
+                                serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+
+                                num_written++;
+
+                                previous_index = i;
+                            }
+                        }
+
+                        CORE_ASSERT( num_written == num_changed );
+                    }
+                    else
+                    {
+                        memset( changed, 0, sizeof( changed ) );
+
+                        int previous_index = 0;
+
+                        for ( int i = 0; i < num_changed; ++i )
+                        {
+                            int index;
+                            if ( i == 0 )
+                                serialize_int( stream, index, 0, MaxCubes - 1 );
+                            else                                
+                                serialize_index_relative( stream, previous_index, index );
+
+                            serialize_bool( stream, cubes[index].interacting );
+
+                            serialize_compressed_vector( stream, cubes[index].position, position_min, position_max, 0.001 );
+                            
+                            serialize_compressed_quaternion( stream, cubes[index].orientation, 9 );
+
+                            changed[index] = true;
+
+                            previous_index = index;
                         }
 
                         for ( int i = 0; i < NumCubes; ++i )

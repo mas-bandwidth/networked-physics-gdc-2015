@@ -303,91 +303,83 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
     {
         CORE_ASSERT( previous < current );
         difference = current - previous;
-        CORE_ASSERT( difference >= 0 );
+        CORE_ASSERT( difference > 0 );
     }
 
-    // todo: one bit means -- consecutive. not a 1 bit value 0,1
+    // +1
 
-    bool oneBit;
+    bool plusOne;
     if ( Stream::IsWriting )
-        oneBit = difference == 1;
-    serialize_bool( stream, oneBit );
-    if ( oneBit )
+        plusOne = difference == 1;
+    serialize_bool( stream, plusOne );
+    if ( plusOne )
     {
         if ( Stream::IsReading )
             current = previous + 1;
         return;
     }
 
-    // todo: next bit means, 2 or more, eg. 2-6 (2 bits)
-
-    /*
+    // [+2,5] -> [0,3] (2 bits)
 
     bool twoBits;
     if ( Stream::IsWriting )
-        twoBits = difference == difference <= 4;
+        twoBits = difference <= 5;
     serialize_bool( stream, twoBits );
     if ( twoBits )
     {
-        serialize_int( stream, difference, 1, 4 );
+        serialize_int( stream, difference, 2, 5 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
+
+    // [+6,13] -> [0,7] (3 bits)
+    
+    bool threeBits;
+    if ( Stream::IsWriting )
+        threeBits = difference <= 13;
+    serialize_bool( stream, threeBits );
+    if ( threeBits )
+    {
+        serialize_int( stream, difference, 6, 13 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    // [14,29] -> [0,15] (4 bits)
 
     bool fourBits;
     if ( Stream::IsWriting )
-        fourBits = difference == difference <= 16;
+        fourBits = difference <= 29;
     serialize_bool( stream, fourBits );
     if ( fourBits )
     {
-        serialize_int( stream, difference, 1, 16 );
+        serialize_int( stream, difference, 14, 29 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    bool eightBits;
+    // [30,61] -> [0,31] (5 bits)
+
+    bool fiveBits;
     if ( Stream::IsWriting )
-        eightBits = difference == difference <= 256;
-    serialize_bool( stream, eightBits );
-    if ( eightBits )
+        fiveBits = difference <= 61;
+    serialize_bool( stream, fiveBits );
+    if ( fiveBits )
     {
-        serialize_int( stream, difference, 1, 256 );
+        serialize_int( stream, difference, 30, 61 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    bool twelveBits;
-    if ( Stream::IsWriting )
-        twelveBits = difference <= 4096;
-    serialize_bool( stream, twelveBits );
-    if ( twelveBits )
-    {
-        serialize_int( stream, difference, 1, 4096 );
-        if ( Stream::IsReading )
-            current = previous + difference;
-        return;
-    }
+    // [62,MaxCubes]
 
-    bool sixteenBits;
-    if ( Stream::IsWriting ) 
-        sixteenBits = difference <= 65535;
-    serialize_bool( stream, sixteenBits );
-    if ( sixteenBits )
-    {
-        serialize_int( stream, difference, 1, 65536 );
-        if ( Stream::IsReading )
-            current = previous + difference;
-        return;
-    }
-
-    uint32_t value = current;
-    serialize_uint32( stream, value );
+    serialize_int( stream, difference, 62, NumCubes - 1 );
     if ( Stream::IsReading )
-        current = (decltype(current)) value;
-    */
+        current = previous + difference;
 }
 
 

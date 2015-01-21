@@ -570,6 +570,9 @@ template <typename Stream, typename T> void serialize_int_relative( Stream & str
         return;
     }
 
+    // todo: i don't think this is efficient for the 16 bits case
+    // it should instead be in range 5 -> 16 + 4
+
     bool fourBits;
     if ( Stream::IsWriting )
         fourBits = difference == difference <= 16;
