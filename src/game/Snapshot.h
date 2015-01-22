@@ -55,7 +55,7 @@ struct CubeState
     }
 };
 
-const int GridCubeSize = 2
+const int GridCubeSize = 1;
 
 struct GridCubeState
 {

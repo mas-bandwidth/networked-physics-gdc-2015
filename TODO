@@ -2,6 +2,10 @@ DONE:
 
 TODO:
 
+    I'm not really getting the compression that I'm expecting when objects are moving.
+
+    Is it just that position offset compression is required to get the effect I want?
+
     -----------------------------------------------------------------------
 
     Can we do even better? If the average position change is smaller than
@@ -13,6 +17,8 @@ TODO:
     eg. if has moved 25cm-50cm or less then can encode with much less bits
 
     If this is a common case, this is a big win for moving cubes.
+
+    -----------------------------------------------------------------------
 
     Ideally, come up with some technique to determine the average position
     difference, maybe even graph the distribution while the game is running
