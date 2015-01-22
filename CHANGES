@@ -15,7 +15,40 @@ Wednesday January 21st, 2015
     After a point (say >127), just serialialize the whole 10 bits.
 
     Now write the cubes that have changed using a variable bit encoding from
-    previous id, eg. one bit if the next object is 
+    previous id, eg. one bit if the next object is +1 and so on.
+
+    Fixed bug with delta position by making epsilon smaller for changed position.
+
+    Create new grid cube struct.
+
+    Implement function to load grid cube state from cube state.
+
+    Implement function to save grid cube state to cube state.
+
+    Fixed some epsilon issues with grid cell clamp. =p
+
+    Add new serialize function for grid cube state, copied from previous.
+
+    Instead of serializing cube state directly, convert them all to grid cube state first (pre-pass)
+
+    If grid cube is unchanged, one bit.
+
+    Otherwise if changed, check if the indices are the same (common)
+
+    If all indices are the same, copy indices from base on read.
+
+    Split position into grid cells xyz and intra cell fractional bits
+
+    Use this to reduce cost of position sync
+
+    Extend delta encoding to have one bit if cell index has changed,
+    therefore in the common case bit is 0, not changed and we only
+    need to send fractional bits for the position
+
+    Make sure cells are relatively large so indices change infrequently
+
+    Serialize one bit if cell indices have not changed, otherwise
+    serialize all indices at once (probably not worth having bool per-index)
 
 
 Tuesday January 20th, 2015

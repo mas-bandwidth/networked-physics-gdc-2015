@@ -40,16 +40,100 @@ struct CubeState
         if ( interacting != other.interacting )
             return false;
 
-        if ( length_squared( position - other.position ) > 0.0001f )
+        if ( length_squared( position - other.position ) > 0.000001f )
             return false;
 
-        if ( length_squared( orientation - other.orientation ) > 0.0001f )
+        if ( length_squared( orientation - other.orientation ) > 0.000001f )
             return false;
 
         return true;
     }
 
     bool operator != ( const CubeState & other ) const
+    {
+        return ! ( *this == other );
+    }
+};
+
+const int GridCubeSize = 2
+
+struct GridCubeState
+{
+    bool interacting;
+    int ix,iy,iz;
+    vectorial::vec3f local_position;
+    vectorial::quat4f orientation;
+
+    void Load( const CubeState & cube_state )
+    {
+        const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
+        const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
+
+        ix = int( ( cube_state.position.x() + PositionBoundXY ) / ( PositionBoundXY * 2.0f ) * num_grid_cells_xy );
+        iy = int( ( cube_state.position.y() + PositionBoundXY ) / ( PositionBoundXY * 2.0f ) * num_grid_cells_xy );
+        iz = int( cube_state.position.z() / PositionBoundZ * num_grid_cells_z );
+
+        CORE_ASSERT( ix >= 0 );
+        CORE_ASSERT( iy >= 0 );
+        CORE_ASSERT( iz >= 0 );
+        CORE_ASSERT( ix < num_grid_cells_xy );
+        CORE_ASSERT( iy < num_grid_cells_xy );
+        CORE_ASSERT( iz < num_grid_cells_z );
+
+        vectorial::vec3f grid_origin( -PositionBoundXY + ix * GridCubeSize,
+                                      -PositionBoundXY + iy * GridCubeSize,
+                                      iz * GridCubeSize );
+
+        local_position = cube_state.position - grid_origin;
+
+        local_position = vectorial::clamp( local_position, vectorial::vec3f(0,0,0), vectorial::vec3f( GridCubeSize, GridCubeSize, GridCubeSize ) );
+
+        CORE_ASSERT( local_position.x() >= 0.0f );
+        CORE_ASSERT( local_position.y() >= 0.0f );
+        CORE_ASSERT( local_position.z() >= 0.0f );
+        CORE_ASSERT( local_position.x() <= GridCubeSize );
+        CORE_ASSERT( local_position.y() <= GridCubeSize );
+        CORE_ASSERT( local_position.z() <= GridCubeSize );
+
+        interacting = cube_state.interacting;
+        orientation = cube_state.orientation;
+    }
+
+    void Save( CubeState & cube_state )
+    {
+        vectorial::vec3f grid_origin( -PositionBoundXY + ix * GridCubeSize,
+                                      -PositionBoundXY + iy * GridCubeSize,
+                                      iz * GridCubeSize );
+
+        cube_state.position = grid_origin + local_position;
+        cube_state.interacting = interacting;
+        cube_state.orientation = orientation;
+    }
+
+    bool operator == ( const GridCubeState & other ) const
+    {
+        if ( interacting != other.interacting )
+            return false;
+
+        if ( ix != other.ix )
+            return false;
+
+        if ( iy != other.iy )
+            return false;
+
+        if ( iz != other.iz )
+            return false;
+
+        if ( length_squared( local_position - other.local_position ) > 0.000001f )
+            return false;
+
+        if ( length_squared( orientation - other.orientation ) > 0.000001f )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const GridCubeState & other ) const
     {
         return ! ( *this == other );
     }

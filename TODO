@@ -4,16 +4,6 @@ TODO:
 
     -----------------------------------------------------------------------
 
-    Split position into grid cells xyz and intra cell fractional bits
-
-    Use this to reduce cost of position sync
-
-    Extend delta encoding to have one bit if cell index has changed,
-    therefore in the common case bit is 0, not changed and we only
-    need to send fractional bits for the position
-
-    -----------------------------------------------------------------------
-
     Can we do even better? If the average position change is smaller than
     the cell size in RTT (it is), then we can recognize this and encode
     that smaller.
@@ -34,8 +24,9 @@ TODO:
 
     Encode orientation relative to previous orientation
 
-    If the orientation is within 10 degrees, encode with much less bits,
-    otherwise just serialize the existing full size quaternion smallest 3.
+    If the orientation is different but within 10 degrees, or 0.1 units linear
+    or something, encode with much less bits, otherwise just serialize absolute
+    quaternion smallest 3.
 
     -----------------------------------------------------------------------
 

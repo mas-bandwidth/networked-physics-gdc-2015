@@ -35,6 +35,7 @@ enum SnapshotMode
     COMPRESSION_MODE_DELTA,
     COMPRESSION_MODE_DELTA_ABSOLUTE_INDICES,
     COMPRESSION_MODE_DELTA_RELATIVE_INDICES,
+    COMPRESSION_MODE_DELTA_POSITION_GRID,
     COMPRESSION_NUM_MODES
 };
 
@@ -49,6 +50,7 @@ const char * compression_mode_descriptions[]
     "Compress delta",
     "Compress delta absolute indices",
     "Compress delta relative indices",
+    "Compress delta position grid"
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -98,6 +100,9 @@ struct CompressionSnapshotPacket : public protocol::Packet
     {
         const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
         const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
+
+        const vectorial::vec3f local_position_min( 0, 0, 0 );
+        const vectorial::vec3f local_position_max( GridCubeSize, GridCubeSize, GridCubeSize );
 
         SnapshotSlidingWindow * snapshot_sliding_window = (SnapshotSlidingWindow*) stream.GetContext( CONTEXT_SNAPSHOT_SLIDING_WINDOW );
         SnapshotSequenceBuffer * snapshot_sequence_buffer = (SnapshotSequenceBuffer*) stream.GetContext( CONTEXT_SNAPSHOT_SEQUENCE_BUFFER );
@@ -318,7 +323,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                 int num_changed = 0;
                 bool use_indices = false;
-                bool changed[MaxCubes];
+                bool changed[NumCubes];
                 if ( Stream::IsWriting )
                 {
                     for ( int i = 0; i < NumCubes; ++i )
@@ -366,7 +371,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         for ( int i = 0; i < num_changed; ++i )
                         {
                             int index;
-                            serialize_int( stream, index, 0, MaxCubes - 1 );
+                            serialize_int( stream, index, 0, NumCubes - 1 );
 
                             serialize_bool( stream, cubes[index].interacting );
 
@@ -434,11 +439,11 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     }
                 }
 
-                const int MaxIndex = 89;
+                const int MaxIndex = 126;
 
                 int num_changed = 0;
                 bool use_indices = false;
-                bool changed[MaxCubes];
+                bool changed[NumCubes];
                 if ( Stream::IsWriting )
                 {
                     for ( int i = 0; i < NumCubes; ++i )
@@ -502,7 +507,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         {
                             int index;
                             if ( i == 0 )
-                                serialize_int( stream, index, 0, MaxCubes - 1 );
+                                serialize_int( stream, index, 0, NumCubes - 1 );
                             else                                
                                 serialize_index_relative( stream, previous_index, index );
 
@@ -543,6 +548,222 @@ struct CompressionSnapshotPacket : public protocol::Packet
                             memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
                         }
                     }
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_DELTA_POSITION_GRID:
+            {
+                CORE_ASSERT( initial_snapshot );
+
+                CubeState * base_cubes = nullptr;
+
+                if ( initial )
+                {
+                    base_cubes = initial_snapshot->cubes;
+                }
+                else
+                {
+                    if ( Stream::IsWriting )
+                    {
+                        CORE_ASSERT( snapshot_sliding_window );
+                        auto & entry = snapshot_sliding_window->Get( base_sequence );
+                        base_cubes = (CubeState*) &entry.cubes[0];
+                    }
+                    else
+                    {
+                        CORE_ASSERT( snapshot_sequence_buffer );
+                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( entry );
+                        base_cubes = (CubeState*) &entry->cubes[0];
+                    }
+                }
+
+                GridCubeState grid_cubes[NumCubes];
+                GridCubeState base_grid_cubes[NumCubes];
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    grid_cubes[i].Load( cubes[i] );
+                    base_grid_cubes[i].Load( base_cubes[i] );
+                }
+
+                const int MaxIndex = 126;
+
+                int num_changed = 0;
+                bool use_indices = false;
+                bool changed[NumCubes];
+                if ( Stream::IsWriting )
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        changed[i] = grid_cubes[i] != base_grid_cubes[i];
+                        if ( changed[i] )
+                            num_changed++;
+                    }
+                    if ( num_changed < MaxIndex )
+                        use_indices = true;
+                }
+
+                serialize_bool( stream, use_indices );
+
+                if ( use_indices )
+                {
+                    serialize_int( stream, num_changed, 0, MaxIndex + 1 );
+
+                    if ( Stream::IsWriting )
+                    {
+                        int num_written = 0;
+
+                        bool first = true;
+                        int previous_index = 0;
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( changed[i] )
+                            {
+                                if ( first )
+                                {
+                                    serialize_int( stream, i, 0, NumCubes - 1 );
+                                    first = false;
+                                }
+                                else
+                                {   
+                                    serialize_index_relative( stream, previous_index, i );
+                                }
+
+                                serialize_bool( stream, grid_cubes[i].interacting );
+
+                                const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
+                                const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
+
+                                bool grid_cell_changed = grid_cubes[i].ix != base_grid_cubes[i].ix ||
+                                                         grid_cubes[i].iy != base_grid_cubes[i].iy ||
+                                                         grid_cubes[i].iz != base_grid_cubes[i].iz;
+
+                                serialize_bool( stream, grid_cell_changed );
+
+                                if ( grid_cell_changed )
+                                {
+                                    serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
+                                    serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
+                                    serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
+                                }
+
+                                serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
+                                
+                                serialize_compressed_quaternion( stream, grid_cubes[i].orientation, 9 );
+
+                                num_written++;
+
+                                previous_index = i;
+                            }
+                        }
+
+                        CORE_ASSERT( num_written == num_changed );
+                    }
+                    else
+                    {
+                        memset( changed, 0, sizeof( changed ) );
+
+                        int previous_index = 0;
+
+                        for ( int i = 0; i < num_changed; ++i )
+                        {
+                            int index;
+                            if ( i == 0 )
+                                serialize_int( stream, index, 0, NumCubes - 1 );
+                            else                                
+                                serialize_index_relative( stream, previous_index, index );
+
+                            serialize_bool( stream, grid_cubes[index].interacting );
+
+                            const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
+                            const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
+
+                            bool grid_cell_changed;
+                            serialize_bool( stream, grid_cell_changed );
+
+                            if ( grid_cell_changed )
+                            {
+                                serialize_int( stream, grid_cubes[index].ix, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, grid_cubes[index].iy, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, grid_cubes[index].iz, 0, num_grid_cells_z - 1 );
+                            }
+                            else
+                            {
+                                grid_cubes[index].ix = base_grid_cubes[index].ix;
+                                grid_cubes[index].iy = base_grid_cubes[index].iy;
+                                grid_cubes[index].iz = base_grid_cubes[index].iz;
+                            }
+
+                            serialize_compressed_vector( stream, grid_cubes[index].local_position, local_position_min, local_position_max, 0.001 );
+                            
+                            serialize_compressed_quaternion( stream, grid_cubes[index].orientation, 9 );
+
+                            changed[index] = true;
+
+                            previous_index = index;
+                        }
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( !changed[i] )
+                                memcpy( &grid_cubes[i], &base_grid_cubes[i], sizeof( GridCubeState ) );
+                        }
+                    }
+                }
+                else
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        serialize_bool( stream, changed[i] );
+
+                        if ( changed[i] )
+                        {
+                            serialize_bool( stream, grid_cubes[i].interacting );
+
+                            const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
+                            const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
+
+                            bool grid_cell_changed;
+
+                            if ( Stream::IsWriting )
+                            {
+                                grid_cell_changed = grid_cubes[i].ix != base_grid_cubes[i].ix ||
+                                                    grid_cubes[i].iy != base_grid_cubes[i].iy ||
+                                                    grid_cubes[i].iz != base_grid_cubes[i].iz;
+                            }
+
+                            serialize_bool( stream, grid_cell_changed );
+
+                            if ( grid_cell_changed )
+                            {
+                                serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
+                            }
+                            else if ( Stream::IsReading )
+                            {
+                                grid_cubes[i].ix = base_grid_cubes[i].ix;
+                                grid_cubes[i].iy = base_grid_cubes[i].iy;
+                                grid_cubes[i].iz = base_grid_cubes[i].iz;
+                            }
+
+                            serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
+                            
+                            serialize_compressed_quaternion( stream, grid_cubes[i].orientation, 9 );
+                        }
+                        else if ( Stream::IsReading )
+                        {
+                            memcpy( &grid_cubes[i], &base_grid_cubes[i], sizeof( GridCubeState ) );
+                        }
+                    }
+                }
+
+                if ( Stream::IsReading )
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                        grid_cubes[i].Save( cubes[i] );
                 }
             }
             break;
@@ -834,7 +1055,7 @@ void CompressionDemo::Render()
     const float bandwidth = m_compression->network_simulator->GetBandwidth();
 
     char bandwidth_string[256];
-    if ( bandwidth < 512 )
+    if ( bandwidth < 1024 )
         snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %d kbps", (int) bandwidth );
     else
         snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %.2f mbps", bandwidth / 1000 );
