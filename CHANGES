@@ -1,4 +1,30 @@
 
+Saturday January 24th, 2015
+---------------------------
+
+    Seems to be some pops and glitches with delta compression.
+
+    Also, the compression is not quite as good as I would expect.
+
+    Something is wrong.
+
+    Simplify the code and try to see what is going on before going further!
+
+    It seems to me that the code that is wrong is the *relative index* code
+
+    The delta encoding by itself is working fine!
+
+    Also, relative index code adds a lot of complexity.
+
+    Maybe save it for the very last optimization?
+
+    Could also be position grid optimization. Separate it out and see!
+
+    Move position grid ahead of relative/absolute index.
+
+    It seems the bug is with the position grid!
+
+
 Wednesday January 21st, 2015
 ----------------------------
 

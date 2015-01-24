@@ -2,37 +2,22 @@ DONE:
 
 TODO:
 
-    I'm not really getting the compression that I'm expecting when objects are moving.
-
-    Is it just that position offset compression is required to get the effect I want?
+    Fix position grid bugs!!!
 
     -----------------------------------------------------------------------
 
-    Can we do even better? If the average position change is smaller than
-    the cell size in RTT (it is), then we can recognize this and encode
-    that smaller.
+    Implement relative position
 
-    Lets say cell size is large (4 meters sq)
+    Implement relative orientation
 
-    eg. if has moved 25cm-50cm or less then can encode with much less bits
-
-    If this is a common case, this is a big win for moving cubes.
+    Don't bother with separate absolute/relative indices -- just go straight to relative
 
     -----------------------------------------------------------------------
 
-    Ideally, come up with some technique to determine the average position
-    difference, maybe even graph the distribution while the game is running
-    at a given RTT.
+    Generate code to output bandwidth as CSV so I can graph it. 
 
-    This would make a cool diagram.
-
-    -----------------------------------------------------------------------
-
-    Encode orientation relative to previous orientation
-
-    If the orientation is different but within 10 degrees, or 0.1 units linear
-    or something, encode with much less bits, otherwise just serialize absolute
-    quaternion smallest 3.
+    Generate code to output position delta and orientation delta
+    (eg. largest component change) as a histogram so again I can graph it.
 
     -----------------------------------------------------------------------
 
