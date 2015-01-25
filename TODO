@@ -1,22 +1,69 @@
 DONE:
 
+    Implement relative position
+
+    Doesn't seem to be getting much improvement
+
+    Is something wrong?!
+
+    Lots is going wrong.
+
+    The quantization from compressed floats is causing positions equality checks
+    to not function, and I think it is also causing the incorrect ix,iy,iz.
+
+    The solution here is to quantize the entire simulation before grabbing
+    the snapshot, eg. have a new snapshot called "QuantizedSnapshot" which
+    contains "QuantizedCubeState" in which positions are stored as integers.
+
+    This way there can be no floating point issues when converting in/out
+    of grid, and the grids are also perfectly efficient in terms of powers
+    of two, eg. 4096 units per-grid or whatever.
+
+    This is the next thing that must be done.
+
+    What is the nearest power of two unit (per-meter) that obtains 0.001 precision for position?
+
+    1/256 = 0.003
+
+    1/512 = 0.0019
+
+    1/1024 = 0.00097 (winner)
+
+    Start here.
+
+    Position units are 1024 units per-meter.
+
 TODO:
 
-    Fix position grid bugs!!!
+    Implement quantized snapshot.
 
     -----------------------------------------------------------------------
-
-    Implement relative position
 
     Implement relative orientation
 
-    Don't bother with separate absolute/relative indices -- just go straight to relative
+    Can relative orientation be efficient?
+
+    How to encode it?
+
+    Axis-angle?
+
+    How close does
 
     -----------------------------------------------------------------------
 
-    Generate code to output bandwidth as CSV so I can graph it. 
+    Implement relative indices on top of all other optimizations
 
-    Generate code to output position delta and orientation delta
+    -----------------------------------------------------------------------
+
+    Need some sort of bandwidth statistics split up into position, orientation, indices etc.
+
+    -----------------------------------------------------------------------
+
+    Write code to output bandwidth as CSV so I can graph it. 
+
+    -----------------------------------------------------------------------
+
+    Write code code to output position delta and orientation delta
     (eg. largest component change) as a histogram so again I can graph it.
 
     -----------------------------------------------------------------------

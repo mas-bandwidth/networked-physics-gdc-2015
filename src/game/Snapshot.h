@@ -55,7 +55,7 @@ struct CubeState
     }
 };
 
-const int GridCubeSize = 1;
+const int GridCubeSize = 4;
 
 struct GridCubeState
 {
@@ -124,10 +124,10 @@ struct GridCubeState
         if ( iz != other.iz )
             return false;
 
-        if ( length_squared( local_position - other.local_position ) > 0.000001f )
+        if ( length_squared( local_position - other.local_position ) > 0.000000001f )
             return false;
 
-        if ( length_squared( orientation - other.orientation ) > 0.000001f )
+        if ( length_squared( orientation - other.orientation ) > 0.000000001f )
             return false;
 
         return true;

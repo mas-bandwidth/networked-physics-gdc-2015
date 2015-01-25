@@ -261,6 +261,25 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     }
                 }
 
+                // todo: snapshots on left side sliding windo wdon't always match snapshots in sequence buffer on right. why?
+
+                /*
+                if ( Stream::IsReading && !initial )
+                {
+                    CORE_ASSERT( snapshot_sliding_window );
+                    auto & entry = snapshot_sliding_window->Get( base_sequence );
+                    CubeState * sent_base_cubes = (CubeState*) &entry.cubes[0];
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        if ( sent_base_cubes[i] != base_cubes[i] )
+                        {
+                            printf( "object %d mismatch for base sequence %d\n", i, base_sequence );
+                        }
+                        CORE_ASSERT( sent_base_cubes[i] == base_cubes[i] );
+                    }
+                }
+                */
+
                 for ( int i = 0; i < NumCubes; ++i )
                 {
                     bool changed = false;
@@ -296,12 +315,15 @@ struct CompressionSnapshotPacket : public protocol::Packet
                 }
                 else
                 {
-                    if ( Stream::IsWriting )
+                    // todo: track down desync between left and right snapshot buffers
+
+//                    if ( Stream::IsWriting )
                     {
                         CORE_ASSERT( snapshot_sliding_window );
                         auto & entry = snapshot_sliding_window->Get( base_sequence );
                         base_cubes = (CubeState*) &entry.cubes[0];
                     }
+                    /*
                     else
                     {
                         CORE_ASSERT( snapshot_sequence_buffer );
@@ -309,6 +331,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         CORE_ASSERT( entry );
                         base_cubes = (CubeState*) &entry->cubes[0];
                     }
+                    */
                 }
 
                 GridCubeState grid_cubes[NumCubes];
@@ -352,14 +375,186 @@ struct CompressionSnapshotPacket : public protocol::Packet
                             serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
                             serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
                         }
-                        else if ( Stream::IsReading )
+                        else
                         {
-                            grid_cubes[i].ix = base_grid_cubes[i].ix;
-                            grid_cubes[i].iy = base_grid_cubes[i].iy;
-                            grid_cubes[i].iz = base_grid_cubes[i].iz;
+                            if ( Stream::IsReading )
+                            {
+                                grid_cubes[i].ix = base_grid_cubes[i].ix;
+                                grid_cubes[i].iy = base_grid_cubes[i].iy;
+                                grid_cubes[i].iz = base_grid_cubes[i].iz;
+                            }
+
+                            // todo: track down difference between left and right snapshot buffers!
+
+                            /*
+                            if ( Stream::IsWriting )
+                            {
+                                serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
+                            }
+                            else
+                            {
+                                grid_cubes[i].ix = base_grid_cubes[i].ix;
+                                grid_cubes[i].iy = base_grid_cubes[i].iy;
+                                grid_cubes[i].iz = base_grid_cubes[i].iz;
+
+                                int ix,iy,iz;
+                                serialize_int( stream, ix, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, iy, 0, num_grid_cells_xy - 1 );
+                                serialize_int( stream, iz, 0, num_grid_cells_z - 1 );
+
+                                if ( ix != grid_cubes[i].ix ||
+                                     iy != grid_cubes[i].iy ||
+                                     iz != grid_cubes[i].iz )
+                                {
+                                    printf( "position grid mismatch: expected (%d,%d,%d), got (%d,%d,%d)\n",
+                                        ix, iy, iz, grid_cubes[i].ix, grid_cubes[i].iy, grid_cubes[i].iz );
+                                }
+
+                                CORE_ASSERT( ix == grid_cubes[i].ix );
+                                CORE_ASSERT( iy == grid_cubes[i].iy );
+                                CORE_ASSERT( iz == grid_cubes[i].iz );
+                            }
+                            */
+                        }
+                        
+                        serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
+                        
+                        serialize_compressed_quaternion( stream, grid_cubes[i].orientation, 9 );
+                    }
+                    else if ( Stream::IsReading )
+                    {
+                        memcpy( &grid_cubes[i], &base_grid_cubes[i], sizeof( GridCubeState ) );
+                    }
+                }
+
+                if ( Stream::IsReading )
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                        grid_cubes[i].Save( cubes[i] );
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_DELTA_POSITION_RELATIVE:
+            {
+                CORE_ASSERT( initial_snapshot );
+
+                CubeState * base_cubes = nullptr;
+
+                if ( initial )
+                {
+                    base_cubes = initial_snapshot->cubes;
+                }
+                else
+                {
+                    // todo: track down desync between left and right snapshot buffers
+
+//                    if ( Stream::IsWriting )
+                    {
+                        CORE_ASSERT( snapshot_sliding_window );
+                        auto & entry = snapshot_sliding_window->Get( base_sequence );
+                        base_cubes = (CubeState*) &entry.cubes[0];
+                    }
+                    /*
+                    else
+                    {
+                        CORE_ASSERT( snapshot_sequence_buffer );
+                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( entry );
+                        base_cubes = (CubeState*) &entry->cubes[0];
+                    }
+                    */
+                }
+
+                GridCubeState grid_cubes[NumCubes];
+                GridCubeState base_grid_cubes[NumCubes];
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    grid_cubes[i].Load( cubes[i] );
+                    base_grid_cubes[i].Load( base_cubes[i] );
+                }
+
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    bool changed;
+
+                    if ( Stream::IsWriting )
+                        changed = grid_cubes[i] != base_grid_cubes[i];
+
+                    serialize_bool( stream, changed );
+
+                    if ( changed )
+                    {
+                        serialize_bool( stream, grid_cubes[i].interacting );
+
+                        const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
+                        const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
+
+                        bool grid_cell_changed;
+
+                        if ( Stream::IsWriting )
+                        {
+                            grid_cell_changed = grid_cubes[i].ix != base_grid_cubes[i].ix ||
+                                                grid_cubes[i].iy != base_grid_cubes[i].iy ||
+                                                grid_cubes[i].iz != base_grid_cubes[i].iz;
                         }
 
-                        serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
+                        serialize_bool( stream, grid_cell_changed );
+
+                        if ( grid_cell_changed )
+                        {
+                            serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
+                            serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
+                            serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
+                        }
+                        else
+                        {
+                            if ( Stream::IsReading )
+                            {
+                                grid_cubes[i].ix = base_grid_cubes[i].ix;
+                                grid_cubes[i].iy = base_grid_cubes[i].iy;
+                                grid_cubes[i].iz = base_grid_cubes[i].iz;
+                            }
+                        }
+                        
+                        bool relative_position = false;
+
+                        const float RelativePositionThreshold = 0.25;
+
+                        if ( Stream::IsWriting )
+                        {
+                            const float dx = grid_cubes[i].local_position.x() - base_grid_cubes[i].local_position.x();
+                            const float dy = grid_cubes[i].local_position.y() - base_grid_cubes[i].local_position.y();
+                            const float dz = grid_cubes[i].local_position.z() - base_grid_cubes[i].local_position.z();
+
+                            if ( fabs( dx ) < RelativePositionThreshold && 
+                                 fabs( dy ) < RelativePositionThreshold &&
+                                 fabs( dz ) < RelativePositionThreshold )
+                            {
+                                relative_position = true;
+                            }
+                        }
+
+                        serialize_bool( stream, relative_position );
+
+                        if ( relative_position )
+                        {
+                            vectorial::vec3f offset;
+
+                            if ( Stream::IsWriting )
+                                offset = grid_cubes[i].local_position - base_grid_cubes[i].local_position;
+
+                            serialize_compressed_vector( stream, offset, RelativePositionThreshold, 0.001 );
+
+                            if ( Stream::IsReading )
+                                grid_cubes[i].local_position = base_grid_cubes[i].local_position + offset;
+                        }
+                        else
+                        {
+                            serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
+                        }
                         
                         serialize_compressed_quaternion( stream, grid_cubes[i].orientation, 9 );
                     }

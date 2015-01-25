@@ -1,4 +1,39 @@
 
+Sunday January 25th, 2015
+-------------------------
+
+    Fix position grid bugs!!!
+
+    Is it the cell delta, or just the grid cell conversions alone?
+
+    It's the cell delta.
+
+    Added code to serialize ix,iy,iz anyway and compare with delta.
+
+    Seems to be an off by one thing for indices, eg. precision rounding?
+
+    Could also simply be a logic error. If the logic was slightly incorrect
+    then typically an incorrect cell would be off by one, statistically speaking.
+
+    But I suspect it's precision moreso, because if the base sequence was wrong
+    then the delta not changed stuff would not be working.
+
+    One test would be to load save then load again. If it is a precision problem
+    then the index values could change during this operation (they shouldn't).
+
+    Tried this and it didn't blow up.
+
+    Idea: compare snapshot sequence # on right side with snapshot data on left side.
+
+    Maybe there are different snapshots on left and right side?
+
+    Yes. The snapshot looked up in the sequence buffer doesn't always match the
+    snapshot sent on the left side. I don't know why yet, but setting the base
+    to lookup from the sliding window on the left instead works around the issue.
+
+    I can use this workaround to finish the rest of the work, and then I can debug it
+
+
 Saturday January 24th, 2015
 ---------------------------
 
