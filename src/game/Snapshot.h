@@ -15,7 +15,9 @@ static const int MaxPacketSize = 64 * 1024;         // this has to be really lar
 
 static const int NumCubes = 900 + MaxPlayers;
 
-static const int NumSnapshots = 64;
+static const int NumInterpolationSnapshots = 64;
+
+static const int UnitsPerMeter = 1024;
 
 enum SnapshotInterpolation
 {
@@ -55,88 +57,60 @@ struct CubeState
     }
 };
 
-const int GridCubeSize = 4;
-
-struct GridCubeState
+struct QuantizedCubeState
 {
     bool interacting;
-    int ix,iy,iz;
-    vectorial::vec3f local_position;
-    vectorial::quat4f orientation;
+    int position_x;
+    int position_y;
+    int position_z;
+    vectorial::quat4f orientation;  
 
     void Load( const CubeState & cube_state )
     {
-        const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
-        const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
-
-        ix = int( ( cube_state.position.x() + PositionBoundXY ) / ( PositionBoundXY * 2.0f ) * num_grid_cells_xy );
-        iy = int( ( cube_state.position.y() + PositionBoundXY ) / ( PositionBoundXY * 2.0f ) * num_grid_cells_xy );
-        iz = int( cube_state.position.z() / PositionBoundZ * num_grid_cells_z );
-
-        CORE_ASSERT( ix >= 0 );
-        CORE_ASSERT( iy >= 0 );
-        CORE_ASSERT( iz >= 0 );
-        CORE_ASSERT( ix < num_grid_cells_xy );
-        CORE_ASSERT( iy < num_grid_cells_xy );
-        CORE_ASSERT( iz < num_grid_cells_z );
-
-        vectorial::vec3f grid_origin( -PositionBoundXY + ix * GridCubeSize,
-                                      -PositionBoundXY + iy * GridCubeSize,
-                                      iz * GridCubeSize );
-
-        local_position = cube_state.position - grid_origin;
-
-        local_position = vectorial::clamp( local_position, vectorial::vec3f(0,0,0), vectorial::vec3f( GridCubeSize, GridCubeSize, GridCubeSize ) );
-
-        CORE_ASSERT( local_position.x() >= 0.0f );
-        CORE_ASSERT( local_position.y() >= 0.0f );
-        CORE_ASSERT( local_position.z() >= 0.0f );
-        CORE_ASSERT( local_position.x() <= GridCubeSize );
-        CORE_ASSERT( local_position.y() <= GridCubeSize );
-        CORE_ASSERT( local_position.z() <= GridCubeSize );
-
+        position_x = (int) floor( cube_state.position.x() * UnitsPerMeter + 0.5f );
+        position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
+        position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
         interacting = cube_state.interacting;
         orientation = cube_state.orientation;
     }
 
     void Save( CubeState & cube_state )
     {
-        vectorial::vec3f grid_origin( -PositionBoundXY + ix * GridCubeSize,
-                                      -PositionBoundXY + iy * GridCubeSize,
-                                      iz * GridCubeSize );
-
-        cube_state.position = grid_origin + local_position;
+        cube_state.position = vectorial::vec3f( position_x, position_y, position_z ) * 1.0f / UnitsPerMeter;
         cube_state.interacting = interacting;
         cube_state.orientation = orientation;
+        cube_state.linear_velocity = vectorial::vec3f( 0, 0, 0 );
     }
 
-    bool operator == ( const GridCubeState & other ) const
+    bool operator == ( const QuantizedCubeState & other ) const
     {
         if ( interacting != other.interacting )
             return false;
 
-        if ( ix != other.ix )
+        if ( position_x != other.position_x )
             return false;
 
-        if ( iy != other.iy )
+        if ( position_y != other.position_y )
             return false;
 
-        if ( iz != other.iz )
+        if ( position_z != other.position_z )
             return false;
 
-        if ( length_squared( local_position - other.local_position ) > 0.000000001f )
-            return false;
-
-        if ( length_squared( orientation - other.orientation ) > 0.000000001f )
+        if ( length_squared( orientation - other.orientation ) > 0.000001f )
             return false;
 
         return true;
     }
 
-    bool operator != ( const GridCubeState & other ) const
+    bool operator != ( const QuantizedCubeState & other ) const
     {
         return ! ( *this == other );
     }
+};
+
+struct QuantizedSnapshot
+{
+    QuantizedCubeState cubes[NumCubes];
 };
 
 template <typename Stream> inline void serialize_vector( Stream & stream, vectorial::vec3f & vector )
@@ -459,7 +433,7 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
         return;
     }
 
-    // [62,MaxCubes]
+    // [62,NumCubes]
 
     serialize_int( stream, difference, 62, NumCubes - 1 );
     if ( Stream::IsReading )
@@ -601,10 +575,51 @@ inline bool GetSnapshot( GameInstance * game_instance, Snapshot & snapshot )
     return true;
 }
 
+inline bool GetQuantizedSnapshot( GameInstance * game_instance, QuantizedSnapshot & snapshot )
+{
+    const int num_active_objects = game_instance->GetNumActiveObjects();
+
+    if ( num_active_objects == 0 )
+        return false;
+
+    const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+
+    CORE_ASSERT( active_objects );
+
+    for ( int i = 0; i < num_active_objects; ++i )
+    {
+        auto & object = active_objects[i];
+
+        const int index = object.id - 1;
+
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < NumCubes );
+
+        CubeState cube_state;
+
+        cube_state.position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
+
+        cube_state.orientation = vectorial::quat4f( object.orientation.x, 
+                                                    object.orientation.y, 
+                                                    object.orientation.z,
+                                                    object.orientation.w );
+
+        cube_state.linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
+                                                       object.linearVelocity.y,
+                                                       object.linearVelocity.z );
+
+        cube_state.interacting = object.authority == 0;
+
+        snapshot.cubes[index].Load( cube_state );
+    }
+
+    return true;
+}
+
 struct SnapshotInterpolationBuffer
 {
     SnapshotInterpolationBuffer( core::Allocator & allocator, const SnapshotModeData & mode_data )
-        : snapshots( allocator, NumSnapshots )
+        : snapshots( allocator, NumInterpolationSnapshots )
     {
         stopped = true;
         interpolating = false;

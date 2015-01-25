@@ -19,9 +19,11 @@ static const int MaxSnapshots = 256;
 
 enum Context
 {
-    CONTEXT_SNAPSHOT_SLIDING_WINDOW,            // send snapshots (for serialize write)
-    CONTEXT_SNAPSHOT_SEQUENCE_BUFFER,           // recv snapshots (for serialize read)
-    CONTEXT_INITIAL_SNAPSHOT                    // initial snapshot
+    CONTEXT_SNAPSHOT_SLIDING_WINDOW,                // send snapshots (for serialize write)
+    CONTEXT_SNAPSHOT_SEQUENCE_BUFFER,               // recv snapshots (for serialize read)
+    CONTEXT_QUANTIZED_SNAPSHOT_SLIDING_WINDOW,      // quantized send snapshots (for serialize write)
+    CONTEXT_QUANTIZED_SNAPSHOT_SEQUENCE_BUFFER,     // quantized recv snapshots (for serialize read)
+    CONTEXT_QUANTIZED_INITIAL_SNAPSHOT              // quantized initial snapshot
 };
 
 enum SnapshotMode
@@ -29,30 +31,24 @@ enum SnapshotMode
     COMPRESSION_MODE_UNCOMPRESSED,
     COMPRESSION_MODE_ORIENTATION,
     COMPRESSION_MODE_AT_REST,
-    COMPRESSION_MODE_VELOCITY,
-    COMPRESSION_MODE_POSITION,
-    COMPRESSION_MODE_NO_VELOCITY,
+    COMPRESSION_MODE_QUANTIZE_POSITION,
     COMPRESSION_MODE_DELTA_NOT_CHANGED,
-    COMPRESSION_MODE_DELTA_POSITION_GRID,
-    COMPRESSION_MODE_DELTA_POSITION_RELATIVE,
-    COMPRESSION_MODE_DELTA_ORIENTATION_RELATIVE,
-    COMPRESSION_MODE_DELTA_INDICES,
+    COMPRESSION_MODE_DELTA_RELATIVE_POSITION,
+    COMPRESSION_MODE_DELTA_RELATIVE_ORIENTATION,
+    COMPRESSION_MODE_DELTA_CHANGED_INDICES,
     COMPRESSION_NUM_MODES
 };
 
 const char * compression_mode_descriptions[]
 {
     "Uncompressed",
-    "Compress orientation",
-    "Compress at rest",
-    "Compress velocity",
-    "Compress position",
-    "Compress no velocity",
-    "Compress delta not changed",
-    "Compress delta position grid",
-    "Compress delta position relative",
-    "Compress delta orientation relative"
-    "Compress delta indices"
+    "Orientation",
+    "At rest",
+    "Quantize position",
+    "Delta not changed",
+    "Delta relative position",
+    "Delta relative orientation",
+    "Delta changed indices"
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -64,7 +60,7 @@ struct CompressionModeData : public SnapshotModeData
         latency = 0.0f;
         packet_loss = 5.0f;
         jitter = 2 / 60.0f;
-        interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+        interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
     }
 };
 
@@ -72,11 +68,16 @@ static CompressionModeData compression_mode_data[COMPRESSION_NUM_MODES];
 
 static void InitCompressionModes()
 {
-    compression_mode_data[COMPRESSION_MODE_NO_VELOCITY].interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
+    compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+    compression_mode_data[COMPRESSION_MODE_ORIENTATION].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+    compression_mode_data[COMPRESSION_MODE_AT_REST].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 }
 
 typedef protocol::SlidingWindow<Snapshot> SnapshotSlidingWindow;
 typedef protocol::SequenceBuffer<Snapshot> SnapshotSequenceBuffer;
+
+typedef protocol::SlidingWindow<QuantizedSnapshot> QuantizedSnapshotSlidingWindow;
+typedef protocol::SequenceBuffer<QuantizedSnapshot> QuantizedSnapshotSequenceBuffer;
 
 enum CompressionPackets
 {
@@ -100,15 +101,17 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
+        const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
+        const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
+
         const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
         const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
 
-        const vectorial::vec3f local_position_min( 0, 0, 0 );
-        const vectorial::vec3f local_position_max( GridCubeSize, GridCubeSize, GridCubeSize );
-
-        SnapshotSlidingWindow * snapshot_sliding_window = (SnapshotSlidingWindow*) stream.GetContext( CONTEXT_SNAPSHOT_SLIDING_WINDOW );
-        SnapshotSequenceBuffer * snapshot_sequence_buffer = (SnapshotSequenceBuffer*) stream.GetContext( CONTEXT_SNAPSHOT_SEQUENCE_BUFFER );
-        Snapshot * initial_snapshot = (Snapshot*) stream.GetContext( CONTEXT_INITIAL_SNAPSHOT );
+        auto snapshot_sliding_window = (SnapshotSlidingWindow*) stream.GetContext( CONTEXT_SNAPSHOT_SLIDING_WINDOW );
+        auto snapshot_sequence_buffer = (SnapshotSequenceBuffer*) stream.GetContext( CONTEXT_SNAPSHOT_SEQUENCE_BUFFER );
+        auto quantized_snapshot_sliding_window = (QuantizedSnapshotSlidingWindow*) stream.GetContext( CONTEXT_QUANTIZED_SNAPSHOT_SLIDING_WINDOW );
+        auto quantized_snapshot_sequence_buffer = (QuantizedSnapshotSequenceBuffer*) stream.GetContext( CONTEXT_QUANTIZED_SNAPSHOT_SEQUENCE_BUFFER );
+        auto quantized_initial_snapshot = (QuantizedSnapshot*) stream.GetContext( CONTEXT_QUANTIZED_INITIAL_SNAPSHOT );
 
         serialize_uint16( stream, sequence );
 
@@ -120,22 +123,42 @@ struct CompressionSnapshotPacket : public protocol::Packet
             serialize_uint16( stream, base_sequence );
 
         CubeState * cubes = nullptr;
+        QuantizedCubeState * quantized_cubes = nullptr;
 
-        if ( Stream::IsWriting )
+        if ( compression_mode < COMPRESSION_MODE_QUANTIZE_POSITION )
         {
-            CORE_ASSERT( snapshot_sliding_window );
-            auto & entry = snapshot_sliding_window->Get( sequence );
-            cubes = (CubeState*) &entry.cubes[0];
+            if ( Stream::IsWriting )
+            {
+                CORE_ASSERT( snapshot_sliding_window );
+                auto & entry = snapshot_sliding_window->Get( sequence );
+                cubes = (CubeState*) &entry.cubes[0];
+            }
+            else
+            {
+                CORE_ASSERT( snapshot_sequence_buffer );
+                auto entry = snapshot_sequence_buffer->Insert( sequence );
+                CORE_ASSERT( entry );
+                cubes = (CubeState*) &entry->cubes[0];
+            }
+            CORE_ASSERT( cubes );
         }
         else
         {
-            CORE_ASSERT( snapshot_sequence_buffer );
-            auto entry = snapshot_sequence_buffer->Insert( sequence );
-            CORE_ASSERT( entry );
-            cubes = (CubeState*) &entry->cubes[0];
+            if ( Stream::IsWriting )
+            {
+                CORE_ASSERT( quantized_snapshot_sliding_window );
+                auto & entry = quantized_snapshot_sliding_window->Get( sequence );
+                quantized_cubes = (QuantizedCubeState*) &entry.cubes[0];
+            }
+            else
+            {
+                CORE_ASSERT( quantized_snapshot_sequence_buffer );
+                auto entry = quantized_snapshot_sequence_buffer->Insert( sequence );
+                CORE_ASSERT( entry );
+                quantized_cubes = (QuantizedCubeState*) &entry->cubes[0];
+            }
+            CORE_ASSERT( quantized_cubes );
         }
-
-        CORE_ASSERT( cubes );
 
         switch ( compression_mode )
         {
@@ -157,7 +180,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                 {
                     serialize_bool( stream, cubes[i].interacting );
                     serialize_vector( stream, cubes[i].position );
-                    serialize_compressed_quaternion( stream, cubes[i].orientation, 10 );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
                     serialize_vector( stream, cubes[i].linear_velocity );
                 }
             }
@@ -169,11 +192,11 @@ struct CompressionSnapshotPacket : public protocol::Packet
                 {
                     serialize_bool( stream, cubes[i].interacting );
                     serialize_vector( stream, cubes[i].position );
-                    serialize_compressed_quaternion( stream, cubes[i].orientation, 10 );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
 
                     bool at_rest;
                     if ( Stream::IsWriting )
-                        at_rest = length_squared( cubes[i].linear_velocity ) <= 0.0000000001f;
+                        at_rest = length_squared( cubes[i].linear_velocity ) <= 0.000001f;
                     serialize_bool( stream, at_rest );
                     if ( !at_rest )
                         serialize_vector( stream, cubes[i].linear_velocity );
@@ -183,125 +206,152 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_VELOCITY:
+            case COMPRESSION_MODE_QUANTIZE_POSITION:
             {
                 for ( int i = 0; i < NumCubes; ++i )
                 {
-                    serialize_bool( stream, cubes[i].interacting );
-                    serialize_vector( stream, cubes[i].position );
-                    serialize_compressed_quaternion( stream, cubes[i].orientation, 10 );
-
-                    bool at_rest;
-                    if ( Stream::IsWriting )
-                        at_rest = length_squared( cubes[i].linear_velocity ) == 0.0f;
-                    serialize_bool( stream, at_rest );
-                    if ( !at_rest )
-                        serialize_compressed_vector( stream, cubes[i].linear_velocity, MaxLinearSpeed, 1.0f );
-                    else if ( Stream::IsReading )
-                        cubes[i].linear_velocity = vectorial::vec3f::zero();
-                }
-            }
-            break;
-
-            case COMPRESSION_MODE_POSITION:
-            {
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    serialize_bool( stream, cubes[i].interacting );
-                    serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
-                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
-
-                    bool at_rest;
-                    if ( Stream::IsWriting )
-                        at_rest = length_squared( cubes[i].linear_velocity ) == 0.0f;
-                    serialize_bool( stream, at_rest );
-                    if ( !at_rest )
-                        serialize_compressed_vector( stream, cubes[i].linear_velocity, MaxLinearSpeed, 1.0f );
-                    else if ( Stream::IsReading )
-                        cubes[i].linear_velocity = vectorial::vec3f::zero();
-                }
-            }
-            break;
-
-            case COMPRESSION_MODE_NO_VELOCITY:
-            {
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    serialize_bool( stream, cubes[i].interacting );
-                    serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );                    
-                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                    serialize_bool( stream, quantized_cubes[i].interacting );
+                    serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                    serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                    serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                    serialize_compressed_quaternion( stream, quantized_cubes[i].orientation, 9 );
                 }
             }
             break;
 
             case COMPRESSION_MODE_DELTA_NOT_CHANGED:
             {
-                CORE_ASSERT( initial_snapshot );
+                CORE_ASSERT( quantized_initial_snapshot );
 
-                CubeState * base_cubes = nullptr;
+                QuantizedCubeState * quantized_base_cubes = nullptr;
 
                 if ( initial )
                 {
-                    base_cubes = initial_snapshot->cubes;
+                    quantized_base_cubes = quantized_initial_snapshot->cubes;
                 }
                 else
                 {
                     if ( Stream::IsWriting )
                     {
-                        CORE_ASSERT( snapshot_sliding_window );
-                        auto & entry = snapshot_sliding_window->Get( base_sequence );
-                        base_cubes = (CubeState*) &entry.cubes[0];
+                        CORE_ASSERT( quantized_snapshot_sliding_window );
+                        auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
+                        quantized_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
                     }
                     else
                     {
-                        CORE_ASSERT( snapshot_sequence_buffer );
-                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( quantized_snapshot_sequence_buffer );
+                        auto entry = quantized_snapshot_sequence_buffer->Find( base_sequence );
                         CORE_ASSERT( entry );
-                        base_cubes = (CubeState*) &entry->cubes[0];
+                        quantized_base_cubes = (QuantizedCubeState*) &entry->cubes[0];
                     }
                 }
 
-                // todo: snapshots on left side sliding windo wdon't always match snapshots in sequence buffer on right. why?
-
-                /*
                 if ( Stream::IsReading && !initial )
                 {
-                    CORE_ASSERT( snapshot_sliding_window );
-                    auto & entry = snapshot_sliding_window->Get( base_sequence );
-                    CubeState * sent_base_cubes = (CubeState*) &entry.cubes[0];
+                    CORE_ASSERT( quantized_snapshot_sliding_window );
+                    auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
+                    QuantizedCubeState * quantized_sent_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
                     for ( int i = 0; i < NumCubes; ++i )
                     {
-                        if ( sent_base_cubes[i] != base_cubes[i] )
-                        {
-                            printf( "object %d mismatch for base sequence %d\n", i, base_sequence );
-                        }
-                        CORE_ASSERT( sent_base_cubes[i] == base_cubes[i] );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].interacting == quantized_base_cubes[i].interacting );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].position_x == quantized_base_cubes[i].position_x );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].position_y == quantized_base_cubes[i].position_y );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].position_z == quantized_base_cubes[i].position_z );
                     }
                 }
-                */
 
                 for ( int i = 0; i < NumCubes; ++i )
                 {
                     bool changed = false;
 
                     if ( Stream::IsWriting )
-                        changed = cubes[i] != base_cubes[i];
+                        changed = quantized_cubes[i] != quantized_base_cubes[i];
 
                     serialize_bool( stream, changed );
 
                     if ( changed )
                     {
-                        serialize_bool( stream, cubes[i].interacting );
-                        serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
-                        serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                        serialize_bool( stream, quantized_cubes[i].interacting );
+                        serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                        serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                        serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                        serialize_compressed_quaternion( stream, quantized_cubes[i].orientation, 9 );
                     }
                     else if ( Stream::IsReading )
                     {
-                        memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                        memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
                     }
                 }
             }
             break;
+
+            case COMPRESSION_MODE_DELTA_RELATIVE_POSITION:
+            {
+                CORE_ASSERT( quantized_initial_snapshot );
+
+                QuantizedCubeState * quantized_base_cubes = nullptr;
+
+                if ( initial )
+                {
+                    quantized_base_cubes = quantized_initial_snapshot->cubes;
+                }
+                else
+                {
+                    if ( Stream::IsWriting )
+                    {
+                        CORE_ASSERT( quantized_snapshot_sliding_window );
+                        auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
+                        quantized_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
+                    }
+                    else
+                    {
+                        CORE_ASSERT( quantized_snapshot_sequence_buffer );
+                        auto entry = quantized_snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( entry );
+                        quantized_base_cubes = (QuantizedCubeState*) &entry->cubes[0];
+                    }
+                }
+
+                if ( Stream::IsReading && !initial )
+                {
+                    CORE_ASSERT( quantized_snapshot_sliding_window );
+                    auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
+                    QuantizedCubeState * quantized_sent_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        CORE_ASSERT( quantized_sent_base_cubes[i].interacting == quantized_base_cubes[i].interacting );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].position_x == quantized_base_cubes[i].position_x );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].position_y == quantized_base_cubes[i].position_y );
+                        CORE_ASSERT( quantized_sent_base_cubes[i].position_z == quantized_base_cubes[i].position_z );
+                    }
+                }
+
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    bool changed = false;
+
+                    if ( Stream::IsWriting )
+                        changed = quantized_cubes[i] != quantized_base_cubes[i];
+
+                    serialize_bool( stream, changed );
+
+                    if ( changed )
+                    {
+                        serialize_bool( stream, quantized_cubes[i].interacting );
+                        serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                        serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                        serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                        serialize_compressed_quaternion( stream, quantized_cubes[i].orientation, 9 );
+                    }
+                    else if ( Stream::IsReading )
+                    {
+                        memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
+                    }
+                }
+            }
+            break;
+
+#if 0
 
             case COMPRESSION_MODE_DELTA_POSITION_GRID:
             {
@@ -834,6 +884,8 @@ struct CompressionSnapshotPacket : public protocol::Packet
             break;
             */
 
+#endif
+
             default:
                 break;
         }
@@ -890,12 +942,16 @@ struct CompressionInternal
         network::SimulatorConfig networkSimulatorConfig;
         snapshot_sliding_window = CORE_NEW( allocator, SnapshotSlidingWindow, allocator, MaxSnapshots );
         snapshot_sequence_buffer = CORE_NEW( allocator, SnapshotSequenceBuffer, allocator, MaxSnapshots );
+        quantized_snapshot_sliding_window = CORE_NEW( allocator, QuantizedSnapshotSlidingWindow, allocator, MaxSnapshots );
+        quantized_snapshot_sequence_buffer = CORE_NEW( allocator, QuantizedSnapshotSequenceBuffer, allocator, MaxSnapshots );
         networkSimulatorConfig.packetFactory = &packet_factory;
         networkSimulatorConfig.maxPacketSize = MaxPacketSize;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         context[0] = snapshot_sliding_window;
         context[1] = snapshot_sequence_buffer;
-        context[2] = &initial_snapshot;
+        context[2] = quantized_snapshot_sliding_window;
+        context[3] = quantized_snapshot_sequence_buffer;
+        context[4] = &quantized_initial_snapshot;
         network_simulator->SetContext( context );
         Reset( mode_data );
     }
@@ -906,9 +962,14 @@ struct CompressionInternal
         typedef network::Simulator NetworkSimulator;
         CORE_DELETE( *allocator, NetworkSimulator, network_simulator );
         CORE_DELETE( *allocator, SnapshotSlidingWindow, snapshot_sliding_window );
+        CORE_DELETE( *allocator, SnapshotSequenceBuffer, snapshot_sequence_buffer );
+        CORE_DELETE( *allocator, QuantizedSnapshotSlidingWindow, quantized_snapshot_sliding_window );
+        CORE_DELETE( *allocator, QuantizedSnapshotSequenceBuffer, quantized_snapshot_sequence_buffer );
         network_simulator = nullptr;
         snapshot_sliding_window = nullptr;
         snapshot_sequence_buffer = nullptr;
+        quantized_snapshot_sliding_window = nullptr;
+        quantized_snapshot_sequence_buffer = nullptr;
     }
 
     void Reset( const SnapshotModeData & mode_data )
@@ -919,6 +980,8 @@ struct CompressionInternal
         network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
         snapshot_sliding_window->Reset();
         snapshot_sequence_buffer->Reset();
+        quantized_snapshot_sliding_window->Reset();
+        quantized_snapshot_sequence_buffer->Reset();
         send_sequence = 0;
         recv_sequence = 0;
         send_accumulator = 1.0f;
@@ -930,13 +993,15 @@ struct CompressionInternal
     uint16_t recv_sequence;
     bool received_ack;
     float send_accumulator;
-    const void * context[3];
+    const void * context[6];
     network::Simulator * network_simulator;
     SnapshotSlidingWindow * snapshot_sliding_window;
     SnapshotSequenceBuffer * snapshot_sequence_buffer;
+    QuantizedSnapshotSlidingWindow * quantized_snapshot_sliding_window;
+    QuantizedSnapshotSequenceBuffer * quantized_snapshot_sequence_buffer;
     SnapshotPacketFactory packet_factory;
     SnapshotInterpolationBuffer interpolation_buffer;
-    Snapshot initial_snapshot;
+    QuantizedSnapshot quantized_initial_snapshot;
 };
 
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
@@ -973,7 +1038,8 @@ bool CompressionDemo::Initialize()
     m_internal->Initialize( *m_allocator, config, m_settings );
 
     auto game_instance = m_internal->GetGameInstance( 0 );
-    bool result = GetSnapshot( game_instance, m_compression->initial_snapshot );
+
+    bool result = GetQuantizedSnapshot( game_instance, m_compression->quantized_initial_snapshot );
     CORE_ASSERT( result );
 
     return true;
@@ -1017,20 +1083,40 @@ void CompressionDemo::Update()
 
         auto snapshot_packet = (CompressionSnapshotPacket*) m_compression->packet_factory.Create( COMPRESSION_SNAPSHOT_PACKET );
 
-        snapshot_packet->sequence = m_compression->send_sequence++;
-        snapshot_packet->base_sequence = m_compression->snapshot_sliding_window->GetAck() + 1;
-        snapshot_packet->initial = !m_compression->received_ack;
+        if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
+        {
+            snapshot_packet->sequence = m_compression->send_sequence++;
+            snapshot_packet->base_sequence = m_compression->snapshot_sliding_window->GetAck() + 1;
+            snapshot_packet->initial = !m_compression->received_ack;
 
-        snapshot_packet->compression_mode = GetMode();
+            snapshot_packet->compression_mode = GetMode();
 
-        uint16_t sequence;
+            uint16_t sequence;
 
-        auto & snapshot = m_compression->snapshot_sliding_window->Insert( sequence );
+            auto & snapshot = m_compression->snapshot_sliding_window->Insert( sequence );
 
-        if ( GetSnapshot( game_instance, snapshot ) )
-            m_compression->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+            if ( GetSnapshot( game_instance, snapshot ) )
+                m_compression->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+            else
+                m_compression->packet_factory.Destroy( snapshot_packet );
+        }
         else
-            m_compression->packet_factory.Destroy( snapshot_packet );
+        {
+            snapshot_packet->sequence = m_compression->send_sequence++;
+            snapshot_packet->base_sequence = m_compression->quantized_snapshot_sliding_window->GetAck() + 1;
+            snapshot_packet->initial = !m_compression->received_ack;
+
+            snapshot_packet->compression_mode = GetMode();
+
+            uint16_t sequence;
+
+            auto & snapshot = m_compression->quantized_snapshot_sliding_window->Insert( sequence );
+
+            if ( GetQuantizedSnapshot( game_instance, snapshot ) )
+                m_compression->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+            else
+                m_compression->packet_factory.Destroy( snapshot_packet );
+        }
     }
 
     // update the network simulator
@@ -1054,20 +1140,41 @@ void CompressionDemo::Update()
         if ( type == COMPRESSION_SNAPSHOT_PACKET && port == RightPort )
         {
             auto snapshot_packet = (CompressionSnapshotPacket*) packet;
-            Snapshot * snapshot = m_compression->snapshot_sequence_buffer->Find( snapshot_packet->sequence );
-            CORE_ASSERT( snapshot );
-            m_compression->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot->cubes );
+            if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
+            {
+                Snapshot * snapshot = m_compression->snapshot_sequence_buffer->Find( snapshot_packet->sequence );
+                CORE_ASSERT( snapshot );
+                m_compression->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot->cubes );
+            }
+            else
+            {
+                QuantizedSnapshot * quantized_snapshot = m_compression->quantized_snapshot_sequence_buffer->Find( snapshot_packet->sequence );
+                CORE_ASSERT( quantized_snapshot );
+                Snapshot snapshot;
+                for ( int i = 0; i < NumCubes; ++i )
+                    quantized_snapshot->cubes[i].Save( snapshot.cubes[i] );
+                m_compression->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot.cubes );
+            }
             if ( !received_snapshot_this_frame || ( received_snapshot_this_frame && core::sequence_greater_than( snapshot_packet->sequence, ack_sequence ) ) )
             {
                 received_snapshot_this_frame = true;
                 ack_sequence = snapshot_packet->sequence;
-            } 
+            }
         }
         else if ( type == COMPRESSION_ACK_PACKET && port == LeftPort )
         {
             auto ack_packet = (CompressionAckPacket*) packet;
-            m_compression->snapshot_sliding_window->Ack( ack_packet->ack - 1 );
-            m_compression->received_ack = true;
+
+            if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
+            {
+                m_compression->snapshot_sliding_window->Ack( ack_packet->ack - 1 );
+                m_compression->received_ack = true;
+            }
+            else
+            {
+                m_compression->quantized_snapshot_sliding_window->Ack( ack_packet->ack - 1 );
+                m_compression->received_ack = true;
+            }
         }
 
         m_compression->packet_factory.Destroy( packet );
@@ -1094,11 +1201,8 @@ void CompressionDemo::Update()
 
     if ( num_object_updates > 0 )
         m_internal->view[1].objects.UpdateObjects( object_updates, num_object_updates );
-    else
-    {
-        if ( m_compression->interpolation_buffer.interpolating )
-            printf( "no snapshot to interpolate towards!\n" );
-    }
+    else if ( m_compression->interpolation_buffer.interpolating )
+        printf( "no snapshot to interpolate towards!\n" );
 
     // run the simulation
 

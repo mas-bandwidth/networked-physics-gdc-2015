@@ -1,41 +1,22 @@
 DONE:
 
-    Implement relative position
+    Get delta not changed working with quantized snapshot
 
-    Doesn't seem to be getting much improvement
-
-    Is something wrong?!
-
-    Lots is going wrong.
-
-    The quantization from compressed floats is causing positions equality checks
-    to not function, and I think it is also causing the incorrect ix,iy,iz.
-
-    The solution here is to quantize the entire simulation before grabbing
-    the snapshot, eg. have a new snapshot called "QuantizedSnapshot" which
-    contains "QuantizedCubeState" in which positions are stored as integers.
-
-    This way there can be no floating point issues when converting in/out
-    of grid, and the grids are also perfectly efficient in terms of powers
-    of two, eg. 4096 units per-grid or whatever.
-
-    This is the next thing that must be done.
-
-    What is the nearest power of two unit (per-meter) that obtains 0.001 precision for position?
-
-    1/256 = 0.003
-
-    1/512 = 0.0019
-
-    1/1024 = 0.00097 (winner)
-
-    Start here.
-
-    Position units are 1024 units per-meter.
+    Remove initial snapshot non-quantized. It's not used anymore!
 
 TODO:
 
-    Implement quantized snapshot.
+    -----------------------------------------------------------------------
+
+    Skip right ahead from position grid to relative position
+
+    This should provide all benefits. If necessary, implement multiple levels.
+
+    eg. within 25cm, within 1cm, within 4m. 
+
+    Do this per-component or globally for xyz?
+
+    Try global first and see how it goes.
 
     -----------------------------------------------------------------------
 
@@ -47,7 +28,7 @@ TODO:
 
     Axis-angle?
 
-    How close does
+    I'm thinking the big win here is axis-angle where the axis is the same between current and base.
 
     -----------------------------------------------------------------------
 

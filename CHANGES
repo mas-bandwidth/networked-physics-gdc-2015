@@ -2,6 +2,61 @@
 Sunday January 25th, 2015
 -------------------------
 
+    Implement relative position
+
+    Doesn't seem to be getting much improvement
+
+    Is something wrong?!
+
+    Lots is going wrong.
+
+    The quantization from compressed floats is causing positions equality checks
+    to not function, and I think it is also causing the incorrect ix,iy,iz.
+
+    The solution here is to quantize the entire simulation before grabbing
+    the snapshot, eg. have a new snapshot called "QuantizedSnapshot" which
+    contains "QuantizedCubeState" in which positions are stored as integers.
+
+    This way there can be no floating point issues when converting in/out
+    of grid, and the grids are also perfectly efficient in terms of powers
+    of two, eg. 4096 units per-grid or whatever.
+
+    This is the next thing that must be done.
+
+    What is the nearest power of two unit (per-meter) that obtains 0.001 precision for position?
+
+    1/256 = 0.003
+
+    1/512 = 0.0019
+
+    1/1024 = 0.00097 (winner)
+
+    ^---- is this much precision *really* necessary? seems excessive!
+
+    Well, it's just 1/10th of a centimeter. eg. mm accuracy... maybe it is correct.
+
+    Start here anyway. Position units are 1024 units per-meter.
+
+    Implement quantized cube state and load/save functions to get in out of it.
+
+    I think it's probably best to have separate sliding windows for quantized state
+
+    This avoids unnecessary conversions
+
+    Add members for quantized sliding window, sequence buffer, initial snapshot.
+
+    Implement a function to get a quantized *snapshot* from the simulation
+
+    Grab initial quantized snapshot from simulation.
+
+    Extend code on send to put a quantized snapshot in as well as non-quantized.
+
+    Update quantized position mode to work with quantized snapshot.
+
+
+Saturday January 24th, 2015
+---------------------------
+
     Fix position grid bugs!!!
 
     Is it the cell delta, or just the grid cell conversions alone?
@@ -34,8 +89,8 @@ Sunday January 25th, 2015
     I can use this workaround to finish the rest of the work, and then I can debug it
 
 
-Saturday January 24th, 2015
----------------------------
+Friday January 23rd, 2015
+-------------------------
 
     Seems to be some pops and glitches with delta compression.
 
