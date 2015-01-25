@@ -1,16 +1,46 @@
 DONE:
 
-TODO:
-
-    -----------------------------------------------------------------------
-
-    Implement relative orientation
+    Implement relative orientation encoding.
 
     Can relative orientation be efficient?
 
     How to encode it?
 
     Axis-angle?
+
+    Yes. Axis angle makes sense.
+
+TODO:
+
+    Convert both current and base to axis-angle.
+
+    If current axis dot base axis < 0, invert current axis.
+
+    If current axis - base axis distance squared is within epsilon,
+
+    set relative orientation to true.
+
+    Determine angle difference between axis.
+
+    Send as angle difference if less than some angle threshold.
+
+    Work out with red coloring what is a good angle threshold (float)
+
+    Determine if the constant axis covers a large % of rotating objects or not (blow)
+
+    -----------------------------------------------------------------------
+
+    Next try checking if axis is within some small amount of distance
+
+    Encode this with a small # of bits (must be a tiny difference)
+
+    Determine if this markedly improves the encoding or not.
+
+    For example, can I take the angle from the previous base and offset from that?
+
+    Seems a bit... wrong but might work...
+
+    -----------------------------------------------------------------------
 
     I'm thinking the big win here is axis-angle where the axis is the same between current and base.
 
