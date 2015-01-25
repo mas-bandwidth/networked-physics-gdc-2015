@@ -72,6 +72,8 @@ Sunday January 25th, 2015
     To verify common cases are getting picked up I clear the "interacting" flag
     if the position is not encoded relative.
 
+    Was able to drop down to 512 units per-meter. Looking good.
+
 
 Saturday January 24th, 2015
 ---------------------------

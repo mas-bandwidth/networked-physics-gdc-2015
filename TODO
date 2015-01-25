@@ -14,6 +14,20 @@ TODO:
 
     I'm thinking the big win here is axis-angle where the axis is the same between current and base.
 
+    Is there still benefit if the axis changes by a small amount?
+
+    I think yes.
+
+    Do the axis the same angle change only and see how many are picked up by it.
+
+    Next, do the short range axis change + angle change.
+
+    Cannot expect to pick up everything, but make sure the small rotations are!
+
+    -----------------------------------------------------------------------
+
+    Simplify existing serialization code. It's getting a bit complex!
+
     -----------------------------------------------------------------------
 
     Implement relative indices on top of all other optimizations
@@ -21,15 +35,6 @@ TODO:
     -----------------------------------------------------------------------
 
     Need some sort of bandwidth statistics split up into position, orientation, indices etc.
-
-    -----------------------------------------------------------------------
-
-    Write code to output bandwidth as CSV so I can graph it. 
-
-    -----------------------------------------------------------------------
-
-    Write code code to output position delta and orientation delta
-    (eg. largest component change) as a histogram so again I can graph it.
 
     -----------------------------------------------------------------------
 
