@@ -1,22 +1,6 @@
 DONE:
 
-    Get delta not changed working with quantized snapshot
-
-    Remove initial snapshot non-quantized. It's not used anymore!
-
 TODO:
-
-    -----------------------------------------------------------------------
-
-    Skip right ahead from position grid to relative position
-
-    This should provide all benefits. If necessary, implement multiple levels.
-
-    eg. within 25cm, within 1cm, within 4m. 
-
-    Do this per-component or globally for xyz?
-
-    Try global first and see how it goes.
 
     -----------------------------------------------------------------------
 

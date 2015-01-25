@@ -53,6 +53,25 @@ Sunday January 25th, 2015
 
     Update quantized position mode to work with quantized snapshot.
 
+    Get delta not changed working with quantized snapshot
+
+    Remove initial snapshot non-quantized. It's not used anymore!
+
+    Skip right ahead from position grid to relative position
+
+    This should provide all benefits. If necessary, implement multiple levels.
+
+    eg. within 25cm, within 1m or so.
+
+    Do this per-component or globally for xyz?
+
+    Try global first and see how it goes.
+
+    Seems to work pretty well.
+
+    To verify common cases are getting picked up I clear the "interacting" flag
+    if the position is not encoded relative.
+
 
 Saturday January 24th, 2015
 ---------------------------

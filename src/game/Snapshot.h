@@ -17,7 +17,7 @@ static const int NumCubes = 900 + MaxPlayers;
 
 static const int NumInterpolationSnapshots = 64;
 
-static const int UnitsPerMeter = 1024;
+static const int UnitsPerMeter = 512;
 
 enum SnapshotInterpolation
 {
