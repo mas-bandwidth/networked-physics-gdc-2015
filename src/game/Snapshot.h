@@ -541,73 +541,90 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
         return;
     }
 
-    // [+2,5] -> [0,3] (2 bits)
+    // [+2,9] -> [0,7] (3 bits)
 
-    bool twoBits;
-    if ( Stream::IsWriting )
-        twoBits = difference <= 5;
-    serialize_bool( stream, twoBits );
-    if ( twoBits )
-    {
-        serialize_int( stream, difference, 2, 5 );
-        if ( Stream::IsReading )
-            current = previous + difference;
-        return;
-    }
-
-    // [+6,13] -> [0,7] (3 bits)
-    
     bool threeBits;
     if ( Stream::IsWriting )
-        threeBits = difference <= 13;
+        threeBits = difference <= 9;
     serialize_bool( stream, threeBits );
     if ( threeBits )
     {
-        serialize_int( stream, difference, 6, 13 );
+        serialize_int( stream, difference, 2, 9 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    // [14,29] -> [0,15] (4 bits)
+    // [10,73] -> [0,63] (6 bits)
 
-    bool fourBits;
+    bool sixBits;
     if ( Stream::IsWriting )
-        fourBits = difference <= 29;
-    serialize_bool( stream, fourBits );
-    if ( fourBits )
+        sixBits = difference <= 73;
+    serialize_bool( stream, sixBits );
+    if ( sixBits )
     {
-        serialize_int( stream, difference, 14, 29 );
+        serialize_int( stream, difference, 10, 73 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    // [30,61] -> [0,31] (5 bits)
+    // [74,NumCubes]
 
-    bool fiveBits;
-    if ( Stream::IsWriting )
-        fiveBits = difference <= 61;
-    serialize_bool( stream, fiveBits );
-    if ( fiveBits )
-    {
-        serialize_int( stream, difference, 30, 61 );
-        if ( Stream::IsReading )
-            current = previous + difference;
-        return;
-    }
-
-    // [62,NumCubes]
-
-    serialize_int( stream, difference, 62, NumCubes - 1 );
+    serialize_int( stream, difference, 74, NumCubes - 1 );
     if ( Stream::IsReading )
         current = previous + difference;
 }
 
+/*
+template <typename Stream> void serialize_index_relative( Stream & stream, int previous, int & current )
+{
+    uint32_t difference;
+    if ( Stream::IsWriting )
+    {
+        CORE_ASSERT( previous < current );
+        difference = current - previous;
+        CORE_ASSERT( difference > 0 );
+    }
+
+    // +1
+
+    bool plusOne;
+    if ( Stream::IsWriting )
+        plusOne = difference == 1;
+    serialize_bool( stream, plusOne );
+    if ( plusOne )
+    {
+        if ( Stream::IsReading )
+            current = previous + 1;
+        return;
+    }
+
+    // [+2,17] -> [0,15] (4 bits)
+
+    bool fourBits;
+    if ( Stream::IsWriting )
+        fourBits = difference <= 17;
+    serialize_bool( stream, fourBits );
+    if ( fourBits )
+    {
+        serialize_int( stream, difference, 2, 17 );
+        if ( Stream::IsReading )
+            current = previous + difference;
+        return;
+    }
+
+    // [17,NumCubes]
+
+    serialize_int( stream, difference, 17, NumCubes - 1 );
+    if ( Stream::IsReading )
+        current = previous + difference;
+}
+*/
+
 struct QuantizedCubeState
 {
     bool interacting;
-    bool fast_rotation;
     int position_x;
     int position_y;
     int position_z;
@@ -616,7 +633,6 @@ struct QuantizedCubeState
     void Load( const CubeState & cube_state )
     {
         interacting = cube_state.interacting;
-        fast_rotation = vectorial::length_squared( cube_state.angular_velocity ) > 10.0f;
         position_x = (int) floor( cube_state.position.x() * UnitsPerMeter + 0.5f );
         position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
         position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
@@ -645,21 +661,7 @@ struct QuantizedCubeState
         if ( position_z != other.position_z )
             return false;
 
-        /*
         if ( orientation != other.orientation )
-            return false;
-            */
-
-        if ( orientation.largest != other.orientation.largest )
-            return false;
-
-        if ( abs( orientation.integer_a - other.orientation.integer_a ) > 8 )
-            return false;
- 
-        if ( abs( orientation.integer_b - other.orientation.integer_b ) > 8 )
-            return false;
-
-        if ( abs( orientation.integer_c - other.orientation.integer_c ) > 8 )
             return false;
 
         return true;

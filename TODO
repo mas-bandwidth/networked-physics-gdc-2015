@@ -1,47 +1,30 @@
 DONE:
 
-    Hook up compressed quaternion to the quantized cube state.
-
-    Tried to do relative orientation with this, but it needs a really high
-    precision float per-component (0.0001), eg. 10 bits per-component to
-    give a good result.
-
-    Could try non-linear quantization with this, but first, I will try
-    something simpler -- try to delta the smallest three representation
-    directly.
-
-    Explore if it is best to encode position/quat orientation with
-    bits per-component, vs. one bit for range. Probably is!
-
-    Tried it. Not really getting a lot of compression.
-
-    At this point seems the best bet is to more roughly compress the orientation
-    when the cubes are rotating quickly (not noticeable) and compress them fine
-    when the rotation is small.
-
-    The rough compression could be very rough, eg. 8X rougher
-
-    Doing this tends to save 20-30kbps at the top end while blowing cubes.
-
-    But, it seems to also add jitter to cubes while in the katamari.
-
 TODO:
 
-    Try this option:
+    Get a 10HZ version running with linear velocity
 
-    1. Approximate the angular velocity from the two previous snapshots
+    This version requires adding the linear velocity to the quantized cube state
 
-    2. 
-    
+    I have to update the == operator to handle the linear velocity comparison
+
+    I'd also like the linear velocity to be an integer quantized value like position
+
+    If linear velocity is not being used, it needs to be cleared to (0,0,0)
+
+    This way the non-hermite interpolation versions that don't use it will
+    still work with == operator comparisons for delta compression.
+
+    Drop to 10HZ and tune the linear velocity precision to the lowest power
+    of two that avoids seeing compression artifacts @ 10HZ.
+
+    This is the "end result" of all the compression effort.
+
+    Should be a ridiculously low value of kbps now... put a fork in it!
+
     -----------------------------------------------------------------------
 
-    -----------------------------------------------------------------------
-
-    Implement relative indices on top of all other optimizations
-
-    -----------------------------------------------------------------------
-
-    Need some sort of bandwidth statistics split up into position, orientation, indices etc.
+    Debug why the interpolation buffer is misbehaving @ 60pps.
 
     -----------------------------------------------------------------------
 

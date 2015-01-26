@@ -16,6 +16,8 @@
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 static const int MaxSnapshots = 256;
+static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
+static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
 enum Context
 {
@@ -33,9 +35,10 @@ enum SnapshotMode
     COMPRESSION_MODE_AT_REST,
     COMPRESSION_MODE_QUANTIZE_POSITION,
     COMPRESSION_MODE_DELTA_NOT_CHANGED,
+    COMPRESSION_MODE_DELTA_CHANGED_INDEX,
+    COMPRESSION_MODE_DELTA_RELATIVE_INDEX,
     COMPRESSION_MODE_DELTA_RELATIVE_POSITION,
-    COMPRESSION_MODE_DELTA_RELATIVE_ORIENTATION,
-    COMPRESSION_MODE_DELTA_CHANGED_INDICES,
+    COMPRESSION_MODE_10HZ_WITH_LINEAR_VELOCITY,
     COMPRESSION_NUM_MODES
 };
 
@@ -46,9 +49,10 @@ const char * compression_mode_descriptions[]
     "At rest",
     "Quantize position",
     "Delta not changed",
+    "Delta changed index",
+    "Delta relative index",
     "Delta relative position",
-    "Delta relative orientation",
-    "Delta changed indices"
+    "Delta 10HZ with linear velocity"
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -71,6 +75,7 @@ static void InitCompressionModes()
     compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
     compression_mode_data[COMPRESSION_MODE_ORIENTATION].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
     compression_mode_data[COMPRESSION_MODE_AT_REST].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+    compression_mode_data[COMPRESSION_MODE_10HZ_WITH_LINEAR_VELOCITY].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 }
 
 typedef protocol::SlidingWindow<Snapshot> SnapshotSlidingWindow;
@@ -85,6 +90,85 @@ enum CompressionPackets
     COMPRESSION_ACK_PACKET,
     COMPRESSION_NUM_PACKETS
 };
+
+template <typename Stream> void serialize_cube_relative_position( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
+{
+    serialize_bool( stream, cube.interacting );
+
+    bool relative_position_a;
+    bool relative_position_b;
+
+    const int RelativePositionBoundA = 63;
+    const int RelativePositionBoundB = 511;
+
+    if ( Stream::IsWriting )
+    {
+        relative_position_a = abs( cube.position_x - base.position_x ) <= RelativePositionBoundA &&
+                              abs( cube.position_y - base.position_y ) <= RelativePositionBoundA &&
+                              abs( cube.position_z - base.position_z ) <= RelativePositionBoundA;
+
+        relative_position_b = abs( cube.position_x - base.position_x ) <= RelativePositionBoundB &&
+                              abs( cube.position_y - base.position_y ) <= RelativePositionBoundB &&
+                              abs( cube.position_z - base.position_z ) <= RelativePositionBoundB;
+    }
+
+    serialize_bool( stream, relative_position_a );
+
+    if ( relative_position_a )
+    {
+        int offset_x, offset_y, offset_z;
+
+        if ( Stream::IsWriting )
+        {
+            offset_x = cube.position_x - base.position_x;
+            offset_y = cube.position_y - base.position_y;
+            offset_z = cube.position_z - base.position_z;
+        }
+
+        serialize_int( stream, offset_x, -RelativePositionBoundA, +RelativePositionBoundA );
+        serialize_int( stream, offset_y, -RelativePositionBoundA, +RelativePositionBoundA );
+        serialize_int( stream, offset_z, -RelativePositionBoundA, +RelativePositionBoundA );
+
+        cube.position_x = base.position_x + offset_x;
+        cube.position_y = base.position_y + offset_y;
+        cube.position_z = base.position_z + offset_z;
+    }
+    else
+    {
+        serialize_bool( stream, relative_position_b );
+
+        if ( relative_position_b )
+        {
+            int offset_x, offset_y, offset_z;
+
+            if ( Stream::IsWriting )
+            {
+                offset_x = cube.position_x - base.position_x;
+                offset_y = cube.position_y - base.position_y;
+                offset_z = cube.position_z - base.position_z;
+            }
+
+            serialize_int( stream, offset_x, -RelativePositionBoundB, +RelativePositionBoundB );
+            serialize_int( stream, offset_y, -RelativePositionBoundB, +RelativePositionBoundB );
+            serialize_int( stream, offset_z, -RelativePositionBoundB, +RelativePositionBoundB );
+
+            cube.position_x = base.position_x + offset_x;
+            cube.position_y = base.position_y + offset_y;
+            cube.position_z = base.position_z + offset_z;
+        }
+        else
+        {
+            serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+            serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+            serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
+
+            if ( Stream::IsReading )
+                cube.interacting = false;
+        }
+    }
+
+    serialize_object( stream, cube.orientation );
+}
 
 struct CompressionSnapshotPacket : public protocol::Packet
 {
@@ -101,12 +185,6 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
-        const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
-        const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
-
-        const vectorial::vec3f position_min( -PositionBoundXY, -PositionBoundXY, 0 );
-        const vectorial::vec3f position_max( +PositionBoundXY, +PositionBoundXY, PositionBoundZ );
-
         auto snapshot_sliding_window = (SnapshotSlidingWindow*) stream.GetContext( CONTEXT_SNAPSHOT_SLIDING_WINDOW );
         auto snapshot_sequence_buffer = (SnapshotSequenceBuffer*) stream.GetContext( CONTEXT_SNAPSHOT_SEQUENCE_BUFFER );
         auto quantized_snapshot_sliding_window = (QuantizedSnapshotSlidingWindow*) stream.GetContext( CONTEXT_QUANTIZED_SNAPSHOT_SLIDING_WINDOW );
@@ -271,7 +349,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_DELTA_RELATIVE_POSITION:
+            case COMPRESSION_MODE_DELTA_CHANGED_INDEX:
             {
                 CORE_ASSERT( quantized_initial_snapshot );
 
@@ -295,746 +373,6 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         auto entry = quantized_snapshot_sequence_buffer->Find( base_sequence );
                         CORE_ASSERT( entry );
                         quantized_base_cubes = (QuantizedCubeState*) &entry->cubes[0];
-                    }
-                }
-
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    bool changed = false;
-
-                    if ( Stream::IsWriting )
-                        changed = quantized_cubes[i] != quantized_base_cubes[i];
-
-                    serialize_bool( stream, changed );
-
-                    if ( changed )
-                    {
-                        serialize_bool( stream, quantized_cubes[i].interacting );
-
-                        bool relative_position_a;
-                        bool relative_position_b;
-
-                        const int RelativePositionBoundA = 63;
-                        const int RelativePositionBoundB = 511;
-
-                        if ( Stream::IsWriting )
-                        {
-                            relative_position_a = abs( quantized_cubes[i].position_x - quantized_base_cubes[i].position_x ) <= RelativePositionBoundA &&
-                                                  abs( quantized_cubes[i].position_y - quantized_base_cubes[i].position_y ) <= RelativePositionBoundA &&
-                                                  abs( quantized_cubes[i].position_z - quantized_base_cubes[i].position_z ) <= RelativePositionBoundA;
-
-                            relative_position_b = abs( quantized_cubes[i].position_x - quantized_base_cubes[i].position_x ) <= RelativePositionBoundB &&
-                                                  abs( quantized_cubes[i].position_y - quantized_base_cubes[i].position_y ) <= RelativePositionBoundB &&
-                                                  abs( quantized_cubes[i].position_z - quantized_base_cubes[i].position_z ) <= RelativePositionBoundB;
-                        }
-
-                        serialize_bool( stream, relative_position_a );
-
-                        if ( relative_position_a )
-                        {
-                            int offset_x, offset_y, offset_z;
-
-                            if ( Stream::IsWriting )
-                            {
-                                offset_x = quantized_cubes[i].position_x - quantized_base_cubes[i].position_x;
-                                offset_y = quantized_cubes[i].position_y - quantized_base_cubes[i].position_y;
-                                offset_z = quantized_cubes[i].position_z - quantized_base_cubes[i].position_z;
-                            }
-
-                            serialize_int( stream, offset_x, -RelativePositionBoundA, +RelativePositionBoundA );
-                            serialize_int( stream, offset_y, -RelativePositionBoundA, +RelativePositionBoundA );
-                            serialize_int( stream, offset_z, -RelativePositionBoundA, +RelativePositionBoundA );
-
-                            quantized_cubes[i].position_x = quantized_base_cubes[i].position_x + offset_x;
-                            quantized_cubes[i].position_y = quantized_base_cubes[i].position_y + offset_y;
-                            quantized_cubes[i].position_z = quantized_base_cubes[i].position_z + offset_z;
-                        }
-                        else
-                        {
-                            serialize_bool( stream, relative_position_b );
-
-                            if ( relative_position_b )
-                            {
-                                int offset_x, offset_y, offset_z;
-
-                                if ( Stream::IsWriting )
-                                {
-                                    offset_x = quantized_cubes[i].position_x - quantized_base_cubes[i].position_x;
-                                    offset_y = quantized_cubes[i].position_y - quantized_base_cubes[i].position_y;
-                                    offset_z = quantized_cubes[i].position_z - quantized_base_cubes[i].position_z;
-                                }
-
-                                serialize_int( stream, offset_x, -RelativePositionBoundB, +RelativePositionBoundB );
-                                serialize_int( stream, offset_y, -RelativePositionBoundB, +RelativePositionBoundB );
-                                serialize_int( stream, offset_z, -RelativePositionBoundB, +RelativePositionBoundB );
-
-                                quantized_cubes[i].position_x = quantized_base_cubes[i].position_x + offset_x;
-                                quantized_cubes[i].position_y = quantized_base_cubes[i].position_y + offset_y;
-                                quantized_cubes[i].position_z = quantized_base_cubes[i].position_z + offset_z;
-                            }
-                            else
-                            {
-                                serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-
-                                if ( Stream::IsReading )
-                                {
-                                    quantized_cubes[i].interacting = false;
-                                }
-                            }
-                        }
-
-                        serialize_object( stream, quantized_cubes[i].orientation );
-                    }
-                    else if ( Stream::IsReading )
-                    {
-                        memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
-                    }
-                }
-            }
-            break;
-
-            case COMPRESSION_MODE_DELTA_RELATIVE_ORIENTATION:
-            {
-                CORE_ASSERT( quantized_initial_snapshot );
-
-                QuantizedCubeState * quantized_base_cubes = nullptr;
-
-                if ( initial )
-                {
-                    quantized_base_cubes = quantized_initial_snapshot->cubes;
-                }
-                else
-                {
-                    if ( Stream::IsWriting )
-                    {
-                        CORE_ASSERT( quantized_snapshot_sliding_window );
-                        auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
-                        quantized_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
-                    }
-                    else
-                    {
-                        CORE_ASSERT( quantized_snapshot_sequence_buffer );
-                        auto entry = quantized_snapshot_sequence_buffer->Find( base_sequence );
-                        CORE_ASSERT( entry );
-                        quantized_base_cubes = (QuantizedCubeState*) &entry->cubes[0];
-                    }
-                }
-
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    bool changed = false;
-
-                    if ( Stream::IsWriting )
-                        changed = quantized_cubes[i] != quantized_base_cubes[i];
-
-                    serialize_bool( stream, changed );
-
-                    if ( changed )
-                    {
-                        serialize_bool( stream, quantized_cubes[i].interacting );
-
-                        bool relative_position_a;
-                        bool relative_position_b;
-
-                        const int RelativePositionBoundA = 63;
-                        const int RelativePositionBoundB = 511;
-
-                        if ( Stream::IsWriting )
-                        {
-                            relative_position_a = abs( quantized_cubes[i].position_x - quantized_base_cubes[i].position_x ) <= RelativePositionBoundA &&
-                                                  abs( quantized_cubes[i].position_y - quantized_base_cubes[i].position_y ) <= RelativePositionBoundA &&
-                                                  abs( quantized_cubes[i].position_z - quantized_base_cubes[i].position_z ) <= RelativePositionBoundA;
-
-                            relative_position_b = abs( quantized_cubes[i].position_x - quantized_base_cubes[i].position_x ) <= RelativePositionBoundB &&
-                                                  abs( quantized_cubes[i].position_y - quantized_base_cubes[i].position_y ) <= RelativePositionBoundB &&
-                                                  abs( quantized_cubes[i].position_z - quantized_base_cubes[i].position_z ) <= RelativePositionBoundB;
-                        }
-
-                        serialize_bool( stream, relative_position_a );
-
-                        if ( relative_position_a )
-                        {
-                            int offset_x, offset_y, offset_z;
-
-                            if ( Stream::IsWriting )
-                            {
-                                offset_x = quantized_cubes[i].position_x - quantized_base_cubes[i].position_x;
-                                offset_y = quantized_cubes[i].position_y - quantized_base_cubes[i].position_y;
-                                offset_z = quantized_cubes[i].position_z - quantized_base_cubes[i].position_z;
-                            }
-
-                            serialize_int( stream, offset_x, -RelativePositionBoundA, +RelativePositionBoundA );
-                            serialize_int( stream, offset_y, -RelativePositionBoundA, +RelativePositionBoundA );
-                            serialize_int( stream, offset_z, -RelativePositionBoundA, +RelativePositionBoundA );
-
-                            quantized_cubes[i].position_x = quantized_base_cubes[i].position_x + offset_x;
-                            quantized_cubes[i].position_y = quantized_base_cubes[i].position_y + offset_y;
-                            quantized_cubes[i].position_z = quantized_base_cubes[i].position_z + offset_z;
-                        }
-                        else
-                        {
-                            serialize_bool( stream, relative_position_b );
-
-                            if ( relative_position_b )
-                            {
-                                int offset_x, offset_y, offset_z;
-
-                                if ( Stream::IsWriting )
-                                {
-                                    offset_x = quantized_cubes[i].position_x - quantized_base_cubes[i].position_x;
-                                    offset_y = quantized_cubes[i].position_y - quantized_base_cubes[i].position_y;
-                                    offset_z = quantized_cubes[i].position_z - quantized_base_cubes[i].position_z;
-                                }
-
-                                serialize_int( stream, offset_x, -RelativePositionBoundB, +RelativePositionBoundB );
-                                serialize_int( stream, offset_y, -RelativePositionBoundB, +RelativePositionBoundB );
-                                serialize_int( stream, offset_z, -RelativePositionBoundB, +RelativePositionBoundB );
-
-                                quantized_cubes[i].position_x = quantized_base_cubes[i].position_x + offset_x;
-                                quantized_cubes[i].position_y = quantized_base_cubes[i].position_y + offset_y;
-                                quantized_cubes[i].position_z = quantized_base_cubes[i].position_z + offset_z;
-                            }
-                            else
-                            {
-                                serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-
-                                if ( Stream::IsReading )
-                                    quantized_cubes[i].interacting = false;
-                            }
-                        }
-
-                        serialize_bool( stream, quantized_cubes[i].fast_rotation );
-
-                        if ( i == 0 || !quantized_cubes[i].fast_rotation )
-                        {
-                            serialize_object( stream, quantized_cubes[i].orientation );
-                        }
-                        else
-                        {
-                            uint32_t a,b,c;
-
-                            if ( Stream::IsWriting )
-                            {
-                                a = quantized_cubes[i].orientation.integer_a / 8;
-                                b = quantized_cubes[i].orientation.integer_b / 8;
-                                c = quantized_cubes[i].orientation.integer_c / 8;
-                            }
-
-                            serialize_bits( stream, quantized_cubes[i].orientation.largest, 2 );
-
-                            serialize_bits( stream, a, OrientationBits - 3 );
-                            serialize_bits( stream, b, OrientationBits - 3 );
-                            serialize_bits( stream, c, OrientationBits - 3 );
-
-                            if ( Stream::IsReading )
-                            {
-                                quantized_cubes[i].orientation.integer_a = a * 8;
-                                quantized_cubes[i].orientation.integer_b = b * 8;
-                                quantized_cubes[i].orientation.integer_c = c * 8;
-                            }
-                        }
-                    }
-                    else if ( Stream::IsReading )
-                    {
-                        memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
-                    }
-                }
-            }
-            break;
-
-                        /*
-                        const int RelativeOrientationThreshold_Large = 32;
-
-                        bool relative_orientation = false;
-
-                        int delta_a, delta_b, delta_c;
-
-                        if ( Stream::IsWriting && quantized_cubes[i].orientation.largest == quantized_base_cubes[i].orientation.largest )
-                        {
-                            delta_a = ( quantized_cubes[i].orientation.integer_a - quantized_base_cubes[i].orientation.integer_a ) / 4;
-                            delta_b = ( quantized_cubes[i].orientation.integer_b - quantized_base_cubes[i].orientation.integer_b ) / 4;
-                            delta_c = ( quantized_cubes[i].orientation.integer_c - quantized_base_cubes[i].orientation.integer_c ) / 4;
-
-                            if ( delta_a >= -RelativeOrientationThreshold_Large && delta_a < RelativeOrientationThreshold_Large &&
-                                 delta_b >= -RelativeOrientationThreshold_Large && delta_b < RelativeOrientationThreshold_Large &&
-                                 delta_c >= -RelativeOrientationThreshold_Large && delta_c < RelativeOrientationThreshold_Large )
-                            {
-                                relative_orientation = true;
-                            }
-                        }
-
-                        serialize_bool( stream, relative_orientation );
-
-                        if ( relative_orientation )
-                        {
-                            serialize_int( stream, delta_a, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-                            serialize_int( stream, delta_b, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-                            serialize_int( stream, delta_c, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-
-                            delta_a *= 4;
-                            delta_b *= 4;
-                            delta_c *= 4;
-
-                            quantized_cubes[i].orientation = quantized_base_cubes[i].orientation;
-                            quantized_cubes[i].orientation.integer_a += delta_a;
-                            quantized_cubes[i].orientation.integer_b += delta_b;
-                            quantized_cubes[i].orientation.integer_c += delta_c;
-                        }
-                        else
-                        {
-                            serialize_object( stream, quantized_cubes[i].orientation );
-
-                            if ( Stream::IsReading )
-                                quantized_cubes[i].interacting = false;
-                        }
-                        */
-
-                        /*
-                        const int RelativeOrientationThreshold_Large = 256;
-                        const int RelativeOrientationThreshold_Small = 16;
-
-                        bool relative_orientation = false;
-                        bool small = false;
-                        bool small_a, small_b, small_c;
-                        int delta_a, delta_b, delta_c;
-
-                        if ( Stream::IsWriting && quantized_cubes[i].orientation.largest == quantized_base_cubes[i].orientation.largest )
-                        {
-                            delta_a = quantized_cubes[i].orientation.integer_a - quantized_base_cubes[i].orientation.integer_a;
-                            delta_b = quantized_cubes[i].orientation.integer_b - quantized_base_cubes[i].orientation.integer_b;
-                            delta_c = quantized_cubes[i].orientation.integer_c - quantized_base_cubes[i].orientation.integer_c;
-
-                            if ( delta_a >= -RelativeOrientationThreshold_Large && delta_a < RelativeOrientationThreshold_Large &&
-                                 delta_b >= -RelativeOrientationThreshold_Large && delta_b < RelativeOrientationThreshold_Large &&
-                                 delta_c >= -RelativeOrientationThreshold_Large && delta_c < RelativeOrientationThreshold_Large )
-                            {
-                                relative_orientation = true;
-
-                                small_a = delta_a >= -RelativeOrientationThreshold_Small && delta_a < RelativeOrientationThreshold_Small;
-                                small_b = delta_b >= -RelativeOrientationThreshold_Small && delta_b < RelativeOrientationThreshold_Small;
-                                small_c = delta_c >= -RelativeOrientationThreshold_Small && delta_c < RelativeOrientationThreshold_Small;
-
-                                small = small_a || small_b || small_c;
-                            }
-                        }
-
-                        serialize_bool( stream, relative_orientation );
-
-                        if ( relative_orientation )
-                        {
-                            serialize_bool( stream, small );
-
-                            if ( small )
-                            {
-                                serialize_bool( stream, small_a );
-                                serialize_bool( stream, small_b );
-                                serialize_bool( stream, small_c );
-
-                                if ( small_a )
-                                    serialize_int( stream, delta_a, -RelativeOrientationThreshold_Small, RelativeOrientationThreshold_Small - 1 );
-                                else
-                                    serialize_int( stream, delta_a, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-
-                                if ( small_b )
-                                    serialize_int( stream, delta_b, -RelativeOrientationThreshold_Small, RelativeOrientationThreshold_Small - 1 );
-                                else
-                                    serialize_int( stream, delta_b, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-
-                                if ( small_c )
-                                    serialize_int( stream, delta_c, -RelativeOrientationThreshold_Small, RelativeOrientationThreshold_Small - 1 );
-                                else
-                                    serialize_int( stream, delta_c, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-                            }
-                            else
-                            {
-                                serialize_int( stream, delta_a, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-                                serialize_int( stream, delta_b, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-                                serialize_int( stream, delta_c, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-                            }
-
-                            quantized_cubes[i].orientation = quantized_base_cubes[i].orientation;
-                            quantized_cubes[i].orientation.integer_a += delta_a;
-                            quantized_cubes[i].orientation.integer_b += delta_b;
-                            quantized_cubes[i].orientation.integer_c += delta_c;
-                        }
-                        else
-                        {
-                            serialize_object( stream, quantized_cubes[i].orientation );
-
-                            if ( Stream::IsReading )
-                                quantized_cubes[i].interacting = false;
-                        }
-                        */
-
-                        /*
-                        const float AxisAngleThreshold = 1.0f;
-
-                        bool relative_orientation = false;
-
-                        vectorial::vec3f axis_angle_delta;
-
-                        if ( Stream::IsWriting )
-                        {
-                            float base_angle, current_angle;
-                            vectorial::vec3f base_axis, current_axis;
-
-                            vectorial::quat4f current_orientation, base_orientation;
-
-                            quantized_cubes[i].orientation.Save( current_orientation );
-                            quantized_base_cubes[i].orientation.Save( base_orientation );
-
-                            current_orientation.to_axis_angle( current_axis, current_angle );
-                            base_orientation.to_axis_angle( base_axis, base_angle );
-
-                            if ( vectorial::dot( base_axis, current_axis ) < 0 )
-                            {
-                                current_axis = -current_axis;
-                                current_angle = -current_angle;
-                            }
-
-                            vectorial::vec3f base_axis_angle = base_axis * base_angle;
-                            vectorial::vec3f current_axis_angle = current_axis * current_angle;
-
-                            axis_angle_delta = current_axis_angle - base_axis_angle;
-
-                            if ( vectorial::length_squared( current_axis_angle ) > 0.00001f &&
-                                 fabs( axis_angle_delta.x() ) < AxisAngleThreshold &&
-                                 fabs( axis_angle_delta.y() ) < AxisAngleThreshold &&
-                                 fabs( axis_angle_delta.z() ) < AxisAngleThreshold )
-                            {
-                                relative_orientation = true;
-                            }
-                        }
-
-                        serialize_bool( stream, relative_orientation );
-
-                        if ( relative_orientation )
-                        {
-                            serialize_compressed_vector( stream, axis_angle_delta, AxisAngleThreshold, 0.0001f );
-
-                            if ( Stream::IsReading )
-                            {
-                                float base_angle;
-                                vectorial::vec3f base_axis;
-                                vectorial::quat4f base_orientation;
-                                quantized_base_cubes[i].orientation.Save( base_orientation );
-                                base_orientation.to_axis_angle( base_axis, base_angle );
-                                vectorial::vec3f base_axis_angle = base_axis * base_angle;
-                                vectorial::vec3f current_axis_angle = base_axis_angle + axis_angle_delta;
-                                float angle = vectorial::length( current_axis_angle );
-                                vectorial::vec3f axis = current_axis_angle / angle;
-                                quantized_cubes[i].orientation.Load (vectorial::quat4f::axis_rotation( angle, axis ) );
-                            }
-                        }
-                        else
-                        {
-                            serialize_object( stream, quantized_cubes[i].orientation );
-
-                            if ( Stream::IsReading )
-                                quantized_cubes[i].interacting = false;
-                        }
-                        */
-
-#if 0
-
-            case COMPRESSION_MODE_DELTA_POSITION_GRID:
-            {
-                CORE_ASSERT( initial_snapshot );
-
-                CubeState * base_cubes = nullptr;
-
-                if ( initial )
-                {
-                    base_cubes = initial_snapshot->cubes;
-                }
-                else
-                {
-                    // todo: track down desync between left and right snapshot buffers
-
-//                    if ( Stream::IsWriting )
-                    {
-                        CORE_ASSERT( snapshot_sliding_window );
-                        auto & entry = snapshot_sliding_window->Get( base_sequence );
-                        base_cubes = (CubeState*) &entry.cubes[0];
-                    }
-                    /*
-                    else
-                    {
-                        CORE_ASSERT( snapshot_sequence_buffer );
-                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
-                        CORE_ASSERT( entry );
-                        base_cubes = (CubeState*) &entry->cubes[0];
-                    }
-                    */
-                }
-
-                GridCubeState grid_cubes[NumCubes];
-                GridCubeState base_grid_cubes[NumCubes];
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    grid_cubes[i].Load( cubes[i] );
-                    base_grid_cubes[i].Load( base_cubes[i] );
-                }
-
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    bool changed;
-
-                    if ( Stream::IsWriting )
-                        changed = grid_cubes[i] != base_grid_cubes[i];
-
-                    serialize_bool( stream, changed );
-
-                    if ( changed )
-                    {
-                        serialize_bool( stream, grid_cubes[i].interacting );
-
-                        const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
-                        const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
-
-                        bool grid_cell_changed;
-
-                        if ( Stream::IsWriting )
-                        {
-                            grid_cell_changed = grid_cubes[i].ix != base_grid_cubes[i].ix ||
-                                                grid_cubes[i].iy != base_grid_cubes[i].iy ||
-                                                grid_cubes[i].iz != base_grid_cubes[i].iz;
-                        }
-
-                        serialize_bool( stream, grid_cell_changed );
-
-                        if ( grid_cell_changed )
-                        {
-                            serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
-                            serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
-                            serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
-                        }
-                        else
-                        {
-                            if ( Stream::IsReading )
-                            {
-                                grid_cubes[i].ix = base_grid_cubes[i].ix;
-                                grid_cubes[i].iy = base_grid_cubes[i].iy;
-                                grid_cubes[i].iz = base_grid_cubes[i].iz;
-                            }
-
-                            // todo: track down difference between left and right snapshot buffers!
-
-                            /*
-                            if ( Stream::IsWriting )
-                            {
-                                serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
-                                serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
-                                serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
-                            }
-                            else
-                            {
-                                grid_cubes[i].ix = base_grid_cubes[i].ix;
-                                grid_cubes[i].iy = base_grid_cubes[i].iy;
-                                grid_cubes[i].iz = base_grid_cubes[i].iz;
-
-                                int ix,iy,iz;
-                                serialize_int( stream, ix, 0, num_grid_cells_xy - 1 );
-                                serialize_int( stream, iy, 0, num_grid_cells_xy - 1 );
-                                serialize_int( stream, iz, 0, num_grid_cells_z - 1 );
-
-                                if ( ix != grid_cubes[i].ix ||
-                                     iy != grid_cubes[i].iy ||
-                                     iz != grid_cubes[i].iz )
-                                {
-                                    printf( "position grid mismatch: expected (%d,%d,%d), got (%d,%d,%d)\n",
-                                        ix, iy, iz, grid_cubes[i].ix, grid_cubes[i].iy, grid_cubes[i].iz );
-                                }
-
-                                CORE_ASSERT( ix == grid_cubes[i].ix );
-                                CORE_ASSERT( iy == grid_cubes[i].iy );
-                                CORE_ASSERT( iz == grid_cubes[i].iz );
-                            }
-                            */
-                        }
-                        
-                        serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
-                        
-                        serialize_compressed_quaternion( stream, grid_cubes[i].orientation, 9 );
-                    }
-                    else if ( Stream::IsReading )
-                    {
-                        memcpy( &grid_cubes[i], &base_grid_cubes[i], sizeof( GridCubeState ) );
-                    }
-                }
-
-                if ( Stream::IsReading )
-                {
-                    for ( int i = 0; i < NumCubes; ++i )
-                        grid_cubes[i].Save( cubes[i] );
-                }
-            }
-            break;
-
-            case COMPRESSION_MODE_DELTA_POSITION_RELATIVE:
-            {
-                CORE_ASSERT( initial_snapshot );
-
-                CubeState * base_cubes = nullptr;
-
-                if ( initial )
-                {
-                    base_cubes = initial_snapshot->cubes;
-                }
-                else
-                {
-                    // todo: track down desync between left and right snapshot buffers
-
-//                    if ( Stream::IsWriting )
-                    {
-                        CORE_ASSERT( snapshot_sliding_window );
-                        auto & entry = snapshot_sliding_window->Get( base_sequence );
-                        base_cubes = (CubeState*) &entry.cubes[0];
-                    }
-                    /*
-                    else
-                    {
-                        CORE_ASSERT( snapshot_sequence_buffer );
-                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
-                        CORE_ASSERT( entry );
-                        base_cubes = (CubeState*) &entry->cubes[0];
-                    }
-                    */
-                }
-
-                GridCubeState grid_cubes[NumCubes];
-                GridCubeState base_grid_cubes[NumCubes];
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    grid_cubes[i].Load( cubes[i] );
-                    base_grid_cubes[i].Load( base_cubes[i] );
-                }
-
-                for ( int i = 0; i < NumCubes; ++i )
-                {
-                    bool changed;
-
-                    if ( Stream::IsWriting )
-                        changed = grid_cubes[i] != base_grid_cubes[i];
-
-                    serialize_bool( stream, changed );
-
-                    if ( changed )
-                    {
-                        serialize_bool( stream, grid_cubes[i].interacting );
-
-                        const int num_grid_cells_xy = int( PositionBoundXY * 2 ) / GridCubeSize;
-                        const int num_grid_cells_z = int( PositionBoundZ ) / GridCubeSize;
-
-                        bool grid_cell_changed;
-
-                        if ( Stream::IsWriting )
-                        {
-                            grid_cell_changed = grid_cubes[i].ix != base_grid_cubes[i].ix ||
-                                                grid_cubes[i].iy != base_grid_cubes[i].iy ||
-                                                grid_cubes[i].iz != base_grid_cubes[i].iz;
-                        }
-
-                        serialize_bool( stream, grid_cell_changed );
-
-                        if ( grid_cell_changed )
-                        {
-                            serialize_int( stream, grid_cubes[i].ix, 0, num_grid_cells_xy - 1 );
-                            serialize_int( stream, grid_cubes[i].iy, 0, num_grid_cells_xy - 1 );
-                            serialize_int( stream, grid_cubes[i].iz, 0, num_grid_cells_z - 1 );
-                        }
-                        else
-                        {
-                            if ( Stream::IsReading )
-                            {
-                                grid_cubes[i].ix = base_grid_cubes[i].ix;
-                                grid_cubes[i].iy = base_grid_cubes[i].iy;
-                                grid_cubes[i].iz = base_grid_cubes[i].iz;
-                            }
-                        }
-                        
-                        bool relative_position = false;
-
-                        const float RelativePositionThreshold = 0.25;
-
-                        if ( Stream::IsWriting )
-                        {
-                            const float dx = grid_cubes[i].local_position.x() - base_grid_cubes[i].local_position.x();
-                            const float dy = grid_cubes[i].local_position.y() - base_grid_cubes[i].local_position.y();
-                            const float dz = grid_cubes[i].local_position.z() - base_grid_cubes[i].local_position.z();
-
-                            if ( fabs( dx ) < RelativePositionThreshold && 
-                                 fabs( dy ) < RelativePositionThreshold &&
-                                 fabs( dz ) < RelativePositionThreshold )
-                            {
-                                relative_position = true;
-                            }
-                        }
-
-                        serialize_bool( stream, relative_position );
-
-                        if ( relative_position )
-                        {
-                            vectorial::vec3f offset;
-
-                            if ( Stream::IsWriting )
-                                offset = grid_cubes[i].local_position - base_grid_cubes[i].local_position;
-
-                            serialize_compressed_vector( stream, offset, RelativePositionThreshold, 0.001 );
-
-                            if ( Stream::IsReading )
-                                grid_cubes[i].local_position = base_grid_cubes[i].local_position + offset;
-                        }
-                        else
-                        {
-                            serialize_compressed_vector( stream, grid_cubes[i].local_position, local_position_min, local_position_max, 0.001 );
-                        }
-                        
-                        serialize_compressed_quaternion( stream, grid_cubes[i].orientation, 9 );
-                    }
-                    else if ( Stream::IsReading )
-                    {
-                        memcpy( &grid_cubes[i], &base_grid_cubes[i], sizeof( GridCubeState ) );
-                    }
-                }
-
-                if ( Stream::IsReading )
-                {
-                    for ( int i = 0; i < NumCubes; ++i )
-                        grid_cubes[i].Save( cubes[i] );
-                }
-            }
-            break;
-
-            /*
-            case COMPRESSION_MODE_DELTA_ABSOLUTE_INDICES:
-            {
-                CORE_ASSERT( initial_snapshot );
-
-                CubeState * base_cubes = nullptr;
-
-                if ( initial )
-                {
-                    base_cubes = initial_snapshot->cubes;
-                }
-                else
-                {
-                    if ( Stream::IsWriting )
-                    {
-                        CORE_ASSERT( snapshot_sliding_window );
-                        auto & entry = snapshot_sliding_window->Get( base_sequence );
-                        base_cubes = (CubeState*) &entry.cubes[0];
-                    }
-                    else
-                    {
-                        CORE_ASSERT( snapshot_sequence_buffer );
-                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
-                        CORE_ASSERT( entry );
-                        base_cubes = (CubeState*) &entry->cubes[0];
                     }
                 }
 
@@ -1047,7 +385,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                 {
                     for ( int i = 0; i < NumCubes; ++i )
                     {
-                        changed[i] = cubes[i] != base_cubes[i];
+                        changed[i] = quantized_cubes[i] != quantized_base_cubes[i];
                         if ( changed[i] )
                             num_changed++;
                     }
@@ -1070,13 +408,11 @@ struct CompressionSnapshotPacket : public protocol::Packet
                             if ( changed[i] )
                             {
                                 serialize_int( stream, i, 0, NumCubes - 1 );
-
-                                serialize_bool( stream, cubes[i].interacting );
-
-                                serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
-                                
-                                serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
-
+                                serialize_bool( stream, quantized_cubes[i].interacting );
+                                serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                                serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                                serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                                serialize_object( stream, quantized_cubes[i].orientation );
                                 num_written++;
                             }
                         }
@@ -1087,24 +423,22 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     {
                         memset( changed, 0, sizeof( changed ) );
 
-                        for ( int i = 0; i < num_changed; ++i )
+                        for ( int j = 0; j < num_changed; ++j )
                         {
-                            int index;
-                            serialize_int( stream, index, 0, NumCubes - 1 );
-
-                            serialize_bool( stream, cubes[index].interacting );
-
-                            serialize_compressed_vector( stream, cubes[index].position, position_min, position_max, 0.001 );
-                            
-                            serialize_compressed_quaternion( stream, cubes[index].orientation, 9 );
-
-                            changed[index] = true;
+                            int i;
+                            serialize_int( stream, i, 0, NumCubes - 1 );
+                            serialize_bool( stream, quantized_cubes[i].interacting );
+                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                            serialize_object( stream, quantized_cubes[i].orientation );
+                            changed[i] = true;
                         }
 
                         for ( int i = 0; i < NumCubes; ++i )
                         {
                             if ( !changed[i] )
-                                memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                                memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
                         }
                     }
                 }
@@ -1116,45 +450,45 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                         if ( changed[i] )
                         {
-                            serialize_bool( stream, cubes[i].interacting );
-
-                            serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
-                            
-                            serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                            serialize_bool( stream, quantized_cubes[i].interacting );
+                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                            serialize_object( stream, quantized_cubes[i].orientation );
                         }
                         else if ( Stream::IsReading )
                         {
-                            memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                            memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
                         }
                     }
                 }
             }
             break;
 
-            case COMPRESSION_MODE_DELTA_RELATIVE_INDICES:
+            case COMPRESSION_MODE_DELTA_RELATIVE_INDEX:
             {
-                CORE_ASSERT( initial_snapshot );
+                CORE_ASSERT( quantized_initial_snapshot );
 
-                CubeState * base_cubes = nullptr;
+                QuantizedCubeState * quantized_base_cubes = nullptr;
 
                 if ( initial )
                 {
-                    base_cubes = initial_snapshot->cubes;
+                    quantized_base_cubes = quantized_initial_snapshot->cubes;
                 }
                 else
                 {
                     if ( Stream::IsWriting )
                     {
-                        CORE_ASSERT( snapshot_sliding_window );
-                        auto & entry = snapshot_sliding_window->Get( base_sequence );
-                        base_cubes = (CubeState*) &entry.cubes[0];
+                        CORE_ASSERT( quantized_snapshot_sliding_window );
+                        auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
+                        quantized_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
                     }
                     else
                     {
-                        CORE_ASSERT( snapshot_sequence_buffer );
-                        auto entry = snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( quantized_snapshot_sequence_buffer );
+                        auto entry = quantized_snapshot_sequence_buffer->Find( base_sequence );
                         CORE_ASSERT( entry );
-                        base_cubes = (CubeState*) &entry->cubes[0];
+                        quantized_base_cubes = (QuantizedCubeState*) &entry->cubes[0];
                     }
                 }
 
@@ -1167,7 +501,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                 {
                     for ( int i = 0; i < NumCubes; ++i )
                     {
-                        changed[i] = cubes[i] != base_cubes[i];
+                        changed[i] = quantized_cubes[i] != quantized_base_cubes[i];
                         if ( changed[i] )
                             num_changed++;
                     }
@@ -1202,11 +536,11 @@ struct CompressionSnapshotPacket : public protocol::Packet
                                     serialize_index_relative( stream, previous_index, i );
                                 }
 
-                                serialize_bool( stream, cubes[i].interacting );
-
-                                serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
-                                
-                                serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                                serialize_bool( stream, quantized_cubes[i].interacting );
+                                serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                                serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                                serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                                serialize_object( stream, quantized_cubes[i].orientation );
 
                                 num_written++;
 
@@ -1222,29 +556,29 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                         int previous_index = 0;
 
-                        for ( int i = 0; i < num_changed; ++i )
+                        for ( int j = 0; j < num_changed; ++j )
                         {
-                            int index;
-                            if ( i == 0 )
-                                serialize_int( stream, index, 0, NumCubes - 1 );
+                            int i;
+                            if ( j == 0 )
+                                serialize_int( stream, i, 0, NumCubes - 1 );
                             else                                
-                                serialize_index_relative( stream, previous_index, index );
+                                serialize_index_relative( stream, previous_index, i );
 
-                            serialize_bool( stream, cubes[index].interacting );
+                            serialize_bool( stream, quantized_cubes[i].interacting );
+                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                            serialize_object( stream, quantized_cubes[i].orientation );
 
-                            serialize_compressed_vector( stream, cubes[index].position, position_min, position_max, 0.001 );
-                            
-                            serialize_compressed_quaternion( stream, cubes[index].orientation, 9 );
+                            changed[i] = true;
 
-                            changed[index] = true;
-
-                            previous_index = index;
+                            previous_index = i;
                         }
 
                         for ( int i = 0; i < NumCubes; ++i )
                         {
                             if ( !changed[i] )
-                                memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                                memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
                         }
                     }
                 }
@@ -1256,23 +590,150 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                         if ( changed[i] )
                         {
-                            serialize_bool( stream, cubes[i].interacting );
-
-                            serialize_compressed_vector( stream, cubes[i].position, position_min, position_max, 0.001 );
-                            
-                            serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                            serialize_bool( stream, quantized_cubes[i].interacting );
+                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
+                            serialize_object( stream, quantized_cubes[i].orientation );
                         }
                         else if ( Stream::IsReading )
                         {
-                            memcpy( &cubes[i], &base_cubes[i], sizeof( CubeState ) );
+                            memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
                         }
                     }
                 }
             }
             break;
-            */
 
-#endif
+            case COMPRESSION_MODE_DELTA_RELATIVE_POSITION:
+            {
+                CORE_ASSERT( quantized_initial_snapshot );
+
+                QuantizedCubeState * quantized_base_cubes = nullptr;
+
+                if ( initial )
+                {
+                    quantized_base_cubes = quantized_initial_snapshot->cubes;
+                }
+                else
+                {
+                    if ( Stream::IsWriting )
+                    {
+                        CORE_ASSERT( quantized_snapshot_sliding_window );
+                        auto & entry = quantized_snapshot_sliding_window->Get( base_sequence );
+                        quantized_base_cubes = (QuantizedCubeState*) &entry.cubes[0];
+                    }
+                    else
+                    {
+                        CORE_ASSERT( quantized_snapshot_sequence_buffer );
+                        auto entry = quantized_snapshot_sequence_buffer->Find( base_sequence );
+                        CORE_ASSERT( entry );
+                        quantized_base_cubes = (QuantizedCubeState*) &entry->cubes[0];
+                    }
+                }
+
+                const int MaxIndex = 126;
+
+                int num_changed = 0;
+                bool use_indices = false;
+                bool changed[NumCubes];
+                if ( Stream::IsWriting )
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        changed[i] = quantized_cubes[i] != quantized_base_cubes[i];
+                        if ( changed[i] )
+                            num_changed++;
+                    }
+                    if ( num_changed < MaxIndex )
+                        use_indices = true;
+                }
+
+                serialize_bool( stream, use_indices );
+
+                if ( use_indices )
+                {
+                    serialize_int( stream, num_changed, 0, MaxIndex + 1 );
+
+                    if ( Stream::IsWriting )
+                    {
+                        int num_written = 0;
+
+                        bool first = true;
+                        int previous_index = 0;
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( changed[i] )
+                            {
+                                if ( first )
+                                {
+                                    serialize_int( stream, i, 0, NumCubes - 1 );
+                                    first = false;
+                                }
+                                else
+                                {   
+                                    serialize_index_relative( stream, previous_index, i );
+                                }
+
+                                serialize_cube_relative_position( stream, quantized_cubes[i], quantized_base_cubes[i] );
+
+                                num_written++;
+
+                                previous_index = i;
+                            }
+                        }
+
+                        CORE_ASSERT( num_written == num_changed );
+                    }
+                    else
+                    {
+                        memset( changed, 0, sizeof( changed ) );
+
+                        int previous_index = 0;
+
+                        for ( int j = 0; j < num_changed; ++j )
+                        {
+                            int i;
+                            if ( j == 0 )
+                                serialize_int( stream, i, 0, NumCubes - 1 );
+                            else                                
+                                serialize_index_relative( stream, previous_index, i );
+
+                            serialize_cube_relative_position( stream, quantized_cubes[i], quantized_base_cubes[i] );
+
+                            changed[i] = true;
+
+                            previous_index = i;
+                        }
+
+                        for ( int i = 0; i < NumCubes; ++i )
+                        {
+                            if ( !changed[i] )
+                                memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
+                        }
+                    }
+                }
+                else
+                {
+                    for ( int i = 0; i < NumCubes; ++i )
+                    {
+                        serialize_bool( stream, changed[i] );
+
+                        if ( changed[i] )
+                        {
+                            serialize_cube_relative_position( stream, quantized_cubes[i], quantized_base_cubes[i] );
+                        }
+                        else if ( Stream::IsReading )
+                        {
+                            memcpy( &quantized_cubes[i], &quantized_base_cubes[i], sizeof( QuantizedCubeState ) );
+                        }
+                    }
+                }
+            }
+            break;
+
+            // todo: 10HZ
 
             default:
                 break;

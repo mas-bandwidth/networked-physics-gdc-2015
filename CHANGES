@@ -1,4 +1,62 @@
 
+Monday Afternoon, January 26th, 2015
+------------------------------------
+
+    Bring back absolute index on top of quantized cube state.
+
+    Bring back relative index on top of quantized cube state.
+
+    It may be more effective if I have a few less levels, eg. 
+    4 bits then 10 bits. eg. optimize common case to 5 bits = halve.
+
+    Settled on one bit +1, one bit 3 bits, one bit 6 bits, 10 bits fallback.
+
+    Seems to shave 20-30kbps off the absolute index. NICE!
+
+    Simplify relative position serialization by adding a function to 
+    serialize quantized cube relative to base.
+
+    This way I can call it from multiple places inside the relative index fn.
+
+    Convert the relative position to also use the relative index serialize.
+
+
+Monday Lunch, January 26th, 2015
+--------------------------------
+
+    Hook up compressed quaternion to the quantized cube state.
+
+    Tried to do relative orientation with this, but it needs a really high
+    precision float per-component (0.0001), eg. 10 bits per-component to
+    give a good result.
+
+    Could try non-linear quantization with this, but first, I will try
+    something simpler -- try to delta the smallest three representation
+    directly.
+
+    Explore if it is best to encode position/quat orientation with
+    bits per-component, vs. one bit for range. Probably is!
+
+    Tried it. Not really getting a lot of compression.
+
+    At this point seems the best bet is to more roughly compress the orientation
+    when the cubes are rotating quickly (not noticeable) and compress them fine
+    when the rotation is small.
+
+    The rough compression could be very rough, eg. 8X rougher
+
+    Doing this tends to save 20-30kbps at the top end while blowing cubes.
+
+    But, it seems to also add jitter to cubes while in the katamari.
+
+    First try disabling angular drag. This should make the small cubes more predictable
+    through the air, eg. they should maintain the exact same velocity.
+
+    Can't disable linear drag. it's necessary for the correct look of the cube blow.
+
+    Disable relative orientation code. It's not a big enough win
+
+
 Monday Morning, January 26th, 2015
 ----------------------------------
 
