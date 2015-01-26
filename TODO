@@ -10,7 +10,30 @@ DONE:
 
     Yes. Axis angle makes sense.
 
+    Axis within 0.1 seems to cover all motion from cube blow.
+
+    This also handles all motion inside katamari.
+
+    Seems to be a winner here.
+
+    Getting so little coverage for axis not changing, it seems
+    wise to skip ahead to the axis threshold... only picking up
+    basically stationary cubes with quaternion.
+
+    Might be a win to say, OK. quaternion has not changed (1 bit)
+
+    There was a bug in quaternion to axis/angle. Fixed.
+
+    Seems that a separate position not changed vs. orientation not changed
+    would be a big win -- looks like while the cubes are sitting coming
+    to rest they are maybe unnecessarily sending orientation?
+
+    Actually, fixed by just relaxing orientation is the same check (0.01f)
+
 TODO:
+
+
+    -----------------------------------------------------------------------
 
     Convert both current and base to axis-angle.
 

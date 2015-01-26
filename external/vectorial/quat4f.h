@@ -30,9 +30,9 @@ namespace vectorial
             return quat4f( axis.x() * s, axis.y() * s, axis.z() * s, c );
         }
 
-        void to_axis_angle( vec3f & axis, float & angle, const float epsilonSquared = 0.001f * 0.001f ) const
+        void to_axis_angle( vec3f & axis, float & angle, const float epsilonSquared = 0.0001f * 0.0001f ) const
         {
-            const float squareLength = length_squared( *this );
+            const float squareLength = length_squared( vec3f( x(), y(), z() ) );
 
             const float _x = x();
             const float _y = y();
