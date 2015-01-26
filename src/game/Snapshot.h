@@ -7,6 +7,7 @@
 #include "vectorial/vec3f.h"
 #include "vectorial/quat4f.h"
 #include "protocol/Stream.h"
+#include "protocol/Object.h"
 #include "protocol/SequenceBuffer.h"
 
 //#define SERIALIZE_ANGULAR_VELOCITY
@@ -18,6 +19,8 @@ static const int NumCubes = 900 + MaxPlayers;
 static const int NumInterpolationSnapshots = 64;
 
 static const int UnitsPerMeter = 512;
+
+static const int OrientationBits = 9;
 
 enum SnapshotInterpolation
 {
@@ -33,9 +36,7 @@ struct CubeState
     vectorial::vec3f position;
     vectorial::quat4f orientation;
     vectorial::vec3f linear_velocity;
-#ifdef SERIALIZE_ANGULAR_VELOCITY
     vectorial::vec3f angular_velocity;
-#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
 
     bool operator == ( const CubeState & other ) const
     {
@@ -55,62 +56,6 @@ struct CubeState
     {
         return ! ( *this == other );
     }
-};
-
-struct QuantizedCubeState
-{
-    bool interacting;
-    int position_x;
-    int position_y;
-    int position_z;
-    vectorial::quat4f orientation;  
-
-    void Load( const CubeState & cube_state )
-    {
-        position_x = (int) floor( cube_state.position.x() * UnitsPerMeter + 0.5f );
-        position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
-        position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
-        interacting = cube_state.interacting;
-        orientation = cube_state.orientation;
-    }
-
-    void Save( CubeState & cube_state )
-    {
-        cube_state.position = vectorial::vec3f( position_x, position_y, position_z ) * 1.0f / UnitsPerMeter;
-        cube_state.interacting = interacting;
-        cube_state.orientation = orientation;
-        cube_state.linear_velocity = vectorial::vec3f( 0, 0, 0 );
-    }
-
-    bool operator == ( const QuantizedCubeState & other ) const
-    {
-        if ( interacting != other.interacting )
-            return false;
-
-        if ( position_x != other.position_x )
-            return false;
-
-        if ( position_y != other.position_y )
-            return false;
-
-        if ( position_z != other.position_z )
-            return false;
-
-        if ( length_squared( orientation - other.orientation ) > 0.01f )
-            return false;
- 
-        return true;
-    }
-
-    bool operator != ( const QuantizedCubeState & other ) const
-    {
-        return ! ( *this == other );
-    }
-};
-
-struct QuantizedSnapshot
-{
-    QuantizedCubeState cubes[NumCubes];
 };
 
 template <typename Stream> inline void serialize_vector( Stream & stream, vectorial::vec3f & vector )
@@ -161,6 +106,225 @@ template <typename Stream> inline void serialize_quaternion( Stream & stream, ve
     if ( Stream::IsReading )
         quaternion.load( values );
 }
+
+template <int bits> struct compressed_quaternion
+{
+    enum { max_value = (1<<bits)-1 };
+
+    uint32_t largest : 2;
+    uint32_t integer_a : bits;
+    uint32_t integer_b : bits;
+    uint32_t integer_c : bits;
+
+    void Load( const vectorial::quat4f & quaternion )
+    {
+        CORE_ASSERT( bits > 1 );
+        CORE_ASSERT( bits <= 10 );
+
+        const float minimum = - 1.0f / 1.414214f;       // 1.0f / sqrt(2)
+        const float maximum = + 1.0f / 1.414214f;
+
+        const float scale = float( ( 1 << bits ) - 1 );
+
+        float values[4];
+        quaternion.store( values );
+
+        const float x = values[0];
+        const float y = values[1];
+        const float z = values[2];
+        const float w = values[3];
+
+        const float abs_x = fabs( x );
+        const float abs_y = fabs( y );
+        const float abs_z = fabs( z );
+        const float abs_w = fabs( w );
+
+        largest = 0;
+        float largest_value = abs_x;
+
+        if ( abs_y > largest_value )
+        {
+            largest = 1;
+            largest_value = abs_y;
+        }
+
+        if ( abs_z > largest_value )
+        {
+            largest = 2;
+            largest_value = abs_z;
+        }
+
+        if ( abs_w > largest_value )
+        {
+            largest = 3;
+            largest_value = abs_w;
+        }
+
+        float a,b,c;
+
+        switch ( largest )
+        {
+            case 0:
+                if ( x >= 0 )
+                {
+                    a = y;
+                    b = z;
+                    c = w;
+                }
+                else
+                {
+                    a = -y;
+                    b = -z;
+                    c = -w;
+                }
+                break;
+
+            case 1:
+                if ( y >= 0 )
+                {
+                    a = x;
+                    b = z;
+                    c = w;
+                }
+                else
+                {
+                    a = -x;
+                    b = -z;
+                    c = -w;
+                }
+                break;
+
+            case 2:
+                if ( z >= 0 )
+                {
+                    a = x;
+                    b = y;
+                    c = w;
+                }
+                else
+                {
+                    a = -x;
+                    b = -y;
+                    c = -w;
+                }
+                break;
+
+            case 3:
+                if ( w >= 0 )
+                {
+                    a = x;
+                    b = y;
+                    c = z;
+                }
+                else
+                {
+                    a = -x;
+                    b = -y;
+                    c = -z;
+                }
+                break;
+
+            default:
+                assert( false );
+        }
+
+        const float normal_a = ( a - minimum ) / ( maximum - minimum ); 
+        const float normal_b = ( b - minimum ) / ( maximum - minimum );
+        const float normal_c = ( c - minimum ) / ( maximum - minimum );
+
+        integer_a = math::floor( normal_a * scale + 0.5f );
+        integer_b = math::floor( normal_b * scale + 0.5f );
+        integer_c = math::floor( normal_c * scale + 0.5f );
+    }
+
+    void Save( vectorial::quat4f & quaternion )
+    {
+        CORE_ASSERT( bits > 1 );
+        CORE_ASSERT( bits <= 10 );
+
+        const float minimum = - 1.0f / 1.414214f;       // 1.0f / sqrt(2)
+        const float maximum = + 1.0f / 1.414214f;
+
+        const float scale = float( ( 1 << bits ) - 1 );
+
+        const float inverse_scale = 1.0f / scale;
+
+        const float a = integer_a * inverse_scale * ( maximum - minimum ) + minimum;
+        const float b = integer_b * inverse_scale * ( maximum - minimum ) + minimum;
+        const float c = integer_c * inverse_scale * ( maximum - minimum ) + minimum;
+
+        switch ( largest )
+        {
+            case 0:
+            {
+                // (?) y z w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( sqrtf( 1 - a*a - b*b - c*c ), a, b, c ) );
+            }
+            break;
+
+            case 1:
+            {
+                // x (?) z w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, sqrtf( 1 - a*a - b*b - c*c ), b, c ) );
+            }
+            break;
+
+            case 2:
+            {
+                // x y (?) w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, b, sqrtf( 1 - a*a - b*b - c*c ), c ) );
+            }
+            break;
+
+            case 3:
+            {
+                // x y z (?)
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, b, c, sqrtf( 1 - a*a - b*b - c*c ) ) );
+            }
+            break;
+
+            default:
+            {
+                assert( false );
+                quaternion = vectorial::quat4f::identity();
+            }
+        }
+    }
+
+    PROTOCOL_SERIALIZE_OBJECT( stream )
+    {
+        serialize_bits( stream, largest, 2 );
+        serialize_bits( stream, integer_a, bits );
+        serialize_bits( stream, integer_b, bits );
+        serialize_bits( stream, integer_c, bits );
+    }
+
+    bool operator == ( const compressed_quaternion & other ) const
+    {
+        if ( largest != other.largest )
+            return false;
+
+        if ( integer_a != other.integer_a )
+            return false;
+
+        if ( integer_b != other.integer_b )
+            return false;
+
+        if ( integer_c != other.integer_c )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const compressed_quaternion & other ) const
+    {
+        return ! ( *this == other );
+    }
+};
 
 template <typename Stream> inline void serialize_compressed_quaternion( Stream & stream, vectorial::quat4f & quaternion, int component_bits )
 {
@@ -440,6 +604,77 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
         current = previous + difference;
 }
 
+struct QuantizedCubeState
+{
+    bool interacting;
+    bool fast_rotation;
+    int position_x;
+    int position_y;
+    int position_z;
+    compressed_quaternion<9> orientation;
+
+    void Load( const CubeState & cube_state )
+    {
+        interacting = cube_state.interacting;
+        fast_rotation = vectorial::length_squared( cube_state.angular_velocity ) > 10.0f;
+        position_x = (int) floor( cube_state.position.x() * UnitsPerMeter + 0.5f );
+        position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
+        position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
+        orientation.Load( cube_state.orientation );
+    }
+
+    void Save( CubeState & cube_state )
+    {
+        cube_state.interacting = interacting;
+        cube_state.position = vectorial::vec3f( position_x, position_y, position_z ) * 1.0f / UnitsPerMeter;
+        orientation.Save( cube_state.orientation );
+        cube_state.linear_velocity = vectorial::vec3f( 0, 0, 0 );
+    }
+
+    bool operator == ( const QuantizedCubeState & other ) const
+    {
+        if ( interacting != other.interacting )
+            return false;
+
+        if ( position_x != other.position_x )
+            return false;
+
+        if ( position_y != other.position_y )
+            return false;
+
+        if ( position_z != other.position_z )
+            return false;
+
+        /*
+        if ( orientation != other.orientation )
+            return false;
+            */
+
+        if ( orientation.largest != other.orientation.largest )
+            return false;
+
+        if ( abs( orientation.integer_a - other.orientation.integer_a ) > 8 )
+            return false;
+ 
+        if ( abs( orientation.integer_b - other.orientation.integer_b ) > 8 )
+            return false;
+
+        if ( abs( orientation.integer_c - other.orientation.integer_c ) > 8 )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const QuantizedCubeState & other ) const
+    {
+        return ! ( *this == other );
+    }
+};
+
+struct QuantizedSnapshot
+{
+    QuantizedCubeState cubes[NumCubes];
+};
 
 static void InterpolateSnapshot_Linear( float t, 
                                         const __restrict CubeState * a, 
@@ -563,11 +798,9 @@ inline bool GetSnapshot( GameInstance * game_instance, Snapshot & snapshot )
                                                                   object.linearVelocity.y,
                                                                   object.linearVelocity.z );
 
-#ifdef SERIALIZE_ANGULAR_VELOCITY
         snapshot.cubes[index].angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
                                                                    object.angularVelocity.y,
                                                                    object.angularVelocity.z );
-#endif // #ifdef SERIALIZE_ANGULAR_VELOCITY
 
         snapshot.cubes[index].interacting = object.authority == 0;
     }
@@ -607,6 +840,10 @@ inline bool GetQuantizedSnapshot( GameInstance * game_instance, QuantizedSnapsho
         cube_state.linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
                                                        object.linearVelocity.y,
                                                        object.linearVelocity.z );
+
+        cube_state.angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
+                                                        object.angularVelocity.y,
+                                                        object.angularVelocity.z );
 
         cube_state.interacting = object.authority == 0;
 

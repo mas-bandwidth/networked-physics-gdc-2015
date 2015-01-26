@@ -1,21 +1,39 @@
 DONE:
 
+    Hook up compressed quaternion to the quantized cube state.
+
+    Tried to do relative orientation with this, but it needs a really high
+    precision float per-component (0.0001), eg. 10 bits per-component to
+    give a good result.
+
+    Could try non-linear quantization with this, but first, I will try
+    something simpler -- try to delta the smallest three representation
+    directly.
+
+    Explore if it is best to encode position/quat orientation with
+    bits per-component, vs. one bit for range. Probably is!
+
+    Tried it. Not really getting a lot of compression.
+
+    At this point seems the best bet is to more roughly compress the orientation
+    when the cubes are rotating quickly (not noticeable) and compress them fine
+    when the rotation is small.
+
+    The rough compression could be very rough, eg. 8X rougher
+
+    Doing this tends to save 20-30kbps at the top end while blowing cubes.
+
+    But, it seems to also add jitter to cubes while in the katamari.
+
 TODO:
 
-    It still has some bugs, eg. not exactly reproducing the orientation (why?)
+    Try this option:
 
-    Also, it seems that it might be possible to make it a bit more accurate,
+    1. Approximate the angular velocity from the two previous snapshots
 
-    At minimum, use the bits perfectly for compressing the vector (eg. specify # of bits)
-
-    First fix it so it reproduces the correct angle.
-
-    Then if this is possible, try to optimize it -- perhaps non-linear, eg. more error
-    for larger rotations or something like that?
-
+    2. 
+    
     -----------------------------------------------------------------------
-
-    Simplify existing serialization code. It's getting a bit complex!
 
     -----------------------------------------------------------------------
 

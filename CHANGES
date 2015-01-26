@@ -1,4 +1,52 @@
 
+Monday Morning, January 26th, 2015
+----------------------------------
+
+    It still has some bugs, eg. not exactly reproducing the orientation (why?)
+
+    Also, it seems that it might be possible to make it a bit more accurate,
+
+    At minimum, use the bits perfectly for compressing the vector (eg. specify # of bits)
+
+    First fix it so it reproduces the correct angle...
+
+    Then if this is possible, try to optimize it -- perhaps non-linear, eg. more error
+    for larger rotations or something like that, eg. take the logarthim or sqrt of the
+    axis/angle multiplied value and then do the difference there, and on the other side
+    exponentiate to return to linear space.
+
+    If I change the non-relative quaternion to encode absolute the error goes away.
+
+    Fairly certain the error is caused by random flipping of the base quaternion such
+    that it is positive for the smallest three.
+
+    To fix this I could perform quaternion quantize into 2-10-10-10 (32 bits)
+    inside the quantized cube state, and then convert that to quaternion as needed.
+
+    This way the base quaternion on both sides would be guaranteed to be in the same
+    quaternion sphere half.
+
+    Also, it seems that the cube disappearing initially is probably due to a zero axis?
+
+    Yes, the singularity is fixed by avoiding the axis*angle encoding if the target 
+    is a zero vector.
+
+    Implement struct compressed_quaternion
+
+    Ideally this struct would be aware of the # of bits per-component,
+    perhaps templated, so it could avoid ANY differences in precision on
+    either side.
+
+    This would also allow me to easily try compression of the smallest three
+    directly, to see if this has any benefit (it may! who knows!?)
+
+    Added operator == and != to compress_quaternion
+
+    Added serialize function and load/save.
+
+    Should be ready to use!
+
+
 Late Sunday Evening, January 25th, 2015
 ---------------------------------------
 
