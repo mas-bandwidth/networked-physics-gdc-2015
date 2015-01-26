@@ -98,7 +98,7 @@ struct QuantizedCubeState
 
         if ( length_squared( orientation - other.orientation ) > 0.01f )
             return false;
-
+ 
         return true;
     }
 

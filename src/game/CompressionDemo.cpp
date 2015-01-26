@@ -507,10 +507,11 @@ struct CompressionSnapshotPacket : public protocol::Packet
                             }
                         }
 
-                        bool relative_orientation = false;
-                        float relative_angle;
+                        const float AxisAngleThreshold = 1.0f;
 
-                        const float RelativeAngleThreshold = 0.25f;
+                        bool relative_orientation = false;
+
+                        vectorial::vec3f axis_angle_delta;
 
                         if ( Stream::IsWriting )
                         {
@@ -526,11 +527,16 @@ struct CompressionSnapshotPacket : public protocol::Packet
                                 current_angle = -current_angle;
                             }
 
-                            if ( vectorial::length_squared( current_axis - base_axis ) < 0.00001f )
+                            vectorial::vec3f base_axis_angle = base_axis * base_angle;
+                            vectorial::vec3f current_axis_angle = current_axis * current_angle;
+
+                            axis_angle_delta = current_axis_angle - base_axis_angle;
+
+                            if ( fabs( axis_angle_delta.x() ) < AxisAngleThreshold &&
+                                 fabs( axis_angle_delta.y() ) < AxisAngleThreshold &&
+                                 fabs( axis_angle_delta.z() ) < AxisAngleThreshold )
                             {
-                                relative_angle = current_angle - base_angle;
-                                if ( fabs( relative_angle ) < RelativeAngleThreshold )
-                                    relative_orientation = true;
+                                relative_orientation = true;
                             }
                         }
 
@@ -538,19 +544,22 @@ struct CompressionSnapshotPacket : public protocol::Packet
 
                         if ( relative_orientation )
                         {
-                            serialize_compressed_float( stream, relative_angle, -RelativeAngleThreshold, +RelativeAngleThreshold, 0.001f );
+                            serialize_compressed_vector( stream, axis_angle_delta, AxisAngleThreshold, 0.01f );
 
                             if ( Stream::IsReading )
                             {
                                 float base_angle;
                                 vectorial::vec3f base_axis;
                                 quantized_base_cubes[i].orientation.to_axis_angle( base_axis, base_angle );
-                                quantized_cubes[i].orientation = vectorial::quat4f::axis_rotation( base_angle + relative_angle, base_axis );
+                                vectorial::vec3f base_axis_angle = base_axis * base_angle;
+                                vectorial::vec3f current_axis_angle = base_axis_angle + axis_angle_delta;
+                                float angle = vectorial::length( current_axis_angle );
+                                vectorial::vec3f axis = current_axis_angle / angle;
+                                quantized_cubes[i].orientation = vectorial::quat4f::axis_rotation( angle, axis );
                             }
                         }
                         else
                         {
-                            //serialize_quaternion( stream, quantized_cubes[i].orientation );
                             serialize_compressed_quaternion( stream, quantized_cubes[i].orientation, 9 );
 
                             if ( Stream::IsReading )

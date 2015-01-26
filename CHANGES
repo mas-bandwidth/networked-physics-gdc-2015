@@ -1,4 +1,109 @@
 
+Late Sunday Evening, January 25th, 2015
+---------------------------------------
+
+    Next try checking if axis is within some small amount of distance
+
+    For example, axis within 0.1 distance (along any xyzw...)
+
+    Encode this with a small # of bits (must be a tiny difference... eg. 4 bits per-component)
+
+    Determine if this markedly improves the encoding or not...
+
+    I'm not sure it would!
+
+    For example, axis of 3 components, 4 bits each is 12 bits. 8 bits for angle difference
+
+    Existing absolute encoding is 29bits...
+
+    That gives 20 bits vs. 29 bits... not a huge win!
+
+    I'm not even sure that 4 bits for the delta on the axis would be sufficient either.
+
+    So I'm not really sure if there is anything I can do here...
+
+    There has to be some way to get a relative encoding that is significantly cheaper
+    than the smallest three...
+
+    I mean if 4.4.4.4 is a valid encoding, then it is 16 bits which is roughly 1/2
+
+    This should be the goal.
+
+    Would it be possible to encode the smallest three? I'm not sure this would be wise
+    because the encoding would not work across largest value changes, and this is 
+    probably quite common (e.g several times per-rotation...).
+
+    Seems like the best bet is 4.4.4.4 or 5.5.5.5 delta, eg: 16 or 20 bits.
+
+    No frankly this is not great.
+
+    An idea... at tangent of a 4D hypersphere is a hyperplane (3d plane)
+
+    If I can determine the basis vectors for this hyperplane, then I could encode the 
+    difference along this hyperplane using only 
+
+    Ryg says that if you multiply the angle by the axis you get a 3 vector that can be delta'd
+    and then returned to quaternion form.
+
+    This seems to be the best way to go ahead.
+
+    Should be able to encode delta for axis*base by 3 coords.
+
+    But... this isn't really helping much. It *is* helping shave about 30kbps off... but it's not dramatic.
+
+
+Sunday Evening January 25th, 2015
+---------------------------------
+
+    Implement relative orientation encoding.
+
+    Can relative orientation be efficient?
+
+    How to encode it?
+
+    Axis-angle?
+
+    Yes. Axis angle makes sense.
+
+    Axis within 0.1 seems to cover all motion from cube blow.
+
+    This also handles all motion inside katamari.
+
+    Seems to be a winner here.
+
+    Getting so little coverage for axis not changing, it seems
+    wise to skip ahead to the axis threshold... only picking up
+    basically stationary cubes with quaternion.
+
+    Might be a win to say, OK. quaternion has not changed (1 bit)
+
+    There was a bug in quaternion to axis/angle. Fixed.
+
+    Seems that a separate position not changed vs. orientation not changed
+    would be a big win -- looks like while the cubes are sitting coming
+    to rest they are maybe unnecessarily sending orientation?
+
+    Actually, fixed by just relaxing orientation is the same check (0.01f)
+
+    Convert both current and base to axis-angle.
+
+    If current axis dot base axis < 0, invert current axis.
+
+    If current axis - base axis distance squared is within epsilon,
+
+    set relative orientation to true.
+
+    Determine angle difference between axis.
+
+    Send as angle difference if less than some angle threshold.
+
+    Work out with red coloring what is a good angle threshold (float)
+
+    Determine if the constant axis covers a large % of rotating objects or not (blow)
+
+    No. Constant axis does not cover a large range of objects.
+
+
 Sunday January 25th, 2015
 -------------------------
 
