@@ -1,30 +1,18 @@
 DONE:
 
+    Try relative orientation again.
+
+    Seem to be working OK. Saving 10-10kbps.
+
 TODO:
+    
+    Can probably do better if I encode the large relative to the small.
 
-    Get a 10HZ version running with linear velocity
-
-    This version requires adding the linear velocity to the quantized cube state
-
-    I have to update the == operator to handle the linear velocity comparison
-
-    I'd also like the linear velocity to be an integer quantized value like position
-
-    If linear velocity is not being used, it needs to be cleared to (0,0,0)
-
-    This way the non-hermite interpolation versions that don't use it will
-    still work with == operator comparisons for delta compression.
-
-    Drop to 10HZ and tune the linear velocity precision to the lowest power
-    of two that avoids seeing compression artifacts @ 10HZ.
-
-    This is the "end result" of all the compression effort.
-
-    Should be a ridiculously low value of kbps now... put a fork in it!
+    Can probably do the same thing to the position encoding.
 
     -----------------------------------------------------------------------
 
-    Debug why the interpolation buffer is misbehaving @ 60pps.
+    Why is the interpolation buffer misbehaving at 60pps?
 
     -----------------------------------------------------------------------
 
