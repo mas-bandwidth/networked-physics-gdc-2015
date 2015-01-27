@@ -252,7 +252,7 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
     bool small = false;
     int delta_a, delta_b, delta_c;
 
-    if ( Stream::IsWriting && cube.orientation.largest == cube.orientation.largest )
+    if ( Stream::IsWriting && cube.orientation.largest == base.orientation.largest )
     {
         delta_a = cube.orientation.integer_a - base.orientation.integer_a;
         delta_b = cube.orientation.integer_b - base.orientation.integer_b;

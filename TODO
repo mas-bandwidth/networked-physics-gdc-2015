@@ -1,15 +1,7 @@
 DONE:
 
-    Try relative orientation again.
-
-    Seem to be working OK. Saving 10-10kbps.
-
 TODO:
     
-    Can probably do better if I encode the large relative to the small.
-
-    Can probably do the same thing to the position encoding.
-
     -----------------------------------------------------------------------
 
     Why is the interpolation buffer misbehaving at 60pps?
