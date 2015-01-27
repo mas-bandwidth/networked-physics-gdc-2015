@@ -59,11 +59,11 @@ struct CompressionModeData : public SnapshotModeData
 {
     CompressionModeData()
     {
-        playout_delay = 0.1f;        // one lost packet = no problem. two lost packets in a row = hitch
+        playout_delay = 0.085f;         // one lost packet = no problem. two lost packets in a row = hitch
         send_rate = 60.0f;
         latency = 0.0f;
         packet_loss = 5.0f;
-        jitter = 2 / 60.0f;
+        jitter = 2.0 / 60.0f;
         interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
     }
 };
@@ -245,73 +245,6 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
         }
     }
 
-    const float RelativeOrientationThreshold = 0.5f;
-
-    bool relative_orientation = false;
-
-    float relative_values[4];
-
-    if ( Stream::IsWriting )
-    {
-        vectorial::quat4f orientation, base_orientation;
-        cube.orientation.Save( orientation );
-        base.orientation.Save( base_orientation );
-        vectorial::quat4f relative = vectorial::conjugate( base_orientation ) * orientation;
-        relative.store( relative_values );
-        if ( fabs( relative_values[0] ) <= RelativeOrientationThreshold &&
-             fabs( relative_values[1] ) <= RelativeOrientationThreshold &&
-             fabs( relative_values[2] ) <= RelativeOrientationThreshold )
-        {
-            relative_orientation = true;
-            printf( "relative: %f,%f,%f,%f\n", relative_values[0], relative_values[1], relative_values[2], relative_values[3] );
-        }
-    }
-
-    serialize_bool( stream, relative_orientation );
-
-    if ( relative_orientation )
-    {
-        serialize_object( stream, cube.orientation );
-
-        /*
-        serialize_float( stream, relative_values[0] );
-        serialize_float( stream, relative_values[1] );
-        serialize_float( stream, relative_values[2] );
-        */
-        /*
-        serialize_compressed_float( stream, relative_values[0], -RelativeOrientationThreshold, +RelativeOrientationThreshold, 0.01f );
-        serialize_compressed_float( stream, relative_values[1], -RelativeOrientationThreshold, +RelativeOrientationThreshold, 0.01f );
-        serialize_compressed_float( stream, relative_values[2], -RelativeOrientationThreshold, +RelativeOrientationThreshold, 0.01f );
-        */
-
-        /*
-        if ( Stream::IsReading )
-        {
-            const float x = relative_values[0];
-            const float y = relative_values[1];
-            const float z = relative_values[2];
-            const float w = sqrt( 1 - x*x - y*y - z*z );
-
-            vectorial::quat4f relative( x, y, z, w );
-
-            vectorial::quat4f base_orientation;
-            base.orientation.Save( base_orientation );
-
-            vectorial::quat4f orientation = base_orientation * relative;
-
-            cube.orientation.Load( orientation );
-        }
-        */
-    }
-    else
-    {
-        serialize_object( stream, cube.orientation );
-
-        if ( Stream::IsReading )
-            cube.interacting = false;
-    }
-
-    /*
     const int RelativeOrientationThreshold_Large = 64;
     const int RelativeOrientationThreshold_Small = 16;
 
@@ -371,7 +304,6 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
         if ( Stream::IsReading )
             cube.interacting = false;
     }
-    */
 }
 
 struct CompressionSnapshotPacket : public protocol::Packet
@@ -1086,13 +1018,13 @@ struct CompressionAckPacket : public protocol::Packet
     }
 };
 
-class SnapshotPacketFactory : public protocol::PacketFactory
+class CompressionPacketFactory : public protocol::PacketFactory
 {
     core::Allocator * m_allocator;
 
 public:
 
-    SnapshotPacketFactory( core::Allocator & allocator )
+    CompressionPacketFactory( core::Allocator & allocator )
         : PacketFactory( allocator, COMPRESSION_NUM_PACKETS )
     {
         m_allocator = &allocator;
@@ -1178,7 +1110,7 @@ struct CompressionInternal
     SnapshotSequenceBuffer * snapshot_sequence_buffer;
     QuantizedSnapshotSlidingWindow * quantized_snapshot_sliding_window;
     QuantizedSnapshotSequenceBuffer * quantized_snapshot_sequence_buffer;
-    SnapshotPacketFactory packet_factory;
+    CompressionPacketFactory packet_factory;
     SnapshotInterpolationBuffer interpolation_buffer;
     QuantizedSnapshot quantized_initial_snapshot;
 };
@@ -1254,9 +1186,9 @@ void CompressionDemo::Update()
 
     m_compression->send_accumulator += global.timeBase.deltaTime;
 
-    if ( m_compression->send_accumulator >= 1.0f / compression_mode_data[GetMode()].send_rate )
+//    if ( m_compression->send_accumulator >= 1.0f / compression_mode_data[GetMode()].send_rate )
     {
-        m_compression->send_accumulator = 0.0f;   
+//        m_compression->send_accumulator = 0.0f;   
 
         auto game_instance = m_internal->GetGameInstance( 0 );
 
@@ -1319,6 +1251,9 @@ void CompressionDemo::Update()
         if ( type == COMPRESSION_SNAPSHOT_PACKET && port == RightPort )
         {
             auto snapshot_packet = (CompressionSnapshotPacket*) packet;
+
+            printf( "receive snapshot %d\n", snapshot_packet->sequence );
+
             if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
             {
                 Snapshot * snapshot = m_compression->snapshot_sequence_buffer->Find( snapshot_packet->sequence );

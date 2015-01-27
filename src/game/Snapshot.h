@@ -576,52 +576,6 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
         current = previous + difference;
 }
 
-/*
-template <typename Stream> void serialize_index_relative( Stream & stream, int previous, int & current )
-{
-    uint32_t difference;
-    if ( Stream::IsWriting )
-    {
-        CORE_ASSERT( previous < current );
-        difference = current - previous;
-        CORE_ASSERT( difference > 0 );
-    }
-
-    // +1
-
-    bool plusOne;
-    if ( Stream::IsWriting )
-        plusOne = difference == 1;
-    serialize_bool( stream, plusOne );
-    if ( plusOne )
-    {
-        if ( Stream::IsReading )
-            current = previous + 1;
-        return;
-    }
-
-    // [+2,17] -> [0,15] (4 bits)
-
-    bool fourBits;
-    if ( Stream::IsWriting )
-        fourBits = difference <= 17;
-    serialize_bool( stream, fourBits );
-    if ( fourBits )
-    {
-        serialize_int( stream, difference, 2, 17 );
-        if ( Stream::IsReading )
-            current = previous + difference;
-        return;
-    }
-
-    // [17,NumCubes]
-
-    serialize_int( stream, difference, 17, NumCubes - 1 );
-    if ( Stream::IsReading )
-        current = previous + difference;
-}
-*/
-
 struct QuantizedCubeState
 {
     bool interacting;
@@ -958,7 +912,6 @@ struct SnapshotInterpolationBuffer
             for ( int i = 0; i < n; ++i )
             {
                 auto snapshot = snapshots.Find( interpolation_start_sequence + 1 + i );
-
                 if ( snapshot )
                 {
                     interpolation_end_sequence = interpolation_start_sequence + 1 + i;
@@ -971,20 +924,13 @@ struct SnapshotInterpolationBuffer
 
         // if current time is still > end time, we couldn't start a new interpolation so return.
 
-        if ( time >= interpolation_end_time )
+        if ( time >= interpolation_end_time + 0.0001f )
             return;
 
         // we are in a valid interpolation, calculate t by looking at current time 
         // relative to interpolation start/end times and perform the interpolation.
 
-        CORE_ASSERT( time >= interpolation_start_time );
-        CORE_ASSERT( time <= interpolation_end_time );
-        CORE_ASSERT( interpolation_start_time < interpolation_end_time );
-
-        const float t = ( time - interpolation_start_time ) / ( interpolation_end_time - interpolation_start_time );
-
-        CORE_ASSERT( t >= 0 );
-        CORE_ASSERT( t <= 1 );
+        const float t = core::clamp( ( time - interpolation_start_time ) / ( interpolation_end_time - interpolation_start_time ), 0.0, 1.0 );
 
         auto snapshot_a = snapshots.Find( interpolation_start_sequence );
         auto snapshot_b = snapshots.Find( interpolation_end_sequence );

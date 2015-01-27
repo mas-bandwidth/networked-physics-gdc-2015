@@ -1,4 +1,26 @@
 
+Tuesday Morning, January 26th, 2015
+-----------------------------------
+
+    Why is the interpolation buffer misbehaving at 60pps?
+
+    What is triggering it? The 60pps?
+
+    Note that if packet loss is disabled, it gets stuck forever!
+
+    Does this mean that it's falling behind?
+
+    If I disable jitter the hitch no longer occurs.
+
+    Logic error to do with out of order snapshots specific to compression demo?
+
+    No. If I add 5% packet loss hitches occur even with zero jitter (no out of order)
+
+    It was an epsilon issue with interpolation end time vs. current time.
+
+    Fixed.
+
+
 Monday Afternoon, January 26th, 2015
 ------------------------------------
 
