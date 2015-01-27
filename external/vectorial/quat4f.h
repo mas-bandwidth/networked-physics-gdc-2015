@@ -58,6 +58,11 @@ namespace vectorial
         return length_squared( q );
     }
 
+    static inline quat4f conjugate( const quat4f & q )
+    {
+        return quat4f( -q.x(), -q.y(), -q.z(), q.w() );
+    }
+
     static inline quat4f exp( const quat4f & q ) 
     {
         float a[4];

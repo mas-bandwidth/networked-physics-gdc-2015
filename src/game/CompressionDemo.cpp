@@ -245,6 +245,73 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
         }
     }
 
+    const float RelativeOrientationThreshold = 0.5f;
+
+    bool relative_orientation = false;
+
+    float relative_values[4];
+
+    if ( Stream::IsWriting )
+    {
+        vectorial::quat4f orientation, base_orientation;
+        cube.orientation.Save( orientation );
+        base.orientation.Save( base_orientation );
+        vectorial::quat4f relative = vectorial::conjugate( base_orientation ) * orientation;
+        relative.store( relative_values );
+        if ( fabs( relative_values[0] ) <= RelativeOrientationThreshold &&
+             fabs( relative_values[1] ) <= RelativeOrientationThreshold &&
+             fabs( relative_values[2] ) <= RelativeOrientationThreshold )
+        {
+            relative_orientation = true;
+            printf( "relative: %f,%f,%f,%f\n", relative_values[0], relative_values[1], relative_values[2], relative_values[3] );
+        }
+    }
+
+    serialize_bool( stream, relative_orientation );
+
+    if ( relative_orientation )
+    {
+        serialize_object( stream, cube.orientation );
+
+        /*
+        serialize_float( stream, relative_values[0] );
+        serialize_float( stream, relative_values[1] );
+        serialize_float( stream, relative_values[2] );
+        */
+        /*
+        serialize_compressed_float( stream, relative_values[0], -RelativeOrientationThreshold, +RelativeOrientationThreshold, 0.01f );
+        serialize_compressed_float( stream, relative_values[1], -RelativeOrientationThreshold, +RelativeOrientationThreshold, 0.01f );
+        serialize_compressed_float( stream, relative_values[2], -RelativeOrientationThreshold, +RelativeOrientationThreshold, 0.01f );
+        */
+
+        /*
+        if ( Stream::IsReading )
+        {
+            const float x = relative_values[0];
+            const float y = relative_values[1];
+            const float z = relative_values[2];
+            const float w = sqrt( 1 - x*x - y*y - z*z );
+
+            vectorial::quat4f relative( x, y, z, w );
+
+            vectorial::quat4f base_orientation;
+            base.orientation.Save( base_orientation );
+
+            vectorial::quat4f orientation = base_orientation * relative;
+
+            cube.orientation.Load( orientation );
+        }
+        */
+    }
+    else
+    {
+        serialize_object( stream, cube.orientation );
+
+        if ( Stream::IsReading )
+            cube.interacting = false;
+    }
+
+    /*
     const int RelativeOrientationThreshold_Large = 64;
     const int RelativeOrientationThreshold_Small = 16;
 
@@ -304,6 +371,7 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
         if ( Stream::IsReading )
             cube.interacting = false;
     }
+    */
 }
 
 struct CompressionSnapshotPacket : public protocol::Packet

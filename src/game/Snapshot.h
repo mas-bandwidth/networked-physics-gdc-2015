@@ -237,7 +237,7 @@ template <int bits> struct compressed_quaternion
         integer_c = math::floor( normal_c * scale + 0.5f );
     }
 
-    void Save( vectorial::quat4f & quaternion )
+    void Save( vectorial::quat4f & quaternion ) const
     {
         CORE_ASSERT( bits > 1 );
         CORE_ASSERT( bits <= 10 );
