@@ -32,7 +32,7 @@ enum SnapshotMode
 {
     COMPRESSION_MODE_UNCOMPRESSED,
     COMPRESSION_MODE_ORIENTATION,
-    COMPRESSION_MODE_AT_REST,
+    COMPRESSION_MODE_QUANTIZE_VELOCITY_AT_REST_FLAG,
     COMPRESSION_MODE_QUANTIZE_POSITION,
     COMPRESSION_MODE_DELTA_NOT_CHANGED,
     COMPRESSION_MODE_DELTA_CHANGED_INDEX,
@@ -46,7 +46,7 @@ const char * compression_mode_descriptions[]
 {
     "Uncompressed",
     "Orientation",
-    "At rest",
+    "Quantize velocity + at rest flag",
     "Quantize position",
     "Delta not changed",
     "Delta changed index",
@@ -59,11 +59,11 @@ struct CompressionModeData : public SnapshotModeData
 {
     CompressionModeData()
     {
-        playout_delay = 0.085f;         // one lost packet = no problem. two lost packets in a row = hitch
+        playout_delay = 0.067f;
         send_rate = 60.0f;
         latency = 0.0f;
         packet_loss = 5.0f;
-        jitter = 2.0 / 60.0f;
+        jitter = 1.0 / 60.0f;
         interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
     }
 };
@@ -1186,9 +1186,9 @@ void CompressionDemo::Update()
 
     m_compression->send_accumulator += global.timeBase.deltaTime;
 
-//    if ( m_compression->send_accumulator >= 1.0f / compression_mode_data[GetMode()].send_rate )
+    if ( m_compression->send_accumulator >= 1.0f / compression_mode_data[GetMode()].send_rate )
     {
-//        m_compression->send_accumulator = 0.0f;   
+        m_compression->send_accumulator = 0.0f;   
 
         auto game_instance = m_internal->GetGameInstance( 0 );
 
@@ -1251,8 +1251,6 @@ void CompressionDemo::Update()
         if ( type == COMPRESSION_SNAPSHOT_PACKET && port == RightPort )
         {
             auto snapshot_packet = (CompressionSnapshotPacket*) packet;
-
-            printf( "receive snapshot %d\n", snapshot_packet->sequence );
 
             if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
             {
