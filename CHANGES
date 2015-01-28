@@ -1,4 +1,20 @@
 
+`Wednesday Afternoon, January 28th, 2015
+---------------------------------------
+
+    Implement function to count # of bits to send relative indices.
+
+    Compare this with skip bits (900) and determine which of the two
+    approaches to use dynamically on serialize write.
+
+    Determine statistically (printf) what the average # of changed cubes
+    can be per-packet before switching to skip bits.
+
+    If # of changed cubes is > max, then fallback to skip bits even if indices more efficient.
+
+    Tuned the relative index a bit. Getting 5 bits per-index avg. This is 50% improvement. Quite good.
+
+
 Tuesday Morning, January 26th, 2015
 -----------------------------------
 

@@ -2,7 +2,11 @@ DONE:
 
 TODO:
 
+    ---------------------------
+
     Split apart quantize linear velocity option and at rest into two separate modes.
+
+    ---------------------------
 
     Work out how many bits are used for serializing linear velocity @ 20pps
     eg. hack up the linear quantize manually with # of bits by converting
@@ -10,23 +14,8 @@ TODO:
 
     ---------------------------
 
-    Implement function to count # of bits to send relative indices.
-
-    Compare this with skip bits (900) and determine which of the two
-    approaches to use dynamically on serialize write.
-
-    Determine statistically (printf) what the average # of changed cubes
-    can be per-packet before switching to skip bits.
-
-    If # of changed cubes is > max, then fallback to skip bits even if indices more efficient.
-
-    ---------------------------
-
-    Upgrade bandwidth exp smoothed moving average so it pumps
-    in a framerate independent way, eg. so bandwidth estimate
-    is as tight at 10pps as it is at 60pps.
-
-    May need to add a packet send rate to the simulator config, or an adjustable tightness (hack)
+    Add an adjustable tightness factor to bandwidth and adjust so 20pps
+    updates at roughly the same rate of bandwidth adjustment as 60pps.
 
     Probably going to go with tightness hand - tuned.
 
@@ -54,5 +43,13 @@ TODO:
     In effect, we have traded a bit of extra bandwidth to compensate for packet loss,
     reducing the amount of playout delay buffer that is required (without the redundant sends,
     playout delay is used to compensate for packet loss...)
+
+    ---------------------------
+
+    Implement some bit counters for position, orientation, index, linear velocity
+    such that I can tell exactly how many bits is used per component, as well as
+    min/max/avg per-cube.
+
+    Add some display prints for each mode and try some tuning.
 
     ---------------------------

@@ -32,7 +32,7 @@ enum SnapshotMode
 {
     COMPRESSION_MODE_UNCOMPRESSED,
     COMPRESSION_MODE_ORIENTATION,
-    COMPRESSION_MODE_QUANTIZE_VELOCITY_AT_REST_FLAG,
+    COMPRESSION_MODE_AT_REST_FLAG,
     COMPRESSION_MODE_QUANTIZE_POSITION,
     COMPRESSION_MODE_DELTA_NOT_CHANGED,
     COMPRESSION_MODE_DELTA_CHANGED_INDEX,
@@ -46,7 +46,7 @@ const char * compression_mode_descriptions[]
 {
     "Uncompressed",
     "Orientation",
-    "Quantize velocity + at rest flag",
+    "At rest flag",
     "Quantize position",
     "Delta not changed",
     "Delta changed index",
@@ -74,7 +74,7 @@ static void InitCompressionModes()
 {
     compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
     compression_mode_data[COMPRESSION_MODE_ORIENTATION].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
-    compression_mode_data[COMPRESSION_MODE_AT_REST].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+    compression_mode_data[COMPRESSION_MODE_AT_REST_FLAG].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
 }
 
 typedef protocol::SlidingWindow<Snapshot> SnapshotSlidingWindow;
@@ -400,7 +400,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_AT_REST:
+            case COMPRESSION_MODE_AT_REST_FLAG:
             {
                 for ( int i = 0; i < NumCubes; ++i )
                 {
@@ -628,7 +628,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
                     }
                 }
 
-                const int MaxIndex = 126;
+                const int MaxChanged = 255;
 
                 int num_changed = 0;
                 bool use_indices = false;
@@ -641,15 +641,23 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         if ( changed[i] )
                             num_changed++;
                     }
-                    if ( num_changed < MaxIndex )
+
+                    const int relative_index_bits = count_relative_index_bits( changed );
+
+                    if ( relative_index_bits < 900 && num_changed <= MaxChanged )
+                    {
+//                        if ( num_changed > 0 )
+//                            printf( "num changed: %d, relative index bits: %d (%.1f avg)\n", num_changed, relative_index_bits, relative_index_bits / float( num_changed ) );
+
                         use_indices = true;
+                    }
                 }
 
                 serialize_bool( stream, use_indices );
 
                 if ( use_indices )
                 {
-                    serialize_int( stream, num_changed, 0, MaxIndex + 1 );
+                    serialize_int( stream, num_changed, 0, MaxChanged );
 
                     if ( Stream::IsWriting )
                     {

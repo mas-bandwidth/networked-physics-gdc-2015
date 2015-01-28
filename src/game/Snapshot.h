@@ -518,6 +518,47 @@ template <typename Stream> inline void serialize_compressed_quaternion( Stream &
     }
 }
 
+inline int count_relative_index_bits( bool * changed )
+{
+    int bits = 8;
+    bool first = true;
+    int previous_index = 0;
+
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        if ( !changed[i] )
+            continue;
+
+        if ( first )
+        {
+            bits += 10;
+            first = false;
+            previous_index = i;
+        }
+        else
+        {
+            const int difference = i - previous_index;
+
+            if ( difference <= 7 )
+            {
+                bits += 1 + 3;
+            }
+            else if ( difference <= 39 )
+            {
+                bits += 1 + 1 + 5;
+            }
+            else
+            {
+                bits += 1 + 1 + 10;
+            }
+
+            previous_index = i;
+        }
+    }
+
+    return bits;
+}
+
 template <typename Stream> void serialize_index_relative( Stream & stream, int previous, int & current )
 {
     uint32_t difference;
@@ -528,50 +569,37 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
         CORE_ASSERT( difference > 0 );
     }
 
-    // +1
-
-    bool plusOne;
-    if ( Stream::IsWriting )
-        plusOne = difference == 1;
-    serialize_bool( stream, plusOne );
-    if ( plusOne )
-    {
-        if ( Stream::IsReading )
-            current = previous + 1;
-        return;
-    }
-
-    // [+2,9] -> [0,7] (3 bits)
+    // [+0,7] (3 bits)
 
     bool threeBits;
     if ( Stream::IsWriting )
-        threeBits = difference <= 9;
+        threeBits = difference <= 7;
     serialize_bool( stream, threeBits );
     if ( threeBits )
     {
-        serialize_int( stream, difference, 2, 9 );
+        serialize_int( stream, difference, 0, 7 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    // [10,73] -> [0,63] (6 bits)
+    // [8,39] -> [0,31] (5 bits)
 
     bool sixBits;
     if ( Stream::IsWriting )
-        sixBits = difference <= 73;
+        sixBits = difference <= 39;
     serialize_bool( stream, sixBits );
     if ( sixBits )
     {
-        serialize_int( stream, difference, 10, 73 );
+        serialize_int( stream, difference, 8, 39 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    // [74,NumCubes]
+    // [40,NumCubes]
 
-    serialize_int( stream, difference, 74, NumCubes - 1 );
+    serialize_int( stream, difference, 40, NumCubes - 1 );
     if ( Stream::IsReading )
         current = previous + difference;
 }
