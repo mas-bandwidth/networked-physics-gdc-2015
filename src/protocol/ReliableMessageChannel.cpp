@@ -327,12 +327,12 @@ namespace protocol
             message->SerializeMeasure( measureStream );
             if ( measureStream.IsOverflow() )
             {
-                printf( "measure stream overflow on message type %d: %d bits written, max is %d\n", message->GetType(), measureStream.GetBitsWritten(), measureStream.GetTotalBits() );
+                printf( "measure stream overflow on message type %d: %d bits written, max is %d\n", message->GetType(), measureStream.GetBitsProcessed(), measureStream.GetTotalBits() );
             }
             
             CORE_ASSERT( !measureStream.IsOverflow() );
             
-            entry->measuredBits = measureStream.GetBitsWritten() + m_messageOverheadBits;
+            entry->measuredBits = measureStream.GetBitsProcessed() + m_messageOverheadBits;
 
 //              printf( "message %d is %d bits\n", (int) m_sendMessageId, entity->measuredBits );
         }

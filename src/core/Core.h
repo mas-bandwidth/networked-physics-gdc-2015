@@ -20,7 +20,7 @@ extern "C"
     extern void srand( unsigned int seed );
     extern int atoi( const char * string );
     extern size_t strlen( const char * string );
-    extern int strcmp ( const char * str1, const char * str2 );
+    extern int strcmp( const char * str1, const char * str2 );
     extern char * strcpy( char * destination, const char * source );
     extern char * strncpy( char * destination, const char * source, size_t size );
     extern char * strncpy_safe( char * destination, const char * source, size_t size );

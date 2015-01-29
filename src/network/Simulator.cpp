@@ -237,7 +237,7 @@ namespace network
 
             CORE_ASSERT( !stream.IsOverflow() );
 
-            bytes = stream.GetBytesWritten();
+            bytes = stream.GetBytesProcessed();
 
             CORE_ASSERT( bytes <= m_config.maxPacketSize );
 

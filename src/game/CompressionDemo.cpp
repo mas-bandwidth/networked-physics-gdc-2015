@@ -32,13 +32,15 @@ enum SnapshotMode
 {
     COMPRESSION_MODE_UNCOMPRESSED,
     COMPRESSION_MODE_ORIENTATION,
-    COMPRESSION_MODE_AT_REST_FLAG,
-    COMPRESSION_MODE_QUANTIZE_POSITION,
+    COMPRESSION_MODE_LINEAR_VELOCITY_AT_REST_FLAG,
+    COMPRESSION_MODE_POSITION,
     COMPRESSION_MODE_DELTA_NOT_CHANGED,
     COMPRESSION_MODE_DELTA_CHANGED_INDEX,
     COMPRESSION_MODE_DELTA_RELATIVE_INDEX,
     COMPRESSION_MODE_DELTA_RELATIVE_POSITION,
     COMPRESSION_MODE_DELTA_RELATIVE_ORIENTATION,
+    COMPRESSION_MODE_20PPS_WITH_LINEAR_VELOCITY,
+    COMPRESSION_MODE_20PPS_WITH_REDUNDANT_SNAPSHOTS,
     COMPRESSION_NUM_MODES
 };
 
@@ -46,13 +48,15 @@ const char * compression_mode_descriptions[]
 {
     "Uncompressed",
     "Orientation",
-    "At rest flag",
-    "Quantize position",
+    "Linear velocity at rest flag",
+    "Position",
     "Delta not changed",
     "Delta changed index",
     "Delta relative index",
     "Delta relative position",
-    "Delta relative orientation"
+    "Delta relative orientation",
+    "20PPS with linear velocity",
+    "20PPS with redundant snapshots"
 };
 
 struct CompressionModeData : public SnapshotModeData
@@ -61,7 +65,7 @@ struct CompressionModeData : public SnapshotModeData
     {
         playout_delay = 0.067f;
         send_rate = 60.0f;
-        latency = 0.0f;
+        latency = 0.05f;      // 100ms round trip
         packet_loss = 5.0f;
         jitter = 1.0 / 60.0f;
         interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
@@ -74,7 +78,13 @@ static void InitCompressionModes()
 {
     compression_mode_data[COMPRESSION_MODE_UNCOMPRESSED].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
     compression_mode_data[COMPRESSION_MODE_ORIENTATION].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
-    compression_mode_data[COMPRESSION_MODE_AT_REST_FLAG].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+    compression_mode_data[COMPRESSION_MODE_LINEAR_VELOCITY_AT_REST_FLAG].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
+
+    compression_mode_data[COMPRESSION_MODE_20PPS_WITH_LINEAR_VELOCITY].send_rate = 20.0f;
+    compression_mode_data[COMPRESSION_MODE_20PPS_WITH_LINEAR_VELOCITY].playout_delay = 0.25f;
+
+    compression_mode_data[COMPRESSION_MODE_20PPS_WITH_REDUNDANT_SNAPSHOTS].send_rate = 20.0f;
+    compression_mode_data[COMPRESSION_MODE_20PPS_WITH_REDUNDANT_SNAPSHOTS].playout_delay = 0.25f;
 }
 
 typedef protocol::SlidingWindow<Snapshot> SnapshotSlidingWindow;
@@ -90,6 +100,56 @@ enum CompressionPackets
     COMPRESSION_NUM_PACKETS
 };
 
+template <typename Stream> void serialize_cube_relative_position( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
+{
+    serialize_bool( stream, cube.interacting );
+
+    bool relative_position;
+
+    const int RelativePositionBound = 1023;
+
+    if ( Stream::IsWriting )
+    {
+        relative_position = abs( cube.position_x - base.position_x ) <= RelativePositionBound &&
+                            abs( cube.position_y - base.position_y ) <= RelativePositionBound &&
+                            abs( cube.position_z - base.position_z ) <= RelativePositionBound;
+    }
+
+    serialize_bool( stream, relative_position );
+
+    if ( relative_position )
+    {
+        int offset_x, offset_y, offset_z;
+
+        if ( Stream::IsWriting )
+        {
+            offset_x = cube.position_x - base.position_x;
+            offset_y = cube.position_y - base.position_y;
+            offset_z = cube.position_z - base.position_z;
+        }
+
+        serialize_int( stream, offset_x, -RelativePositionBound, +RelativePositionBound );
+        serialize_int( stream, offset_y, -RelativePositionBound, +RelativePositionBound );
+        serialize_int( stream, offset_z, -RelativePositionBound, +RelativePositionBound );
+
+        cube.position_x = base.position_x + offset_x;
+        cube.position_y = base.position_y + offset_y;
+        cube.position_z = base.position_z + offset_z;
+    }
+    else
+    {
+        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
+
+        if ( Stream::IsReading )
+            cube.interacting = false;
+    }
+
+    serialize_object( stream, cube.orientation );
+}
+
+/*
 template <typename Stream> void serialize_cube_relative_position( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
     serialize_bool( stream, cube.interacting );
@@ -168,7 +228,101 @@ template <typename Stream> void serialize_cube_relative_position( Stream & strea
 
     serialize_object( stream, cube.orientation );
 }
+*/
 
+template <typename Stream> void serialize_cube_relative_orientation( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
+{
+    serialize_bool( stream, cube.interacting );
+
+    bool relative_position;
+
+    const int RelativePositionBound = 1023;
+
+    if ( Stream::IsWriting )
+    {
+        relative_position = abs( cube.position_x - base.position_x ) <= RelativePositionBound &&
+                            abs( cube.position_y - base.position_y ) <= RelativePositionBound &&
+                            abs( cube.position_z - base.position_z ) <= RelativePositionBound;
+    }
+
+    serialize_bool( stream, relative_position );
+
+    if ( relative_position )
+    {
+        int offset_x, offset_y, offset_z;
+
+        if ( Stream::IsWriting )
+        {
+            offset_x = cube.position_x - base.position_x;
+            offset_y = cube.position_y - base.position_y;
+            offset_z = cube.position_z - base.position_z;
+        }
+
+        serialize_int( stream, offset_x, -RelativePositionBound, +RelativePositionBound );
+        serialize_int( stream, offset_y, -RelativePositionBound, +RelativePositionBound );
+        serialize_int( stream, offset_z, -RelativePositionBound, +RelativePositionBound );
+
+        cube.position_x = base.position_x + offset_x;
+        cube.position_y = base.position_y + offset_y;
+        cube.position_z = base.position_z + offset_z;
+    }
+    else
+    {
+        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
+
+        if ( Stream::IsReading )
+            cube.interacting = false;
+    }
+
+    /*
+    const int RelativeOrientationThreshold = 64;
+    
+    bool relative_orientation = false;
+    int delta_a, delta_b, delta_c;
+
+    if ( Stream::IsWriting && cube.orientation.largest == base.orientation.largest )
+    {
+        delta_a = cube.orientation.integer_a - base.orientation.integer_a;
+        delta_b = cube.orientation.integer_b - base.orientation.integer_b;
+        delta_c = cube.orientation.integer_c - base.orientation.integer_c;
+
+        if ( delta_a >= -RelativeOrientationThreshold && delta_a < RelativeOrientationThreshold &&
+             delta_b >= -RelativeOrientationThreshold && delta_b < RelativeOrientationThreshold &&
+             delta_c >= -RelativeOrientationThreshold && delta_c < RelativeOrientationThreshold )
+        {
+            relative_orientation = true;
+        }
+    }
+
+    serialize_bool( stream, relative_orientation );
+
+    if ( relative_orientation )
+    {
+        serialize_int( stream, delta_a, -RelativeOrientationThreshold, RelativeOrientationThreshold - 1 );
+        serialize_int( stream, delta_b, -RelativeOrientationThreshold, RelativeOrientationThreshold - 1 );
+        serialize_int( stream, delta_c, -RelativeOrientationThreshold, RelativeOrientationThreshold - 1 );
+
+        cube.orientation = base.orientation;
+
+        cube.orientation.integer_a += delta_a;
+        cube.orientation.integer_b += delta_b;
+        cube.orientation.integer_c += delta_c;
+    }
+    else
+    {
+        serialize_object( stream, cube.orientation );
+
+        if ( Stream::IsReading )
+            cube.interacting = false;
+    }
+    */
+
+    serialize_object( stream, cube.orientation );
+}
+
+/*
 template <typename Stream> void serialize_cube_relative_orientation( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
     serialize_bool( stream, cube.interacting );
@@ -305,6 +459,7 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
             cube.interacting = false;
     }
 }
+*/
 
 struct CompressionSnapshotPacket : public protocol::Packet
 {
@@ -339,7 +494,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
         CubeState * cubes = nullptr;
         QuantizedCubeState * quantized_cubes = nullptr;
 
-        if ( compression_mode < COMPRESSION_MODE_QUANTIZE_POSITION )
+        if ( compression_mode < COMPRESSION_MODE_POSITION )
         {
             if ( Stream::IsWriting )
             {
@@ -400,7 +555,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_AT_REST_FLAG:
+            case COMPRESSION_MODE_LINEAR_VELOCITY_AT_REST_FLAG:
             {
                 for ( int i = 0; i < NumCubes; ++i )
                 {
@@ -420,7 +575,7 @@ struct CompressionSnapshotPacket : public protocol::Packet
             }
             break;
 
-            case COMPRESSION_MODE_QUANTIZE_POSITION:
+            case COMPRESSION_MODE_POSITION:
             {
                 for ( int i = 0; i < NumCubes; ++i )
                 {
@@ -438,6 +593,9 @@ struct CompressionSnapshotPacket : public protocol::Packet
                 CORE_ASSERT( quantized_initial_snapshot );
 
                 QuantizedCubeState * quantized_base_cubes = nullptr;
+
+//                if ( Stream::IsWriting )
+//                    printf( "encoding snapshot %d relative to baseline %d\n", sequence, base_sequence );
 
                 if ( initial )
                 {
@@ -878,6 +1036,8 @@ struct CompressionSnapshotPacket : public protocol::Packet
             break;
 
             case COMPRESSION_MODE_DELTA_RELATIVE_ORIENTATION:
+            case COMPRESSION_MODE_20PPS_WITH_LINEAR_VELOCITY:
+            case COMPRESSION_MODE_20PPS_WITH_REDUNDANT_SNAPSHOTS:
             {
                 CORE_ASSERT( quantized_initial_snapshot );
 
@@ -1202,7 +1362,7 @@ void CompressionDemo::Update()
 
         auto snapshot_packet = (CompressionSnapshotPacket*) m_compression->packet_factory.Create( COMPRESSION_SNAPSHOT_PACKET );
 
-        if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
+        if ( GetMode() < COMPRESSION_MODE_POSITION )
         {
             snapshot_packet->sequence = m_compression->send_sequence++;
             snapshot_packet->base_sequence = m_compression->snapshot_sliding_window->GetAck() + 1;
@@ -1260,7 +1420,7 @@ void CompressionDemo::Update()
         {
             auto snapshot_packet = (CompressionSnapshotPacket*) packet;
 
-            if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
+            if ( GetMode() < COMPRESSION_MODE_POSITION )
             {
                 Snapshot * snapshot = m_compression->snapshot_sequence_buffer->Find( snapshot_packet->sequence );
                 CORE_ASSERT( snapshot );
@@ -1285,7 +1445,7 @@ void CompressionDemo::Update()
         {
             auto ack_packet = (CompressionAckPacket*) packet;
 
-            if ( GetMode() < COMPRESSION_MODE_QUANTIZE_POSITION )
+            if ( GetMode() < COMPRESSION_MODE_POSITION )
             {
                 m_compression->snapshot_sliding_window->Ack( ack_packet->ack - 1 );
                 m_compression->received_ack = true;

@@ -48,6 +48,7 @@ namespace protocol
         void Align()
         {
             m_writer.WriteAlign();
+            // todo: should add align bits to bits written
         }
 
         int GetAlignBits() const
@@ -72,19 +73,19 @@ namespace protocol
             return m_writer.GetData();
         }
 
-        int GetBytesWritten() const
+        int GetBytesProcessed() const
         {
             return m_writer.GetBytesWritten();
         }
 
-        int GetBitsWritten() const
+        int GetBitsProcessed() const
         {
             return m_writer.GetBitsWritten();
         }
 
         int GetBitsRemaining() const
         {
-            return GetTotalBits() - GetBitsWritten();
+            return GetTotalBits() - GetBitsProcessed();
         }
 
         int GetTotalBits() const
@@ -138,7 +139,7 @@ namespace protocol
         enum { IsWriting = 0 };
         enum { IsReading = 1 };
 
-        ReadStream( uint8_t * buffer, int bytes ) : m_reader( buffer, bytes ), m_context( nullptr ), m_aborted( false ) {}
+        ReadStream( uint8_t * buffer, int bytes ) : m_bitsRead(0), m_reader( buffer, bytes ), m_context( nullptr ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
@@ -146,6 +147,7 @@ namespace protocol
             const int bits = core::bits_required( min, max );
             uint32_t unsigned_value = m_reader.ReadBits( bits );
             value = (int32_t) unsigned_value + min;
+            m_bitsRead += bits;
         }
 
         void SerializeBits( uint32_t & value, int bits )
@@ -154,17 +156,20 @@ namespace protocol
             CORE_ASSERT( bits <= 32 );
             uint32_t read_value = m_reader.ReadBits( bits );
             value = read_value;
+            m_bitsRead += bits;
         }
 
         void SerializeBytes( uint8_t * data, int bytes )
         {
             Align();
             m_reader.ReadBytes( data, bytes );
+            m_bitsRead += bytes * 8;
         }
 
         void Align()
         {
             m_reader.ReadAlign();
+            // todo: should probably add align bits to m_bitsRead
         }
 
         int GetAlignBits() const
@@ -179,6 +184,16 @@ namespace protocol
             SerializeBits( value, 32 );
             CORE_ASSERT( value == magic );
             return value == magic;
+        }
+
+        int GetBitsProcessed() const
+        {
+            return m_bitsRead;
+        }
+
+        int GetBytesProcessed() const
+        {
+            return m_bitsRead / 8 + ( m_bitsRead % 8 ? 1 : 0 );
         }
 
         bool IsOverflow() const
@@ -215,6 +230,7 @@ namespace protocol
 
     private:
 
+        int m_bitsRead;
         BitReader m_reader;
         const void ** m_context;
         bool m_aborted;
@@ -269,12 +285,12 @@ namespace protocol
             return true;
         }
 
-        int GetBitsWritten() const
+        int GetBitsProcessed() const
         {
             return m_bitsWritten;
         }
 
-        int GetBytesWritten() const
+        int GetBytesProcessed() const
         {
             return m_bitsWritten / 8 + ( m_bitsWritten % 8 ? 1 : 0 );
         }

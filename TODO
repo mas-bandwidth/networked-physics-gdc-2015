@@ -4,13 +4,23 @@ TODO:
 
     ---------------------------
 
-    Split apart quantize linear velocity option and at rest into two separate modes.
+    Separate out compression from delta
+
+    This way there is not an unreasonable amount of compression modes and it's not confusing.
 
     ---------------------------
 
-    Work out how many bits are used for serializing linear velocity @ 20pps
-    eg. hack up the linear quantize manually with # of bits by converting
-    explicitly to integer.
+    Need to retune relative position and orientation compression for 100ms latency.
+
+    Previously was delta encoding from only a few frames ago, hence the small levels were really helping.
+
+    Really need to perform calculations for the average position difference min/max etc.
+
+    Need the distribution of position delta, and orientation delta (in radians)
+
+    Need the distribution of the change in 100ms so I can plan a strategy...
+
+    If the distribution is such that it is large on average, as a % of the total space it's not worth it (eg. orientation)
 
     ---------------------------
 
@@ -18,6 +28,8 @@ TODO:
     updates at roughly the same rate of bandwidth adjustment as 60pps.
 
     Probably going to go with tightness hand - tuned.
+
+    Get 20pps option working with linear interpolation
 
     ---------------------------
 
@@ -43,13 +55,5 @@ TODO:
     In effect, we have traded a bit of extra bandwidth to compensate for packet loss,
     reducing the amount of playout delay buffer that is required (without the redundant sends,
     playout delay is used to compensate for packet loss...)
-
-    ---------------------------
-
-    Implement some bit counters for position, orientation, index, linear velocity
-    such that I can tell exactly how many bits is used per component, as well as
-    min/max/avg per-cube.
-
-    Add some display prints for each mode and try some tuning.
 
     ---------------------------

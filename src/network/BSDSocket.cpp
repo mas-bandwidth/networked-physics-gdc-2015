@@ -308,7 +308,7 @@ namespace network
                 continue;
             }
 
-            const int bytes = stream.GetBytesWritten();
+            const int bytes = stream.GetBytesProcessed();
             const uint8_t * data = stream.GetData();
 
             CORE_ASSERT( bytes <= m_config.maxPacketSize );

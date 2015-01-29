@@ -1,5 +1,5 @@
 
-`Wednesday Afternoon, January 28th, 2015
+Wednesday Afternoon, January 28th, 2015
 ---------------------------------------
 
     Implement function to count # of bits to send relative indices.
@@ -13,6 +13,33 @@
     If # of changed cubes is > max, then fallback to skip bits even if indices more efficient.
 
     Tuned the relative index a bit. Getting 5 bits per-index avg. This is 50% improvement. Quite good.
+
+    Split apart quantize linear velocity option and at rest into two separate modes.
+
+    Work out how many bits are used for serializing linear velocity @ 20pps
+    eg. hack up the linear quantize manually with # of bits by converting
+    explicitly to integer.
+
+    It's roughly 39 bits per-linear velocity. eg. 11 bits per-component.
+
+    Could probably be reduced further.
+
+    Make sure the ack delay is actually reasonable, for example, if there is no latency
+    the ack should be almost immediate. Surely the encoding of the quaternion
+
+    eg. print out encoding snapshot x relative to base y
+
+    Well it's only 4 frames or so.
+
+    Now in 4 frames difference, the change in position and orientation should be really small.
+
+    It seems reasonable that we should be getting better orientation compression than we are currently.
+
+    Also, seems that to get a proper delta encoding we should be adding 100ms of latency.
+
+    Added 100ms latency. Is the relative encoding of orientation actually helping at all?
+
+    Seems that it's not doing the best job. Need to bump up the relative position to 1024 from 512.
 
 
 Tuesday Morning, January 26th, 2015

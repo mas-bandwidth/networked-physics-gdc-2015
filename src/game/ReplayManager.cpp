@@ -331,7 +331,7 @@ void ReplayManager::RecordMessage( int type, protocol::Object & message )
 
     fwrite( &type, sizeof(type), 1, m_internal->file );
 
-    int bytes = stream.GetBytesWritten();
+    int bytes = stream.GetBytesProcessed();
     fwrite( &bytes, sizeof(bytes), 1, m_internal->file );
 
     fwrite( buffer, bytes, 1, m_internal->file );
