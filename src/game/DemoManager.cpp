@@ -8,6 +8,7 @@
 #include "LockstepDemo.h"
 #include "SnapshotDemo.h"
 #include "CompressionDemo.h"
+#include "DeltaDemo.h"
 #include "Render.h"
 #include "Global.h"
 #include "Console.h"
@@ -55,6 +56,10 @@ bool DemoManager::LoadDemo( const char * name )
     else if ( strcmp( name, "compression" ) == 0 )
     {
         m_demo = CORE_NEW( *m_allocator, CompressionDemo, *m_allocator );
+    }
+    else if ( strcmp( name, "delta" ) == 0 )
+    {
+        m_demo = CORE_NEW( *m_allocator, DeltaDemo, *m_allocator );
     }
     else
     {
@@ -209,102 +214,6 @@ bool DemoManager::KeyEvent( int key, int scancode, int action, int mods )
             if ( num_modes >= 10 )
             {
                 m_demo->SetMode( 9 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F1 )
-        {
-            if ( num_modes >= 11 )
-            {
-                m_demo->SetMode( 10 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F2 )
-        {
-            if ( num_modes >= 12 )
-            {
-                m_demo->SetMode( 11 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F3 )
-        {
-            if ( num_modes >= 13 )
-            {
-                m_demo->SetMode( 12 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F4 )
-        {
-            if ( num_modes >= 14 )
-            {
-                m_demo->SetMode( 13 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F5 )
-        {
-            if ( num_modes >= 15 )
-            {
-                m_demo->SetMode( 14 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F6 )
-        {
-            if ( num_modes >= 16 )
-            {
-                m_demo->SetMode( 15 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F7 )
-        {
-            if ( num_modes >= 17 )
-            {
-                m_demo->SetMode( 16 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F8 )
-        {
-            if ( num_modes >= 18 )
-            {
-                m_demo->SetMode( 17 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F9 )
-        {
-            if ( num_modes >= 19 )
-            {
-                m_demo->SetMode( 18 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F10 )
-        {
-            if ( num_modes >= 20 )
-            {
-                m_demo->SetMode( 19 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F11 )
-        {
-            if ( num_modes >= 21 )
-            {
-                m_demo->SetMode( 20 );
-                ResetDemo();
-            }
-        }
-        else if ( key == GLFW_KEY_F12 )
-        {
-            if ( num_modes >= 22 )
-            {
-                m_demo->SetMode( 21 );
                 ResetDemo();
             }
         }

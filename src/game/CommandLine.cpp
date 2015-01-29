@@ -56,6 +56,10 @@ void ProcessCommandLine()
     {
         global.console->ExecuteCommand( "load compression" );
     }
+    else if ( strcmp( commandLineBuffer, "+load delta" ) == 0 )
+    {
+        global.console->ExecuteCommand( "load delta" );
+    }
     else if ( strcmp( commandLineBuffer, "+playback" ) == 0 )
     {
         global.replayManager->StartPlayback( replayFile );

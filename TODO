@@ -1,12 +1,12 @@
 DONE:
 
-TODO:
-
-    ---------------------------
-
     Separate out compression from delta
 
     This way there is not an unreasonable amount of compression modes and it's not confusing.
+
+TODO:
+
+    Remove delta code from compression demo
 
     ---------------------------
 
@@ -21,39 +21,5 @@ TODO:
     Need the distribution of the change in 100ms so I can plan a strategy...
 
     If the distribution is such that it is large on average, as a % of the total space it's not worth it (eg. orientation)
-
-    ---------------------------
-
-    Add an adjustable tightness factor to bandwidth and adjust so 20pps
-    updates at roughly the same rate of bandwidth adjustment as 60pps.
-
-    Probably going to go with tightness hand - tuned.
-
-    Get 20pps option working with linear interpolation
-
-    ---------------------------
-
-    Need to add quantized linear velocity to quantized cube state, and for demos
-    that don't send the linear velocity need to make sure it is cleared always
-    so operator == still works.
-
-    Implement 20pps version of simulation with delta encoded linear velocity
-
-    Should be signifinantly reduced bandwidth. I would hope sub 100kbps.
-
-    ---------------------------
-
-    Implement 3 snapshots per-packet redundant version with relative encoding
-
-    Start with the oldest snapshot and encode the two next ones, this way
-    the start snapshot is closer to the baseline.
-
-    Then reduce playout delay buffer to 66ms.
-
-    Even with 10% packet loss this should work fine with the small playout delay.
-
-    In effect, we have traded a bit of extra bandwidth to compensate for packet loss,
-    reducing the amount of playout delay buffer that is required (without the redundant sends,
-    playout delay is used to compensate for packet loss...)
 
     ---------------------------

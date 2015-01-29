@@ -572,6 +572,25 @@ if not os.is "windows" then
 
     newaction
     {
+        trigger     = "delta",
+        description = "Build and run delta demo",
+        valid_kinds = premake.action.get("gmake").valid_kinds,
+        valid_languages = premake.action.get("gmake").valid_languages,
+        valid_tools = premake.action.get("gmake").valid_tools,
+     
+        execute = function ()
+            if os.execute "rm -rf output; mkdir -p output" ~= 0 then
+                os.exit(1)
+            end
+            if os.execute "make -j4 Client" ~= 0 then
+                os.exit(1)
+            end
+            os.execute "bin/Client +load delta"
+        end
+    }
+
+    newaction
+    {
         trigger     = "playback",
         description = "Playback replay recording",
         valid_kinds = premake.action.get("gmake").valid_kinds,
