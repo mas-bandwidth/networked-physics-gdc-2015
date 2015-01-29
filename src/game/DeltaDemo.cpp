@@ -21,8 +21,9 @@ static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
 static const int MaxPositionDelta = 4096;
-static const int MaxSmallestThreeDelta = 512;
+static const int MaxSmallestThreeDelta = 1024;
 static const int MaxQuaternionDelta = 1024;
+static const int MaxAxisAngleDelta = 4096;
 
 static uint64_t delta_position_accum_x[MaxPositionDelta];
 static uint64_t delta_position_accum_y[MaxPositionDelta];
@@ -36,6 +37,10 @@ static uint64_t delta_quaternion_accum_x[MaxQuaternionDelta];
 static uint64_t delta_quaternion_accum_y[MaxQuaternionDelta];
 static uint64_t delta_quaternion_accum_z[MaxQuaternionDelta];
 static uint64_t delta_quaternion_accum_w[MaxQuaternionDelta];
+
+static uint64_t delta_axis_angle_accum_x[MaxAxisAngleDelta];
+static uint64_t delta_axis_angle_accum_y[MaxAxisAngleDelta];
+static uint64_t delta_axis_angle_accum_z[MaxAxisAngleDelta];
 
 enum Context
 {
@@ -543,6 +548,13 @@ struct DeltaSnapshotPacket : public protocol::Packet
                         const int position_delta_y = core::clamp( abs( quantized_cubes[i].position_y - quantized_base_cubes[i].position_y ), 0, MaxPositionDelta - 1 );
                         const int position_delta_z = core::clamp( abs( quantized_cubes[i].position_z - quantized_base_cubes[i].position_z ), 0, MaxPositionDelta - 1 );
 
+                        CORE_ASSERT( position_delta_x >= 0 );
+                        CORE_ASSERT( position_delta_y >= 0 );
+                        CORE_ASSERT( position_delta_z >= 0 );
+                        CORE_ASSERT( position_delta_x < MaxPositionDelta );
+                        CORE_ASSERT( position_delta_y < MaxPositionDelta );
+                        CORE_ASSERT( position_delta_z < MaxPositionDelta );
+
                         delta_position_accum_x[position_delta_x]++;
                         delta_position_accum_y[position_delta_y]++;
                         delta_position_accum_z[position_delta_z]++;
@@ -550,6 +562,13 @@ struct DeltaSnapshotPacket : public protocol::Packet
                         const int smallest_three_delta_a = abs( quantized_cubes[i].orientation.integer_a - quantized_base_cubes[i].orientation.integer_a );
                         const int smallest_three_delta_b = abs( quantized_cubes[i].orientation.integer_b - quantized_base_cubes[i].orientation.integer_b );
                         const int smallest_three_delta_c = abs( quantized_cubes[i].orientation.integer_c - quantized_base_cubes[i].orientation.integer_c );
+
+                        CORE_ASSERT( smallest_three_delta_a >= 0 );
+                        CORE_ASSERT( smallest_three_delta_b >= 0 );
+                        CORE_ASSERT( smallest_three_delta_c >= 0 );
+                        CORE_ASSERT( smallest_three_delta_a < MaxSmallestThreeDelta );
+                        CORE_ASSERT( smallest_three_delta_b < MaxSmallestThreeDelta );
+                        CORE_ASSERT( smallest_three_delta_c < MaxSmallestThreeDelta );
 
                         delta_smallest_three_accum_a[smallest_three_delta_a]++;
                         delta_smallest_three_accum_b[smallest_three_delta_b]++;
@@ -564,25 +583,67 @@ struct DeltaSnapshotPacket : public protocol::Packet
                         if ( vectorial::dot( orientation, base_orientation ) < 0 )
                             orientation = -orientation;
 
-                        const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
-                        const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
-                        const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
-                        const int quaternion_w = core::clamp( ( orientation.w() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_w = core::clamp( ( orientation.w() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
 
-                        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
-                        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
-                        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
-                        const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, 1023.0f );
 
                         const int quaternion_delta_x = abs( quaternion_x - base_quaternion_x );
                         const int quaternion_delta_y = abs( quaternion_y - base_quaternion_y );
                         const int quaternion_delta_z = abs( quaternion_z - base_quaternion_z );
                         const int quaternion_delta_w = abs( quaternion_w - base_quaternion_w );
 
+                        CORE_ASSERT( quaternion_delta_x >= 0 );
+                        CORE_ASSERT( quaternion_delta_y >= 0 );
+                        CORE_ASSERT( quaternion_delta_z >= 0 );
+                        CORE_ASSERT( quaternion_delta_w >= 0 );
+                        CORE_ASSERT( quaternion_delta_x < MaxQuaternionDelta );
+                        CORE_ASSERT( quaternion_delta_y < MaxQuaternionDelta );
+                        CORE_ASSERT( quaternion_delta_z < MaxQuaternionDelta );
+                        CORE_ASSERT( quaternion_delta_w < MaxQuaternionDelta );
+
                         delta_quaternion_accum_x[quaternion_delta_x]++;
                         delta_quaternion_accum_y[quaternion_delta_y]++;
                         delta_quaternion_accum_z[quaternion_delta_z]++;
                         delta_quaternion_accum_w[quaternion_delta_w]++;
+
+                        float angle, base_angle;
+                        vectorial::vec3f axis, base_axis;
+                        orientation.to_axis_angle( axis, angle );
+                        base_orientation.to_axis_angle( base_axis, base_angle );
+
+                        vectorial::vec3f axis_angle = axis * angle;
+                        vectorial::vec3f base_axis_angle = base_axis * base_angle;
+
+                        const float pi = 3.14157f;
+
+                        const int axis_angle_x = core::clamp( (int) floor( axis_angle.x() / ( 2 * pi ) * 2047.0f + 0.5f ), -2047, 2047 );
+                        const int axis_angle_y = core::clamp( (int) floor( axis_angle.y() / ( 2 * pi ) * 2047.0f + 0.5f ), -2047, 2047 );
+                        const int axis_angle_z = core::clamp( (int) floor( axis_angle.z() / ( 2 * pi ) * 2047.0f + 0.5f ), -2047, 2047 );
+
+                        const int base_axis_angle_x = core::clamp( (int) floor( base_axis_angle.x() / ( 2 * pi ) * 2047.0f + 0.5f ), -2047, 2047 );
+                        const int base_axis_angle_y = core::clamp( (int) floor( base_axis_angle.y() / ( 2 * pi ) * 2047.0f + 0.5f ), -2047, 2047 );
+                        const int base_axis_angle_z = core::clamp( (int) floor( base_axis_angle.z() / ( 2 * pi ) * 2047.0f + 0.5f ), -2047, 2047 );
+
+                        const int axis_angle_delta_x = abs( axis_angle_x - base_axis_angle_x );
+                        const int axis_angle_delta_y = abs( axis_angle_y - base_axis_angle_y );
+                        const int axis_angle_delta_z = abs( axis_angle_z - base_axis_angle_z );
+
+                        CORE_ASSERT( axis_angle_delta_x >= 0 );
+                        CORE_ASSERT( axis_angle_delta_y >= 0 );
+                        CORE_ASSERT( axis_angle_delta_z >= 0 );
+                        CORE_ASSERT( axis_angle_delta_x < MaxAxisAngleDelta );
+                        CORE_ASSERT( axis_angle_delta_y < MaxAxisAngleDelta );
+                        CORE_ASSERT( axis_angle_delta_z < MaxAxisAngleDelta );
+
+                        delta_axis_angle_accum_x[axis_angle_delta_x]++;
+                        delta_axis_angle_accum_y[axis_angle_delta_y]++;
+                        delta_axis_angle_accum_z[axis_angle_delta_z]++;
                     }
 
                     serialize_bool( stream, changed );
@@ -1237,8 +1298,11 @@ void DumpDeltaAccumulators()
 //    for ( int i = 0; i < MaxSmallestThreeDelta; ++i )
 //        printf( "%lld,%lld,%lld\n", delta_smallest_three_accum_a[i], delta_smallest_three_accum_b[i], delta_smallest_three_accum_c[i] );
 
-    for ( int i = 0; i < MaxQuaternionDelta; ++i )
-        printf( "%lld,%lld,%lld,%lld\n", delta_quaternion_accum_x[i], delta_quaternion_accum_y[i], delta_quaternion_accum_z[i], delta_quaternion_accum_w[i] );
+//    for ( int i = 0; i < MaxQuaternionDelta; ++i )
+//        printf( "%lld,%lld,%lld,%lld\n", delta_quaternion_accum_x[i], delta_quaternion_accum_y[i], delta_quaternion_accum_z[i], delta_quaternion_accum_w[i] );
+
+    for ( int i = 0; i < MaxAxisAngleDelta; ++i )
+        printf( "%lld,%lld,%lld\n", delta_axis_angle_accum_x[i], delta_axis_angle_accum_y[i], delta_axis_angle_accum_z[i] );
 }
 
 DeltaDemo::DeltaDemo( core::Allocator & allocator )
@@ -1262,6 +1326,10 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
     memset( delta_quaternion_accum_y, 0, sizeof( delta_quaternion_accum_y ) );
     memset( delta_quaternion_accum_z, 0, sizeof( delta_quaternion_accum_z ) );
     memset( delta_quaternion_accum_w, 0, sizeof( delta_quaternion_accum_w ) );
+
+    memset( delta_axis_angle_accum_x, 0, sizeof( delta_axis_angle_accum_x ) );
+    memset( delta_axis_angle_accum_y, 0, sizeof( delta_axis_angle_accum_y ) );
+    memset( delta_axis_angle_accum_z, 0, sizeof( delta_axis_angle_accum_z ) );
 }
 
 DeltaDemo::~DeltaDemo()

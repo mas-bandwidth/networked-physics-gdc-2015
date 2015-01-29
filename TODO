@@ -8,11 +8,9 @@ DONE:
 
     Take quaternion and convert to 10 bit precision and calculate deta (4 component)
 
+    Calculate delta of axis * angle (3 component), quantized to 4096 (+/- 2*pi)
+
 TODO:
-
-    ---------------------------
-
-    Calculate delta of axis * angle (3 component), quantized to 1024
 
     ---------------------------
 
@@ -28,8 +26,24 @@ TODO:
 
     ---------------------------
 
+    Write all the files out to the output directory at once, eg. with fopen/fwrite
+    so I can be guaranteed that all data is captured from exactly the same simulation
+    and is directly comparable.
+
+    ---------------------------
+
+    Gather sample data set from blowing cubes
+
+    ---------------------------
+
+    Now write a ruby script (scripts/delta.rb) to read in the data sets and calculate the output I want, eg. % under n bit buckets for each quantity.
+
     Post process data according to power of two buckets and print out % that is covered by that bucket
 
-    Now determine power of two buckets in which all components are <= bounds, eg. % inside inside this bucket.
+    Do some basic analysis for each type and try to work out which of the quaternion representations are the best.
+
+    Also try to find the best position small vs. large bracket that covers the largest %
+
+    Also try to determine if bits per-component make sense, eg. small, large, absolute bits for x,y,z for position (probably does statistically)
 
     ---------------------------

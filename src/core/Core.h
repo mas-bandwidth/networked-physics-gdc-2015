@@ -200,7 +200,7 @@ namespace core
 
     template <typename T> T abs( const T & value )
     {
-        return value < 0 ? -value : value;
+        return ( value < 0 ) ? -value : value;
     }
 
     inline bool sequence_greater_than( uint16_t s1, uint16_t s2 )
