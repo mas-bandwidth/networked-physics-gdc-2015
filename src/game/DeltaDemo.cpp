@@ -2,6 +2,7 @@
 
 #ifdef CLIENT
 
+#include "stdlib.h"
 #include "Cubes.h"
 #include "Global.h"
 #include "Snapshot.h"
@@ -18,6 +19,23 @@ static const int RightPort = 1001;
 static const int MaxSnapshots = 256;
 static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
+
+static const int MaxPositionDelta = 4096;
+static const int MaxSmallestThreeDelta = 512;
+static const int MaxQuaternionDelta = 1024;
+
+static uint64_t delta_position_accum_x[MaxPositionDelta];
+static uint64_t delta_position_accum_y[MaxPositionDelta];
+static uint64_t delta_position_accum_z[MaxPositionDelta];
+
+static uint64_t delta_smallest_three_accum_a[MaxSmallestThreeDelta];
+static uint64_t delta_smallest_three_accum_b[MaxSmallestThreeDelta];
+static uint64_t delta_smallest_three_accum_c[MaxSmallestThreeDelta];
+
+static uint64_t delta_quaternion_accum_x[MaxQuaternionDelta];
+static uint64_t delta_quaternion_accum_y[MaxQuaternionDelta];
+static uint64_t delta_quaternion_accum_z[MaxQuaternionDelta];
+static uint64_t delta_quaternion_accum_w[MaxQuaternionDelta];
 
 enum Context
 {
@@ -518,7 +536,54 @@ struct DeltaSnapshotPacket : public protocol::Packet
                     bool changed = false;
 
                     if ( Stream::IsWriting )
+                    {
                         changed = quantized_cubes[i] != quantized_base_cubes[i];
+
+                        const int position_delta_x = core::clamp( abs( quantized_cubes[i].position_x - quantized_base_cubes[i].position_x ), 0, MaxPositionDelta - 1 );
+                        const int position_delta_y = core::clamp( abs( quantized_cubes[i].position_y - quantized_base_cubes[i].position_y ), 0, MaxPositionDelta - 1 );
+                        const int position_delta_z = core::clamp( abs( quantized_cubes[i].position_z - quantized_base_cubes[i].position_z ), 0, MaxPositionDelta - 1 );
+
+                        delta_position_accum_x[position_delta_x]++;
+                        delta_position_accum_y[position_delta_y]++;
+                        delta_position_accum_z[position_delta_z]++;
+
+                        const int smallest_three_delta_a = abs( quantized_cubes[i].orientation.integer_a - quantized_base_cubes[i].orientation.integer_a );
+                        const int smallest_three_delta_b = abs( quantized_cubes[i].orientation.integer_b - quantized_base_cubes[i].orientation.integer_b );
+                        const int smallest_three_delta_c = abs( quantized_cubes[i].orientation.integer_c - quantized_base_cubes[i].orientation.integer_c );
+
+                        delta_smallest_three_accum_a[smallest_three_delta_a]++;
+                        delta_smallest_three_accum_b[smallest_three_delta_b]++;
+                        delta_smallest_three_accum_c[smallest_three_delta_c]++;
+
+                        vectorial::quat4f orientation;
+                        vectorial::quat4f base_orientation;
+
+                        quantized_cubes[i].orientation.Save( orientation );
+                        quantized_base_cubes[i].orientation.Save( base_orientation );
+
+                        if ( vectorial::dot( orientation, base_orientation ) < 0 )
+                            orientation = -orientation;
+
+                        const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int quaternion_w = core::clamp( ( orientation.w() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+
+                        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+                        const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 0.5f * 1024 + 0.5f, 0.0f, 1023.0f );
+
+                        const int quaternion_delta_x = abs( quaternion_x - base_quaternion_x );
+                        const int quaternion_delta_y = abs( quaternion_y - base_quaternion_y );
+                        const int quaternion_delta_z = abs( quaternion_z - base_quaternion_z );
+                        const int quaternion_delta_w = abs( quaternion_w - base_quaternion_w );
+
+                        delta_quaternion_accum_x[quaternion_delta_x]++;
+                        delta_quaternion_accum_y[quaternion_delta_y]++;
+                        delta_quaternion_accum_z[quaternion_delta_z]++;
+                        delta_quaternion_accum_w[quaternion_delta_w]++;
+                    }
 
                     serialize_bool( stream, changed );
 
@@ -1164,20 +1229,50 @@ struct DeltaInternal
     QuantizedSnapshot quantized_initial_snapshot;
 };
 
+void DumpDeltaAccumulators()
+{
+//    for ( int i = 0; i < MaxPositionDelta; ++i )
+//        printf( "%lld,%lld,%lld\n", delta_position_accum_x[i], delta_position_accum_y[i], delta_position_accum_z[i] );
+
+//    for ( int i = 0; i < MaxSmallestThreeDelta; ++i )
+//        printf( "%lld,%lld,%lld\n", delta_smallest_three_accum_a[i], delta_smallest_three_accum_b[i], delta_smallest_three_accum_c[i] );
+
+    for ( int i = 0; i < MaxQuaternionDelta; ++i )
+        printf( "%lld,%lld,%lld,%lld\n", delta_quaternion_accum_x[i], delta_quaternion_accum_y[i], delta_quaternion_accum_z[i], delta_quaternion_accum_w[i] );
+}
+
 DeltaDemo::DeltaDemo( core::Allocator & allocator )
 {
     InitDeltaModes();
+
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
     m_delta = CORE_NEW( *m_allocator, DeltaInternal, *m_allocator, delta_mode_data[GetMode()] );
+  
+    memset( delta_position_accum_x, 0, sizeof( delta_position_accum_x ) );
+    memset( delta_position_accum_y, 0, sizeof( delta_position_accum_x ) );
+    memset( delta_position_accum_z, 0, sizeof( delta_position_accum_x ) );
+
+    memset( delta_smallest_three_accum_a, 0, sizeof( delta_smallest_three_accum_a ) );
+    memset( delta_smallest_three_accum_b, 0, sizeof( delta_smallest_three_accum_b ) );
+    memset( delta_smallest_three_accum_c, 0, sizeof( delta_smallest_three_accum_c ) );
+
+    memset( delta_quaternion_accum_x, 0, sizeof( delta_quaternion_accum_x ) );
+    memset( delta_quaternion_accum_y, 0, sizeof( delta_quaternion_accum_y ) );
+    memset( delta_quaternion_accum_z, 0, sizeof( delta_quaternion_accum_z ) );
+    memset( delta_quaternion_accum_w, 0, sizeof( delta_quaternion_accum_w ) );
 }
 
 DeltaDemo::~DeltaDemo()
 {
     Shutdown();
+
+    DumpDeltaAccumulators();
+ 
     CORE_DELETE( *m_allocator, DeltaInternal, m_delta );
     CORE_DELETE( *m_allocator, CubesSettings, m_settings );
+
     m_delta = nullptr;
     m_settings = nullptr;
     m_allocator = nullptr;

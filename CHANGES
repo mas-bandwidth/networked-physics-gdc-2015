@@ -1,4 +1,14 @@
 
+Wednesday Evening, January 28th, 2015
+-------------------------------------
+
+    Separate out compression from delta
+
+    This way there is not an unreasonable amount of compression modes and it's not confusing.
+
+    Remove delta code from compression demo
+
+
 Wednesday Afternoon, January 28th, 2015
 ---------------------------------------
 

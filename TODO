@@ -1,25 +1,35 @@
 DONE:
 
-    Separate out compression from delta
+    Measure position deltas in units and accumulate in static buffer. 
 
-    This way there is not an unreasonable amount of compression modes and it's not confusing.
+    Print out and capture to file.
+
+    Do the same for smallest three a,b,c
+
+    Take quaternion and convert to 10 bit precision and calculate deta (4 component)
 
 TODO:
 
-    Remove delta code from compression demo
+    ---------------------------
+
+    Calculate delta of axis * angle (3 component), quantized to 1024
 
     ---------------------------
 
-    Need to retune relative position and orientation compression for 100ms latency.
+    Calculate the relative quaternion and calculate the delta of x,y,z from zero, and w from 1.0 (4 component)
 
-    Previously was delta encoding from only a few frames ago, hence the small levels were really helping.
+    ---------------------------
 
-    Really need to perform calculations for the average position difference min/max etc.
+    Adjust smallest 3 delta such that:
 
-    Need the distribution of position delta, and orientation delta (in radians)
+        1. it ignores differences when largest value is changed
+        2. I can measure % of largest value changing vs. not
+        3. I am ensured that both quaternions are in the same quadrant first (eg. go out to quat, back off, dot, re-encode...)
 
-    Need the distribution of the change in 100ms so I can plan a strategy...
+    ---------------------------
 
-    If the distribution is such that it is large on average, as a % of the total space it's not worth it (eg. orientation)
+    Post process data according to power of two buckets and print out % that is covered by that bucket
+
+    Now determine power of two buckets in which all components are <= bounds, eg. % inside inside this bucket.
 
     ---------------------------

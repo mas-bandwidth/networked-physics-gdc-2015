@@ -2,6 +2,11 @@ WOULD BE NICE:
 
     -------------------------------------------
 
+    Maybe the smallest 3 representations need normalization, eg. the base is in the other quadrant of the quaternion
+    and this adds much more delta than is necessary?
+
+    -------------------------------------------
+
     Verify that the + 0.5f on the float conversion is the right thing to do. Why is it?!
 
     -------------------------------------------
