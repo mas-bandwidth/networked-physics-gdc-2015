@@ -1,4 +1,34 @@
 
+Friday Morning, January 30th, 2015
+----------------------------------
+
+    Measure position deltas in units and accumulate in static buffer. 
+
+    Print out and capture to file.
+
+    Do the same for smallest three a,b,c
+
+    Take quaternion and convert to 10 bit precision and calculate deta (4 component)
+
+    Calculate delta of axis * angle (3 component), quantized to 4096 (+/- 2*pi)
+
+    Make sure all bounds are reasonable, eg. not too large
+
+    Calculate the relative quaternion and calculate the delta of x,y,z from zero, and w from 1.0 (4 component)
+
+    Make sure the axis lines up, eg. invert axis and angle if axis dot base axis is < 0.
+
+    Calculate the angle difference and axis difference separately
+
+    It may be that axis/angle compress better apart, especially if there is a significant subset where axis doesn't change
+
+    Write all the files out to the output directory at once, eg. with fopen/fwrite
+    so I can be guaranteed that all data is captured from exactly the same simulation
+    and is directly comparable.
+
+    Make sure that if the cube state is equal, it does not contribute to delta statistics (this is covered with not changed flag already...)    
+
+
 Wednesday Evening, January 28th, 2015
 -------------------------------------
 

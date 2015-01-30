@@ -2,6 +2,10 @@ BUGS
 
 ------------------------------------------------------------------------
 
+Stencil shadows are broken? Caused by brew upgrade of GLFW?
+
+------------------------------------------------------------------------
+
 Compression mode seems to have a lot more latency than specified!!!
 
 ------------------------------------------------------------------------

@@ -235,7 +235,9 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.RenderCubes( view[0].cubes );
         
-        render.RenderCubeShadows( view[0].cubes );
+        // todo: these are broken!?!
+
+        //render.RenderCubeShadows( view[0].cubes );
 
         render.RenderShadowQuad();
         
@@ -261,7 +263,8 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.RenderCubes( view[0].cubes );
         
-        render.RenderCubeShadows( view[0].cubes );
+        // todo: broken!
+        //render.RenderCubeShadows( view[0].cubes );
         
         render.EndScene();
 
@@ -277,7 +280,8 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.RenderCubes( view[1].cubes );
         
-        render.RenderCubeShadows( view[1].cubes );
+        // todo: broken!
+        //render.RenderCubeShadows( view[1].cubes );
         
         render.EndScene();
 

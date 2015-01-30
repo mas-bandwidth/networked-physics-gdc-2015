@@ -1,20 +1,49 @@
 DONE:
 
-    Measure position deltas in units and accumulate in static buffer. 
-
-    Print out and capture to file.
-
-    Do the same for smallest three a,b,c
-
-    Take quaternion and convert to 10 bit precision and calculate deta (4 component)
-
-    Calculate delta of axis * angle (3 component), quantized to 4096 (+/- 2*pi)
-
 TODO:
 
     ---------------------------
 
-    Calculate the relative quaternion and calculate the delta of x,y,z from zero, and w from 1.0 (4 component)
+    Now write a ruby script (scripts/delta.rb) to read in the data sets and calculate the output I want, eg. % under n bit buckets for each quantity.
+
+    Post process data according to power of two buckets and print out % that is covered by that bucket
+
+    Do some basic analysis for each type and try to work out which of the quaternion representations are the best
+
+    Work out how to render graphs of the histograms from inside ruby
+
+    ----------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ---------------------------
+
+    Measure frequency of smallest three having the same largest component vs. having a different largest component
+
+    ---------------------------
+
+    Measure frequency of quaternion difference having w component larger than the others
 
     ---------------------------
 
@@ -26,21 +55,10 @@ TODO:
 
     ---------------------------
 
-    Write all the files out to the output directory at once, eg. with fopen/fwrite
-    so I can be guaranteed that all data is captured from exactly the same simulation
-    and is directly comparable.
-
-    ---------------------------
-
     Gather sample data set from blowing cubes
 
     ---------------------------
 
-    Now write a ruby script (scripts/delta.rb) to read in the data sets and calculate the output I want, eg. % under n bit buckets for each quantity.
-
-    Post process data according to power of two buckets and print out % that is covered by that bucket
-
-    Do some basic analysis for each type and try to work out which of the quaternion representations are the best.
 
     Also try to find the best position small vs. large bracket that covers the largest %
 
