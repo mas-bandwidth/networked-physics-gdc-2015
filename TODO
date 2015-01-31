@@ -1,67 +1,33 @@
 DONE:
 
+    Indeed the remaining "error" in the smallest three compression was that negative w
+    was not being considered.
+
+    Added another bool "quaternion_negative_w" to know when to negate the w.
+
+    There is still another error that occurs, I suspect to do with smallest 2 breaking down
+    (eg. blinking out of existence). 
+
+    I may need to send more bits or identify the largest component post 
+
 TODO:
 
-    ---------------------------
+    Should probably fix this before going further with the smallest 2 for axis.
 
-    Now write a ruby script (scripts/delta.rb) to read in the data sets and calculate the output I want, eg. % under n bit buckets for each quantity.
+    -----------------------------------------------
 
-    Post process data according to power of two buckets and print out % that is covered by that bucket
+    Write out data files: "orientation_data.txt", "position_data.txt"
 
-    Do some basic analysis for each type and try to work out which of the quaternion representations are the best
+    Write logic to setup array of objects with # of bits per-axis and per-angle
+    to use, and a function to run over the sample data and calculate average #
+    of bits per-orientation.
 
-    Work out how to render graphs of the histograms from inside ruby
+    Sort the output then by the # of bits calculated, and print out the top ten encodings for orientation.
 
-    ----------------------------
+    Just try the simplest thing for now, eg. just want to know if the simple technique is worthwhile
+    and what % of bits it saves.
 
+    Once this is done, try to answer more advanced questions:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ---------------------------
-
-    Measure frequency of smallest three having the same largest component vs. having a different largest component
-
-    ---------------------------
-
-    Measure frequency of quaternion difference having w component larger than the others
-
-    ---------------------------
-
-    Adjust smallest 3 delta such that:
-
-        1. it ignores differences when largest value is changed
-        2. I can measure % of largest value changing vs. not
-        3. I am ensured that both quaternions are in the same quadrant first (eg. go out to quat, back off, dot, re-encode...)
-
-    ---------------------------
-
-    Gather sample data set from blowing cubes
-
-    ---------------------------
-
-
-    Also try to find the best position small vs. large bracket that covers the largest %
-
-    Also try to determine if bits per-component make sense, eg. small, large, absolute bits for x,y,z for position (probably does statistically)
-
-    ---------------------------
+        - do we need 2 bits to represent smallest two for axis?
+        - if we encode smallest 2 bits then we need to encode whether or not it is negative as well

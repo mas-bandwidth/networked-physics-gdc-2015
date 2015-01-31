@@ -20,12 +20,12 @@ static const int MaxSnapshots = 256;
 static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
-static const int MaxPositionDelta = 4096;
+static const int MaxPositionDelta = 1024;
 static const int MaxSmallestThreeDelta = 1024;
-static const int MaxQuaternionDelta = 1024;
 static const int MaxAxisDelta = 1024;
 static const int MaxAngleDelta = 1024;
-static const int MaxAxisAngleDelta = 4096;
+static const int MaxAxisAngleDelta = 1024;
+static const int MaxQuaternionDelta = 1024;
 static const int MaxRelativeQuaternionDelta = 1024;
 
 static uint64_t delta_position_accum_x[MaxPositionDelta];
@@ -248,7 +248,7 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
 
     bool relative_position;
 
-    const int RelativePositionBound = 1023;
+    const int RelativePositionBound = 1024;
 
     if ( Stream::IsWriting )
     {
@@ -283,55 +283,85 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
         serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
         serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
         serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
-
-        if ( Stream::IsReading )
-            cube.interacting = false;
     }
 
-    /*
-    const int RelativeOrientationThreshold = 64;
+    int delta_quaternion_x = 0;
+    int delta_quaternion_y = 0;
+    int delta_quaternion_z = 0;
     
-    bool relative_orientation = false;
-    int delta_a, delta_b, delta_c;
+    bool quaternion_changed_x = false;
+    bool quaternion_changed_y = false;
+    bool quaternion_changed_z = false;
+    bool quaternion_negative_w = false;
 
-    if ( Stream::IsWriting && cube.orientation.largest == base.orientation.largest )
+    if ( Stream::IsWriting )
     {
-        delta_a = cube.orientation.integer_a - base.orientation.integer_a;
-        delta_b = cube.orientation.integer_b - base.orientation.integer_b;
-        delta_c = cube.orientation.integer_c - base.orientation.integer_c;
+        vectorial::quat4f orientation, base_orientation;
 
-        if ( delta_a >= -RelativeOrientationThreshold && delta_a < RelativeOrientationThreshold &&
-             delta_b >= -RelativeOrientationThreshold && delta_b < RelativeOrientationThreshold &&
-             delta_c >= -RelativeOrientationThreshold && delta_c < RelativeOrientationThreshold )
-        {
-            relative_orientation = true;
-        }
+        cube.orientation.Save( orientation );
+        base.orientation.Save( base_orientation );
+
+        if ( vectorial::dot( orientation, base_orientation ) < 0 )
+            orientation = -orientation;
+
+        const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+        const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+        const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+
+        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+
+        delta_quaternion_x = quaternion_x - base_quaternion_x;
+        delta_quaternion_y = quaternion_y - base_quaternion_y;
+        delta_quaternion_z = quaternion_z - base_quaternion_z;
+
+        quaternion_changed_x = delta_quaternion_x != 0;
+        quaternion_changed_y = delta_quaternion_y != 0;
+        quaternion_changed_z = delta_quaternion_z != 0;
+        quaternion_negative_w = orientation.w() < 0;
     }
 
-    serialize_bool( stream, relative_orientation );
+    serialize_bool( stream, quaternion_changed_x );
+    serialize_bool( stream, quaternion_changed_y );
+    serialize_bool( stream, quaternion_changed_z );
+    serialize_bool( stream, quaternion_negative_w );
 
-    if ( relative_orientation )
+    if ( quaternion_changed_x )
+        serialize_int( stream, delta_quaternion_x, - MaxQuaternionDelta, MaxQuaternionDelta - 1 );
+    
+    if ( quaternion_changed_y )
+        serialize_int( stream, delta_quaternion_y, - MaxQuaternionDelta, MaxQuaternionDelta - 1 );
+    
+    if ( quaternion_changed_z )
+        serialize_int( stream, delta_quaternion_z, - MaxQuaternionDelta, MaxQuaternionDelta - 1 );
+    
+    if ( Stream::IsReading )
     {
-        serialize_int( stream, delta_a, -RelativeOrientationThreshold, RelativeOrientationThreshold - 1 );
-        serialize_int( stream, delta_b, -RelativeOrientationThreshold, RelativeOrientationThreshold - 1 );
-        serialize_int( stream, delta_c, -RelativeOrientationThreshold, RelativeOrientationThreshold - 1 );
+        vectorial::quat4f base_orientation;
+        base.orientation.Save( base_orientation );
 
-        cube.orientation = base.orientation;
+        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
 
-        cube.orientation.integer_a += delta_a;
-        cube.orientation.integer_b += delta_b;
-        cube.orientation.integer_c += delta_c;
+        const int quaternion_x = base_quaternion_x + delta_quaternion_x;
+        const int quaternion_y = base_quaternion_y + delta_quaternion_y;
+        const int quaternion_z = base_quaternion_z + delta_quaternion_z;
+
+        const float x = core::clamp( quaternion_x / float( MaxQuaternionDelta - 1 ) * 2.0f - 1.0f, -1.0f, +1.0f );
+        const float y = core::clamp( quaternion_y / float( MaxQuaternionDelta - 1 ) * 2.0f - 1.0f, -1.0f, +1.0f );
+        const float z = core::clamp( quaternion_z / float( MaxQuaternionDelta - 1 ) * 2.0f - 1.0f, -1.0f, +1.0f );
+        
+        float w = core::clamp( sqrtf( 1 - x*x - y*y - z*z ), -1.0f, +1.0f );
+
+        if ( quaternion_negative_w )
+            w = -w;
+
+        vectorial::quat4f orientation( x, y, z, w );
+
+        cube.orientation.Load( vectorial::normalize( orientation ) );
     }
-    else
-    {
-        serialize_object( stream, cube.orientation );
-
-        if ( Stream::IsReading )
-            cube.interacting = false;
-    }
-    */
-
-    serialize_object( stream, cube.orientation );
 }
 
 /*
@@ -518,15 +548,15 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     if ( vectorial::dot( orientation, base_orientation ) < 0 )
         orientation = -orientation;
 
-    const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int quaternion_w = core::clamp( ( orientation.w() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_w = core::clamp( ( orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
 
-    const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 0.5f * 1023 + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
 
     const int quaternion_delta_x = abs( quaternion_x - base_quaternion_x );
     const int quaternion_delta_y = abs( quaternion_y - base_quaternion_y );
@@ -621,7 +651,7 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     const int relative_quaternion_delta_x = core::clamp( abs( (int) floor( relative_quaternion.x() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
     const int relative_quaternion_delta_y = core::clamp( abs( (int) floor( relative_quaternion.y() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
     const int relative_quaternion_delta_z = core::clamp( abs( (int) floor( relative_quaternion.z() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
-    const int relative_quaternion_delta_w = ( MaxRelativeQuaternionDelta - 1 ) - core::clamp( abs( (int) floor( relative_quaternion.w() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
+    const int relative_quaternion_delta_w = core::clamp( abs( (int) floor( relative_quaternion.w() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
 
     CORE_ASSERT( relative_quaternion_delta_x >= 0 );
     CORE_ASSERT( relative_quaternion_delta_y >= 0 );

@@ -1,4 +1,142 @@
 
+Saturday Lunch, January 31st, 2015
+----------------------------------
+
+    It's starting to look like separate axis angle is the best one.
+
+    The reason is that the axis is as close or better than other quat
+    representation, and 50% of the angles are *identical*.
+
+    Therefore if the axis is within a reasonable amount of bits, say 6 bits (+1 for unchanged per-component) = 7 bits
+
+    That's 21 bits per axis, and one bit for 50% of those.
+
+    So basically, if axis is < 6 bits.
+
+    Absolute:
+
+        +2 bit -- largest 
+        +9 bit -- a
+        +9 bit -- b
+        +9 bit -- c
+
+        = 29 bits
+
+    Best case relative (<50%)
+
+        +1 bit -- relative rotation
+        +1 bit -- angle the same
+        +8 bit -- delta x axis
+        +8 bit -- delta y axis
+        +8 bit -- delta z axis
+
+        = 26 bits (not great)
+
+    Best case with unit length relative axis normal encoded:
+
+        +1 bit -- relative rotation
+        +1 bit -- angle the same
+        +7 bit -- delta x axis
+        +7 bit -- delta y axis
+
+        = 16 bits (half = good!)
+
+    Worst case with unit length relative axis normal:
+
+        +1 bit -- relative rotation
+        +1 bit -- angle is different
+        +7 bit -- angle delta
+        +7 bit -- delta x axis
+        +7 bit -- delta y axis
+
+        = 23 (slight win... 3 bits)
+
+    Derivation for smallest three quaternion:
+
+        (v,v,0,0) is maximum for quaternion given largest value v.
+
+    Therefore:
+
+        v^2 + v^2 = 1
+        2v^2 = 1
+        v^2 = 1/2
+        v = 1 / sqrt(2)
+
+    Derivation for smallest two normal:
+
+        (v,v,0)
+
+        therefore same, v = 1 / sqrt(2)
+
+    This isn't relevant to *relative* encoding though, only absolute!
+
+    Maybe if the largest axis value was identified (in the target),
+    statistically speaking the smallest two values might have a smaller delta.
+
+    To determine if this is the case I need to output the base/current axis-angle (separate) as a text file
+    and then run analysis over this data.
+
+    I could also run estimates of various compression schemes over this data
+    and see how they work out, eg. different # of bits for axes, different # of bits for angle
+    and so on -- basically, the important thing is the avg % of bits, and the % of time that
+    the smaller compression scheme gets to be used.
+
+    To work this out, run a bunch of different tests with anything from 1-10 bits for angle
+    permuted with 1-10 bits for axis (that's only 100 combinations...), then output the average
+    % of bits used per-orientation.
+
+
+Saturday Morning, January 31st, 2015
+------------------------------------
+
+    Fix the problem encoding with quaternion.
+
+    Found one issue. The quaternion values were / 0.5, should be / 2.0. 
+
+    This explains the cluster @ 0.0 no change.
+
+    Re-examine delta stats post this fix...
+
+    Next, was dividing by integer instead of by float.
+
+    Fixed but there are some precision issues from dropping one component. Probably need to ensure
+    that we drop the largest component for numerical stability.
+
+
+Friday Evening, January 30th, 2015
+----------------------------------
+
+    Now write a ruby script (scripts/delta.rb) to read in the data sets and calculate the output I want, eg. % under n bit buckets for each quantity.
+
+    Post process data according to power of two buckets and print out % that is covered by that bucket
+
+    Do some basic analysis for each type and try to work out which of the quaternion representations are the best
+
+    So far it appears that with quaternion representation 90% of individual elements are the same
+
+    This seems a bit strange, but seems to occur even if equal quaternions are discarded.
+
+    It seems that it would be necessary to do this per-component, because although it is 90% that
+    each component individually won't change, it is not 90% that all components have not changed.
+
+    Design a relative encoding strategy for quaternion
+
+    This encoding probably requires:
+
+    9-10 bits per-component.
+
+    Send three components.
+
+    Infer the other one from unit length rule.
+
+    Might be best to say, OK if delta of all components is within 8 bits or so (probably common...)
+    then do relative encoding, and then per-component do the 1 bit changed, 8 bit delta.
+
+    As long as we don't run into precision issues, this seems like the best bet. 
+
+    Implement this quaternion encoding.
+
+
 Friday Morning, January 30th, 2015
 ----------------------------------
 
