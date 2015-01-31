@@ -85,6 +85,22 @@ Saturday Lunch, January 31st, 2015
     permuted with 1-10 bits for axis (that's only 100 combinations...), then output the average
     % of bits used per-orientation.
 
+    Indeed the remaining "error" in the smallest three compression was that negative w
+    was not being considered.
+
+    Added another bool "quaternion_negative_w" to know when to negate the w.
+
+    There is still another error that occurs, I suspect to do with smallest 2 breaking down
+    (eg. blinking out of existence). 
+
+    I may need to send more bits or identify the largest component post 
+
+    Unfortunately the high bits on the angle not changing was caused by programmer error.
+
+    I was not abs'ing before clamping so 50% of data was clamped to zero.
+
+    :(
+
 
 Saturday Morning, January 31st, 2015
 ------------------------------------

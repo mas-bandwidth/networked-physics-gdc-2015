@@ -590,7 +590,7 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
 
     const float pi = 3.14157f;
 
-    const int angle_delta = core::clamp( (int) floor( ( angle - base_angle ) / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f ), 0, MaxAngleDelta - 1 );
+    const int angle_delta = core::clamp( (int) floor( fabs( angle - base_angle ) / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f ), 0, MaxAngleDelta - 1 );
 
     CORE_ASSERT( angle_delta >= 0 );
     CORE_ASSERT( angle_delta < MaxAngleDelta );
@@ -646,17 +646,29 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     delta_axis_angle_accum_y[axis_angle_delta_y]++;
     delta_axis_angle_accum_z[axis_angle_delta_z]++;
 
-    vectorial::quat4f relative_quaternion = vectorial::conjugate( base_orientation ) * orientation;
+    vectorial::quat4f relative_quaternion = vectorial::conjugate( orientation ) * base_orientation;
 
     const int relative_quaternion_delta_x = core::clamp( abs( (int) floor( relative_quaternion.x() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
     const int relative_quaternion_delta_y = core::clamp( abs( (int) floor( relative_quaternion.y() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
     const int relative_quaternion_delta_z = core::clamp( abs( (int) floor( relative_quaternion.z() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
-    const int relative_quaternion_delta_w = core::clamp( abs( (int) floor( relative_quaternion.w() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
+
+    float w = core::clamp( relative_quaternion.w(), -1.0f, 1.0f );
+    if ( w > 0 )
+        w = 1 - w;
+    else
+        w = fabs( -1 - w );
+
+    const float epsilon = 0.0001f;
+    CORE_ASSERT( w >= 0 - epsilon );
+    CORE_ASSERT( w <= 1 + epsilon );
+
+    const int relative_quaternion_delta_w = core::clamp( abs( (int) floor( w * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
 
     CORE_ASSERT( relative_quaternion_delta_x >= 0 );
     CORE_ASSERT( relative_quaternion_delta_y >= 0 );
     CORE_ASSERT( relative_quaternion_delta_z >= 0 );
     CORE_ASSERT( relative_quaternion_delta_w >= 0 );
+
     CORE_ASSERT( relative_quaternion_delta_x < MaxRelativeQuaternionDelta );
     CORE_ASSERT( relative_quaternion_delta_y < MaxRelativeQuaternionDelta );
     CORE_ASSERT( relative_quaternion_delta_z < MaxRelativeQuaternionDelta );

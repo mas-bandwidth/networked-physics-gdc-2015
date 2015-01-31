@@ -1,20 +1,26 @@
 DONE:
 
-    Indeed the remaining "error" in the smallest three compression was that negative w
-    was not being considered.
+    Study compression amounts now that the error on angle is fixed
 
-    Added another bool "quaternion_negative_w" to know when to negate the w.
+    Now it seems that the most promising direction is the relative
+    quaternion option with w inferred.
 
-    There is still another error that occurs, I suspect to do with smallest 2 breaking down
-    (eg. blinking out of existence). 
-
-    I may need to send more bits or identify the largest component post 
+    (Need to remember flag for +/- w)
 
 TODO:
 
-    Should probably fix this before going further with the smallest 2 for axis.
+    Not sure about this.
 
-    -----------------------------------------------
+    The effectiveness depends on the % of orientations that have the same largest component
+
+    And the % of relative quaternions that have w as the largest component
+
+    And the % of relative quaternions that have all components under some max value
+    that makes it worthwhile. (Otherwise 10 bits per-component that isn't under the threshold = max 34 bytes)
+
+    I do feel that some gains exist. I think they will be small though. No silver bullet!
+
+    ----------------------------------------------------
 
     Write out data files: "orientation_data.txt", "position_data.txt"
 
