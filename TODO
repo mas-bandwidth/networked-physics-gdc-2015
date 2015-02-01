@@ -1,39 +1,34 @@
 DONE:
 
-    Study compression amounts now that the error on angle is fixed
-
-    Now it seems that the most promising direction is the relative
-    quaternion option with w inferred.
-
-    (Need to remember flag for +/- w)
+    Write out data files: "orientation_data.txt", "position_data.txt" etc.
 
 TODO:
 
-    Not sure about this.
+    Start analysis on relative quaternion
 
-    The effectiveness depends on the % of orientations that have the same largest component
+    It seems that if there is a small delta xyz, it is guaranteed that there is a large w.
 
-    And the % of relative quaternions that have w as the largest component
+    This is a good thing! For small delta xyz we can always rely on w being large
+    and being able to be inferred from the xyz components of the quaternion.
 
-    And the % of relative quaternions that have all components under some max value
-    that makes it worthwhile. (Otherwise 10 bits per-component that isn't under the threshold = max 34 bytes)
 
-    I do feel that some gains exist. I think they will be small though. No silver bullet!
 
-    ----------------------------------------------------
 
-    Write out data files: "orientation_data.txt", "position_data.txt"
 
-    Write logic to setup array of objects with # of bits per-axis and per-angle
-    to use, and a function to run over the sample data and calculate average #
-    of bits per-orientation.
 
-    Sort the output then by the # of bits calculated, and print out the top ten encodings for orientation.
 
-    Just try the simplest thing for now, eg. just want to know if the simple technique is worthwhile
-    and what % of bits it saves.
 
-    Once this is done, try to answer more advanced questions:
 
-        - do we need 2 bits to represent smallest two for axis?
-        - if we encode smallest 2 bits then we need to encode whether or not it is negative as well
+
+
+
+
+    Start analysis on the position.
+
+    Answer the question, which # of bits is the best for compression?
+
+    To do this, need to know how many bits for uncompressed.
+
+    Also, answer the question if its better to individually do small value
+    flags per x,y,z component, or if its best to group them together
+

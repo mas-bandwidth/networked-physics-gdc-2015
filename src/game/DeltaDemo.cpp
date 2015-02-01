@@ -20,6 +20,10 @@ static const int MaxSnapshots = 256;
 static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
+#define DELTA_STATS 1
+
+#if DELTA_STATS
+
 static const int MaxPositionDelta = 1024;
 static const int MaxSmallestThreeDelta = 1024;
 static const int MaxAxisDelta = 1024;
@@ -56,6 +60,14 @@ static uint64_t delta_relative_quaternion_accum_y[MaxRelativeQuaternionDelta];
 static uint64_t delta_relative_quaternion_accum_z[MaxRelativeQuaternionDelta];
 static uint64_t delta_relative_quaternion_accum_w[MaxRelativeQuaternionDelta];
 
+static FILE * position_values = nullptr;
+static FILE * quaternion_values = nullptr;
+static FILE * relative_quaternion_values = nullptr;
+static FILE * smallest_three_values = nullptr;
+static FILE * axis_angle_values = nullptr;
+
+#endif // #ifdef DELTA_STATS
+
 enum Context
 {
     CONTEXT_QUANTIZED_SNAPSHOT_SLIDING_WINDOW,      // quantized send snapshots (for serialize write)
@@ -88,7 +100,7 @@ struct DeltaModeData : public SnapshotModeData
     {
         playout_delay = 0.067f;
         send_rate = 60.0f;
-        latency = 0.05f;      // 100ms round trip -- IMPORTANT! Otherwise delta compression is too easy!
+        latency = 0.0f;//0.025f;      // 50ms round trip -- IMPORTANT! Otherwise delta compression is too easy!
         packet_loss = 5.0f;
         jitter = 1.0 / 60.0f;
         interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
@@ -161,87 +173,6 @@ template <typename Stream> void serialize_cube_relative_position( Stream & strea
     serialize_object( stream, cube.orientation );
 }
 
-/*
-template <typename Stream> void serialize_cube_relative_position( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
-{
-    serialize_bool( stream, cube.interacting );
-
-    bool relative_position_a;
-    bool relative_position_b;
-
-    const int RelativePositionBoundA = 63;
-    const int RelativePositionBoundB = 511;
-
-    if ( Stream::IsWriting )
-    {
-        relative_position_a = abs( cube.position_x - base.position_x ) <= RelativePositionBoundA &&
-                              abs( cube.position_y - base.position_y ) <= RelativePositionBoundA &&
-                              abs( cube.position_z - base.position_z ) <= RelativePositionBoundA;
-
-        relative_position_b = abs( cube.position_x - base.position_x ) <= RelativePositionBoundB &&
-                              abs( cube.position_y - base.position_y ) <= RelativePositionBoundB &&
-                              abs( cube.position_z - base.position_z ) <= RelativePositionBoundB;
-    }
-
-    serialize_bool( stream, relative_position_a );
-
-    if ( relative_position_a )
-    {
-        int offset_x, offset_y, offset_z;
-
-        if ( Stream::IsWriting )
-        {
-            offset_x = cube.position_x - base.position_x;
-            offset_y = cube.position_y - base.position_y;
-            offset_z = cube.position_z - base.position_z;
-        }
-
-        serialize_int( stream, offset_x, -RelativePositionBoundA, +RelativePositionBoundA );
-        serialize_int( stream, offset_y, -RelativePositionBoundA, +RelativePositionBoundA );
-        serialize_int( stream, offset_z, -RelativePositionBoundA, +RelativePositionBoundA );
-
-        cube.position_x = base.position_x + offset_x;
-        cube.position_y = base.position_y + offset_y;
-        cube.position_z = base.position_z + offset_z;
-    }
-    else
-    {
-        serialize_bool( stream, relative_position_b );
-
-        if ( relative_position_b )
-        {
-            int offset_x, offset_y, offset_z;
-
-            if ( Stream::IsWriting )
-            {
-                offset_x = cube.position_x - base.position_x;
-                offset_y = cube.position_y - base.position_y;
-                offset_z = cube.position_z - base.position_z;
-            }
-
-            serialize_int( stream, offset_x, -RelativePositionBoundB, +RelativePositionBoundB );
-            serialize_int( stream, offset_y, -RelativePositionBoundB, +RelativePositionBoundB );
-            serialize_int( stream, offset_z, -RelativePositionBoundB, +RelativePositionBoundB );
-
-            cube.position_x = base.position_x + offset_x;
-            cube.position_y = base.position_y + offset_y;
-            cube.position_z = base.position_z + offset_z;
-        }
-        else
-        {
-            serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-            serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-            serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
-
-            if ( Stream::IsReading )
-                cube.interacting = false;
-        }
-    }
-
-    serialize_object( stream, cube.orientation );
-}
-*/
-
 template <typename Stream> void serialize_cube_relative_orientation( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
     serialize_bool( stream, cube.interacting );
@@ -293,6 +224,8 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
     bool quaternion_changed_y = false;
     bool quaternion_changed_z = false;
     bool quaternion_negative_w = false;
+
+    const int MaxQuaternionDelta = 512;
 
     if ( Stream::IsWriting )
     {
@@ -364,154 +297,25 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
     }
 }
 
-/*
-template <typename Stream> void serialize_cube_relative_orientation( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
-{
-    serialize_bool( stream, cube.interacting );
+#if DELTA_STATS
 
-    bool relative_position_a;
-    bool relative_position_b;
-
-    const int RelativePositionBoundA = 63;
-    const int RelativePositionBoundB = 511;
-
-    if ( Stream::IsWriting )
-    {
-        relative_position_a = abs( cube.position_x - base.position_x ) <= RelativePositionBoundA &&
-                              abs( cube.position_y - base.position_y ) <= RelativePositionBoundA &&
-                              abs( cube.position_z - base.position_z ) <= RelativePositionBoundA;
-
-        relative_position_b = abs( cube.position_x - base.position_x ) <= RelativePositionBoundB &&
-                              abs( cube.position_y - base.position_y ) <= RelativePositionBoundB &&
-                              abs( cube.position_z - base.position_z ) <= RelativePositionBoundB;
-    }
-
-    serialize_bool( stream, relative_position_a );
-
-    if ( relative_position_a )
-    {
-        int offset_x, offset_y, offset_z;
-
-        if ( Stream::IsWriting )
-        {
-            offset_x = cube.position_x - base.position_x;
-            offset_y = cube.position_y - base.position_y;
-            offset_z = cube.position_z - base.position_z;
-        }
-
-        serialize_int( stream, offset_x, -RelativePositionBoundA, +RelativePositionBoundA );
-        serialize_int( stream, offset_y, -RelativePositionBoundA, +RelativePositionBoundA );
-        serialize_int( stream, offset_z, -RelativePositionBoundA, +RelativePositionBoundA );
-
-        cube.position_x = base.position_x + offset_x;
-        cube.position_y = base.position_y + offset_y;
-        cube.position_z = base.position_z + offset_z;
-    }
-    else
-    {
-        serialize_bool( stream, relative_position_b );
-
-        if ( relative_position_b )
-        {
-            int offset_x, offset_y, offset_z;
-
-            if ( Stream::IsWriting )
-            {
-                offset_x = cube.position_x - base.position_x;
-                offset_y = cube.position_y - base.position_y;
-                offset_z = cube.position_z - base.position_z;
-            }
-
-            serialize_int( stream, offset_x, -RelativePositionBoundB, +RelativePositionBoundB );
-            serialize_int( stream, offset_y, -RelativePositionBoundB, +RelativePositionBoundB );
-            serialize_int( stream, offset_z, -RelativePositionBoundB, +RelativePositionBoundB );
-
-            cube.position_x = base.position_x + offset_x;
-            cube.position_y = base.position_y + offset_y;
-            cube.position_z = base.position_z + offset_z;
-        }
-        else
-        {
-            serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-            serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-            serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
-
-            if ( Stream::IsReading )
-                cube.interacting = false;
-        }
-    }
-
-    const int RelativeOrientationThreshold_Large = 64;
-    const int RelativeOrientationThreshold_Small = 16;
-
-    bool relative_orientation = false;
-    bool small = false;
-    int delta_a, delta_b, delta_c;
-
-    if ( Stream::IsWriting && cube.orientation.largest == base.orientation.largest )
-    {
-        delta_a = cube.orientation.integer_a - base.orientation.integer_a;
-        delta_b = cube.orientation.integer_b - base.orientation.integer_b;
-        delta_c = cube.orientation.integer_c - base.orientation.integer_c;
-
-        if ( delta_a >= -RelativeOrientationThreshold_Large && delta_a < RelativeOrientationThreshold_Large &&
-             delta_b >= -RelativeOrientationThreshold_Large && delta_b < RelativeOrientationThreshold_Large &&
-             delta_c >= -RelativeOrientationThreshold_Large && delta_c < RelativeOrientationThreshold_Large )
-        {
-            relative_orientation = true;
-
-            const bool small_a = delta_a >= -RelativeOrientationThreshold_Small && delta_a < RelativeOrientationThreshold_Small;
-            const bool small_b = delta_b >= -RelativeOrientationThreshold_Small && delta_b < RelativeOrientationThreshold_Small;
-            const bool small_c = delta_c >= -RelativeOrientationThreshold_Small && delta_c < RelativeOrientationThreshold_Small;
-
-            small = small_a && small_b && small_c;
-        }
-    }
-
-    serialize_bool( stream, relative_orientation );
-
-    if ( relative_orientation )
-    {
-        serialize_bool( stream, small );
-
-        if ( small )
-        {
-            serialize_int( stream, delta_a, -RelativeOrientationThreshold_Small, RelativeOrientationThreshold_Small - 1 );
-            serialize_int( stream, delta_b, -RelativeOrientationThreshold_Small, RelativeOrientationThreshold_Small - 1 );
-            serialize_int( stream, delta_c, -RelativeOrientationThreshold_Small, RelativeOrientationThreshold_Small - 1 );
-        }
-        else
-        {
-            serialize_int( stream, delta_a, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-            serialize_int( stream, delta_b, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-            serialize_int( stream, delta_c, -RelativeOrientationThreshold_Large, RelativeOrientationThreshold_Large - 1 );
-        }
-
-        cube.orientation = base.orientation;
-
-        cube.orientation.integer_a += delta_a;
-        cube.orientation.integer_b += delta_b;
-        cube.orientation.integer_c += delta_c;
-    }
-    else
-    {
-        serialize_object( stream, cube.orientation );
-
-        if ( Stream::IsReading )
-            cube.interacting = false;
-    }
-}
-*/
-
-void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState & base_cube )
+void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
     // IMPORTANT: Don't count identical cubes in delta stats. These are already handled by changed flag.
-    if ( cube == base_cube )
+    if ( cube == base )
         return;
 
-    const int position_delta_x = core::clamp( abs( cube.position_x - base_cube.position_x ), 0, MaxPositionDelta - 1 );
-    const int position_delta_y = core::clamp( abs( cube.position_y - base_cube.position_y ), 0, MaxPositionDelta - 1 );
-    const int position_delta_z = core::clamp( abs( cube.position_z - base_cube.position_z ), 0, MaxPositionDelta - 1 );
+    fprintf( position_values, "%d,%d,%d,%d,%d,%d\n", 
+        cube.position_x, cube.position_y, cube.position_z,
+        base.position_x, base.position_y, base.position_z );
+
+    fprintf( smallest_three_values, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
+        cube.orientation.largest, cube.orientation.integer_a, cube.orientation.integer_b, cube.orientation.integer_c, 
+        base.orientation.largest, base.orientation.integer_a, base.orientation.integer_b, base.orientation.integer_c );
+
+    const int position_delta_x = core::clamp( abs( cube.position_x - base.position_x ), 0, MaxPositionDelta - 1 );
+    const int position_delta_y = core::clamp( abs( cube.position_y - base.position_y ), 0, MaxPositionDelta - 1 );
+    const int position_delta_z = core::clamp( abs( cube.position_z - base.position_z ), 0, MaxPositionDelta - 1 );
 
     CORE_ASSERT( position_delta_x >= 0 );
     CORE_ASSERT( position_delta_y >= 0 );
@@ -524,9 +328,9 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     delta_position_accum_y[position_delta_y]++;
     delta_position_accum_z[position_delta_z]++;
 
-    const int smallest_three_delta_a = abs( cube.orientation.integer_a - base_cube.orientation.integer_a );
-    const int smallest_three_delta_b = abs( cube.orientation.integer_b - base_cube.orientation.integer_b );
-    const int smallest_three_delta_c = abs( cube.orientation.integer_c - base_cube.orientation.integer_c );
+    const int smallest_three_delta_a = abs( cube.orientation.integer_a - base.orientation.integer_a );
+    const int smallest_three_delta_b = abs( cube.orientation.integer_b - base.orientation.integer_b );
+    const int smallest_three_delta_c = abs( cube.orientation.integer_c - base.orientation.integer_c );
 
     CORE_ASSERT( smallest_three_delta_a >= 0 );
     CORE_ASSERT( smallest_three_delta_b >= 0 );
@@ -543,7 +347,7 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     vectorial::quat4f base_orientation;
 
     cube.orientation.Save( orientation );
-    base_cube.orientation.Save( base_orientation );
+    base.orientation.Save( base_orientation );
 
     if ( vectorial::dot( orientation, base_orientation ) < 0 )
         orientation = -orientation;
@@ -557,6 +361,10 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
     const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
     const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+
+    fprintf( quaternion_values, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
+        quaternion_x, quaternion_y, quaternion_z, quaternion_w, 
+        base_quaternion_x, base_quaternion_y, base_quaternion_z, base_quaternion_w );
 
     const int quaternion_delta_x = abs( quaternion_x - base_quaternion_x );
     const int quaternion_delta_y = abs( quaternion_y - base_quaternion_y );
@@ -577,20 +385,23 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     delta_quaternion_accum_z[quaternion_delta_z]++;
     delta_quaternion_accum_w[quaternion_delta_w]++;
 
-    float angle, base_angle;
+    float float_angle, float_base_angle;
     vectorial::vec3f axis, base_axis;
-    orientation.to_axis_angle( axis, angle );
-    base_orientation.to_axis_angle( base_axis, base_angle );
+    orientation.to_axis_angle( axis, float_angle );
+    base_orientation.to_axis_angle( base_axis, float_base_angle );
 
     if ( vectorial::dot( axis, base_axis ) < 0 )
     {
         axis = -axis;
-        angle = -angle;
+        float_angle = -float_angle;
     }
+
 
     const float pi = 3.14157f;
 
-    const int angle_delta = core::clamp( (int) floor( fabs( angle - base_angle ) / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f ), 0, MaxAngleDelta - 1 );
+    const int angle = (int) floor( float_angle / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f );
+    const int base_angle = (int) floor( float_base_angle / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f );
+    const int angle_delta = core::clamp( angle - base_angle, 0, MaxAngleDelta - 1 );
 
     CORE_ASSERT( angle_delta >= 0 );
     CORE_ASSERT( angle_delta < MaxAngleDelta );
@@ -604,6 +415,10 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     const int base_axis_x = (int) floor( base_axis.x() * ( MaxAxisDelta - 1 ) + 0.5f );
     const int base_axis_y = (int) floor( base_axis.y() * ( MaxAxisDelta - 1 ) + 0.5f );
     const int base_axis_z = (int) floor( base_axis.z() * ( MaxAxisDelta - 1 ) + 0.5f );
+
+    fprintf( axis_angle_values, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
+        axis_x, axis_y, axis_z, angle, 
+        base_axis_x, base_axis_y, base_axis_z, base_angle );
 
     const int axis_delta_x = core::clamp( abs( axis_x - base_axis_x ), 0, MaxAxisDelta - 1 );
     const int axis_delta_y = core::clamp( abs( axis_y - base_axis_y ), 0, MaxAxisDelta - 1 );
@@ -646,23 +461,23 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     delta_axis_angle_accum_y[axis_angle_delta_y]++;
     delta_axis_angle_accum_z[axis_angle_delta_z]++;
 
-    vectorial::quat4f relative_quaternion = vectorial::conjugate( orientation ) * base_orientation;
+    vectorial::quat4f relative_quaternion = vectorial::conjugate( base_orientation ) * orientation;
 
-    const int relative_quaternion_delta_x = core::clamp( abs( (int) floor( relative_quaternion.x() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
-    const int relative_quaternion_delta_y = core::clamp( abs( (int) floor( relative_quaternion.y() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
-    const int relative_quaternion_delta_z = core::clamp( abs( (int) floor( relative_quaternion.z() * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
+    const int relative_quaternion_x = (int) floor( ( relative_quaternion.x() + 1.0f ) * 0.5f * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f );
+    const int relative_quaternion_y = (int) floor( ( relative_quaternion.y() + 1.0f ) * 0.5f * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f );
+    const int relative_quaternion_z = (int) floor( ( relative_quaternion.z() + 1.0f ) * 0.5f * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f );
+    const int relative_quaternion_w = (int) floor( ( relative_quaternion.w() + 1.0f ) * 0.5f * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f );
 
-    float w = core::clamp( relative_quaternion.w(), -1.0f, 1.0f );
-    if ( w > 0 )
-        w = 1 - w;
-    else
-        w = fabs( -1 - w );
+    fprintf( relative_quaternion_values, "%d,%d,%d,%d\n", 
+        relative_quaternion_x,
+        relative_quaternion_y,
+        relative_quaternion_z,
+        relative_quaternion_w );
 
-    const float epsilon = 0.0001f;
-    CORE_ASSERT( w >= 0 - epsilon );
-    CORE_ASSERT( w <= 1 + epsilon );
-
-    const int relative_quaternion_delta_w = core::clamp( abs( (int) floor( w * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f ) ), 0, MaxRelativeQuaternionDelta - 1 );
+    const int relative_quaternion_delta_x = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_x );
+    const int relative_quaternion_delta_y = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_y );
+    const int relative_quaternion_delta_z = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_z );
+    const int relative_quaternion_delta_w = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_w );
 
     CORE_ASSERT( relative_quaternion_delta_x >= 0 );
     CORE_ASSERT( relative_quaternion_delta_y >= 0 );
@@ -679,6 +494,8 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     delta_relative_quaternion_accum_z[relative_quaternion_delta_z]++;
     delta_relative_quaternion_accum_w[relative_quaternion_delta_w]++;
 }
+
+#endif // #if DELTA_STATS
 
 struct DeltaSnapshotPacket : public protocol::Packet
 {
@@ -764,8 +581,9 @@ struct DeltaSnapshotPacket : public protocol::Packet
                     if ( Stream::IsWriting )
                     {
                         changed = quantized_cubes[i] != quantized_base_cubes[i];
-
+#if DELTA_STATS
                         UpdateDeltaStats( quantized_cubes[i], quantized_base_cubes[i] );
+#endif // #if DELTA_STATS
                     }
 
                     serialize_bool( stream, changed );
@@ -1412,6 +1230,8 @@ struct DeltaInternal
     QuantizedSnapshot quantized_initial_snapshot;
 };
 
+#if DELTA_STATS
+
 void DumpDeltaAccumulators()
 {
     {
@@ -1490,6 +1310,8 @@ void DumpDeltaAccumulators()
     }
 }
 
+#endif // #if DELTA_STATS
+
 DeltaDemo::DeltaDemo( core::Allocator & allocator )
 {
     InitDeltaModes();
@@ -1499,6 +1321,8 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
     m_delta = CORE_NEW( *m_allocator, DeltaInternal, *m_allocator, delta_mode_data[GetMode()] );
   
+#if DELTA_STATS
+
     memset( delta_position_accum_x, 0, sizeof( delta_position_accum_x ) );
     memset( delta_position_accum_y, 0, sizeof( delta_position_accum_x ) );
     memset( delta_position_accum_z, 0, sizeof( delta_position_accum_x ) );
@@ -1526,13 +1350,30 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
     memset( delta_relative_quaternion_accum_y, 0, sizeof( delta_relative_quaternion_accum_y ) );
     memset( delta_relative_quaternion_accum_z, 0, sizeof( delta_relative_quaternion_accum_z ) );
     memset( delta_relative_quaternion_accum_w, 0, sizeof( delta_relative_quaternion_accum_w ) );
+
+    position_values = fopen( "output/position_values.txt", "w" );
+    quaternion_values = fopen( "output/quaternion_values.txt", "w" );
+    relative_quaternion_values = fopen( "output/relative_quaternion_values.txt", "w" );
+    smallest_three_values = fopen( "output/smallest_three_values.txt", "w" );
+    axis_angle_values = fopen( "output/axis_angle_values.txt", "w" );
+
+#endif // #if DELTA_STATS
 }
 
 DeltaDemo::~DeltaDemo()
 {
-    Shutdown();
+#if DELTA_STATS
 
     DumpDeltaAccumulators();
+
+    fclose( position_values );
+    fclose( quaternion_values ) ;
+    fclose( relative_quaternion_values );
+    fclose( smallest_three_values );
+
+#endif // #if DELTA_STATS
+
+    Shutdown();
  
     CORE_DELETE( *m_allocator, DeltaInternal, m_delta );
     CORE_DELETE( *m_allocator, CubesSettings, m_settings );

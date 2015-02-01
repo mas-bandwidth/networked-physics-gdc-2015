@@ -1,4 +1,28 @@
 
+Saturday Evening, January 31st, 2015
+------------------------------------
+
+    Study compression amounts now that the error on angle is fixed
+
+    Now it seems that the most promising direction is the relative
+    quaternion option with w inferred.
+
+    (Need to remember flag for +/- w)
+
+    Not sure about this.
+
+    The effectiveness depends on the % of orientations that have the same largest component
+
+    And the % of relative quaternions that have w as the largest component
+
+    And the % of relative quaternions that have all components under some max value
+    that makes it worthwhile. (Otherwise 10 bits per-component that isn't under the threshold = max 34 bytes)
+
+    I do feel that some gains exist. I think they will be small though. No silver bullet!
+
+    Therefore it is super important to do the analysis and determine what gives the best compression!
+
+
 Saturday Lunch, January 31st, 2015
 ----------------------------------
 
