@@ -22,6 +22,17 @@ Saturday Evening, January 31st, 2015
 
     Therefore it is super important to do the analysis and determine what gives the best compression!
 
+    Write out data files: "orientation_data.txt", "position_data.txt" etc.
+
+    Start analysis on relative quaternion
+
+    It seems that if there is a small delta xyz, it is guaranteed that there is a large w.
+
+    This is a good thing! For small delta xyz we can always rely on w being large
+    and being able to be inferred from the xyz components of the quaternion.
+
+    Getting some benefit from it.
+
 
 Saturday Lunch, January 31st, 2015
 ----------------------------------

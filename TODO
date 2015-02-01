@@ -1,17 +1,15 @@
 DONE:
 
-    Write out data files: "orientation_data.txt", "position_data.txt" etc.
 
 TODO:
 
-    Start analysis on relative quaternion
+    Try analysis on smallest 3
 
-    It seems that if there is a small delta xyz, it is guaranteed that there is a large w.
+    ----------------------------------------------------------------------------------
 
-    This is a good thing! For small delta xyz we can always rely on w being large
-    and being able to be inferred from the xyz components of the quaternion.
+    Try analysis on axis-angle (separate) with only small axis changes -- what %
 
-
+    ----------------------------------------------------------------------------------
 
 
 

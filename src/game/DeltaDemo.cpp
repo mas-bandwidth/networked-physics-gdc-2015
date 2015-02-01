@@ -100,7 +100,7 @@ struct DeltaModeData : public SnapshotModeData
     {
         playout_delay = 0.067f;
         send_rate = 60.0f;
-        latency = 0.0f;//0.025f;      // 50ms round trip -- IMPORTANT! Otherwise delta compression is too easy!
+        latency = 0.005f;      // 100ms round trip -- IMPORTANT! Otherwise delta compression is too easy!
         packet_loss = 5.0f;
         jitter = 1.0 / 60.0f;
         interpolation = SNAPSHOT_INTERPOLATION_LINEAR;

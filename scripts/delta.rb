@@ -334,7 +334,7 @@ puts
 
 puts "relative quaternion bandwidth estimate:\n\n"
 
-def relative_quaternion_bandwidth_estimate quaternion, small_component_bits = 3, large_component_bits = 7
+def relative_quaternion_bandwidth_estimate quaternion, small_component_bits, large_component_bits = 9
   num_really_small = 0
   small_threshold = ( 1 << ( small_component_bits - 1 ) ) - 1;
   if quaternion.x.abs < small_threshold
@@ -347,11 +347,11 @@ def relative_quaternion_bandwidth_estimate quaternion, small_component_bits = 3,
     num_really_small += 1
   end
   if num_really_small >= 2
-    bits = 3 + small_component_bits*num_really_small + 1
+    bits = 1 + 3 + small_component_bits*num_really_small + 1
     bits += 9 if num_really_small != 3
     return bits
   else
-    return 2 + 9 + 9 + 9
+    return 1 + 2 + 9 + 9 + 9
   end  
 end
 
@@ -389,5 +389,116 @@ puts "relative quaternion bits (6): #{relative_quaternion_bits_6} (#{(relative_q
 puts "relative quaternion bits (7): #{relative_quaternion_bits_7} (#{(relative_quaternion_bits_7/absolute_quaternion_bits.to_f*100).round(1)}%)"
 puts "relative quaternion bits (8): #{relative_quaternion_bits_8} (#{(relative_quaternion_bits_8/absolute_quaternion_bits.to_f*100).round(1)}%)"
 puts "relative quaternion bits (9): #{relative_quaternion_bits_9} (#{(relative_quaternion_bits_9/absolute_quaternion_bits.to_f*100).round(1)}%)"
+
+puts "\nsmallest three values:\n"
+
+class SmallestThree
+  attr_accessor :largest, :a, :b, :c
+  def initialize( largest, a, b, c )
+    @largest = largest
+    @a = a
+    @b = b
+    @c = c
+  end
+end
+
+smallest_three_values = []
+smallest_three_base_values = []
+
+smallest_three_same_largest = 0
+
+File.readlines( 'output/smallest_three_values.txt' ).each do |line|
+
+  values = line.split( ',' )
+
+  smallest_three = SmallestThree.new( values[0].to_i,
+                                      values[1].to_i,
+                                      values[2].to_i,
+                                      values[3].to_i );
+
+  smallest_three_values.push smallest_three
+
+  smallest_three_base = SmallestThree.new( values[4].to_i,
+                                           values[5].to_i,
+                                           values[6].to_i,
+                                           values[7].to_i );
+
+  smallest_three_base_values.push smallest_three_base
+ 
+  next if smallest_three.largest != smallest_three_base.largest
+
+  smallest_three_same_largest += 1
+
+#  puts "#{smallest_three.largest},#{smallest_three.a},#{smallest_three.b},#{smallest_three.c},#{smallest_three_base.largest},#{smallest_three_base.a},#{smallest_three_base.b},#{smallest_three_base.c}"
+
+end
+
+puts
+puts "  + same largest: #{((smallest_three_same_largest/smallest_three_values.size.to_f)*100).round(1)}%"
+puts
+
+puts "smallest three bandwidth estimate:\n\n"
+
+def smallest_three_bandwidth_estimate smallest_three, smallest_three_base, small_component_bits, large_component_bits = 9
+  return 1 + 2 + 9 + 9 + 9 if smallest_three.largest != smallest_three_base.largest
+  small_threshold = ( 1 << ( small_component_bits - 1 ) ) - 1
+  num_small = 0
+  num_small += 1 if ( smallest_three.a - smallest_three_base.a ).abs < small_threshold
+  num_small += 1 if ( smallest_three.b - smallest_three_base.b ).abs < small_threshold
+  num_small += 1 if ( smallest_three.c - smallest_three_base.c ).abs < small_threshold
+  bits = 1 + 3
+  if ( smallest_three.a - smallest_three_base.a ).abs < small_threshold
+    bits += small_component_bits
+  else
+    bits += large_component_bits
+  end
+  if ( smallest_three.b - smallest_three_base.b ).abs < small_threshold
+    bits += small_component_bits
+  else
+    bits += large_component_bits
+  end
+  if ( smallest_three.c - smallest_three_base.c ).abs < small_threshold
+    bits += small_component_bits
+  else
+    bits += large_component_bits
+  end
+  return bits
+end
+
+absolute_quaternion_bits = 0
+
+smallest_three_bits_2 = 0
+smallest_three_bits_3 = 0
+smallest_three_bits_4 = 0
+smallest_three_bits_5 = 0
+smallest_three_bits_6 = 0
+smallest_three_bits_7 = 0
+smallest_three_bits_8 = 0
+smallest_three_bits_9 = 0
+
+smallest_three_values.each_index do |index|
+  absolute_quaternion_bits += 29
+  smallest_three_bits_2 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 2 )
+  smallest_three_bits_3 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 3 )
+  smallest_three_bits_4 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 4 )
+  smallest_three_bits_5 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 5 )
+  smallest_three_bits_6 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 6 )
+  smallest_three_bits_7 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 7 )
+  smallest_three_bits_8 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 8 )
+  smallest_three_bits_9 += smallest_three_bandwidth_estimate( smallest_three_values[index], smallest_three_base_values[index], 9 )
+end
+
+puts "num smallest three values: #{smallest_three_values.size}"
+puts
+puts "absolute quaternion bits: #{absolute_quaternion_bits}"
+puts
+puts "smallest three bits (2): #{smallest_three_bits_2} (#{(smallest_three_bits_2/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (3): #{smallest_three_bits_3} (#{(smallest_three_bits_3/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (4): #{smallest_three_bits_4} (#{(smallest_three_bits_4/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (5): #{smallest_three_bits_5} (#{(smallest_three_bits_5/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (6): #{smallest_three_bits_6} (#{(smallest_three_bits_6/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (7): #{smallest_three_bits_7} (#{(smallest_three_bits_7/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (8): #{smallest_three_bits_8} (#{(smallest_three_bits_8/absolute_quaternion_bits.to_f*100).round(1)}%)"
+puts "smallest three bits (9): #{smallest_three_bits_9} (#{(smallest_three_bits_9/absolute_quaternion_bits.to_f*100).round(1)}%)"
 
 puts
