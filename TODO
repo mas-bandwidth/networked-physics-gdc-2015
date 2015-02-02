@@ -1,32 +1,13 @@
 DONE:
 
-
 TODO:
 
-    Try analysis on smallest 3
+    ----------------------------------
 
-    ----------------------------------------------------------------------------------
+    Implement the best position and orientation strategy in code
 
-    Try analysis on axis-angle (separate) with only small axis changes -- what %
+    ----------------------------------
 
-    ----------------------------------------------------------------------------------
+    Write the article!!!
 
-
-
-
-
-
-
-
-
-
-
-    Start analysis on the position.
-
-    Answer the question, which # of bits is the best for compression?
-
-    To do this, need to know how many bits for uncompressed.
-
-    Also, answer the question if its better to individually do small value
-    flags per x,y,z component, or if its best to group them together
-
+    ----------------------------------

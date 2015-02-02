@@ -611,6 +611,7 @@ struct QuantizedCubeState
     int position_y;
     int position_z;
     compressed_quaternion<9> orientation;
+    vectorial::quat4f original_orientation;     // for output/delta_float_values.txt only!
 
     void Load( const CubeState & cube_state )
     {
@@ -619,6 +620,7 @@ struct QuantizedCubeState
         position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
         position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
         orientation.Load( cube_state.orientation );
+        original_orientation = cube_state.orientation;
     }
 
     void Save( CubeState & cube_state )

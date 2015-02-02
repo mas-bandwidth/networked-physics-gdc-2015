@@ -1,4 +1,117 @@
 
+Monday Morning, February 2nd, 2015
+----------------------------------
+
+    Try analysis on axis-angle (separate) with only small axis changes
+
+    First, determine if its possible to get a win...
+
+    50% of angles are unchanged. This alone reduces 4 components to 3 straight up...
+
+    For example, send axis using 9 bits -- that's 18 bits plus 2 bits to indentify largest axis = 20 bits.
+
+    This means that for 50% of the orientation values I can shave off ~9 bits.
+
+    So on average a saving of 4.5 bits per-orientation. This is roughly in line with savings from smallest 3 delta.
+
+    I don't think this is worth exploring in detail...
+
+    Moving on to position.
+
+    Start analysis on the position
+
+    Generate uncompressed quaternion data set for dude who wants to write a blog 
+    on compressing it with geometric algebra techniques ASAP
+
+    Wait. Double check on the smallest 3 representation. What is the % of values that are identical to base?
+
+    It's actually 5%. This is statistically significant. Might be worth one bit (quat not changed)?
+
+    Read in position and base position data and print out
+
+    Number of orientation values that are the same: 20196
+
+    Number of position values that are the same: 22275
+
+    So both around 5%
+
+    This is a huge win. Separate changed bits for position and orientation are a win!!!
+
+    Skip over compression of the axis/angle representation. It's a lot of work,
+    and it's likely the geomerics guys are going to find something more kickass
+    than my approach. Let them.
+
+    Implement the one bit per-unchanged position, one bit per-unchanged quat and incorporate it
+    into the existing bandwidth estimates for orientation compression.
+
+    Verified. # of position/orientation values in data set equal to base = 0
+
+    This has reduced the efficiency of my smallest 3 quaternion compression to 84.8%
+
+    It's not a big reduction. Note that # of axis/angle angles that are identical is still 50% (!!!)
+
+    Fixed *another* bug causing the angle valuse to cluster @ 0. Fucking clamping instead of abs! MORON!!!
+
+    Finished upgrading all serialize fns to have bits for unchanged position, unchanged orientation.
+
+    Basically the idea is to determine what is the best reasonable upper bound for all components
+    before switching to absolute, and the upper bound for small per-component values to minimize
+    bandwidth.
+
+    This requires optimizing two variables, so add a class for the bandwidth estimate with input
+    with # small bits, # large bits. Generate the set of all possibilities, calculate all and sort.
+    Print out the top 10 x/y bits and % of original.
+
+    Added the framework for this. Minimized the search space from ~4500 down to < 400 with smart ranges.
+
+    Implement the position bandwidth estimate function.
+
+    First, need to calculate absolute bandwidth for position.
+
+    It is 1 bit + xy_bits * 2 + z_bits
+
+    const float PositionBoundXY = 256;
+    const float PositionBoundZ = 64;
+
+    Position resolution is 512 per-meter, so:
+
+    18 bits per xy component (signed)
+
+    15 bits per-z component (unsigned)
+
+    So that's only 3 bits more for xy components. Is the z bound a bit low maybe?
+
+    Reduced position bound for z from 64 to 32.
+
+    This means 14 bits per-z component now.
+
+    Note that the # of bits for large, and the # of bits for small should be separate for xy and z
+
+    These values behave differently!!!
+
+    So it's really an optimization of 4 variables
+
+    Done!
+
+    Result of compression analysis shows that a variable encoding of 5-9-5-9 works best (~50% of absolute)
+
+    Quaternion compression shows (~80 of original. Can't seem to easily do better than this. Moving on!)
+
+
+Sunday Morning, February 1st, 2015
+----------------------------------
+
+    Try analysis on smallest 3
+
+    Pretty good results. 
+
+    90% of smallest 3 deltas share the same largest component, so it's a good delta opportunity.
+
+    About 80% of absolute orientation with smallest 3 delta with 1 bit per-component and 5 bits per-companent (signed, eg. +/- 16 bits)
+
+    This is a better result than relative quaternion.
+
+
 Saturday Evening, January 31st, 2015
 ------------------------------------
 

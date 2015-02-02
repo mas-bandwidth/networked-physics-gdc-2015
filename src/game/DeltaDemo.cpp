@@ -62,6 +62,7 @@ static uint64_t delta_relative_quaternion_accum_w[MaxRelativeQuaternionDelta];
 
 static FILE * position_values = nullptr;
 static FILE * quaternion_values = nullptr;
+static FILE * quaternion_float_values = nullptr;
 static FILE * relative_quaternion_values = nullptr;
 static FILE * smallest_three_values = nullptr;
 static FILE * axis_angle_values = nullptr;
@@ -124,9 +125,56 @@ enum DeltaPackets
     DELTA_NUM_PACKETS
 };
 
+template <typename Stream> void serialize_cube_changed( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
+{
+    serialize_bool( stream, cube.interacting );
+
+    bool position_changed;
+    bool orientation_changed;
+
+    if ( Stream::IsWriting )
+    {
+        position_changed = cube.position_x != base.position_x || cube.position_y != base.position_y || cube.position_z != base.position_z;
+        orientation_changed = cube.orientation != base.orientation;
+    }
+
+    serialize_bool( stream, position_changed );
+    serialize_bool( stream, orientation_changed );
+
+    if ( position_changed )
+    {
+        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
+    }
+    else
+    {
+        cube.position_x = base.position_x;
+        cube.position_y = base.position_y;
+        cube.position_z = base.position_z;
+    }
+
+    if ( orientation_changed )
+        serialize_object( stream, cube.orientation );
+    else
+        cube.orientation = base.orientation;
+}
+
 template <typename Stream> void serialize_cube_relative_position( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
     serialize_bool( stream, cube.interacting );
+
+    bool position_changed;
+    bool orientation_changed;
+
+    if ( Stream::IsWriting )
+    {
+        position_changed = cube.position_x != base.position_x || cube.position_y != base.position_y || cube.position_z != base.position_z;
+        orientation_changed = cube.orientation != base.orientation;
+    }
+
+    serialize_bool( stream, position_changed );
+    serialize_bool( stream, orientation_changed );
 
     bool relative_position;
 
@@ -162,139 +210,30 @@ template <typename Stream> void serialize_cube_relative_position( Stream & strea
     }
     else
     {
-        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
-
-        if ( Stream::IsReading )
-            cube.interacting = false;
+        if ( position_changed )
+        {
+            serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+            serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+            serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
+        }
+        else
+        {
+            cube.position_x = base.position_x;
+            cube.position_y = base.position_y;
+            cube.position_z = base.position_z;
+        }
     }
 
-    serialize_object( stream, cube.orientation );
+    if ( orientation_changed )
+        serialize_object( stream, cube.orientation );
+    else
+        cube.orientation = base.orientation;
 }
 
 template <typename Stream> void serialize_cube_relative_orientation( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
-    serialize_bool( stream, cube.interacting );
-
-    bool relative_position;
-
-    const int RelativePositionBound = 1024;
-
-    if ( Stream::IsWriting )
-    {
-        relative_position = abs( cube.position_x - base.position_x ) <= RelativePositionBound &&
-                            abs( cube.position_y - base.position_y ) <= RelativePositionBound &&
-                            abs( cube.position_z - base.position_z ) <= RelativePositionBound;
-    }
-
-    serialize_bool( stream, relative_position );
-
-    if ( relative_position )
-    {
-        int offset_x, offset_y, offset_z;
-
-        if ( Stream::IsWriting )
-        {
-            offset_x = cube.position_x - base.position_x;
-            offset_y = cube.position_y - base.position_y;
-            offset_z = cube.position_z - base.position_z;
-        }
-
-        serialize_int( stream, offset_x, -RelativePositionBound, +RelativePositionBound );
-        serialize_int( stream, offset_y, -RelativePositionBound, +RelativePositionBound );
-        serialize_int( stream, offset_z, -RelativePositionBound, +RelativePositionBound );
-
-        cube.position_x = base.position_x + offset_x;
-        cube.position_y = base.position_y + offset_y;
-        cube.position_z = base.position_z + offset_z;
-    }
-    else
-    {
-        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
-    }
-
-    int delta_quaternion_x = 0;
-    int delta_quaternion_y = 0;
-    int delta_quaternion_z = 0;
-    
-    bool quaternion_changed_x = false;
-    bool quaternion_changed_y = false;
-    bool quaternion_changed_z = false;
-    bool quaternion_negative_w = false;
-
-    const int MaxQuaternionDelta = 512;
-
-    if ( Stream::IsWriting )
-    {
-        vectorial::quat4f orientation, base_orientation;
-
-        cube.orientation.Save( orientation );
-        base.orientation.Save( base_orientation );
-
-        if ( vectorial::dot( orientation, base_orientation ) < 0 )
-            orientation = -orientation;
-
-        const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-        const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-        const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-
-        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-
-        delta_quaternion_x = quaternion_x - base_quaternion_x;
-        delta_quaternion_y = quaternion_y - base_quaternion_y;
-        delta_quaternion_z = quaternion_z - base_quaternion_z;
-
-        quaternion_changed_x = delta_quaternion_x != 0;
-        quaternion_changed_y = delta_quaternion_y != 0;
-        quaternion_changed_z = delta_quaternion_z != 0;
-        quaternion_negative_w = orientation.w() < 0;
-    }
-
-    serialize_bool( stream, quaternion_changed_x );
-    serialize_bool( stream, quaternion_changed_y );
-    serialize_bool( stream, quaternion_changed_z );
-    serialize_bool( stream, quaternion_negative_w );
-
-    if ( quaternion_changed_x )
-        serialize_int( stream, delta_quaternion_x, - MaxQuaternionDelta, MaxQuaternionDelta - 1 );
-    
-    if ( quaternion_changed_y )
-        serialize_int( stream, delta_quaternion_y, - MaxQuaternionDelta, MaxQuaternionDelta - 1 );
-    
-    if ( quaternion_changed_z )
-        serialize_int( stream, delta_quaternion_z, - MaxQuaternionDelta, MaxQuaternionDelta - 1 );
-    
-    if ( Stream::IsReading )
-    {
-        vectorial::quat4f base_orientation;
-        base.orientation.Save( base_orientation );
-
-        const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-        const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-        const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-
-        const int quaternion_x = base_quaternion_x + delta_quaternion_x;
-        const int quaternion_y = base_quaternion_y + delta_quaternion_y;
-        const int quaternion_z = base_quaternion_z + delta_quaternion_z;
-
-        const float x = core::clamp( quaternion_x / float( MaxQuaternionDelta - 1 ) * 2.0f - 1.0f, -1.0f, +1.0f );
-        const float y = core::clamp( quaternion_y / float( MaxQuaternionDelta - 1 ) * 2.0f - 1.0f, -1.0f, +1.0f );
-        const float z = core::clamp( quaternion_z / float( MaxQuaternionDelta - 1 ) * 2.0f - 1.0f, -1.0f, +1.0f );
-        
-        float w = core::clamp( sqrtf( 1 - x*x - y*y - z*z ), -1.0f, +1.0f );
-
-        if ( quaternion_negative_w )
-            w = -w;
-
-        vectorial::quat4f orientation( x, y, z, w );
-
-        cube.orientation.Load( vectorial::normalize( orientation ) );
-    }
+    // todo: implement delta encoding for smallest 3 rep
+    serialize_cube_relative_position( stream, cube, base );
 }
 
 #if DELTA_STATS
@@ -305,9 +244,24 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     if ( cube == base )
         return;
 
-    fprintf( position_values, "%d,%d,%d,%d,%d,%d\n", 
-        cube.position_x, cube.position_y, cube.position_z,
-        base.position_x, base.position_y, base.position_z );
+    // IMPORTANT: Don't write position values if identical to base. We serialize one bit to handle this case (~5% of "changed" cubes)
+    if ( cube.position_x != base.position_x ||
+         cube.position_y != base.position_y ||
+         cube.position_z != base.position_z )
+    {
+        fprintf( position_values, "%d,%d,%d,%d,%d,%d\n", 
+                 cube.position_x, cube.position_y, cube.position_z,
+                 base.position_x, base.position_y, base.position_z );
+    }
+
+    // IMPORTANT: Don't write orientation values if identical to base. We serialize one bit to handle this case (~5% of "changed" cubes)
+    if ( cube.orientation.largest == base.orientation.largest && 
+         cube.orientation.integer_a == base.orientation.integer_a && 
+         cube.orientation.integer_b == base.orientation.integer_b && 
+         cube.orientation.integer_c == base.orientation.integer_c )
+    {
+        return;
+    }
 
     fprintf( smallest_three_values, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
         cube.orientation.largest, cube.orientation.integer_a, cube.orientation.integer_b, cube.orientation.integer_c, 
@@ -366,6 +320,10 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
         quaternion_x, quaternion_y, quaternion_z, quaternion_w, 
         base_quaternion_x, base_quaternion_y, base_quaternion_z, base_quaternion_w );
 
+    fprintf( quaternion_float_values, "%f,%f,%f,%f,%f,%f,%f,%f\n", 
+        cube.original_orientation.x(), cube.original_orientation.y(), cube.original_orientation.z(), cube.original_orientation.w(), 
+        base.original_orientation.x(), base.original_orientation.y(), base.original_orientation.z(), base.original_orientation.w() );
+
     const int quaternion_delta_x = abs( quaternion_x - base_quaternion_x );
     const int quaternion_delta_y = abs( quaternion_y - base_quaternion_y );
     const int quaternion_delta_z = abs( quaternion_z - base_quaternion_z );
@@ -396,12 +354,11 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
         float_angle = -float_angle;
     }
 
-
     const float pi = 3.14157f;
 
     const int angle = (int) floor( float_angle / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f );
     const int base_angle = (int) floor( float_base_angle / ( 2 * pi ) * ( MaxAngleDelta - 1 ) + 0.5f );
-    const int angle_delta = core::clamp( angle - base_angle, 0, MaxAngleDelta - 1 );
+    const int angle_delta = core::clamp( abs( angle - base_angle ), 0, MaxAngleDelta - 1 );
 
     CORE_ASSERT( angle_delta >= 0 );
     CORE_ASSERT( angle_delta < MaxAngleDelta );
@@ -461,7 +418,7 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     delta_axis_angle_accum_y[axis_angle_delta_y]++;
     delta_axis_angle_accum_z[axis_angle_delta_z]++;
 
-    vectorial::quat4f relative_quaternion = vectorial::conjugate( base_orientation ) * orientation;
+    vectorial::quat4f relative_quaternion = orientation * vectorial::conjugate( base_orientation );
 
     const int relative_quaternion_x = (int) floor( ( relative_quaternion.x() + 1.0f ) * 0.5f * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f );
     const int relative_quaternion_y = (int) floor( ( relative_quaternion.y() + 1.0f ) * 0.5f * ( MaxRelativeQuaternionDelta - 1 ) + 0.5f );
@@ -590,11 +547,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
 
                     if ( changed )
                     {
-                        serialize_bool( stream, quantized_cubes[i].interacting );
-                        serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                        serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                        serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                        serialize_object( stream, quantized_cubes[i].orientation );
+                        serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
                     }
                     else if ( Stream::IsReading )
                     {
@@ -663,11 +616,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
                             if ( changed[i] )
                             {
                                 serialize_int( stream, i, 0, NumCubes - 1 );
-                                serialize_bool( stream, quantized_cubes[i].interacting );
-                                serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                                serialize_object( stream, quantized_cubes[i].orientation );
+                                serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
                                 num_written++;
                             }
                         }
@@ -682,11 +631,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
                         {
                             int i;
                             serialize_int( stream, i, 0, NumCubes - 1 );
-                            serialize_bool( stream, quantized_cubes[i].interacting );
-                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                            serialize_object( stream, quantized_cubes[i].orientation );
+                            serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
                             changed[i] = true;
                         }
 
@@ -705,11 +650,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
 
                         if ( changed[i] )
                         {
-                            serialize_bool( stream, quantized_cubes[i].interacting );
-                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                            serialize_object( stream, quantized_cubes[i].orientation );
+                            serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
                         }
                         else if ( Stream::IsReading )
                         {
@@ -799,11 +740,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
                                     serialize_index_relative( stream, previous_index, i );
                                 }
 
-                                serialize_bool( stream, quantized_cubes[i].interacting );
-                                serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                                serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                                serialize_object( stream, quantized_cubes[i].orientation );
+                                serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
 
                                 num_written++;
 
@@ -827,11 +764,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
                             else                                
                                 serialize_index_relative( stream, previous_index, i );
 
-                            serialize_bool( stream, quantized_cubes[i].interacting );
-                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                            serialize_object( stream, quantized_cubes[i].orientation );
+                            serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
 
                             changed[i] = true;
 
@@ -853,11 +786,7 @@ struct DeltaSnapshotPacket : public protocol::Packet
 
                         if ( changed[i] )
                         {
-                            serialize_bool( stream, quantized_cubes[i].interacting );
-                            serialize_int( stream, quantized_cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                            serialize_int( stream, quantized_cubes[i].position_z, 0, +QuantizedPositionBoundZ );
-                            serialize_object( stream, quantized_cubes[i].orientation );
+                            serialize_cube_changed( stream, quantized_cubes[i], quantized_base_cubes[i] );
                         }
                         else if ( Stream::IsReading )
                         {
@@ -1353,6 +1282,7 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
 
     position_values = fopen( "output/position_values.txt", "w" );
     quaternion_values = fopen( "output/quaternion_values.txt", "w" );
+    quaternion_float_values = fopen( "output/quaternion_float_values.txt", "w" );
     relative_quaternion_values = fopen( "output/relative_quaternion_values.txt", "w" );
     smallest_three_values = fopen( "output/smallest_three_values.txt", "w" );
     axis_angle_values = fopen( "output/axis_angle_values.txt", "w" );
@@ -1368,6 +1298,7 @@ DeltaDemo::~DeltaDemo()
 
     fclose( position_values );
     fclose( quaternion_values ) ;
+    fclose( quaternion_float_values ) ;
     fclose( relative_quaternion_values );
     fclose( smallest_three_values );
 

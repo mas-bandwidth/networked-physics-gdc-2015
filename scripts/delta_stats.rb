@@ -1,4 +1,3 @@
-
 puts "\ndelta position:\n\n"
 
 delta_position_x = []
@@ -406,6 +405,7 @@ smallest_three_values = []
 smallest_three_base_values = []
 
 smallest_three_same_largest = 0
+smallest_three_identical = 0
 
 File.readlines( 'output/smallest_three_values.txt' ).each do |line|
 
@@ -422,6 +422,13 @@ File.readlines( 'output/smallest_three_values.txt' ).each do |line|
                                            values[5].to_i,
                                            values[6].to_i,
                                            values[7].to_i );
+
+  if ( smallest_three.largest == smallest_three_base.largest &&
+       smallest_three.a == smallest_three_base.a &&
+       smallest_three.b == smallest_three_base.b &&
+       smallest_three.c == smallest_three_base.c )
+    smallest_three_identical += 1
+  end
 
   smallest_three_base_values.push smallest_three_base
  
@@ -489,6 +496,8 @@ smallest_three_values.each_index do |index|
 end
 
 puts "num smallest three values: #{smallest_three_values.size}"
+puts
+puts "num identical three values: #{smallest_three_identical}"
 puts
 puts "absolute quaternion bits: #{absolute_quaternion_bits}"
 puts
