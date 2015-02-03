@@ -569,37 +569,37 @@ template <typename Stream> void serialize_index_relative( Stream & stream, int p
         CORE_ASSERT( difference > 0 );
     }
 
-    // [+0,7] (3 bits)
+    // [+1,8] (3 bits)
 
     bool threeBits;
     if ( Stream::IsWriting )
-        threeBits = difference <= 7;
+        threeBits = difference <= 8;
     serialize_bool( stream, threeBits );
     if ( threeBits )
     {
-        serialize_int( stream, difference, 0, 7 );
+        serialize_int( stream, difference, 1, 8 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    // [8,39] -> [0,31] (5 bits)
+    // [9,40] -> [0,31] (5 bits)
 
     bool sixBits;
     if ( Stream::IsWriting )
-        sixBits = difference <= 39;
+        sixBits = difference <= 40;
     serialize_bool( stream, sixBits );
     if ( sixBits )
     {
-        serialize_int( stream, difference, 8, 39 );
+        serialize_int( stream, difference, 9, 40 );
         if ( Stream::IsReading )
             current = previous + difference;
         return;
     }
 
-    // [40,NumCubes]
+    // [41,NumCubes]
 
-    serialize_int( stream, difference, 40, NumCubes - 1 );
+    serialize_int( stream, difference, 41, NumCubes - 1 );
     if ( Stream::IsReading )
         current = previous + difference;
 }

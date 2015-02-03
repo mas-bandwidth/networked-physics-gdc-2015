@@ -2,18 +2,80 @@ DONE:
 
 TODO:
 
-    Write the article. You've done enough research!
+    -------------------------------------------------------------------------
 
-    Need to move on to stateful synchronization article.
+    Clean up first draft.
 
-    Fix shadows.
+    Adjust bandwidth estimates to include packet headers where they don't currently.
 
-    Write final article (stateful synchronization)
+    Fix shadows so I can record a video of the key points, eg. with huge bandwidth,
+    post delta encode (changed), at the end with everything on.
 
-    Write conclusion article (pros/cons of each technique)
+    Are there diagrams or drawings or statistics/tables/graphs I can make to make it 
+    more visually interesting?
+
+    It's a bit of a wall of text right now.
+
+    -------------------------------------------------------------------------
+
+    Need to move on to stateful synchronization implementation.
+
+    Get it working. 
+
+    Implement priority bubble up. 
+
+    Encode position relative to center quantized integer point. smallest 3 orientation. 
+
+    Quantize and bound linear/angular velocity.
+
+    Index 10 bits. Too sparse to optimize with relative.
+
+    Can't use delta encoding. Or at least, would be really complex, you have to specify base
+    per-object, not per-snapshot as not all objects are included in snapshot, and 1 bit for
+    no base. Possible. Might we worth it. Punting.
+
+    Instead... send less frequently. Come up with heuristics. 
+
+    Use the sim on the right side to send less data, eg. space out object updates.
+
+    Maybe washing machine with hash (eg. detect wrong or changed, prioritize resend higher...)
+
+    Nice distance based function from Tony. x / (x + 1 ) or something?
+
+    Error reduction for position.
+
+    Error reduction for orientation.
+
+    -------------------------------------------------------------------------
+
+    Write stateful synchronization article
+
+    -------------------------------------------------------------------------
+
+    Write conclusion article (pros/cons of each technique) ---> SHORT
+
+    Need this because I need the arc of conclusion for the GDC talk.
+
+        1. The simulation
+
+        2. Deterministic lockstep
+
+        3. Snapshots and interpolation (plus compression)
+
+        4. Stateful synchronization
+
+        5. Conclusion: Pros/cons of each approach
+
+        6. Good question time ideally: latency hiding, client/server, implementation details etc.
+
+    -------------------------------------------------------------------------
 
     Generate a bunch of statistics, graphs, diagrams and so on to create slides.
 
     Finish slides for GDC.
 
+    -------------------------------------------------------------------------
+
     This is going to be very hard to finish this week but it *must* be finished this week.
+
+    -------------------------------------------------------------------------
