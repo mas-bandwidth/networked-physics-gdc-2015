@@ -1,4 +1,49 @@
 
+Monday Afternoon, February 2nd, 2015
+------------------------------------
+
+    Implement the best position strategy (5-9-5-9)
+
+    And then extend it to support the extra compression for not small components
+
+    Split out serialize relative position function so it's reusable.
+
+    Split out serialize orientation function so it will be reusable when written. Dummy out for now w. absolute
+
+    Update the optimize position ruby script to consider this and make sure 5-9-5-9 is still the best.
+
+    Yes it's still the best.
+
+    Best optimized position is 8.64083585062093 bits per-position component. That's fucking incredible!
+
+    Lock it down and move on!
+
+    Implement best orientation strategy (smallest 3 with 5 bits delta, eg. +/- 15), and large (+/-255)
+
+    Extend to support extra range for not small components.
+
+    Take the complicated bit of code to serialize small/large integer range
+    and move it to a function. It's a real mess of cut and paste code right now!
+
+    Done.
+
+    Break out to optimize_smallest_three.rb
+
+    Apply same optimization strategy for smallest three two-level (small/large bits)
+
+    Verify the bit ranges are optimal.
+
+    Gather statistics about it. eg. avg. bits per-orientation
+
+    Lock it down and move on!    
+
+    Best is 77.7% of absolute smallest 3 bits.
+
+    5 bits small, 8 bits large.
+
+    meaning: +/- 15 bits small, +/- 127 bits large.
+
+
 Monday Morning, February 2nd, 2015
 ----------------------------------
 

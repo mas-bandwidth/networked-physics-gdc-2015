@@ -1,4 +1,4 @@
-puts "\nposition bandwidth:\n\n"
+puts "\noptimize position:\n\n"
 
 class Position
   attr_accessor :x, :y, :z

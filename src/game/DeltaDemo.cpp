@@ -160,6 +160,40 @@ template <typename Stream> void serialize_cube_changed( Stream & stream, Quantiz
         cube.orientation = base.orientation;
 }
 
+template <typename Stream> void serialize_offset( Stream & stream, int & offset, int small_bound, int large_bound )
+{
+    if ( Stream::IsWriting )
+    {
+        CORE_ASSERT( offset >= small_bound - 1 || offset <= - small_bound );
+
+        if ( offset > 0 )
+        {   
+            offset -= small_bound - 1;
+        }
+        else
+        {
+            offset += small_bound - 1;
+            CORE_ASSERT( offset < 0 );                        // note: otherwise two offset values end up sharing the zero value
+        }
+
+        CORE_ASSERT( offset >= -large_bound );
+        CORE_ASSERT( offset <= +large_bound - 1 );
+    }
+
+    serialize_int( stream, 
+                   offset, 
+                  -large_bound,
+                   large_bound - 1 );
+
+    if ( Stream::IsReading )
+    {
+        if ( offset >= 0 )
+            offset += small_bound - 1;
+        else
+            offset -= small_bound - 1;
+    }
+}
+
 template <typename Stream> void serialize_relative_position( Stream & stream,
                                                              int & position_x,
                                                              int & position_y,
@@ -220,36 +254,7 @@ template <typename Stream> void serialize_relative_position( Stream & stream,
         }
         else
         {
-            if ( Stream::IsWriting )
-            {
-                CORE_ASSERT( offset_x >= RelativePositionBound_Small - 1 || offset_x <= - RelativePositionBound_Small );
-
-                if ( offset_x > 0 )
-                {   
-                    offset_x -= RelativePositionBound_Small - 1;
-                }
-                else
-                {
-                    offset_x += RelativePositionBound_Small - 1;
-                    CORE_ASSERT( offset_x < 0 );                        // note: otherwise two values end up sharing the zero value
-                }
-
-                CORE_ASSERT( offset_x >= -RelativePositionBound_Large );
-                CORE_ASSERT( offset_x <= +RelativePositionBound_Large - 1 );
-            }
-
-            serialize_int( stream, 
-                           offset_x,
-                          -RelativePositionBound_Large,
-                           RelativePositionBound_Large - 1 );
-
-            if ( Stream::IsReading )
-            {
-                if ( offset_x >= 0 )
-                    offset_x += RelativePositionBound_Small - 1;
-                else
-                    offset_x -= RelativePositionBound_Small - 1;
-            }
+            serialize_offset( stream, offset_x, RelativePositionBound_Small, RelativePositionBound_Large );
         }
 
         if ( relative_position_small_y )
@@ -258,36 +263,7 @@ template <typename Stream> void serialize_relative_position( Stream & stream,
         }
         else
         {
-            if ( Stream::IsWriting )
-            {
-                CORE_ASSERT( offset_y >= RelativePositionBound_Small - 1 || offset_y <= - RelativePositionBound_Small );
-
-                if ( offset_y > 0 )
-                {   
-                    offset_y -= RelativePositionBound_Small - 1;
-                }
-                else
-                {
-                    offset_y += RelativePositionBound_Small - 1;
-                    CORE_ASSERT( offset_y < 0 );                        // note: otherwise two values end up sharing the zero value
-                }
-
-                CORE_ASSERT( offset_y >= -RelativePositionBound_Large );
-                CORE_ASSERT( offset_y <= +RelativePositionBound_Large - 1 );
-            }
-
-            serialize_int( stream, 
-                           offset_y, 
-                          -RelativePositionBound_Large,
-                           RelativePositionBound_Large - 1 );
-
-            if ( Stream::IsReading )
-            {
-                if ( offset_y >= 0 )
-                    offset_y += RelativePositionBound_Small - 1;
-                else
-                    offset_y -= RelativePositionBound_Small - 1;
-            }
+            serialize_offset( stream, offset_y, RelativePositionBound_Small, RelativePositionBound_Large );
         }
 
         if ( relative_position_small_z )
@@ -296,36 +272,7 @@ template <typename Stream> void serialize_relative_position( Stream & stream,
         }
         else
         {
-            if ( Stream::IsWriting )
-            {
-                CORE_ASSERT( offset_z >= RelativePositionBound_Small - 1 || offset_z <= - RelativePositionBound_Small );
-
-                if ( offset_z > 0 )
-                {   
-                    offset_z -= RelativePositionBound_Small - 1;
-                }
-                else
-                {
-                    offset_z += RelativePositionBound_Small - 1;
-                    CORE_ASSERT( offset_z < 0 );                        // note: otherwise two values end up sharing the zero value
-                }
-
-                CORE_ASSERT( offset_z >= -RelativePositionBound_Large );
-                CORE_ASSERT( offset_z <= +RelativePositionBound_Large - 1 );
-            }
-
-            serialize_int( stream, 
-                           offset_z, 
-                          -RelativePositionBound_Large,
-                           RelativePositionBound_Large - 1 );
-
-            if ( Stream::IsReading )
-            {
-                if ( offset_z >= 0 )
-                    offset_z += RelativePositionBound_Small - 1;
-                else
-                    offset_z -= RelativePositionBound_Small - 1;
-            }
+            serialize_offset( stream, offset_z, RelativePositionBound_Small, RelativePositionBound_Large );
         }
 
         if ( Stream::IsReading )
@@ -383,7 +330,7 @@ template <typename Stream> void serialize_cube_relative_position( Stream & strea
 template <typename Stream> void serialize_relative_orientation( Stream & stream, compressed_quaternion<9> & orientation, const compressed_quaternion<9> & base_orientation )
 {
     const int RelativeOrientationBound_Small = 16;
-    const int RelativeOrientationBound_Large = 256;
+    const int RelativeOrientationBound_Large = 128;
 
     bool relative_orientation = false;
     bool small_a = false;
@@ -396,10 +343,13 @@ template <typename Stream> void serialize_relative_orientation( Stream & stream,
         const int db = orientation.integer_b - base_orientation.integer_b;
         const int dc = orientation.integer_c - base_orientation.integer_c;
 
+        const int relative_min = -RelativeOrientationBound_Large - ( RelativeOrientationBound_Small - 1 );        // -256 - 15 = -271
+        const int relative_max =  RelativeOrientationBound_Large - 1 + ( RelativeOrientationBound_Small - 1 );    // +255 + 15 = 270
+
         if ( orientation.largest == base_orientation.largest &&
-             da >= -RelativeOrientationBound_Large && da < RelativeOrientationBound_Large &&
-             db >= -RelativeOrientationBound_Large && db < RelativeOrientationBound_Large &&
-             dc >= -RelativeOrientationBound_Large && dc < RelativeOrientationBound_Large )
+             da >= relative_min && da < relative_max &&
+             db >= relative_min && db < relative_max &&
+             dc >= relative_min && dc < relative_max )
         {
             relative_orientation = true;
 
@@ -432,7 +382,7 @@ template <typename Stream> void serialize_relative_orientation( Stream & stream,
         }
         else
         {
-            serialize_int( stream, offset_a, -RelativeOrientationBound_Large, RelativeOrientationBound_Large - 1 );
+            serialize_offset( stream, offset_a, RelativeOrientationBound_Small, RelativeOrientationBound_Large );
         }
 
         if ( small_b )
@@ -441,7 +391,7 @@ template <typename Stream> void serialize_relative_orientation( Stream & stream,
         }
         else
         {
-            serialize_int( stream, offset_b, -RelativeOrientationBound_Large, RelativeOrientationBound_Large - 1 );
+            serialize_offset( stream, offset_b, RelativeOrientationBound_Small, RelativeOrientationBound_Large );
         }
 
         if ( small_c )
@@ -450,7 +400,7 @@ template <typename Stream> void serialize_relative_orientation( Stream & stream,
         }
         else
         {
-            serialize_int( stream, offset_c, -RelativeOrientationBound_Large, RelativeOrientationBound_Large - 1 );
+            serialize_offset( stream, offset_c, RelativeOrientationBound_Small, RelativeOrientationBound_Large );
         }
 
         if ( Stream::IsReading )
