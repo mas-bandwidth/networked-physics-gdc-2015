@@ -6,7 +6,7 @@ delta_position_z = []
 delta_position_total_x = 0
 delta_position_total_y = 0
 delta_position_total_z = 0
-File.readlines( 'output/delta_position.txt' ).each do |line|
+File.readlines( 'scripts/delta_position.txt' ).each do |line|
   values = line.split( ',' )
   position_x = values[0].to_i
   position_y = values[1].to_i
@@ -38,7 +38,7 @@ puts "\ndelta angle:\n\n"
 
 delta_angle = []
 delta_angle_total = 0
-File.readlines( 'output/delta_angle.txt' ).each do |line|
+File.readlines( 'scripts/delta_angle.txt' ).each do |line|
   value = line.to_i
   delta_angle.push value
   delta_angle_total += value
@@ -61,7 +61,7 @@ delta_axis_z = []
 delta_axis_total_x = 0
 delta_axis_total_y = 0
 delta_axis_total_z = 0
-File.readlines( 'output/delta_axis.txt' ).each do |line|
+File.readlines( 'scripts/delta_axis.txt' ).each do |line|
   values = line.split( ',' )
   axis_x = values[0].to_i
   axis_y = values[1].to_i
@@ -97,7 +97,7 @@ delta_axis_angle_z = []
 delta_axis_angle_total_x = 0
 delta_axis_angle_total_y = 0
 delta_axis_angle_total_z = 0
-File.readlines( 'output/delta_axis_angle.txt' ).each do |line|
+File.readlines( 'scripts/delta_axis_angle.txt' ).each do |line|
   values = line.split( ',' )
   axis_angle_x = values[0].to_i
   axis_angle_y = values[1].to_i
@@ -133,7 +133,7 @@ delta_smallest_three_z = []
 delta_smallest_three_total_x = 0
 delta_smallest_three_total_y = 0
 delta_smallest_three_total_z = 0
-File.readlines( 'output/delta_smallest_three.txt' ).each do |line|
+File.readlines( 'scripts/delta_smallest_three.txt' ).each do |line|
   values = line.split( ',' )
   smallest_three_x = values[0].to_i
   smallest_three_y = values[1].to_i
@@ -171,7 +171,7 @@ delta_quaternion_total_x = 0
 delta_quaternion_total_y = 0
 delta_quaternion_total_z = 0
 delta_quaternion_total_w = 0
-File.readlines( 'output/delta_quaternion.txt' ).each do |line|
+File.readlines( 'scripts/delta_quaternion.txt' ).each do |line|
   values = line.split( ',' )
   quaternion_x = values[0].to_i
   quaternion_y = values[1].to_i
@@ -215,7 +215,7 @@ delta_relative_quaternion_total_x = 0
 delta_relative_quaternion_total_y = 0
 delta_relative_quaternion_total_z = 0
 delta_relative_quaternion_total_w = 0
-File.readlines( 'output/delta_relative_quaternion.txt' ).each do |line|
+File.readlines( 'scripts/delta_relative_quaternion.txt' ).each do |line|
   values = line.split( ',' )
   relative_quaternion_x = values[0].to_i
   relative_quaternion_y = values[1].to_i
@@ -275,7 +275,7 @@ relative_quaternion_two_or_more_really_small = 0
 
 relative_quaternion_values = []
 
-File.readlines( 'output/relative_quaternion_values.txt' ).each do |line|
+File.readlines( 'scripts/relative_quaternion_values.txt' ).each do |line|
 
   values = line.split( ',' )
 
@@ -407,7 +407,7 @@ smallest_three_base_values = []
 smallest_three_same_largest = 0
 smallest_three_identical = 0
 
-File.readlines( 'output/smallest_three_values.txt' ).each do |line|
+File.readlines( 'scripts/smallest_three_values.txt' ).each do |line|
 
   values = line.split( ',' )
 

@@ -20,7 +20,7 @@ static const int MaxSnapshots = 256;
 static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
-#define DELTA_STATS 1
+//#define DELTA_STATS 1
 
 #if DELTA_STATS
 
@@ -160,6 +160,189 @@ template <typename Stream> void serialize_cube_changed( Stream & stream, Quantiz
         cube.orientation = base.orientation;
 }
 
+template <typename Stream> void serialize_relative_position( Stream & stream,
+                                                             int & position_x,
+                                                             int & position_y,
+                                                             int & position_z,
+                                                             int base_position_x,
+                                                             int base_position_y,
+                                                             int base_position_z )
+{
+    const int RelativePositionBound_Small = 16;
+    const int RelativePositionBound_Large = 256;
+
+    bool relative_position = false;
+    bool relative_position_small_x = false;
+    bool relative_position_small_y = false;
+    bool relative_position_small_z = false;
+
+    if ( Stream::IsWriting )
+    {
+        const int dx = position_x - base_position_x;
+        const int dy = position_y - base_position_y;
+        const int dz = position_z - base_position_z;
+
+        const int relative_min = -RelativePositionBound_Large - ( RelativePositionBound_Small - 1 );        // -256 - 15 = -271
+        const int relative_max =  RelativePositionBound_Large - 1 + ( RelativePositionBound_Small - 1 );    // +255 + 15 = 270
+
+        relative_position = dx >= relative_min && dx <= relative_max &&
+                            dy >= relative_min && dy <= relative_max &&
+                            dz >= relative_min && dz <= relative_max;
+
+        if ( relative_position )
+        {
+            relative_position_small_x = dx >= -RelativePositionBound_Small && dx < RelativePositionBound_Small;
+            relative_position_small_y = dy >= -RelativePositionBound_Small && dy < RelativePositionBound_Small;
+            relative_position_small_z = dz >= -RelativePositionBound_Small && dz < RelativePositionBound_Small;
+        }
+    }
+
+    serialize_bool( stream, relative_position );
+
+    if ( relative_position )
+    {
+        serialize_bool( stream, relative_position_small_x );
+        serialize_bool( stream, relative_position_small_y );
+        serialize_bool( stream, relative_position_small_z );
+
+        int offset_x, offset_y, offset_z;
+
+        if ( Stream::IsWriting )
+        {
+            offset_x = position_x - base_position_x;
+            offset_y = position_y - base_position_y;
+            offset_z = position_z - base_position_z;
+        }
+
+        if ( relative_position_small_x )
+        {
+            serialize_int( stream, offset_x, -RelativePositionBound_Small, RelativePositionBound_Small - 1 );
+        }
+        else
+        {
+            if ( Stream::IsWriting )
+            {
+                CORE_ASSERT( offset_x >= RelativePositionBound_Small - 1 || offset_x <= - RelativePositionBound_Small );
+
+                if ( offset_x > 0 )
+                {   
+                    offset_x -= RelativePositionBound_Small - 1;
+                }
+                else
+                {
+                    offset_x += RelativePositionBound_Small - 1;
+                    CORE_ASSERT( offset_x < 0 );                        // note: otherwise two values end up sharing the zero value
+                }
+
+                CORE_ASSERT( offset_x >= -RelativePositionBound_Large );
+                CORE_ASSERT( offset_x <= +RelativePositionBound_Large - 1 );
+            }
+
+            serialize_int( stream, 
+                           offset_x,
+                          -RelativePositionBound_Large,
+                           RelativePositionBound_Large - 1 );
+
+            if ( Stream::IsReading )
+            {
+                if ( offset_x >= 0 )
+                    offset_x += RelativePositionBound_Small - 1;
+                else
+                    offset_x -= RelativePositionBound_Small - 1;
+            }
+        }
+
+        if ( relative_position_small_y )
+        {
+            serialize_int( stream, offset_y, -RelativePositionBound_Small, RelativePositionBound_Small - 1 );
+        }
+        else
+        {
+            if ( Stream::IsWriting )
+            {
+                CORE_ASSERT( offset_y >= RelativePositionBound_Small - 1 || offset_y <= - RelativePositionBound_Small );
+
+                if ( offset_y > 0 )
+                {   
+                    offset_y -= RelativePositionBound_Small - 1;
+                }
+                else
+                {
+                    offset_y += RelativePositionBound_Small - 1;
+                    CORE_ASSERT( offset_y < 0 );                        // note: otherwise two values end up sharing the zero value
+                }
+
+                CORE_ASSERT( offset_y >= -RelativePositionBound_Large );
+                CORE_ASSERT( offset_y <= +RelativePositionBound_Large - 1 );
+            }
+
+            serialize_int( stream, 
+                           offset_y, 
+                          -RelativePositionBound_Large,
+                           RelativePositionBound_Large - 1 );
+
+            if ( Stream::IsReading )
+            {
+                if ( offset_y >= 0 )
+                    offset_y += RelativePositionBound_Small - 1;
+                else
+                    offset_y -= RelativePositionBound_Small - 1;
+            }
+        }
+
+        if ( relative_position_small_z )
+        {
+            serialize_int( stream, offset_z, -RelativePositionBound_Small, RelativePositionBound_Small - 1 );
+        }
+        else
+        {
+            if ( Stream::IsWriting )
+            {
+                CORE_ASSERT( offset_z >= RelativePositionBound_Small - 1 || offset_z <= - RelativePositionBound_Small );
+
+                if ( offset_z > 0 )
+                {   
+                    offset_z -= RelativePositionBound_Small - 1;
+                }
+                else
+                {
+                    offset_z += RelativePositionBound_Small - 1;
+                    CORE_ASSERT( offset_z < 0 );                        // note: otherwise two values end up sharing the zero value
+                }
+
+                CORE_ASSERT( offset_z >= -RelativePositionBound_Large );
+                CORE_ASSERT( offset_z <= +RelativePositionBound_Large - 1 );
+            }
+
+            serialize_int( stream, 
+                           offset_z, 
+                          -RelativePositionBound_Large,
+                           RelativePositionBound_Large - 1 );
+
+            if ( Stream::IsReading )
+            {
+                if ( offset_z >= 0 )
+                    offset_z += RelativePositionBound_Small - 1;
+                else
+                    offset_z -= RelativePositionBound_Small - 1;
+            }
+        }
+
+        if ( Stream::IsReading )
+        {
+            position_x = base_position_x + offset_x;
+            position_y = base_position_y + offset_y;
+            position_z = base_position_z + offset_z;
+        }
+    }
+    else
+    {
+        serialize_int( stream, position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
+        serialize_int( stream, position_z, 0, +QuantizedPositionBoundZ );
+    }
+}
+
 template <typename Stream> void serialize_cube_relative_position( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
     serialize_bool( stream, cube.interacting );
@@ -176,64 +359,149 @@ template <typename Stream> void serialize_cube_relative_position( Stream & strea
     serialize_bool( stream, position_changed );
     serialize_bool( stream, orientation_changed );
 
-    bool relative_position;
-
-    const int RelativePositionBound = 1023;
-
-    if ( Stream::IsWriting )
+    if ( position_changed )
     {
-        relative_position = abs( cube.position_x - base.position_x ) <= RelativePositionBound &&
-                            abs( cube.position_y - base.position_y ) <= RelativePositionBound &&
-                            abs( cube.position_z - base.position_z ) <= RelativePositionBound;
+        serialize_relative_position( stream, cube.position_x, cube.position_y, cube.position_z, base.position_x, base.position_y, base.position_z );
     }
-
-    serialize_bool( stream, relative_position );
-
-    if ( relative_position )
+    else if ( Stream::IsReading )
     {
-        int offset_x, offset_y, offset_z;
-
-        if ( Stream::IsWriting )
-        {
-            offset_x = cube.position_x - base.position_x;
-            offset_y = cube.position_y - base.position_y;
-            offset_z = cube.position_z - base.position_z;
-        }
-
-        serialize_int( stream, offset_x, -RelativePositionBound, +RelativePositionBound );
-        serialize_int( stream, offset_y, -RelativePositionBound, +RelativePositionBound );
-        serialize_int( stream, offset_z, -RelativePositionBound, +RelativePositionBound );
-
-        cube.position_x = base.position_x + offset_x;
-        cube.position_y = base.position_y + offset_y;
-        cube.position_z = base.position_z + offset_z;
-    }
-    else
-    {
-        if ( position_changed )
-        {
-            serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-            serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-            serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
-        }
-        else
-        {
-            cube.position_x = base.position_x;
-            cube.position_y = base.position_y;
-            cube.position_z = base.position_z;
-        }
+        cube.position_x = base.position_x;
+        cube.position_y = base.position_y;
+        cube.position_z = base.position_z;
     }
 
     if ( orientation_changed )
+    {
         serialize_object( stream, cube.orientation );
+    }
     else
+    {
         cube.orientation = base.orientation;
+    }
+}
+
+template <typename Stream> void serialize_relative_orientation( Stream & stream, compressed_quaternion<9> & orientation, const compressed_quaternion<9> & base_orientation )
+{
+    const int RelativeOrientationBound_Small = 16;
+    const int RelativeOrientationBound_Large = 256;
+
+    bool relative_orientation = false;
+    bool small_a = false;
+    bool small_b = false;
+    bool small_c = false;
+
+    if ( Stream::IsWriting )
+    {
+        const int da = orientation.integer_a - base_orientation.integer_a;
+        const int db = orientation.integer_b - base_orientation.integer_b;
+        const int dc = orientation.integer_c - base_orientation.integer_c;
+
+        if ( orientation.largest == base_orientation.largest &&
+             da >= -RelativeOrientationBound_Large && da < RelativeOrientationBound_Large &&
+             db >= -RelativeOrientationBound_Large && db < RelativeOrientationBound_Large &&
+             dc >= -RelativeOrientationBound_Large && dc < RelativeOrientationBound_Large )
+        {
+            relative_orientation = true;
+
+            small_a = da >= -RelativeOrientationBound_Small && da < RelativeOrientationBound_Small;
+            small_b = db >= -RelativeOrientationBound_Small && db < RelativeOrientationBound_Small;
+            small_c = dc >= -RelativeOrientationBound_Small && dc < RelativeOrientationBound_Small;
+        }
+    }
+
+    serialize_bool( stream, relative_orientation );
+
+    if ( relative_orientation )
+    {
+        serialize_bool( stream, small_a );
+        serialize_bool( stream, small_b );
+        serialize_bool( stream, small_c );
+
+        int offset_a, offset_b, offset_c;
+
+        if ( Stream::IsWriting )
+        {
+            offset_a = orientation.integer_a - base_orientation.integer_a;
+            offset_b = orientation.integer_b - base_orientation.integer_b;
+            offset_c = orientation.integer_c - base_orientation.integer_c;
+        }
+
+        if ( small_a )
+        {
+            serialize_int( stream, offset_a, -RelativeOrientationBound_Small, RelativeOrientationBound_Small - 1 );
+        }
+        else
+        {
+            serialize_int( stream, offset_a, -RelativeOrientationBound_Large, RelativeOrientationBound_Large - 1 );
+        }
+
+        if ( small_b )
+        {
+            serialize_int( stream, offset_b, -RelativeOrientationBound_Small, RelativeOrientationBound_Small - 1 );
+        }
+        else
+        {
+            serialize_int( stream, offset_b, -RelativeOrientationBound_Large, RelativeOrientationBound_Large - 1 );
+        }
+
+        if ( small_c )
+        {
+            serialize_int( stream, offset_c, -RelativeOrientationBound_Small, RelativeOrientationBound_Small - 1 );
+        }
+        else
+        {
+            serialize_int( stream, offset_c, -RelativeOrientationBound_Large, RelativeOrientationBound_Large - 1 );
+        }
+
+        if ( Stream::IsReading )
+        {
+            orientation.largest = base_orientation.largest;
+            orientation.integer_a = base_orientation.integer_a + offset_a;
+            orientation.integer_b = base_orientation.integer_b + offset_b;
+            orientation.integer_c = base_orientation.integer_c + offset_c;
+        }
+    }
+    else 
+    {
+        serialize_object( stream, orientation );
+    }
 }
 
 template <typename Stream> void serialize_cube_relative_orientation( Stream & stream, QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
-    // todo: implement delta encoding for smallest 3 rep
-    serialize_cube_relative_position( stream, cube, base );
+    serialize_bool( stream, cube.interacting );
+
+    bool position_changed;
+    bool orientation_changed;
+
+    if ( Stream::IsWriting )
+    {
+        position_changed = cube.position_x != base.position_x || cube.position_y != base.position_y || cube.position_z != base.position_z;
+        orientation_changed = cube.orientation != base.orientation;
+    }
+
+    serialize_bool( stream, position_changed );
+    serialize_bool( stream, orientation_changed );
+
+    if ( position_changed )
+    {
+        serialize_relative_position( stream, cube.position_x, cube.position_y, cube.position_z, base.position_x, base.position_y, base.position_z );
+    }
+    else if ( Stream::IsReading )
+    {
+        cube.position_x = base.position_x;
+        cube.position_y = base.position_y;
+        cube.position_z = base.position_z;
+    }
+
+    if ( orientation_changed )
+    {
+        serialize_relative_orientation( stream, cube.orientation, base.orientation );
+    }
+    else
+    {
+        cube.orientation = base.orientation;
+    }
 }
 
 #if DELTA_STATS
