@@ -1,4 +1,33 @@
 
+
+Monday Evening, February 2nd, 2015
+----------------------------------
+
+    position not changed 5% -- orientation not changed 5%
+
+    dependent but opposite, so 10% gets a big win. eg. position and orientation in just 2 bits
+
+    but... 90% of "changed" cubes have 2 bits added to their state for no reason
+
+    is it a win? do the math!
+
+    in order to win, we need to save more bits from 10% of cubes than we lose from 90%
+
+    So for 1000 cubes, 50 have position not changed, 50 have orientation not changed. 900 have both changed.
+
+    900 * 2 = 1800 bits overhead.
+
+    50 * ( 26 - 2 ) = 1200 bits saved on orientation
+
+    50 * ( 26 - 2 ) = 1200 bits saved on position
+
+    So 2400 bits saved overall, average saving of 2400/1000 bits per-object, 2.4 bits per-object.
+
+    This is a small but good win. I'll take it! :D
+
+    Updated the article sketch out with more recent R&D
+
+
 Monday Afternoon, February 2nd, 2015
 ------------------------------------
 
@@ -14,7 +43,9 @@ Monday Afternoon, February 2nd, 2015
 
     Yes it's still the best.
 
-    Best optimized position is 8.64083585062093 bits per-position component. That's fucking incredible!
+    Best optimized position is 25.92 bits per-position
+
+    That's 8.64 bits per-position component. That's fucking incredible!
 
     Lock it down and move on!
 
