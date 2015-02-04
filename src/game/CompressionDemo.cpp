@@ -83,8 +83,6 @@ enum CompressionPackets
 struct CompressionSnapshotPacket : public protocol::Packet
 {
     uint16_t sequence;
-    uint16_t base_sequence;
-    bool initial;
     int compression_mode;
 
     CompressionSnapshotPacket() : Packet( COMPRESSION_SNAPSHOT_PACKET )
@@ -101,11 +99,6 @@ struct CompressionSnapshotPacket : public protocol::Packet
         serialize_uint16( stream, sequence );
 
         serialize_int( stream, compression_mode, 0, COMPRESSION_NUM_MODES - 1 );
-
-        serialize_bool( stream, initial );
-
-        if ( !initial )
-            serialize_uint16( stream, base_sequence );
 
         CubeState * cubes = nullptr;
 
@@ -382,9 +375,6 @@ void CompressionDemo::Update()
         auto snapshot_packet = (CompressionSnapshotPacket*) m_compression->packet_factory.Create( COMPRESSION_SNAPSHOT_PACKET );
 
         snapshot_packet->sequence = m_compression->send_sequence++;
-        snapshot_packet->base_sequence = m_compression->snapshot_sliding_window->GetAck() + 1;
-        snapshot_packet->initial = !m_compression->received_ack;
-
         snapshot_packet->compression_mode = GetMode();
 
         uint16_t sequence;

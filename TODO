@@ -1,20 +1,35 @@
 DONE:
 
+    Fix issue with simulator not giving correct amount of bandwidth.
+
+    Should also handle different send rates now too, but it may oscillate a bit
+
+    Clean up first draft.
+
+    Go through the article and insert placeholder text for diagrams and videos to be created
+
+    Adjust bandwidth estimates to include packet headers where they don't currently.
+
 TODO:
 
     -------------------------------------------------------------------------
 
-    Clean up first draft.
+    Make a list of videos and diagrams that need to be created.
 
-    Adjust bandwidth estimates to include packet headers where they don't currently.
+    -------------------------------------------------------------------------
 
     Fix shadows so I can record a video of the key points, eg. with huge bandwidth,
     post delta encode (changed), at the end with everything on.
 
-    Are there diagrams or drawings or statistics/tables/graphs I can make to make it 
-    more visually interesting?
+    -------------------------------------------------------------------------
 
-    It's a bit of a wall of text right now.
+    Create the diagrams. 
+
+    First start with rough drawing in pencil/paper.
+
+    Once the basic outline is working hand over to Chantel to create the diagrams w. illustrator.
+
+    Now I can work in parallel.
 
     -------------------------------------------------------------------------
 

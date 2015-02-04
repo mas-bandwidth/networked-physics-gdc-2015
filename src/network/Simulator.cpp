@@ -199,17 +199,18 @@ namespace network
         {
             uint64_t bytes = 0;
             int numEntries = 0;
-            const BandwidthEntry & beginEntry = m_bandwidthSlidingWindow.Get( m_bandwidthSlidingWindow.GetBegin() );
-            const BandwidthEntry & endEntry = m_bandwidthSlidingWindow.Get( m_bandwidthSlidingWindow.GetEnd() - 1 );
             uint16_t sequence = m_bandwidthSlidingWindow.GetBegin();
             while ( sequence != m_bandwidthSlidingWindow.GetEnd() )
             {
                 const BandwidthEntry & entry = m_bandwidthSlidingWindow.Get( sequence );
-                bytes += entry.packetSize;
-                numEntries++;
+                if ( entry.time >= m_timeBase.time - m_config.bandwidthTime - 0.001f )
+                {
+                    bytes += entry.packetSize;
+                    numEntries++;
+                }
                 sequence++;
             }
-            m_bandwidth = bytes * 8.0 / ( endEntry.time - beginEntry.time ) / 1000.0;
+            m_bandwidth = bytes * 8.0 / m_config.bandwidthTime / 1000.0;     // kilobits per-second
         }
     }
 
@@ -233,13 +234,13 @@ namespace network
 
             input->SerializeWrite( stream );
 
-            stream.Flush();
-
-            CORE_ASSERT( !stream.IsOverflow() );
-
             bytes = stream.GetBytesProcessed();
 
             CORE_ASSERT( bytes <= m_config.maxPacketSize );
+
+            stream.Flush();
+
+            CORE_ASSERT( !stream.IsOverflow() );
 
             m_config.packetFactory->Destroy( input );
         }
