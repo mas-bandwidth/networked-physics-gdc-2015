@@ -1463,6 +1463,8 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
 {
     InitDeltaModes();
 
+    SetMode( DELTA_MODE_RELATIVE_ORIENTATION );
+
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );

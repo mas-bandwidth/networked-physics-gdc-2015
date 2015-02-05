@@ -235,9 +235,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.RenderCubes( view[0].cubes );
         
-        // todo: these are broken!?!
-
-        //render.RenderCubeShadows( view[0].cubes );
+        render.RenderCubeShadows( view[0].cubes );
 
         render.RenderShadowQuad();
         
@@ -263,8 +261,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.RenderCubes( view[0].cubes );
         
-        // todo: broken!
-        //render.RenderCubeShadows( view[0].cubes );
+        render.RenderCubeShadows( view[0].cubes );
         
         render.EndScene();
 
@@ -280,8 +277,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.RenderCubes( view[1].cubes );
         
-        // todo: broken!
-        //render.RenderCubeShadows( view[1].cubes );
+        render.RenderCubeShadows( view[1].cubes );
         
         render.EndScene();
 
@@ -873,17 +869,15 @@ void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
 
     glUseProgram( shader );
 
-    glm::mat4 viewMatrix = glm::lookAt( glm::vec3( cameraPosition.x(), cameraPosition.y(), cameraPosition.z() ), 
-                                        glm::vec3( cameraLookAt.x(), cameraLookAt.y(), cameraLookAt.z() ), 
-                                        glm::vec3( cameraUp.x(), cameraUp.y(), cameraUp.z() ) );
+    vectorial::mat4f viewMatrix = vectorial::mat4f::lookAt( cameraPosition, cameraLookAt, cameraUp );
 
-    glm::mat4 projectionMatrix = glm::perspective( 40.0f, displayWidth / (float)displayHeight, 0.1f, 100.0f );
+    vectorial::mat4f projectionMatrix = vectorial::mat4f::perspective( 40.0f, displayWidth / (float)displayHeight, 0.1f, 100.0f );
 
-    glm::mat4 modelViewProjection = projectionMatrix * viewMatrix;
+    vectorial::mat4f modelViewProjection = projectionMatrix * viewMatrix;
 
     int location = glGetUniformLocation( shader, "ModelViewProjection" );
     if ( location >= 0 )
-        glUniformMatrix4fv( location, 1, GL_FALSE, &modelViewProjection[0][0] );
+        glUniformMatrix4fv( location, 1, GL_FALSE, (float*) &modelViewProjection );
 
     glBindVertexArray( shadow_vao );
 

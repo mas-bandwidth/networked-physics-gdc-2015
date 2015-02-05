@@ -303,6 +303,7 @@ struct CompressionInternal
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
 {
     InitCompressionModes();
+//    SetMode( COMPRESSION_MODE_POSITION );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );

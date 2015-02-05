@@ -1,4 +1,50 @@
 
+Thursday Morning, February 5th, 2015
+------------------------------------
+
+    Make a list of videos that need to be created.
+
+    Fix shadows so I can record a video of the key points, eg. with huge bandwidth,
+    post delta encode (changed), at the end with everything on.
+
+    It may not have been GLFW because might be the OS upgrade.
+
+    Trying the latest GLFW source anyway...
+
+    It's still broken! What the fuck?!
+
+    Fix it!
+
+    It was fucking GLM! Fixed by converting shadow projection matrix to vectorial instead (matching non-shadow render)
+
+    Record videos at high resolution:
+
+        1. video of cubes blowing and katamari roll at maximum bandwidth -- 17.37 megabits per-second
+
+        2. video showing variable bandwidth with "at rest flag" as you move around doing stuff
+
+        3. video of compressed position @ 4.3 megabits
+
+        4. video of delta encoding with changed flag
+
+        5. video of reduced steady state: roll the cube off to the side and have it completely stationary
+
+        6. video showing the end result @ 60 packets per-second
+
+
+Wednesday Morning, February 4th, 2015
+-------------------------------------
+
+    Fix issue with simulator not giving correct amount of bandwidth.
+
+    Should also handle different send rates now too, but it may oscillate a bit
+
+    Clean up first draft.
+
+    Go through the article and insert placeholder text for diagrams and videos to be created
+
+    Adjust bandwidth estimates to include packet headers where they don't currently.
+
 
 Monday Evening, February 2nd, 2015
 ----------------------------------

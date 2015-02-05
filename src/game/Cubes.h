@@ -30,7 +30,7 @@ struct CubeInstance
 
 const int MaxCubeShadowVertices = 1024 * 32;
 
-#define DEBUG_CUBE_SHADOWS 0
+//#define DEBUG_CUBE_SHADOWS 1
 
 class CubesRender
 {
