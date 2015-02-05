@@ -1,4 +1,28 @@
 
+Thursday Lunch, February 5th, 2015
+----------------------------------
+
+Convert videos to web format and upload
+
+    webm command line is: 
+
+        parallel 'ffmpeg -loglevel quiet -i {} -c:v libvpx -b:v 2M -c:a libvorbis -vf scale=1000:500 {.}.webm' ::: *.mov
+
+    mp4 command line is:
+
+        parallel 'ffmpeg -loglevel quiet -i {} -vf scale=1000:500 {.}.mp4' ::: *.mov
+
+    Upload videos to gafferongames wordpress.
+
+    Migrate videos across to linode.
+
+    Hook videos up into the article.
+
+    Test in safari.
+
+    Test in firefox.
+
+
 Thursday Morning, February 5th, 2015
 ------------------------------------
 

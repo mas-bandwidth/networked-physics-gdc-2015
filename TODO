@@ -2,26 +2,13 @@ DONE:
 
 TODO:
 
-
-    -------------------------------------------------------------------------
-
-    Convert videos to web format and upload
-
-    -------------------------------------------------------------------------
-
-    Make a list of diagrams that need to be created.
-
-    Sketch out the diagrams roughly with pencil/paper.
-
-    Once the basic outline is working hand over to Chantel to create the diagrams w. illustrator.
-
-    Now I can work in parallel.
-
     -------------------------------------------------------------------------
 
     Need to move on to stateful synchronization implementation.
 
-    Get the code working. 
+    Add demo framework: "pm stateful".
+
+    Get sim running on both sides.
 
     Implement priority bubble up. 
 
@@ -71,12 +58,16 @@ TODO:
 
     -------------------------------------------------------------------------
 
-    Generate a bunch of statistics, graphs, diagrams and so on to create slides.
+    Make a list of diagrams that need to be created.
+
+    Sketch out the diagrams roughly with pencil/paper.
+
+    Once the basic outline is working hand over to Chantel to create the diagrams w. illustrator.
 
     Finish slides for GDC.
 
     -------------------------------------------------------------------------
 
-    This is going to be very hard to finish this week but it *must* be finished this week.
+    Implement javascript to pause video when it is not currently visible
 
     -------------------------------------------------------------------------
