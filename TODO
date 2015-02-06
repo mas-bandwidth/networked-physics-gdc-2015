@@ -4,32 +4,45 @@ TODO:
 
     Each frame before simulate pull all state from simulation, quantize it, clamp position, linear velocity, angular velocity.
 
-    From this quantized state you can then fill packet with n most important.
+    This quantized state is where the cube state that fills the packet with n most important comes from.
 
     Then push this quantized state back to simulation and run sim frame.
 
     -------------------------------------------------------------------------
 
-    Move generally useful serialization stuff into somewhere that is generally useful.
+    Determine if precision needs to be higher for quantize.
 
-    May need to make various precision inputs to functions rather than static const, eg.
-    position resolution *may* need to be higher for quantized position state.
+    Hopefully not, but if it does some structural changes need to be made.
 
-    Hopefully not though.
 
-    Implement jitter buffer. Just delay just enough to handle jitter (just over two frames)
+    -------------------------------------------------------------------------
 
     Implement priority bubble up, pull, push.
 
     Send packet from left to right containing cube state.
 
+    When this packet arrives print to make sure it's being received.
+
+    -------------------------------------------------------------------------
+
+    Implement jitter buffer. Just delay just enough to handle jitter (just over two frames)
+
+    -------------------------------------------------------------------------
+
+    Implement push to sim from jitter buffer.
+
+    Make sure when pushing that the correct time for that frame is being set
+    from the jitter buffer, you are not guaranteed to receive first packet.
+
+    -------------------------------------------------------------------------
+
     Encode position relative to center quantized integer point. smallest 3 orientation. 
 
-    Quantize and bound linear/angular velocity.
-
-    Index 10 bits. Too sparse to optimize with relative.
+    -------------------------------------------------------------------------
 
     Implement error reduction for position (smoothing)
+
+    -------------------------------------------------------------------------
 
     Implement error reduction for orientation (smoothing)
 
