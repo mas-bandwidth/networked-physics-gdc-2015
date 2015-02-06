@@ -1,4 +1,28 @@
 
+Friday Morning, February 6th, 2015
+----------------------------------
+
+    Sketched out cube data with index for packet.
+
+    Implement packet serialize fn. with per-cube index and serialize of position, orientation, lin/ang velocity.
+
+    Implemented at rest flag.
+
+    Each frame before simulate pull all state from simulation, quantize it, clamp position, linear velocity, angular velocity.
+
+    This quantized state is where the cube state that fills the packet with n most important comes from.
+
+    Implemented code to clamp the quantized state for position, linear/ang velocity bounds.
+
+    Implement code to push the quantized snapshot back to the simulation
+
+    Determine if precision needs to be higher with quantize.
+
+    Hopefully not, but if it does some structural changes need to be made.
+
+    Precision seems fine.
+
+
 Thursday Evening, February 5th, 2015
 ------------------------------------
 

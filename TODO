@@ -1,42 +1,59 @@
 DONE:
 
-    Sketched out cube data with index for packet.
-
-    Implement packet serialize fn. with per-cube index and serialize of position, orientation, lin/ang velocity.
-
-    Implemented at rest flag.
-
 TODO:
-
-    Each frame before simulate pull all state from simulation, quantize it, clamp position, linear velocity, angular velocity.
-
-    This quantized state is where the cube state that fills the packet with n most important comes from.
-
-    Then push this quantized state back to simulation and run sim frame.
-
-    Determine if precision needs to be higher with quantize.
-
-    Hopefully not, but if it does some structural changes need to be made.
 
     -------------------------------------------------------------------------
 
     Implement priority bubble up, pull, push.
 
-    Send packet from left to right containing cube state.
+    Need to first get priority for all cubes this frame.
+
+    This is a simple function, if red the cube has high priority, if player cube extreme high priority.
+
+    Once this priority float is created (array float), then pass over existing struct 
+    { float accum, int index } and add delta Time * priority to accum.
+
+    Copy this struct and sort highest accum to smallest.
+
+    Take the n most important cube indices and put them in an array for potentially
+    being included in a packet.
+
+    Serialize measure these cube indices and mark which ones actually should be sent.
+
+    Take the ones that are to be sent and clear their priority accum to zero.
+
+    -------------------------------------------------------------------------
+
+    Send packet from left to right containing most important n cube state
+    that should be sent (according to measure)
+
+    -------------------------------------------------------------------------
 
     When this packet arrives print to make sure it's being received.
 
     -------------------------------------------------------------------------
 
-    Implement jitter buffer. Just delay just enough to handle jitter (just over two frames)
+    Implement jitter buffer
+
+    -------------------------------------------------------------------------
 
     Add code so the sim doesn't run on the right until the first packet comes in.
+
+    -------------------------------------------------------------------------
 
     Set remote input to input in packet.
 
     Set right side time to frame # in packet (does it need to be sent or can it be inferred from sequence?)
 
-    Push state to right side sim.
+    I think it can be inferred from sequence. Big win.
+
+    Push cube state to right side sim
+
+    -------------------------------------------------------------------------
+
+    Implement serialize measure per-state before writing so we can set a hard
+    limit on the packet size, eg. measure precise packet size for bandwidth
+    limit and set the payload at that size precisely.
 
     -------------------------------------------------------------------------
 
@@ -59,6 +76,8 @@ TODO:
     Might be cool to have a fake lag switch when you press a button,
     eg. no packets come through for one second.
 
+    Or a mode that every few seconds lets no packets in for one second.
+
     Will be a cool visual demonstration of how the stateful sync works,
     and recovers from errors (like errors in a video stream...)
 
@@ -76,13 +95,15 @@ TODO:
 
         2. Deterministic lockstep
 
-        3. Snapshots and interpolation (plus compression)
+        3. Snapshots and interpolation
+
+            *** snapshot compression worked example ***
 
         4. Stateful synchronization
 
-        5. Conclusion: Pros/cons of each approach
+        5. Conclusion: Pros/cons
 
-        6. Good question time ideally: latency hiding, client/server, implementation details etc.
+        6. Question time: latency hiding, client/server, implementation details etc.
 
     -------------------------------------------------------------------------
 

@@ -226,6 +226,47 @@ void StatefulDemo::Shutdown()
     }
 }
 
+void ClampSnapshot( QuantizedSnapshotWithVelocity & snapshot )
+{
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        QuantizedCubeStateWithVelocity & cube = snapshot.cubes[i];
+
+        cube.position_x = core::clamp( cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+        cube.position_y = core::clamp( cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+        cube.position_z = core::clamp( cube.position_z, 0, +QuantizedPositionBoundZ - 1 );
+
+        cube.linear_velocity_x = core::clamp( cube.linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+        cube.linear_velocity_y = core::clamp( cube.linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+        cube.linear_velocity_z = core::clamp( cube.linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+
+        cube.angular_velocity_x = core::clamp( cube.angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+        cube.angular_velocity_y = core::clamp( cube.angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+        cube.angular_velocity_z = core::clamp( cube.angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+    }
+}
+
+void ApplySnapshot( CubesView & view, QuantizedSnapshotWithVelocity & snapshot )
+{
+    view::ObjectUpdate object_updates[NumCubes];
+
+    int num_object_updates = NumCubes;
+
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        CubeState cube;
+        snapshot.cubes[i].Save( cube );
+        object_updates[i].id = i + 1;
+        object_updates[i].position = cube.position;
+        object_updates[i].orientation = cube.orientation;
+        object_updates[i].scale = ( i == 0 ) ? hypercube::PlayerCubeSize : hypercube::NonPlayerCubeSize;
+        object_updates[i].authority = cube.interacting ? 0 : MaxPlayers;
+        object_updates[i].visible = true;
+    }
+
+    view.objects.UpdateObjects( object_updates, num_object_updates );
+}
+
 void StatefulDemo::Update()
 {
     CubesUpdateConfig update_config;
@@ -241,6 +282,26 @@ void StatefulDemo::Update()
 
     update_config.sim[1].num_frames = 1;
     update_config.sim[1].frame_input[0] = m_stateful->remote_input;
+
+    // quantize and clamp left simulation state
+
+    QuantizedSnapshotWithVelocity left_snapshot;
+
+    GetQuantizedSnapshotWithVelocity( m_internal->GetGameInstance( 0 ), left_snapshot );
+
+    ClampSnapshot( left_snapshot );
+
+    ApplySnapshot( m_internal->view[0], left_snapshot );
+
+    // quantize and clamp right simulation state
+
+    QuantizedSnapshotWithVelocity right_snapshot;
+
+    GetQuantizedSnapshotWithVelocity( m_internal->GetGameInstance( 1 ), right_snapshot );
+
+    ClampSnapshot( right_snapshot );
+
+    ApplySnapshot( m_internal->view[1], right_snapshot );
 
     // todo: state packet
 
