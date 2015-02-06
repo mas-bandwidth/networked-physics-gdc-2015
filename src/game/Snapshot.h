@@ -10,6 +10,7 @@
 #include "protocol/Object.h"
 #include "protocol/SequenceBuffer.h"
 
+//#define DELTA_STATS 1
 //#define SERIALIZE_ANGULAR_VELOCITY
 
 static const int MaxPacketSize = 64 * 1024;         // this has to be really large for the worst case!
@@ -21,6 +22,10 @@ static const int NumInterpolationSnapshots = 64;
 static const int UnitsPerMeter = 512;
 
 static const int OrientationBits = 9;
+
+static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
+
+static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
 enum SnapshotInterpolation
 {
@@ -611,7 +616,10 @@ struct QuantizedCubeState
     int position_y;
     int position_z;
     compressed_quaternion<9> orientation;
+
+#if DELTA_STATS
     vectorial::quat4f original_orientation;     // for output/delta_float_values.txt only!
+#endif // #if DELTA_STATS
 
     void Load( const CubeState & cube_state )
     {
@@ -620,7 +628,9 @@ struct QuantizedCubeState
         position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
         position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
         orientation.Load( cube_state.orientation );
+#if DELTA_STATS
         original_orientation = cube_state.orientation;
+#endif // #if DELTA_STATS
     }
 
     void Save( CubeState & cube_state )
@@ -652,6 +662,68 @@ struct QuantizedCubeState
     }
 
     bool operator != ( const QuantizedCubeState & other ) const
+    {
+        return ! ( *this == other );
+    }
+};
+
+struct QuantizedCubeStateWithVelocity : public QuantizedCubeState
+{
+    int linear_velocity_x;
+    int linear_velocity_y;
+    int linear_velocity_z;
+
+    int angular_velocity_x;
+    int angular_velocity_y;
+    int angular_velocity_z;
+
+    void Load( const CubeState & cube_state )
+    {
+        QuantizedCubeState::Load( cube_state );
+
+        linear_velocity_x = (int) floor( cube_state.linear_velocity.x() * UnitsPerMeter + 0.5f );
+        linear_velocity_x = (int) floor( cube_state.linear_velocity.y() * UnitsPerMeter + 0.5f );
+        linear_velocity_x = (int) floor( cube_state.linear_velocity.z() * UnitsPerMeter + 0.5f );
+
+        angular_velocity_x = (int) floor( cube_state.angular_velocity.x() * UnitsPerMeter + 0.5f );
+        angular_velocity_x = (int) floor( cube_state.angular_velocity.y() * UnitsPerMeter + 0.5f );
+        angular_velocity_x = (int) floor( cube_state.angular_velocity.z() * UnitsPerMeter + 0.5f );
+    }
+
+    void Save( CubeState & cube_state )
+    {
+        QuantizedCubeState::Save( cube_state );
+        cube_state.linear_velocity = vectorial::vec3f( linear_velocity_x, linear_velocity_y, linear_velocity_z ) * 1.0f / UnitsPerMeter;
+        cube_state.angular_velocity = vectorial::vec3f( angular_velocity_x, angular_velocity_y, angular_velocity_z ) * 1.0f / UnitsPerMeter;
+    }
+
+    bool operator == ( const QuantizedCubeStateWithVelocity & other ) const
+    {
+        if ( !QuantizedCubeState::operator ==( other ) )
+            return false;
+
+        if ( linear_velocity_x != other.linear_velocity_x )
+            return false;
+
+        if ( linear_velocity_y != other.linear_velocity_y )
+            return false;
+
+        if ( linear_velocity_z != other.linear_velocity_z )
+            return false;
+
+        if ( angular_velocity_x != other.angular_velocity_x )
+            return false;
+
+        if ( angular_velocity_y != other.angular_velocity_y )
+            return false;
+
+        if ( angular_velocity_z != other.angular_velocity_z )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const QuantizedCubeStateWithVelocity & other ) const
     {
         return ! ( *this == other );
     }

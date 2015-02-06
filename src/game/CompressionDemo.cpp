@@ -16,8 +16,6 @@
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 static const int MaxSnapshots = 256;
-static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
-static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
 enum Context
 {
@@ -303,7 +301,6 @@ struct CompressionInternal
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
 {
     InitCompressionModes();
-//    SetMode( COMPRESSION_MODE_POSITION );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );

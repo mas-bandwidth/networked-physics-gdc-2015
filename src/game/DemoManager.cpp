@@ -9,6 +9,7 @@
 #include "SnapshotDemo.h"
 #include "CompressionDemo.h"
 #include "DeltaDemo.h"
+#include "StatefulDemo.h"
 #include "Render.h"
 #include "Global.h"
 #include "Console.h"
@@ -60,6 +61,10 @@ bool DemoManager::LoadDemo( const char * name )
     else if ( strcmp( name, "delta" ) == 0 )
     {
         m_demo = CORE_NEW( *m_allocator, DeltaDemo, *m_allocator );
+    }
+    else if ( strcmp( name, "stateful" ) == 0 )
+    {
+        m_demo = CORE_NEW( *m_allocator, StatefulDemo, *m_allocator );
     }
     else
     {

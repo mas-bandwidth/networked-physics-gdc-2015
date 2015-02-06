@@ -17,10 +17,6 @@
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 static const int MaxSnapshots = 256;
-static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
-static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
-
-//#define DELTA_STATS 1
 
 #if DELTA_STATS
 
@@ -1462,8 +1458,6 @@ void DumpDeltaAccumulators()
 DeltaDemo::DeltaDemo( core::Allocator & allocator )
 {
     InitDeltaModes();
-
-    SetMode( DELTA_MODE_RELATIVE_ORIENTATION );
 
     m_allocator = &allocator;
     m_internal = nullptr;

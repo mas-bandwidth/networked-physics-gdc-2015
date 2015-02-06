@@ -28,6 +28,8 @@ void ProcessCommandLine()
 {
     // todo: implement proper command line parsing, eg. "-blah", "-blah = X", "+command something something something -switch"
 
+    // muahahaha I'm so lazy.
+
 //    printf( "command line: '%s'\n", buffer );
 
 #ifdef CLIENT
@@ -59,6 +61,10 @@ void ProcessCommandLine()
     else if ( strcmp( commandLineBuffer, "+load delta" ) == 0 )
     {
         global.console->ExecuteCommand( "load delta" );
+    }
+    else if ( strcmp( commandLineBuffer, "+load stateful" ) == 0 )
+    {
+        global.console->ExecuteCommand( "load stateful" );
     }
     else if ( strcmp( commandLineBuffer, "+playback" ) == 0 )
     {

@@ -1,4 +1,24 @@
 
+Thursday Evening, February 5th, 2015
+------------------------------------
+
+    Need to move on to stateful synchronization implementation.
+
+    Add demo framework: "pm stateful".
+
+    Get sim running on both sides
+
+    Need a place to store remote input.
+
+    Setup right simulation to run from remote input, even though it is currently always cleared.
+
+    Fuck it just include Snapshot.h from state demo.
+
+    Extend quantized cube state to include linear/angular velocity.
+
+    QuantizedCubeStateWithVelocity struct.
+
+
 Thursday Lunch, February 5th, 2015
 ----------------------------------
 

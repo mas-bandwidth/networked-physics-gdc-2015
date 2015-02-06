@@ -2,15 +2,26 @@ DONE:
 
 TODO:
 
+    Each frame before simulate pull all state from simulation, quantize it, clamp position, linear velocity, angular velocity.
+
+    From this quantized state you can then fill packet with n most important.
+
+    Then push this quantized state back to simulation and run sim frame.
+
     -------------------------------------------------------------------------
 
-    Need to move on to stateful synchronization implementation.
+    Move generally useful serialization stuff into somewhere that is generally useful.
 
-    Add demo framework: "pm stateful".
+    May need to make various precision inputs to functions rather than static const, eg.
+    position resolution *may* need to be higher for quantized position state.
 
-    Get sim running on both sides.
+    Hopefully not though.
 
-    Implement priority bubble up. 
+    Implement jitter buffer. Just delay just enough to handle jitter (just over two frames)
+
+    Implement priority bubble up, pull, push.
+
+    Send packet from left to right containing cube state.
 
     Encode position relative to center quantized integer point. smallest 3 orientation. 
 
@@ -18,21 +29,17 @@ TODO:
 
     Index 10 bits. Too sparse to optimize with relative.
 
-    Can't use delta encoding. Or at least, would be really complex, you have to specify base
-    per-object, not per-snapshot as not all objects are included in snapshot, and 1 bit for
-    no base. Possible. Might we worth it. Punting.
+    Implement error reduction for position (smoothing)
 
-    Instead... send less frequently. Come up with heuristics. 
+    Implement error reduction for orientation (smoothing)
 
-    Use the sim on the right side to send less data, eg. space out object updates.
+    -------------------------------------------------------------------------
 
-    Maybe washing machine with hash (eg. detect wrong or changed, prioritize resend higher...)
+    Might be cool to have a fake lag switch when you press a button,
+    eg. no packets come through for one second.
 
-    Nice distance based function from Tony. x / (x + 1 ) or something?
-
-    Error reduction for position.
-
-    Error reduction for orientation.
+    Will be a cool visual demonstration of how the stateful sync works,
+    and recovers from errors (like errors in a video stream...)
 
     -------------------------------------------------------------------------
 
