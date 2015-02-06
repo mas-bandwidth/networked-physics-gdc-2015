@@ -12,15 +12,9 @@
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
 
+static const int MaxCubesPerPacket = 63;
 //static const int LeftPort = 1000;
 //static const int RightPort = 1001;
-
-enum Context
-{
-    CONTEXT_QUANTIZED_SNAPSHOT_SLIDING_WINDOW,      // quantized send snapshots (for serialize write)
-    CONTEXT_QUANTIZED_SNAPSHOT_SEQUENCE_BUFFER,     // quantized recv snapshots (for serialize read)
-    CONTEXT_QUANTIZED_INITIAL_SNAPSHOT              // quantized initial snapshot
-};
 
 enum StatefulMode
 {
@@ -35,7 +29,7 @@ const char * stateful_mode_descriptions[]
 
 struct StatefulModeData
 {
-    int bandwidth = 64 * 1000;                      // 64kbps bandwidth by default
+    int bandwidth = 64 * 1000;                      // 64 kbps bandwidth by default
     float playout_delay = 0.035f;                   // handle +/- two frames jitter @ 60 fps
     float send_rate = 60.0f;
     float latency = 0.0f;
@@ -56,12 +50,16 @@ enum StatefulPackets
     STATE_NUM_PACKETS
 };
 
+struct CubeData : public QuantizedCubeStateWithVelocity
+{
+    int index;
+};
+
 struct StatePacket : public protocol::Packet
 {
     uint16_t sequence;
     int num_cubes;
-
-    // todo: need full quantized cube state with linear and angular velocity
+    CubeData cubes[MaxCubesPerPacket];
 
     StatePacket() : Packet( STATE_PACKET )
     {
@@ -72,7 +70,42 @@ struct StatePacket : public protocol::Packet
     {
         serialize_uint16( stream, sequence );
 
-        // ...
+        serialize_int( stream, num_cubes, 0, MaxCubesPerPacket );
+
+        for ( int i = 0; i < num_cubes; ++i )
+        {
+            serialize_int( stream, cubes[i].index, 0, NumCubes - 1 );
+
+            serialize_int( stream, cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+            serialize_int( stream, cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+            serialize_int( stream, cubes[i].position_z, 0, QuantizedPositionBoundZ - 1 );
+
+            serialize_object( stream, cubes[i].orientation );
+
+            bool at_rest = false;
+
+            if ( Stream::IsWriting )
+            {
+                if ( cubes[i].linear_velocity_x == 0 && cubes[i].linear_velocity_y == 0 && cubes[i].linear_velocity_z == 0 &&
+                     cubes[i].angular_velocity_x == 0 && cubes[i].angular_velocity_y == 0 && cubes[i].angular_velocity_z == 0 )
+                {
+                    at_rest = true;
+                }
+            }
+            
+            serialize_bool( stream, at_rest );
+
+            if ( at_rest )
+            {
+                serialize_int( stream, cubes[i].linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, cubes[i].linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, cubes[i].linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+
+                serialize_int( stream, cubes[i].angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, cubes[i].angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, cubes[i].angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+            }
+        }
     }
 };
 

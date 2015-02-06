@@ -1,5 +1,11 @@
 DONE:
 
+    Sketched out cube data with index for packet.
+
+    Implement packet serialize fn. with per-cube index and serialize of position, orientation, lin/ang velocity.
+
+    Implemented at rest flag.
+
 TODO:
 
     Each frame before simulate pull all state from simulation, quantize it, clamp position, linear velocity, angular velocity.
@@ -8,12 +14,9 @@ TODO:
 
     Then push this quantized state back to simulation and run sim frame.
 
-    -------------------------------------------------------------------------
-
-    Determine if precision needs to be higher for quantize.
+    Determine if precision needs to be higher with quantize.
 
     Hopefully not, but if it does some structural changes need to be made.
-
 
     -------------------------------------------------------------------------
 
@@ -27,16 +30,21 @@ TODO:
 
     Implement jitter buffer. Just delay just enough to handle jitter (just over two frames)
 
+    Add code so the sim doesn't run on the right until the first packet comes in.
+
+    Set remote input to input in packet.
+
+    Set right side time to frame # in packet (does it need to be sent or can it be inferred from sequence?)
+
+    Push state to right side sim.
+
     -------------------------------------------------------------------------
 
-    Implement push to sim from jitter buffer.
+    Encode position relative to center quantized integer point.
 
-    Make sure when pushing that the correct time for that frame is being set
-    from the jitter buffer, you are not guaranteed to receive first packet.
+    Output the data set and optimize the encoding (single var most likely).
 
-    -------------------------------------------------------------------------
-
-    Encode position relative to center quantized integer point. smallest 3 orientation. 
+    Maybe try multiple var two-level encoding?
 
     -------------------------------------------------------------------------
 

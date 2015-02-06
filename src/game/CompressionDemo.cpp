@@ -183,9 +183,9 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         quantized_cube.Load( cubes[i] );
 
                     serialize_bool( stream, quantized_cube.interacting );
-                    serialize_int( stream, quantized_cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                    serialize_int( stream, quantized_cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-                    serialize_int( stream, quantized_cube.position_z, 0, +QuantizedPositionBoundZ );
+                    serialize_int( stream, quantized_cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+                    serialize_int( stream, quantized_cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+                    serialize_int( stream, quantized_cube.position_z, 0, +QuantizedPositionBoundZ - 1 );
                     serialize_object( stream, quantized_cube.orientation );
 
                     if ( Stream::IsReading )

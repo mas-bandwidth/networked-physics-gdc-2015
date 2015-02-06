@@ -139,9 +139,9 @@ template <typename Stream> void serialize_cube_changed( Stream & stream, Quantiz
 
     if ( position_changed )
     {
-        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ );
+        serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+        serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+        serialize_int( stream, cube.position_z, 0, +QuantizedPositionBoundZ - 1 );
     }
     else
     {
@@ -280,9 +280,9 @@ template <typename Stream> void serialize_relative_position( Stream & stream,
     }
     else
     {
-        serialize_int( stream, position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY );
-        serialize_int( stream, position_z, 0, +QuantizedPositionBoundZ );
+        serialize_int( stream, position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+        serialize_int( stream, position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+        serialize_int( stream, position_z, 0, +QuantizedPositionBoundZ - 1 );
     }
 }
 

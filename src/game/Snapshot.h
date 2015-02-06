@@ -27,6 +27,10 @@ static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
 
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 
+static const int QuantizedLinearVelocityBound = UnitsPerMeter * MaxLinearSpeed;
+
+static const int QuantizedAngularVelocityBound = UnitsPerMeter * MaxLinearSpeed;
+
 enum SnapshotInterpolation
 {
     SNAPSHOT_INTERPOLATION_NONE,
@@ -734,6 +738,11 @@ struct QuantizedSnapshot
     QuantizedCubeState cubes[NumCubes];
 };
 
+struct QuantizedSnapshotWithVelocity
+{
+    QuantizedCubeStateWithVelocity cubes[NumCubes];
+};
+
 static void InterpolateSnapshot_Linear( float t, 
                                         const __restrict CubeState * a, 
                                         const __restrict CubeState * b, 
@@ -867,6 +876,51 @@ inline bool GetSnapshot( GameInstance * game_instance, Snapshot & snapshot )
 }
 
 inline bool GetQuantizedSnapshot( GameInstance * game_instance, QuantizedSnapshot & snapshot )
+{
+    const int num_active_objects = game_instance->GetNumActiveObjects();
+
+    if ( num_active_objects == 0 )
+        return false;
+
+    const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+
+    CORE_ASSERT( active_objects );
+
+    for ( int i = 0; i < num_active_objects; ++i )
+    {
+        auto & object = active_objects[i];
+
+        const int index = object.id - 1;
+
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < NumCubes );
+
+        CubeState cube_state;
+
+        cube_state.position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
+
+        cube_state.orientation = vectorial::quat4f( object.orientation.x, 
+                                                    object.orientation.y, 
+                                                    object.orientation.z,
+                                                    object.orientation.w );
+
+        cube_state.linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
+                                                       object.linearVelocity.y,
+                                                       object.linearVelocity.z );
+
+        cube_state.angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
+                                                        object.angularVelocity.y,
+                                                        object.angularVelocity.z );
+
+        cube_state.interacting = object.authority == 0;
+
+        snapshot.cubes[index].Load( cube_state );
+    }
+
+    return true;
+}
+
+inline bool GetQuantizedSnapshotWithVelocity( GameInstance * game_instance, QuantizedSnapshotWithVelocity & snapshot )
 {
     const int num_active_objects = game_instance->GetNumActiveObjects();
 
