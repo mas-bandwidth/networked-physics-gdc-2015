@@ -11,10 +11,10 @@
 #include "protocol/Stream.h"
 #include "protocol/PacketFactory.h"
 #include "network/Simulator.h"
+#include <algorithm>
 
-static const int MaxCubesPerPacket = 63;
-//static const int LeftPort = 1000;
-//static const int RightPort = 1001;
+static const int MaxCubesPerPacket = 31;
+static const int RightPort = 1001;
 
 enum StatefulMode
 {
@@ -31,7 +31,6 @@ struct StatefulModeData
 {
     int bandwidth = 64 * 1000;                      // 64 kbps bandwidth by default
     float playout_delay = 0.035f;                   // handle +/- two frames jitter @ 60 fps
-    float send_rate = 60.0f;
     float latency = 0.0f;
     float packet_loss = 5.0f;
     float jitter = 2 * 1 / 60.0f;
@@ -59,11 +58,13 @@ struct StatePacket : public protocol::Packet
 {
     uint16_t sequence;
     int num_cubes;
-    CubeData cubes[MaxCubesPerPacket];
+    int cube_index[MaxCubesPerPacket];
+    QuantizedCubeStateWithVelocity cube_state[MaxCubesPerPacket];
 
     StatePacket() : Packet( STATE_PACKET )
     {
         sequence = 0;
+        num_cubes = 0;
     }
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
@@ -74,20 +75,20 @@ struct StatePacket : public protocol::Packet
 
         for ( int i = 0; i < num_cubes; ++i )
         {
-            serialize_int( stream, cubes[i].index, 0, NumCubes - 1 );
+            serialize_int( stream, cube_index[i], 0, NumCubes - 1 );
 
-            serialize_int( stream, cubes[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-            serialize_int( stream, cubes[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-            serialize_int( stream, cubes[i].position_z, 0, QuantizedPositionBoundZ - 1 );
+            serialize_int( stream, cube_state[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+            serialize_int( stream, cube_state[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+            serialize_int( stream, cube_state[i].position_z, 0, QuantizedPositionBoundZ - 1 );
 
-            serialize_object( stream, cubes[i].orientation );
+            serialize_object( stream, cube_state[i].orientation );
 
             bool at_rest = false;
 
             if ( Stream::IsWriting )
             {
-                if ( cubes[i].linear_velocity_x == 0 && cubes[i].linear_velocity_y == 0 && cubes[i].linear_velocity_z == 0 &&
-                     cubes[i].angular_velocity_x == 0 && cubes[i].angular_velocity_y == 0 && cubes[i].angular_velocity_z == 0 )
+                if ( cube_state[i].linear_velocity_x == 0 && cube_state[i].linear_velocity_y == 0 && cube_state[i].linear_velocity_z == 0 &&
+                     cube_state[i].angular_velocity_x == 0 && cube_state[i].angular_velocity_y == 0 && cube_state[i].angular_velocity_z == 0 )
                 {
                     at_rest = true;
                 }
@@ -97,13 +98,13 @@ struct StatePacket : public protocol::Packet
 
             if ( at_rest )
             {
-                serialize_int( stream, cubes[i].linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-                serialize_int( stream, cubes[i].linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-                serialize_int( stream, cubes[i].linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, cube_state[i].linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, cube_state[i].linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, cube_state[i].linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
 
-                serialize_int( stream, cubes[i].angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-                serialize_int( stream, cubes[i].angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-                serialize_int( stream, cubes[i].angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, cube_state[i].angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, cube_state[i].angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, cube_state[i].angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
             }
         }
     }
@@ -134,6 +135,12 @@ protected:
     }
 };
 
+struct CubePriorityInfo
+{
+    int index;
+    float accum;
+};
+
 struct StatefulInternal
 {
     StatefulInternal( core::Allocator & allocator, const StatefulModeData & mode_data ) 
@@ -161,15 +168,19 @@ struct StatefulInternal
         network_simulator->ClearStates();
         network_simulator->AddState( { mode_data.latency, mode_data.jitter, mode_data.packet_loss } );
         send_sequence = 0;
-        recv_sequence = 0;
+        for ( int i = 0; i < NumCubes; ++i )
+        {
+            priority_info[i].index = i;
+            priority_info[i].accum = 0.0f;
+        }
     }
 
     core::Allocator * allocator;
     uint16_t send_sequence;
-    uint16_t recv_sequence;
     game::Input remote_input;
     network::Simulator * network_simulator;
     StatePacketFactory packet_factory;
+    CubePriorityInfo priority_info[NumCubes];
 };
 
 StatefulDemo::StatefulDemo( core::Allocator & allocator )
@@ -267,6 +278,41 @@ void ApplySnapshot( CubesView & view, QuantizedSnapshotWithVelocity & snapshot )
     view.objects.UpdateObjects( object_updates, num_object_updates );
 }
 
+void CalculateCubePriorities( float * priority, QuantizedSnapshotWithVelocity & snapshot )
+{
+    const float BasePriority = 1.0f;
+    const float PlayerPriority = 1000000.0f;
+    const float InteractingPriority = 100.0f;
+
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        priority[i] = BasePriority;
+
+        if ( i == 0 )
+            priority[i] += PlayerPriority;
+
+        if ( snapshot.cubes[i].interacting )
+            priority[i] += InteractingPriority;
+    }
+}
+
+bool priority_sort_function( const CubePriorityInfo & a, const CubePriorityInfo & b ) { return a.accum > b.accum; }
+
+struct SendCubeInfo
+{
+    int index;
+    bool send;
+};
+
+void MeasureCubesToSend( QuantizedSnapshotWithVelocity & snapshot, SendCubeInfo * send_cubes, int max_bytes )
+{
+    // todo: actually serialize measure cubes to send that fit in given number of bytes
+    for ( int i = 0; i < MaxCubesPerPacket; ++i )
+    {
+        send_cubes[i].send = true;
+    }
+}
+
 void StatefulDemo::Update()
 {
     CubesUpdateConfig update_config;
@@ -303,37 +349,64 @@ void StatefulDemo::Update()
 
     ApplySnapshot( m_internal->view[1], right_snapshot );
 
-    // todo: state packet
+    // calculate cube priorities and determine which cubes to send in packet
 
-    /*
-    // send a snapshot packet to the right simulation
+    float priority[NumCubes];
 
-    m_stateful->send_accumulator += global.timeBase.deltaTime;
+    CalculateCubePriorities( priority, left_snapshot );
 
-    if ( m_delta->send_accumulator >= 1.0f / delta_mode_data[GetMode()].send_rate )
+    for ( int i = 0; i < NumCubes; ++i )
+        m_stateful->priority_info[i].accum += global.timeBase.deltaTime * priority[i];
+
+    CubePriorityInfo priority_info[NumCubes];
+
+    memcpy( priority_info, m_stateful->priority_info, sizeof( CubePriorityInfo ) * NumCubes );
+
+    std::sort( priority_info, priority_info + NumCubes, priority_sort_function );
+
+    SendCubeInfo send_cubes[MaxCubesPerPacket];
+
+    for ( int i = 0; i < MaxCubesPerPacket; ++i )
     {
-        m_delta->send_accumulator = 0.0f;   
-
-        auto game_instance = m_internal->GetGameInstance( 0 );
-
-        auto snapshot_packet = (DeltaSnapshotPacket*) m_delta->packet_factory.Create( DELTA_SNAPSHOT_PACKET );
-
-        snapshot_packet->sequence = m_delta->send_sequence++;
-        snapshot_packet->base_sequence = m_delta->quantized_snapshot_sliding_window->GetAck() + 1;
-        snapshot_packet->initial = !m_delta->received_ack;
-
-        snapshot_packet->delta_mode = GetMode();
-
-        uint16_t sequence;
-
-        auto & snapshot = m_delta->quantized_snapshot_sliding_window->Insert( sequence );
-
-        if ( GetQuantizedSnapshot( game_instance, snapshot ) )
-            m_delta->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
-        else
-            m_delta->packet_factory.Destroy( snapshot_packet );
+        send_cubes[i].index = priority_info[i].index;
+        send_cubes[i].send = false;     // not yet
     }
-    */
+
+    const int MaxCubeBytes = 256;           // todo: this should be a function of packet header size and desired amount bandwidth in mode
+
+    MeasureCubesToSend( left_snapshot, send_cubes, MaxCubeBytes );
+
+    int num_cubes_to_send = 0;
+    for ( int i = 0; i < MaxCubesPerPacket; i++ )
+    {
+        if ( send_cubes[i].send )
+        {
+            m_stateful->priority_info[send_cubes[i].index].accum = 0.0f;
+            num_cubes_to_send++;
+        }
+    }
+
+    // construct state packet containing cubes to be sent
+
+    auto state_packet = (StatePacket*) m_stateful->packet_factory.Create( STATE_PACKET );
+
+    state_packet->sequence = m_stateful->send_sequence;
+    state_packet->num_cubes = num_cubes_to_send;
+    int j = 0;    
+    for ( int i = 0; i < MaxCubesPerPacket; ++i )
+    {
+        if ( send_cubes[i].send )
+        {
+            state_packet->cube_index[j] = send_cubes[i].index;
+            state_packet->cube_state[j] = left_snapshot.cubes[ send_cubes[i].index ];
+            j++;
+        }
+    }
+    CORE_ASSERT( j == num_cubes_to_send );
+
+    m_stateful->network_simulator->SendPacket( network::Address( "::1", RightPort ), state_packet );
+
+    m_stateful->send_sequence++;
 
     // update the network simulator
 
@@ -347,40 +420,15 @@ void StatefulDemo::Update()
         if ( !packet )
             break;
 
-        // todo: process packet
-
-        /*
         const auto port = packet->GetAddress().GetPort();
         const auto type = packet->GetType();
 
-        if ( type == DELTA_SNAPSHOT_PACKET && port == RightPort )
+        if ( type == STATE_PACKET && port == RightPort )
         {
-            auto snapshot_packet = (DeltaSnapshotPacket*) packet;
+            auto state_packet = (StatePacket*) packet;
 
-            QuantizedSnapshot * quantized_snapshot = m_delta->quantized_snapshot_sequence_buffer->Find( snapshot_packet->sequence );
-    
-            CORE_ASSERT( quantized_snapshot );
-    
-            Snapshot snapshot;
-            for ( int i = 0; i < NumCubes; ++i )
-                quantized_snapshot->cubes[i].Save( snapshot.cubes[i] );
-
-            m_delta->interpolation_buffer.AddSnapshot( global.timeBase.time, snapshot_packet->sequence, snapshot.cubes );
-
-            if ( !received_snapshot_this_frame || ( received_snapshot_this_frame && core::sequence_greater_than( snapshot_packet->sequence, ack_sequence ) ) )
-            {
-                received_snapshot_this_frame = true;
-                ack_sequence = snapshot_packet->sequence;
-            }
+            printf( "received state packet %d\n", state_packet->sequence );
         }
-        else if ( type == DELTA_ACK_PACKET && port == LeftPort )
-        {
-            auto ack_packet = (DeltaAckPacket*) packet;
-
-            m_delta->quantized_snapshot_sliding_window->Ack( ack_packet->ack - 1 );
-            m_delta->received_ack = true;
-        }
-        */
 
         m_stateful->packet_factory.Destroy( packet );
     }

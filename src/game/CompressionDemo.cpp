@@ -360,7 +360,7 @@ void CompressionDemo::Update()
     update_config.sim[0].num_frames = 1;
     update_config.sim[0].frame_input[0] = local_input;
 
-    // send a snapshot packet to the right simulation
+    // send a snapshot packet to the right side
 
     m_compression->send_accumulator += global.timeBase.deltaTime;
 

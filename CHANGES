@@ -1,4 +1,40 @@
 
+Friday Afternoon, February 6th, 2015
+------------------------------------
+
+    Implement priority bubble up, pull, push.
+
+    Need to first get priority for all cubes this frame.
+
+    This is a simple function that fills an array of floats:
+
+        1. if red the cube has high priority
+        2. if player cube extreme high priority
+        3. otherwise default priority (1.0)
+
+    Once this priority float is created (array float), then pass over existing struct 
+    { float accum, int index } and add delta Time * priority to accum.
+
+    Copy this struct and sort highest accum to smallest.
+
+    Need a new struct for potential cubes to send: SendCubeInfo { int index; bool send; }
+
+    Take the n most important cube indices and put them in an array for potentially
+    being included in a packet.
+
+    Fake out a function that in the future will serialize measure these cubes and mark 
+    which ones actually should be sent. Right now just mark all to be sent.
+
+    Construct state packet containing n most important cubes to be sent.
+
+    Send packet from left to right containing most important n cube state
+    that should be sent (according to measure)
+
+    When this packet arrives print to make sure it's being received.
+
+    Make sure send sequence is being sent.
+
+
 Friday Morning, February 6th, 2015
 ----------------------------------
 
