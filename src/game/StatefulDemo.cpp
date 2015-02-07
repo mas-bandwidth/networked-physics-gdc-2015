@@ -54,41 +54,46 @@ struct CubeData : public QuantizedCubeStateWithVelocity
     int index;
 };
 
+struct StateUpdate
+{
+    int num_cubes = 0;
+    int cube_index[MaxCubesPerPacket];
+    QuantizedCubeStateWithVelocity cube_state[MaxCubesPerPacket];
+};
+
 struct StatePacket : public protocol::Packet
 {
     uint16_t sequence;
-    int num_cubes;
-    int cube_index[MaxCubesPerPacket];
-    QuantizedCubeStateWithVelocity cube_state[MaxCubesPerPacket];
+
+    StateUpdate state;
 
     StatePacket() : Packet( STATE_PACKET )
     {
         sequence = 0;
-        num_cubes = 0;
     }
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
         serialize_uint16( stream, sequence );
 
-        serialize_int( stream, num_cubes, 0, MaxCubesPerPacket );
+        serialize_int( stream, state.num_cubes, 0, MaxCubesPerPacket );
 
-        for ( int i = 0; i < num_cubes; ++i )
+        for ( int i = 0; i < state.num_cubes; ++i )
         {
-            serialize_int( stream, cube_index[i], 0, NumCubes - 1 );
+            serialize_int( stream, state.cube_index[i], 0, NumCubes - 1 );
 
-            serialize_int( stream, cube_state[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-            serialize_int( stream, cube_state[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-            serialize_int( stream, cube_state[i].position_z, 0, QuantizedPositionBoundZ - 1 );
+            serialize_int( stream, state.cube_state[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+            serialize_int( stream, state.cube_state[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
+            serialize_int( stream, state.cube_state[i].position_z, 0, QuantizedPositionBoundZ - 1 );
 
-            serialize_object( stream, cube_state[i].orientation );
+            serialize_object( stream, state.cube_state[i].orientation );
 
             bool at_rest = false;
 
             if ( Stream::IsWriting )
             {
-                if ( cube_state[i].linear_velocity_x == 0 && cube_state[i].linear_velocity_y == 0 && cube_state[i].linear_velocity_z == 0 &&
-                     cube_state[i].angular_velocity_x == 0 && cube_state[i].angular_velocity_y == 0 && cube_state[i].angular_velocity_z == 0 )
+                if ( state.cube_state[i].linear_velocity_x == 0 && state.cube_state[i].linear_velocity_y == 0 && state.cube_state[i].linear_velocity_z == 0 &&
+                     state.cube_state[i].angular_velocity_x == 0 && state.cube_state[i].angular_velocity_y == 0 && state.cube_state[i].angular_velocity_z == 0 )
                 {
                     at_rest = true;
                 }
@@ -98,13 +103,23 @@ struct StatePacket : public protocol::Packet
 
             if ( at_rest )
             {
-                serialize_int( stream, cube_state[i].linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-                serialize_int( stream, cube_state[i].linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-                serialize_int( stream, cube_state[i].linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, state.cube_state[i].linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, state.cube_state[i].linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+                serialize_int( stream, state.cube_state[i].linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
 
-                serialize_int( stream, cube_state[i].angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-                serialize_int( stream, cube_state[i].angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-                serialize_int( stream, cube_state[i].angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, state.cube_state[i].angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, state.cube_state[i].angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+                serialize_int( stream, state.cube_state[i].angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+            }
+            else if ( Stream::IsReading )
+            {
+                state.cube_state[i].linear_velocity_x = 0;
+                state.cube_state[i].linear_velocity_y = 0;
+                state.cube_state[i].linear_velocity_z = 0;
+
+                state.cube_state[i].angular_velocity_x = 0;
+                state.cube_state[i].angular_velocity_y = 0;
+                state.cube_state[i].angular_velocity_z = 0;
             }
         }
     }
@@ -139,6 +154,174 @@ struct CubePriorityInfo
 {
     int index;
     float accum;
+};
+
+struct StateJitterBuffer
+{
+    StateJitterBuffer( core::Allocator & allocator, const StatefulModeData & mode_data )
+    //    : snapshots( allocator, NumJitterBufferEntries )
+    {
+        stopped = true;
+        start_time = 0.0;
+        playout_delay = mode_data.playout_delay;
+    }
+
+    void AddState( double time, uint16_t sequence, const StateUpdate & state )
+    {
+        /*
+        CORE_ASSERT( cube_state > 0 );
+
+        if ( stopped )
+        {
+            start_time = time;
+            stopped = false;
+        }
+
+        auto entry = snapshots.Insert( sequence );
+
+        if ( entry )
+            memcpy( entry->cubes, cube_state, sizeof( entry->cubes ) );
+            */
+    }
+
+    void GetViewUpdate( const SnapshotModeData & mode_data, double time, view::ObjectUpdate * object_update, int & num_object_updates )
+    {
+#if 0
+
+        num_object_updates = 0;
+
+        // we have not received a packet yet. nothing to display!
+
+        if ( stopped )
+            return;
+
+        // if time minus playout delay is negative, it's too early to display anything
+
+        time -= ( start_time + playout_delay );
+
+        if ( time <= 0 )
+            return;
+
+        // if we are interpolating but the interpolation start time is too old,
+        // go back to the not interpolating state, so we can find a new start point.
+
+        const double frames_since_start = time * mode_data.send_rate;
+
+        if ( interpolating )
+        {
+            const int n = (int) floor( mode_data.playout_delay / ( 1.0f / mode_data.send_rate ) );
+
+            uint16_t interpolation_sequence = (uint16_t) uint64_t( floor( frames_since_start ) );
+
+            if ( core::sequence_difference( interpolation_sequence, interpolation_start_sequence ) > n )
+                interpolating = false;
+        }
+
+        // if not interpolating, attempt to find an interpolation start point. 
+        // if start point exists, go into interpolating mode and set end point to start point
+        // so we can reuse code below to find a suitable end point on first time through.
+        // if no interpolation start point is found, return.
+
+        if ( !interpolating )
+        {
+            uint16_t interpolation_sequence = (uint16_t) uint64_t( floor( frames_since_start ) );
+
+            auto snapshot = snapshots.Find( interpolation_sequence );
+
+            if ( snapshot )
+            {
+                interpolation_start_sequence = interpolation_sequence;
+                interpolation_end_sequence = interpolation_sequence;
+
+                interpolation_start_time = frames_since_start * ( 1.0 / mode_data.send_rate );
+                interpolation_end_time = interpolation_start_time;
+
+                interpolating = true;
+            }
+        }
+
+        if ( !interpolating )
+            return;
+
+        if ( time < interpolation_start_time )
+            time = interpolation_start_time;
+
+        CORE_ASSERT( time >= interpolation_start_time );
+
+        // if current time is >= end time, we need to start a new interpolation
+        // from the previous end time to the next sample that exists up to n samples
+        // ahead, where n is the # of frames in the playout delay buffer, rounded up.
+
+        if ( time >= interpolation_end_time )
+        {
+            const int n = (int) floor( mode_data.playout_delay / ( 1.0f / mode_data.send_rate ) );
+
+            interpolation_start_sequence = interpolation_end_sequence;
+            interpolation_start_time = interpolation_end_time;
+
+            for ( int i = 0; i < n; ++i )
+            {
+                auto snapshot = snapshots.Find( interpolation_start_sequence + 1 + i );
+                if ( snapshot )
+                {
+                    interpolation_end_sequence = interpolation_start_sequence + 1 + i;
+                    interpolation_end_time = interpolation_start_time + ( 1.0 / mode_data.send_rate ) * ( 1 + i );
+                    interpolation_step_size = ( 1.0 / mode_data.send_rate ) * ( 1 + i );
+                    break;
+                }
+            }
+        }
+
+        // if current time is still > end time, we couldn't start a new interpolation so return.
+
+        if ( time >= interpolation_end_time + 0.0001f )
+            return;
+
+        // we are in a valid interpolation, calculate t by looking at current time 
+        // relative to interpolation start/end times and perform the interpolation.
+
+        const float t = core::clamp( ( time - interpolation_start_time ) / ( interpolation_end_time - interpolation_start_time ), 0.0, 1.0 );
+
+        auto snapshot_a = snapshots.Find( interpolation_start_sequence );
+        auto snapshot_b = snapshots.Find( interpolation_end_sequence );
+
+        CORE_ASSERT( snapshot_a );
+        CORE_ASSERT( snapshot_b );
+
+        if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_LINEAR )
+        {
+            InterpolateSnapshot_Linear( t, snapshot_a->cubes, snapshot_b->cubes, object_update );            
+            num_object_updates = NumCubes;
+        }
+        else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE )
+        {
+            InterpolateSnapshot_Hermite( t, interpolation_step_size, snapshot_a->cubes, snapshot_b->cubes, object_update );                
+            num_object_updates = NumCubes;
+        }
+        else if ( mode_data.interpolation == SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION )
+        {
+            InterpolateSnapshot_Hermite_WithExtrapolation( t, interpolation_step_size, mode_data.extrapolation, snapshot_a->cubes, snapshot_b->cubes, object_update );
+            num_object_updates = NumCubes;
+        }
+        else
+        {
+            CORE_ASSERT( false );
+        }
+
+#endif
+    }
+
+    void Reset()
+    {
+        stopped = true;
+        start_time = 0.0;
+//        snapshots.Reset();
+    }
+
+    bool stopped;
+    double start_time;
+    float playout_delay;
+//    protocol::SequenceBuffer<Snapshot> snapshots;
 };
 
 struct StatefulInternal
@@ -391,14 +574,14 @@ void StatefulDemo::Update()
     auto state_packet = (StatePacket*) m_stateful->packet_factory.Create( STATE_PACKET );
 
     state_packet->sequence = m_stateful->send_sequence;
-    state_packet->num_cubes = num_cubes_to_send;
+    state_packet->state.num_cubes = num_cubes_to_send;
     int j = 0;    
     for ( int i = 0; i < MaxCubesPerPacket; ++i )
     {
         if ( send_cubes[i].send )
         {
-            state_packet->cube_index[j] = send_cubes[i].index;
-            state_packet->cube_state[j] = left_snapshot.cubes[ send_cubes[i].index ];
+            state_packet->state.cube_index[j] = send_cubes[i].index;
+            state_packet->state.cube_state[j] = left_snapshot.cubes[ send_cubes[i].index ];
             j++;
         }
     }
@@ -427,11 +610,21 @@ void StatefulDemo::Update()
         {
             auto state_packet = (StatePacket*) packet;
 
-            printf( "received state packet %d\n", state_packet->sequence );
+//            printf( "received state packet %d\n", state_packet->sequence );
+
+            // todo: process state packet and copy to jitter buffer
         }
 
         m_stateful->packet_factory.Destroy( packet );
     }
+
+    // todo: query jitter buffer if a state update is ready this frame
+
+    // todo: if it is, push to right simulation
+
+    // 1. set input
+    // 2. set time
+    // 3. apply state
 
     // run the simulation
 

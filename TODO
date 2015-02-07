@@ -1,16 +1,19 @@
 DONE:
 
-TODO:
-
-    -------------------------------------------------------------------------
-
     Implement jitter buffer
 
     Store the packet pointer and delete it? Or copy the data?
 
     The data is pretty small. Just copy. Safer.
 
-    -------------------------------------------------------------------------
+    Hacked up StateJitterBuffer copied from interpolation buffer.
+
+TODO:
+
+    Work out what needs to be done to implement delay jitter buffer.
+
+    Really shouldn't be that hard, just a cut down version of interp
+    without any of the hard interp stuff!!!
 
     Add code so the sim doesn't run on the right until the first packet comes in.
 
