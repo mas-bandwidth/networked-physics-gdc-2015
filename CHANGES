@@ -1,4 +1,73 @@
 
+Saturday Morning, February 7th, 2015
+------------------------------------
+
+    Implement jitter buffer
+
+    Store the packet pointer and delete it? Or copy the data?
+
+    The data is pretty small. Just copy. Safer.
+
+    Hacked up StateJitterBuffer copied from interpolation buffer.
+
+    Work out what needs to be done to implement delay jitter buffer.
+
+    Add code so the sim doesn't run on the right until the first packet comes in.
+
+    (Use the stopped flag)
+
+    Check the jitter buffer if a state update is available for current time
+
+    Working. State updates are coming through.
+
+    Once the state update is pushed to sim, remove it so it is not pushed repeatedly.
+
+    Set remote input to input in packet
+
+    Sim is not deterministic on right. It should be!
+
+    Work out why it's not (probably time related) and make it so.
+
+    Seems to be deterministic until input kicks in.
+
+    I believe it's because it is starting sim too early, so frame # is off.
+
+    Fix should be to only start sim when the first frame should be available to sim.
+
+    Yes. That fixed it!
+
+    Lock in input only as first mode. This is important to make sure it is deterministic.
+
+    Next, add some packet loss and show it desyncing (2nd mode)
+
+    3rd mode synchronize state.
+
+    4th mode, implement smoothing?
+
+    Implement "ApplyStateUpdate" function to push to sim.
+
+    INPUT_AND_STATE mode should be working now (staying in sync)
+
+    It seems that linear/angvel in state is zero. Inverted at rest flag?
+
+    It was inverted but now the velocity is totally fucked up.
+
+    Incorrect velocity state on send?!
+
+    Just a cut&paste bug on quantized cube state w. velocity load function.
+
+    Fixed!
+
+    Apply snapshot to sim is not pushing to sim but to view. This is incorrect. Fix it!
+
+    Might need more precision now. It wasn't really quantizing the sim before.
+
+    Don't need more precision, but the linear/ang velocity threshold for at rest needs to be increased,
+    because some cubes are remaining active now.
+
+    Increased to 0.5m sec threshold.
+
+
 Friday Afternoon, February 6th, 2015
 ------------------------------------
 

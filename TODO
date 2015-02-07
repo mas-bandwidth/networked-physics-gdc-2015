@@ -1,37 +1,16 @@
 DONE:
 
-    Implement jitter buffer
-
-    Store the packet pointer and delete it? Or copy the data?
-
-    The data is pretty small. Just copy. Safer.
-
-    Hacked up StateJitterBuffer copied from interpolation buffer.
-
 TODO:
-
-    Work out what needs to be done to implement delay jitter buffer.
-
-    Really shouldn't be that hard, just a cut down version of interp
-    without any of the hard interp stuff!!!
-
-    Add code so the sim doesn't run on the right until the first packet comes in.
-
-    Set remote input to input in packet.
-
-    Set right side time to frame # in packet (does it need to be sent or can it be inferred from sequence?)
-
-    I think it can be inferred from sequence. Big win.
-
-    Push cube state to right side sim
 
     -------------------------------------------------------------------------
 
-    Output the data set and optimize the encoding (single var most likely).
+    Output the data set for cube positions relative to player position
 
-    Maybe try multiple var two-level encoding?
+    Format for text should be x,y,z,player_x,player_y,player_z
 
-    Encode position relative to center quantized integer point.
+    Optimize the position relative to player cube center (two var: xy, z)
+
+    Implement encoding with this optimal # of bits for xy and z.
 
     -------------------------------------------------------------------------
 
@@ -43,6 +22,20 @@ TODO:
 
     -------------------------------------------------------------------------
 
+    Make sure we meet the bandwidth expectations exactly.
+
+    If the bandwidth is under then pad with zeros (just send packet of perfect size...)
+
+    -------------------------------------------------------------------------
+
+    Would be very nice to have a button that when pressed disables packets for 1 second.
+
+    This way state recovery in a katamari could be demonstrated. This would make a great video!
+
+    Want a video of this without smoothing, and with smoothing.
+
+    -------------------------------------------------------------------------
+
     Implement error reduction for position (smoothing)
 
     Implement error reduction for orientation (smoothing)
@@ -50,15 +43,7 @@ TODO:
     Maybe demonstrate difference between local space smoothing (error reduction)
     vs. lagging world space smoothing (following spring...)
 
-    -------------------------------------------------------------------------
-
-    Might be cool to have a fake lag switch when you press a button,
-    eg. no packets come through for one second.
-
-    Or a mode that every few seconds lets no packets in for one second.
-
-    Will be a cool visual demonstration of how the stateful sync works,
-    and recovers from errors (like errors in a video stream...)
+    Get video with smoothing to demonstrate
 
     -------------------------------------------------------------------------
 

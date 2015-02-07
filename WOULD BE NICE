@@ -2,8 +2,21 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Maybe the smallest 3 representations need normalization, eg. the base is in the other quadrant of the quaternion
-    and this adds much more delta than is necessary?
+    Actually much nicer to rename it to "Sync"
+
+    eg. "pm sync"
+
+    "sync demo"
+
+    etc.
+
+    -------------------------------------------
+
+    Rename "stateful" to "state".
+
+    Stateful sounds pretentious.
+
+    State synchronization is much better.
 
     -------------------------------------------
 
@@ -97,35 +110,11 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Quat4f should be converted to behave like other vectorial types, eg. x(), y() etc. not public x,y,z,w floats.
-
-    Should integrate the quat implementation into the vectorial library.
-
-    --------------------------------------------
-
-    Should probably clean up the whole "RealSlidingWindow", vs. "SlidingWindow" thing.
-    
-    SlidingWindowWithHoles?
-
-    --------------------------------------------
-
-    Network protocol "Sliding Window" is not a real sliding window.
-
-    A real sliding window doesn't have any holes.
-
-    Real sliding window has sequence at head and trailing ack sequence and no holes.
-    
-    -------------------------------------------
-
     Would actually be cooler if display settings could be passed in on the command line,
     eg. -width -height, -windowed -fullscreen and so on.
 
     This would allow me to fine tune display settings on a per-premake shortcut basis,
     rather than continually editing and recompiling Game.cpp to change width/height.
-
-    -------------------------------------------
-
-    Idea: the quick console starts at the top center of the screen and grows centered?
 
     -------------------------------------------
 
@@ -154,25 +143,9 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Work out how to setup alternative images for when the HTML5 video is not available.    
-
-    Would actually be even better just to link to the youtube version of that video as a fallback.
-
-    BOOM great idea.
-
-    Seems that 60fps can be uploaded to youtube.
-
-    Idea, upload in super high res and see what happens. Should be possible.
-
-    -------------------------------------------
-
     If the code that wrote the TGA file was spawned off to another thread,
     it should be generally possible to capture realtime images without 
     demo recording and playback, eg. faster workflow.
-
-    ----------------------------------
-
-    Add capture mode, eg. "-capture" which runs in windowed and in reduced resolution (500/250 is good)
 
     ----------------------------------
 

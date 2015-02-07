@@ -415,14 +415,14 @@ namespace activation
 		idToCellIndex[id] = (int) ( cell - &cells[0] );
 	}
 	
-	void ActivationSystem::MoveObject( ObjectId id, float x, float y, bool warp )
+	void ActivationSystem::MoveObject( ObjectId id, float x, float y )
 	{
 		// IMPORTANT: this is quite a slow function (linear search to find active object...)
 		ActiveObject * activeObject = active_objects.FindObject( id );
 		if ( activeObject )
 		{
 			int activeIndex = activeObject - active_objects.GetObjectArray();
-			MoveActiveObject( activeIndex, x, y, warp );
+			MoveActiveObject( activeIndex, x, y );
 		}
 		else
 		{
@@ -430,7 +430,7 @@ namespace activation
 		}
 	}
 
-	void ActivationSystem::MoveActiveObject( int activeIndex, float new_x, float new_y, bool warp )
+	void ActivationSystem::MoveActiveObject( int activeIndex, float new_x, float new_y )
 	{
 		// clamp the new position within bounds
 		new_x = math::clamp( new_x, -bound_x, +bound_x );
@@ -486,7 +486,7 @@ namespace activation
 		if ( distanceSquared > activation_radius_squared )
 		{
 			if ( !activeObject->pendingDeactivation )
-				QueueObjectForDeactivation( *activeObject, warp );
+				QueueObjectForDeactivation( *activeObject );
 		}
 		else
 			activeObject->pendingDeactivation = 0;

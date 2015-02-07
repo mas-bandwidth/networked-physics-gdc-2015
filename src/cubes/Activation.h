@@ -407,10 +407,10 @@ namespace activation
 		void InsertObject( ObjectId id, float x, float y );
 
 		// IMPORTANT: this is a slow function, use the active or database versions instead if you can
-		void MoveObject( ObjectId id, float new_x, float new_y, bool warp = false );
+		void MoveObject( ObjectId id, float new_x, float new_y );
 		
 		// these are much faster
-		void MoveActiveObject( int activeIndex, float new_x, float new_y, bool warp );
+		void MoveActiveObject( int activeIndex, float new_x, float new_y );
  		void MoveDatabaseObject( ObjectId id, float new_x, float new_y );
 		
 		ActiveObject & ActivateObject( CellObject & cellObject, Cell & cell );

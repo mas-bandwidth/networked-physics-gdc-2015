@@ -46,8 +46,8 @@ namespace cubes
 			Gravity = 20.0f;
 			QuickStep = true;
 			RestTime = 0.2f;
-			LinearRestThresholdSquared = 0.2f * 0.2f;
-			AngularRestThresholdSquared = 0.2f * 0.2f;
+			LinearRestThresholdSquared = 0.5f * 0.5f;
+			AngularRestThresholdSquared = 0.5f * 0.5f;
 		}  
 	};
 

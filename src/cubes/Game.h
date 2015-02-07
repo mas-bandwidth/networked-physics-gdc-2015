@@ -421,13 +421,13 @@ namespace game
 			}
 		}
 		
-		void MoveActiveObject( ActiveObject * activeObject, bool warp )
+		void MoveActiveObject( ActiveObject * activeObject )
 		{
 			assert( activeObject );
 			int activeIndex = activeObject - &activeObjects.GetObject( 0 );
 			float x,y;
 			activeObject->GetPositionXY( x, y );
-			activationSystem->MoveActiveObject( activeIndex, x, y, warp );
+			activationSystem->MoveActiveObject( activeIndex, x, y );
 		}
 		
 		void MoveDatabaseObject( ObjectId id, float x, float y )
@@ -504,10 +504,9 @@ namespace game
 			{
 				// active object
 				ActiveId activeId = activeObject->activeId;
-				const bool warp = ( activeObject->position - object.position ).lengthSquared() > 25.0f;
 				*activeObject = object;
 				activeObject->activeId = activeId;
-				activationSystem->MoveActiveObject( activeId, object.position.x, object.position.y, warp );
+				activationSystem->MoveActiveObject( activeId, object.position.x, object.position.y );
 			}
 			else
 			{
@@ -802,7 +801,7 @@ namespace game
 				float x,y;
 				activeObject->GetPositionXY( x, y );
 				int activeIndex = activeObject - &activeObjects.GetObject( 0 );
-				activationSystem->MoveActiveObject( activeIndex, x, y, false );
+				activationSystem->MoveActiveObject( activeIndex, x, y );
 			}
 		}
 		

@@ -637,7 +637,7 @@ struct QuantizedCubeState
 #endif // #if DELTA_STATS
     }
 
-    void Save( CubeState & cube_state )
+    void Save( CubeState & cube_state ) const
     {
         cube_state.interacting = interacting;
         cube_state.position = vectorial::vec3f( position_x, position_y, position_z ) * 1.0f / UnitsPerMeter;
@@ -686,19 +686,25 @@ struct QuantizedCubeStateWithVelocity : public QuantizedCubeState
         QuantizedCubeState::Load( cube_state );
 
         linear_velocity_x = (int) floor( cube_state.linear_velocity.x() * UnitsPerMeter + 0.5f );
-        linear_velocity_x = (int) floor( cube_state.linear_velocity.y() * UnitsPerMeter + 0.5f );
-        linear_velocity_x = (int) floor( cube_state.linear_velocity.z() * UnitsPerMeter + 0.5f );
+        linear_velocity_y = (int) floor( cube_state.linear_velocity.y() * UnitsPerMeter + 0.5f );
+        linear_velocity_z = (int) floor( cube_state.linear_velocity.z() * UnitsPerMeter + 0.5f );
 
         angular_velocity_x = (int) floor( cube_state.angular_velocity.x() * UnitsPerMeter + 0.5f );
-        angular_velocity_x = (int) floor( cube_state.angular_velocity.y() * UnitsPerMeter + 0.5f );
-        angular_velocity_x = (int) floor( cube_state.angular_velocity.z() * UnitsPerMeter + 0.5f );
+        angular_velocity_y = (int) floor( cube_state.angular_velocity.y() * UnitsPerMeter + 0.5f );
+        angular_velocity_z = (int) floor( cube_state.angular_velocity.z() * UnitsPerMeter + 0.5f );
     }
 
-    void Save( CubeState & cube_state )
+    void Save( CubeState & cube_state ) const
     {
         QuantizedCubeState::Save( cube_state );
         cube_state.linear_velocity = vectorial::vec3f( linear_velocity_x, linear_velocity_y, linear_velocity_z ) * 1.0f / UnitsPerMeter;
         cube_state.angular_velocity = vectorial::vec3f( angular_velocity_x, angular_velocity_y, angular_velocity_z ) * 1.0f / UnitsPerMeter;
+    }
+
+    bool AtRest() const
+    {
+        return linear_velocity_x == 0 && linear_velocity_y == 0 && linear_velocity_z == 0 &&
+               angular_velocity_y == 0 && angular_velocity_y == 0 && angular_velocity_z == 0;
     }
 
     bool operator == ( const QuantizedCubeStateWithVelocity & other ) const
