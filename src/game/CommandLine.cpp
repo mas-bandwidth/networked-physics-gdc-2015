@@ -62,9 +62,9 @@ void ProcessCommandLine()
     {
         global.console->ExecuteCommand( "load delta" );
     }
-    else if ( strcmp( commandLineBuffer, "+load stateful" ) == 0 )
+    else if ( strcmp( commandLineBuffer, "+load sync" ) == 0 )
     {
-        global.console->ExecuteCommand( "load stateful" );
+        global.console->ExecuteCommand( "load sync" );
     }
     else if ( strcmp( commandLineBuffer, "+playback" ) == 0 )
     {

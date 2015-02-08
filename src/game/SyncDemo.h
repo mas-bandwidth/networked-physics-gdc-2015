@@ -1,5 +1,5 @@
-#ifndef STATEFUL_DEMO_H
-#define STATEFUL_DEMO_H
+#ifndef SYNC_DEMO_H
+#define SYNC_DEMO_H
 
 #ifdef CLIENT
 
@@ -7,15 +7,15 @@
 
 struct CubesInternal;
 struct CubesSettings;
-struct StatefulInternal;
+struct SyncInternal;
 
-class StatefulDemo : public Demo
+class SyncDemo : public Demo
 {
 public:
 
-    StatefulDemo( core::Allocator & allocator );
+    SyncDemo( core::Allocator & allocator );
 
-    ~StatefulDemo();
+    ~SyncDemo();
 
     virtual bool Initialize() override;
 
@@ -45,7 +45,7 @@ private:
 
     CubesSettings * m_settings;
 
-    StatefulInternal * m_stateful;
+    SyncInternal * m_sync;
 };
 
 #endif // #ifdef CLIENT

@@ -1,4 +1,58 @@
 
+Sunday Morning, February 8th, 2015
+----------------------------------
+
+    Extend precision.
+
+    CubeStateHighPrecision
+
+    increase the position resolution until the quantize stops having artifacts
+
+    eg. 1024, 2048 per-meter...
+
+    increase the orientation bits to 10, is it noticeable? It's probably for the best.
+
+    Seems that 1024 position and 10 bit orientation is sufficient.
+
+    New modes: without quantization, with quantize, with smoothing
+
+    Noticed that there is still quantize jitter on the katamari...
+
+    Tried increasing the position precision. Nope.
+
+    Tried separating linear/angular velocity precision and increasing. Nope.
+
+    Added 64 bit compressed quaternion so I could increase orientation precision about 20 bits.
+
+    Fixed it.
+
+    Now reduce the precision for each back to the breaking point and then back up one
+
+    Seems that 12 bits precision for orientation and 2048 for position/velocity does the trick.
+
+
+Saturday Evening, February 7th, 2015
+------------------------------------
+
+    Would be very nice to have a button that when held disables packets getting through.
+
+        ^--- X KEY
+
+    Done. It's not super great because the popping hides a lot of the corrections.
+
+    It seems that we do need additional precision
+
+    Definitely for position. Probably also for orientation.
+
+    Removing the quantize removes the jitter and popping on the left side,
+    but on the right it still exists.
+
+    To get it working properly it is necessary to synchronize at high(er) precision
+    and do the quantize on both sides.
+
+    It is probably a good idea to have a mode without the quantize as demonstration
+
+
 Saturday Morning, February 7th, 2015
 ------------------------------------
 
@@ -66,6 +120,14 @@ Saturday Morning, February 7th, 2015
     because some cubes are remaining active now.
 
     Increased to 0.5m sec threshold.
+
+    Rename "stateful" or "state" to "sync". Much better.
+
+    Actually implement serialize measure before cube packet write, so cubes
+    perfectly fit into the allowed # of bytes and we hit requested bandwidth
+    exactly.
+
+    Hacked the code to loosely output 256kbps (equivalent to snapshot)
 
 
 Friday Afternoon, February 6th, 2015

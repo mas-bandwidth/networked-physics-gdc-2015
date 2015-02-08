@@ -2,21 +2,11 @@ WOULD BE NICE:
 
     -------------------------------------------
 
-    Actually much nicer to rename it to "Sync"
+    I think I need to implement a low-precision mode for the unquantized demo.
 
-    eg. "pm sync"
+    Otherwise, you really can't see the effect clearly.
 
-    "sync demo"
-
-    etc.
-
-    -------------------------------------------
-
-    Rename "stateful" to "state".
-
-    Stateful sounds pretentious.
-
-    State synchronization is much better.
+    The high precision quantize is so close to float precision effectively it is not visible.
 
     -------------------------------------------
 

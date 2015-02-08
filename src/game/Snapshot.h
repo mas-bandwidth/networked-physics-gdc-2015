@@ -13,23 +13,24 @@
 //#define DELTA_STATS 1
 //#define SERIALIZE_ANGULAR_VELOCITY
 
-static const int MaxPacketSize = 64 * 1024;         // this has to be really large for the worst case!
-
 static const int NumCubes = 900 + MaxPlayers;
 
 static const int NumInterpolationSnapshots = 64;
 
 static const int UnitsPerMeter = 512;
-
 static const int OrientationBits = 9;
-
 static const int QuantizedPositionBoundXY = UnitsPerMeter * PositionBoundXY;
-
 static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
-
 static const int QuantizedLinearVelocityBound = UnitsPerMeter * MaxLinearSpeed;
+static const int QuantizedAngularVelocityBound = UnitsPerMeter * MaxAngularSpeed;
 
-static const int QuantizedAngularVelocityBound = UnitsPerMeter * MaxLinearSpeed;
+static const int UnitsPerMeter_HighPrecision = 2048;
+static const int VelocityUnits_HighPrecision = 2048;
+static const int OrientationBits_HighPrecision = 12;
+static const int QuantizedPositionBoundXY_HighPrecision = UnitsPerMeter_HighPrecision * PositionBoundXY;
+static const int QuantizedPositionBoundZ_HighPrecision = UnitsPerMeter_HighPrecision * PositionBoundZ;
+static const int QuantizedLinearVelocityBound_HighPrecision = VelocityUnits_HighPrecision * MaxLinearSpeed;
+static const int QuantizedAngularVelocityBound_HighPrecision = VelocityUnits_HighPrecision * MaxAngularSpeed;
 
 enum SnapshotInterpolation
 {
@@ -335,6 +336,226 @@ template <int bits> struct compressed_quaternion
     }
 };
 
+template <int bits> struct compressed_quaternion_64
+{
+    enum { max_value = (1<<bits)-1 };
+
+    uint64_t largest : 2;
+    uint64_t integer_a : bits;
+    uint32_t integer_b : bits;
+    uint32_t integer_c : bits;
+
+    void Load( const vectorial::quat4f & quaternion )
+    {
+        CORE_ASSERT( bits > 1 );
+        CORE_ASSERT( bits <= 20 );
+
+        const float minimum = - 1.0f / 1.414214f;       // 1.0f / sqrt(2)
+        const float maximum = + 1.0f / 1.414214f;
+
+        const float scale = float( ( 1 << bits ) - 1 );
+
+        float values[4];
+        quaternion.store( values );
+
+        const float x = values[0];
+        const float y = values[1];
+        const float z = values[2];
+        const float w = values[3];
+
+        const float abs_x = fabs( x );
+        const float abs_y = fabs( y );
+        const float abs_z = fabs( z );
+        const float abs_w = fabs( w );
+
+        largest = 0;
+        float largest_value = abs_x;
+
+        if ( abs_y > largest_value )
+        {
+            largest = 1;
+            largest_value = abs_y;
+        }
+
+        if ( abs_z > largest_value )
+        {
+            largest = 2;
+            largest_value = abs_z;
+        }
+
+        if ( abs_w > largest_value )
+        {
+            largest = 3;
+            largest_value = abs_w;
+        }
+
+        float a,b,c;
+
+        switch ( largest )
+        {
+            case 0:
+                if ( x >= 0 )
+                {
+                    a = y;
+                    b = z;
+                    c = w;
+                }
+                else
+                {
+                    a = -y;
+                    b = -z;
+                    c = -w;
+                }
+                break;
+
+            case 1:
+                if ( y >= 0 )
+                {
+                    a = x;
+                    b = z;
+                    c = w;
+                }
+                else
+                {
+                    a = -x;
+                    b = -z;
+                    c = -w;
+                }
+                break;
+
+            case 2:
+                if ( z >= 0 )
+                {
+                    a = x;
+                    b = y;
+                    c = w;
+                }
+                else
+                {
+                    a = -x;
+                    b = -y;
+                    c = -w;
+                }
+                break;
+
+            case 3:
+                if ( w >= 0 )
+                {
+                    a = x;
+                    b = y;
+                    c = z;
+                }
+                else
+                {
+                    a = -x;
+                    b = -y;
+                    c = -z;
+                }
+                break;
+
+            default:
+                assert( false );
+        }
+
+        const float normal_a = ( a - minimum ) / ( maximum - minimum ); 
+        const float normal_b = ( b - minimum ) / ( maximum - minimum );
+        const float normal_c = ( c - minimum ) / ( maximum - minimum );
+
+        integer_a = math::floor( normal_a * scale + 0.5f );
+        integer_b = math::floor( normal_b * scale + 0.5f );
+        integer_c = math::floor( normal_c * scale + 0.5f );
+    }
+
+    void Save( vectorial::quat4f & quaternion ) const
+    {
+        CORE_ASSERT( bits > 1 );
+        CORE_ASSERT( bits <= 20 );
+
+        const float minimum = - 1.0f / 1.414214f;       // 1.0f / sqrt(2)
+        const float maximum = + 1.0f / 1.414214f;
+
+        const float scale = float( ( 1 << bits ) - 1 );
+
+        const float inverse_scale = 1.0f / scale;
+
+        const float a = integer_a * inverse_scale * ( maximum - minimum ) + minimum;
+        const float b = integer_b * inverse_scale * ( maximum - minimum ) + minimum;
+        const float c = integer_c * inverse_scale * ( maximum - minimum ) + minimum;
+
+        switch ( largest )
+        {
+            case 0:
+            {
+                // (?) y z w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( sqrtf( 1 - a*a - b*b - c*c ), a, b, c ) );
+            }
+            break;
+
+            case 1:
+            {
+                // x (?) z w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, sqrtf( 1 - a*a - b*b - c*c ), b, c ) );
+            }
+            break;
+
+            case 2:
+            {
+                // x y (?) w
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, b, sqrtf( 1 - a*a - b*b - c*c ), c ) );
+            }
+            break;
+
+            case 3:
+            {
+                // x y z (?)
+
+                quaternion = vectorial::normalize( vectorial::quat4f( a, b, c, sqrtf( 1 - a*a - b*b - c*c ) ) );
+            }
+            break;
+
+            default:
+            {
+                assert( false );
+                quaternion = vectorial::quat4f::identity();
+            }
+        }
+    }
+
+    PROTOCOL_SERIALIZE_OBJECT( stream )
+    {
+        serialize_bits( stream, largest, 2 );
+        serialize_bits( stream, integer_a, bits );
+        serialize_bits( stream, integer_b, bits );
+        serialize_bits( stream, integer_c, bits );
+    }
+
+    bool operator == ( const compressed_quaternion_64 & other ) const
+    {
+        if ( largest != other.largest )
+            return false;
+
+        if ( integer_a != other.integer_a )
+            return false;
+
+        if ( integer_b != other.integer_b )
+            return false;
+
+        if ( integer_c != other.integer_c )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const compressed_quaternion_64 & other ) const
+    {
+        return ! ( *this == other );
+    }
+};
+
+
 template <typename Stream> inline void serialize_compressed_quaternion( Stream & stream, vectorial::quat4f & quaternion, int component_bits )
 {
     CORE_ASSERT( component_bits > 1 );
@@ -619,7 +840,7 @@ struct QuantizedCubeState
     int position_x;
     int position_y;
     int position_z;
-    compressed_quaternion<9> orientation;
+    compressed_quaternion<OrientationBits> orientation;
 
 #if DELTA_STATS
     vectorial::quat4f original_orientation;     // for output/delta_float_values.txt only!
@@ -739,6 +960,110 @@ struct QuantizedCubeStateWithVelocity : public QuantizedCubeState
     }
 };
 
+struct QuantizedCubeState_HighPrecision
+{
+    bool interacting;
+
+    int position_x;
+    int position_y;
+    int position_z;
+
+    int linear_velocity_x;
+    int linear_velocity_y;
+    int linear_velocity_z;
+
+    int angular_velocity_x;
+    int angular_velocity_y;
+    int angular_velocity_z;
+
+    compressed_quaternion_64<OrientationBits_HighPrecision> orientation;
+
+#if DELTA_STATS
+    vectorial::quat4f original_orientation;     // for output/delta_float_values.txt only!
+#endif // #if DELTA_STATS
+
+    void Load( const CubeState & cube_state )
+    {
+        interacting = cube_state.interacting;
+
+        position_x = (int) floor( cube_state.position.x() * UnitsPerMeter_HighPrecision + 0.5f );
+        position_y = (int) floor( cube_state.position.y() * UnitsPerMeter_HighPrecision + 0.5f );
+        position_z = (int) floor( cube_state.position.z() * UnitsPerMeter_HighPrecision + 0.5f );
+
+        linear_velocity_x = (int) floor( cube_state.linear_velocity.x() * VelocityUnits_HighPrecision + 0.5f );
+        linear_velocity_y = (int) floor( cube_state.linear_velocity.y() * VelocityUnits_HighPrecision + 0.5f );
+        linear_velocity_z = (int) floor( cube_state.linear_velocity.z() * VelocityUnits_HighPrecision + 0.5f );
+
+        angular_velocity_x = (int) floor( cube_state.angular_velocity.x() * VelocityUnits_HighPrecision + 0.5f );
+        angular_velocity_y = (int) floor( cube_state.angular_velocity.y() * VelocityUnits_HighPrecision + 0.5f );
+        angular_velocity_z = (int) floor( cube_state.angular_velocity.z() * VelocityUnits_HighPrecision + 0.5f );
+
+        orientation.Load( cube_state.orientation );
+
+#if DELTA_STATS
+        original_orientation = cube_state.orientation;
+#endif // #if DELTA_STATS
+    }
+
+    void Save( CubeState & cube_state ) const
+    {
+        cube_state.interacting = interacting;
+        cube_state.position = vectorial::vec3f( position_x, position_y, position_z ) * 1.0f / UnitsPerMeter_HighPrecision;
+        cube_state.linear_velocity = vectorial::vec3f( linear_velocity_x, linear_velocity_y, linear_velocity_z ) * 1.0f / VelocityUnits_HighPrecision;
+        cube_state.angular_velocity = vectorial::vec3f( angular_velocity_x, angular_velocity_y, angular_velocity_z ) * 1.0f / VelocityUnits_HighPrecision;
+        orientation.Save( cube_state.orientation );
+    }
+
+    bool AtRest() const
+    {
+        return linear_velocity_x == 0 && linear_velocity_y == 0 && linear_velocity_z == 0 &&
+               angular_velocity_y == 0 && angular_velocity_y == 0 && angular_velocity_z == 0;
+    }
+
+    bool operator == ( const QuantizedCubeState_HighPrecision & other ) const
+    {
+        if ( interacting != other.interacting )
+            return false;
+
+        if ( position_x != other.position_x )
+            return false;
+
+        if ( position_y != other.position_y )
+            return false;
+
+        if ( position_z != other.position_z )
+            return false;
+
+        if ( linear_velocity_x != other.linear_velocity_x )
+            return false;
+
+        if ( linear_velocity_y != other.linear_velocity_y )
+            return false;
+
+        if ( linear_velocity_z != other.linear_velocity_z )
+            return false;
+
+        if ( angular_velocity_x != other.angular_velocity_x )
+            return false;
+
+        if ( angular_velocity_y != other.angular_velocity_y )
+            return false;
+
+        if ( angular_velocity_z != other.angular_velocity_z )
+            return false;
+
+        if ( orientation != other.orientation )
+            return false;
+
+        return true;
+    }
+
+    bool operator != ( const QuantizedCubeState_HighPrecision & other ) const
+    {
+        return ! ( *this == other );
+    }
+};
+
 struct QuantizedSnapshot
 {
     QuantizedCubeState cubes[NumCubes];
@@ -747,6 +1072,11 @@ struct QuantizedSnapshot
 struct QuantizedSnapshotWithVelocity
 {
     QuantizedCubeStateWithVelocity cubes[NumCubes];
+};
+
+struct QuantizedSnapshot_HighPrecision
+{
+    QuantizedCubeState_HighPrecision cubes[NumCubes];
 };
 
 static void InterpolateSnapshot_Linear( float t, 
@@ -927,6 +1257,51 @@ inline bool GetQuantizedSnapshot( GameInstance * game_instance, QuantizedSnapsho
 }
 
 inline bool GetQuantizedSnapshotWithVelocity( GameInstance * game_instance, QuantizedSnapshotWithVelocity & snapshot )
+{
+    const int num_active_objects = game_instance->GetNumActiveObjects();
+
+    if ( num_active_objects == 0 )
+        return false;
+
+    const hypercube::ActiveObject * active_objects = game_instance->GetActiveObjects();
+
+    CORE_ASSERT( active_objects );
+
+    for ( int i = 0; i < num_active_objects; ++i )
+    {
+        auto & object = active_objects[i];
+
+        const int index = object.id - 1;
+
+        CORE_ASSERT( index >= 0 );
+        CORE_ASSERT( index < NumCubes );
+
+        CubeState cube_state;
+
+        cube_state.position = vectorial::vec3f( object.position.x, object.position.y, object.position.z );
+
+        cube_state.orientation = vectorial::quat4f( object.orientation.x, 
+                                                    object.orientation.y, 
+                                                    object.orientation.z,
+                                                    object.orientation.w );
+
+        cube_state.linear_velocity = vectorial::vec3f( object.linearVelocity.x, 
+                                                       object.linearVelocity.y,
+                                                       object.linearVelocity.z );
+
+        cube_state.angular_velocity = vectorial::vec3f( object.angularVelocity.x, 
+                                                        object.angularVelocity.y,
+                                                        object.angularVelocity.z );
+
+        cube_state.interacting = object.authority == 0;
+
+        snapshot.cubes[index].Load( cube_state );
+    }
+
+    return true;
+}
+
+inline bool GetQuantizedSnapshot_HighPrecision( GameInstance * game_instance, QuantizedSnapshot_HighPrecision & snapshot )
 {
     const int num_active_objects = game_instance->GetNumActiveObjects();
 

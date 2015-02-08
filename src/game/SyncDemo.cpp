@@ -1,4 +1,4 @@
-#include "StatefulDemo.h"
+#include "SyncDemo.h"
 
 #ifdef CLIENT
 
@@ -13,51 +13,49 @@
 #include "network/Simulator.h"
 #include <algorithm>
 
-static const int MaxCubesPerPacket = 31;
+static const int MaxCubesPerPacket = 63;
 static const int NumStateUpdates = 256;
 static const int RightPort = 1001;
 
-enum StatefulMode
+enum SyncMode
 {
-    STATEFUL_MODE_INPUT_ONLY,
-    STATEFUL_MODE_INPUT_DESYNC,
-    STATEFUL_MODE_INPUT_AND_STATE,
-    STATEFUL_NUM_MODES
+    SYNC_MODE_INPUT_ONLY,
+    SYNC_MODE_INPUT_DESYNC,
+    SYNC_MODE_INPUT_AND_STATE,
+    SYNC_MODE_QUANTIZE,
+    SYNC_MODE_SMOOTHING,
+    SYNC_NUM_MODES
 };
 
-const char * stateful_mode_descriptions[]
+const char * sync_mode_descriptions[]
 {
     "Input Only",
     "Input Desync",
-    "Input and State"
+    "Input and State",
+    "Quantize",
+    "Smoothing"
 };
 
-struct StatefulModeData
+struct SyncModeData
 {
-    int bandwidth = 256 * 1000;                     // 256 kbps maximum bandwidth
     float playout_delay = 0.035f;                   // handle +/- two frames jitter @ 60 fps
     float latency = 0.0f;
     float packet_loss = 5.0f;
     float jitter = 2 * 1/60.0f;
 };
 
-static StatefulModeData stateful_mode_data[STATEFUL_NUM_MODES];
+static SyncModeData sync_mode_data[SYNC_NUM_MODES];
 
-static void InitStatefulModes()
+static void InitSyncModes()
 {
-    stateful_mode_data[STATEFUL_MODE_INPUT_ONLY].packet_loss = 0.0f;
-    stateful_mode_data[STATEFUL_MODE_INPUT_ONLY].jitter = 0.0f;
+    sync_mode_data[SYNC_MODE_INPUT_ONLY].packet_loss = 0.0f;
+    sync_mode_data[SYNC_MODE_INPUT_ONLY].jitter = 0.0f;
 }
 
-enum StatefulPackets
+enum SyncPackets
 {
-    STATE_PACKET,
-    STATE_NUM_PACKETS
-};
-
-struct CubeData : public QuantizedCubeStateWithVelocity
-{
-    int index;
+    SYNC_STATE_PACKET,
+    SYNC_NUM_PACKETS
 };
 
 struct StateUpdate
@@ -66,14 +64,50 @@ struct StateUpdate
     uint16_t sequence = 0;
     int num_cubes = 0;
     int cube_index[MaxCubesPerPacket];
-    QuantizedCubeStateWithVelocity cube_state[MaxCubesPerPacket];
+    QuantizedCubeState_HighPrecision cube_state[MaxCubesPerPacket];
 };
+
+template <typename Stream> void serialize_cube_state_update( Stream & stream, int & index, QuantizedCubeState_HighPrecision & cube )
+{
+    serialize_int( stream, index, 0, NumCubes - 1 );
+
+    serialize_int( stream, cube.position_x, -QuantizedPositionBoundXY_HighPrecision, +QuantizedPositionBoundXY_HighPrecision - 1 );
+    serialize_int( stream, cube.position_y, -QuantizedPositionBoundXY_HighPrecision, +QuantizedPositionBoundXY_HighPrecision - 1 );
+    serialize_int( stream, cube.position_z, 0, QuantizedPositionBoundZ_HighPrecision - 1 );
+
+    serialize_object( stream, cube.orientation );
+
+    bool at_rest = Stream::IsWriting ? cube.AtRest() : false;
+    
+    serialize_bool( stream, at_rest );
+
+    if ( !at_rest )
+    {
+        serialize_int( stream, cube.linear_velocity_x, -QuantizedLinearVelocityBound_HighPrecision, +QuantizedLinearVelocityBound_HighPrecision - 1 );
+        serialize_int( stream, cube.linear_velocity_y, -QuantizedLinearVelocityBound_HighPrecision, +QuantizedLinearVelocityBound_HighPrecision - 1 );
+        serialize_int( stream, cube.linear_velocity_z, -QuantizedLinearVelocityBound_HighPrecision, +QuantizedLinearVelocityBound_HighPrecision - 1 );
+
+        serialize_int( stream, cube.angular_velocity_x, -QuantizedAngularVelocityBound_HighPrecision, +QuantizedAngularVelocityBound_HighPrecision - 1 );
+        serialize_int( stream, cube.angular_velocity_y, -QuantizedAngularVelocityBound_HighPrecision, +QuantizedAngularVelocityBound_HighPrecision - 1 );
+        serialize_int( stream, cube.angular_velocity_z, -QuantizedAngularVelocityBound_HighPrecision, +QuantizedAngularVelocityBound_HighPrecision - 1 );
+    }
+    else if ( Stream::IsReading )
+    {
+        cube.linear_velocity_x = 0;
+        cube.linear_velocity_y = 0;
+        cube.linear_velocity_z = 0;
+
+        cube.angular_velocity_x = 0;
+        cube.angular_velocity_y = 0;
+        cube.angular_velocity_z = 0;
+    }
+}
 
 struct StatePacket : public protocol::Packet
 {
     StateUpdate state_update;
 
-    StatePacket() : Packet( STATE_PACKET ) {}
+    StatePacket() : Packet( SYNC_STATE_PACKET ) {}
 
     PROTOCOL_SERIALIZE_OBJECT( stream )
     {
@@ -90,38 +124,7 @@ struct StatePacket : public protocol::Packet
 
         for ( int i = 0; i < state_update.num_cubes; ++i )
         {
-            serialize_int( stream, state_update.cube_index[i], 0, NumCubes - 1 );
-
-            serialize_int( stream, state_update.cube_state[i].position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-            serialize_int( stream, state_update.cube_state[i].position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-            serialize_int( stream, state_update.cube_state[i].position_z, 0, QuantizedPositionBoundZ - 1 );
-
-            serialize_object( stream, state_update.cube_state[i].orientation );
-
-            bool at_rest = Stream::IsWriting ? state_update.cube_state[i].AtRest() : false;
-            
-            serialize_bool( stream, at_rest );
-
-            if ( !at_rest )
-            {
-                serialize_int( stream, state_update.cube_state[i].linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-                serialize_int( stream, state_update.cube_state[i].linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-                serialize_int( stream, state_update.cube_state[i].linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-
-                serialize_int( stream, state_update.cube_state[i].angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-                serialize_int( stream, state_update.cube_state[i].angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-                serialize_int( stream, state_update.cube_state[i].angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-            }
-            else if ( Stream::IsReading )
-            {
-                state_update.cube_state[i].linear_velocity_x = 0;
-                state_update.cube_state[i].linear_velocity_y = 0;
-                state_update.cube_state[i].linear_velocity_z = 0;
-
-                state_update.cube_state[i].angular_velocity_x = 0;
-                state_update.cube_state[i].angular_velocity_y = 0;
-                state_update.cube_state[i].angular_velocity_z = 0;
-            }
+            serialize_cube_state_update( stream, state_update.cube_index[i], state_update.cube_state[i] );
         }
     }
 };
@@ -133,7 +136,7 @@ class StatePacketFactory : public protocol::PacketFactory
 public:
 
     StatePacketFactory( core::Allocator & allocator )
-        : PacketFactory( allocator, STATE_NUM_PACKETS )
+        : PacketFactory( allocator, SYNC_NUM_PACKETS )
     {
         m_allocator = &allocator;
     }
@@ -144,7 +147,7 @@ protected:
     {
         switch ( type )
         {
-            case STATE_PACKET:   return CORE_NEW( *m_allocator, StatePacket );
+            case SYNC_STATE_PACKET:   return CORE_NEW( *m_allocator, StatePacket );
             default:
                 return nullptr;
         }
@@ -159,7 +162,7 @@ struct CubePriorityInfo
 
 struct StateJitterBuffer
 {
-    StateJitterBuffer( core::Allocator & allocator, const StatefulModeData & mode_data )
+    StateJitterBuffer( core::Allocator & allocator, const SyncModeData & mode_data )
         : state_updates( allocator, NumStateUpdates )
     {
         stopped = true;
@@ -239,21 +242,21 @@ private:
     protocol::SequenceBuffer<StateUpdate> state_updates;
 };
 
-struct StatefulInternal
+struct SyncInternal
 {
-    StatefulInternal( core::Allocator & allocator, const StatefulModeData & mode_data ) 
+    SyncInternal( core::Allocator & allocator, const SyncModeData & mode_data ) 
         : packet_factory( allocator )
     {
         this->allocator = &allocator;
         network::SimulatorConfig networkSimulatorConfig;
         networkSimulatorConfig.packetFactory = &packet_factory;
-        networkSimulatorConfig.maxPacketSize = 1024;
+        networkSimulatorConfig.maxPacketSize = 4096;
         network_simulator = CORE_NEW( allocator, network::Simulator, networkSimulatorConfig );
         jitter_buffer = CORE_NEW( allocator, StateJitterBuffer, allocator, mode_data );
         Reset( mode_data );
     }
 
-    ~StatefulInternal()
+    ~SyncInternal()
     {
         CORE_ASSERT( network_simulator );
         typedef network::Simulator NetworkSimulator;
@@ -263,7 +266,7 @@ struct StatefulInternal
         jitter_buffer = nullptr;
     }
 
-    void Reset( const StatefulModeData & mode_data )
+    void Reset( const SyncModeData & mode_data )
     {
         network_simulator->Reset();
         network_simulator->ClearStates();
@@ -280,35 +283,36 @@ struct StatefulInternal
     core::Allocator * allocator;
     uint16_t send_sequence;
     game::Input remote_input;
+    bool disable_packets = false;
     network::Simulator * network_simulator;
     StatePacketFactory packet_factory;
     CubePriorityInfo priority_info[NumCubes];
     StateJitterBuffer * jitter_buffer;
 };
 
-StatefulDemo::StatefulDemo( core::Allocator & allocator )
+SyncDemo::SyncDemo( core::Allocator & allocator )
 {
-    InitStatefulModes();
+    InitSyncModes();
 
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
-    m_stateful = CORE_NEW( *m_allocator, StatefulInternal, *m_allocator, stateful_mode_data[GetMode()] );
+    m_sync = CORE_NEW( *m_allocator, SyncInternal, *m_allocator, sync_mode_data[GetMode()] );
 }
 
-StatefulDemo::~StatefulDemo()
+SyncDemo::~SyncDemo()
 {
     Shutdown();
 
-    CORE_DELETE( *m_allocator, StatefulInternal, m_stateful );
+    CORE_DELETE( *m_allocator, SyncInternal, m_sync );
     CORE_DELETE( *m_allocator, CubesSettings, m_settings );
 
-    m_stateful = nullptr;
+    m_sync = nullptr;
     m_settings = nullptr;
     m_allocator = nullptr;
 }
 
-bool StatefulDemo::Initialize()
+bool SyncDemo::Initialize()
 {
     if ( m_internal )
         Shutdown();
@@ -325,12 +329,12 @@ bool StatefulDemo::Initialize()
     return true;
 }
 
-void StatefulDemo::Shutdown()
+void SyncDemo::Shutdown()
 {
     CORE_ASSERT( m_allocator );
 
-    CORE_ASSERT( m_stateful );
-    m_stateful->Reset( stateful_mode_data[GetMode()] );
+    CORE_ASSERT( m_sync );
+    m_sync->Reset( sync_mode_data[GetMode()] );
 
     if ( m_internal )
     {
@@ -340,27 +344,27 @@ void StatefulDemo::Shutdown()
     }
 }
 
-void ClampSnapshot( QuantizedSnapshotWithVelocity & snapshot )
+void ClampSnapshot( QuantizedSnapshot_HighPrecision & snapshot )
 {
     for ( int i = 0; i < NumCubes; ++i )
     {
-        QuantizedCubeStateWithVelocity & cube = snapshot.cubes[i];
+        QuantizedCubeState_HighPrecision & cube = snapshot.cubes[i];
 
-        cube.position_x = core::clamp( cube.position_x, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-        cube.position_y = core::clamp( cube.position_y, -QuantizedPositionBoundXY, +QuantizedPositionBoundXY - 1 );
-        cube.position_z = core::clamp( cube.position_z, 0, +QuantizedPositionBoundZ - 1 );
+        cube.position_x = core::clamp( cube.position_x, -QuantizedPositionBoundXY_HighPrecision, +QuantizedPositionBoundXY_HighPrecision - 1 );
+        cube.position_y = core::clamp( cube.position_y, -QuantizedPositionBoundXY_HighPrecision, +QuantizedPositionBoundXY_HighPrecision - 1 );
+        cube.position_z = core::clamp( cube.position_z, 0, +QuantizedPositionBoundZ_HighPrecision - 1 );
 
-        cube.linear_velocity_x = core::clamp( cube.linear_velocity_x, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-        cube.linear_velocity_y = core::clamp( cube.linear_velocity_y, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
-        cube.linear_velocity_z = core::clamp( cube.linear_velocity_z, -QuantizedLinearVelocityBound, +QuantizedLinearVelocityBound - 1 );
+        cube.linear_velocity_x = core::clamp( cube.linear_velocity_x, -QuantizedLinearVelocityBound_HighPrecision, +QuantizedLinearVelocityBound_HighPrecision - 1 );
+        cube.linear_velocity_y = core::clamp( cube.linear_velocity_y, -QuantizedLinearVelocityBound_HighPrecision, +QuantizedLinearVelocityBound_HighPrecision - 1 );
+        cube.linear_velocity_z = core::clamp( cube.linear_velocity_z, -QuantizedLinearVelocityBound_HighPrecision, +QuantizedLinearVelocityBound_HighPrecision - 1 );
 
-        cube.angular_velocity_x = core::clamp( cube.angular_velocity_x, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-        cube.angular_velocity_y = core::clamp( cube.angular_velocity_y, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
-        cube.angular_velocity_z = core::clamp( cube.angular_velocity_z, -QuantizedAngularVelocityBound, +QuantizedAngularVelocityBound - 1 );
+        cube.angular_velocity_x = core::clamp( cube.angular_velocity_x, -QuantizedAngularVelocityBound_HighPrecision, +QuantizedAngularVelocityBound_HighPrecision - 1 );
+        cube.angular_velocity_y = core::clamp( cube.angular_velocity_y, -QuantizedAngularVelocityBound_HighPrecision, +QuantizedAngularVelocityBound_HighPrecision - 1 );
+        cube.angular_velocity_z = core::clamp( cube.angular_velocity_z, -QuantizedAngularVelocityBound_HighPrecision, +QuantizedAngularVelocityBound_HighPrecision - 1 );
     }
 }
 
-void ApplySnapshot( GameInstance & game_instance, QuantizedSnapshotWithVelocity & snapshot )
+void ApplySnapshot( GameInstance & game_instance, QuantizedSnapshot_HighPrecision & snapshot )
 {
     for ( int i = 0; i < NumCubes; ++i )
     {
@@ -409,7 +413,7 @@ void ApplyStateUpdate( GameInstance & game_instance, const StateUpdate & state_u
     }
 }
 
-void CalculateCubePriorities( float * priority, QuantizedSnapshotWithVelocity & snapshot )
+void CalculateCubePriorities( float * priority, QuantizedSnapshot_HighPrecision & snapshot )
 {
     const float BasePriority = 1.0f;
     const float PlayerPriority = 1000000.0f;
@@ -435,36 +439,53 @@ struct SendCubeInfo
     bool send;
 };
 
-void MeasureCubesToSend( QuantizedSnapshotWithVelocity & snapshot, SendCubeInfo * send_cubes, int max_bytes )
+void MeasureCubesToSend( QuantizedSnapshot_HighPrecision & snapshot, SendCubeInfo * send_cubes, int max_bytes )
 {
-    // todo: actually serialize measure cubes to send that fit in given number of bytes
+    const int max_bits = max_bytes * 8;
+
+    int bits = 0;
+
     for ( int i = 0; i < MaxCubesPerPacket; ++i )
     {
-        send_cubes[i].send = true;
+        protocol::MeasureStream stream( max_bytes * 2 );
+
+        int id = send_cubes[i].index;
+
+        serialize_cube_state_update( stream, id, snapshot.cubes[id] );
+
+        const int bits_processed = stream.GetBitsProcessed();
+
+        if ( bits + bits_processed < max_bits )
+        {
+            send_cubes[i].send = true;
+            bits += bits_processed;
+        }
     }
 }
 
-void StatefulDemo::Update()
+void SyncDemo::Update()
 {
-    // quantize and clamp left simulation state
+    // quantize and clamp simulation state if necessary
 
-    QuantizedSnapshotWithVelocity left_snapshot;
+    QuantizedSnapshot_HighPrecision left_snapshot;
 
-    GetQuantizedSnapshotWithVelocity( m_internal->GetGameInstance( 0 ), left_snapshot );
+    GetQuantizedSnapshot_HighPrecision( m_internal->GetGameInstance( 0 ), left_snapshot );
 
     ClampSnapshot( left_snapshot );
 
-    ApplySnapshot( *m_internal->simulation[0].game_instance, left_snapshot );
+    if ( GetMode() >= SYNC_MODE_QUANTIZE )
+        ApplySnapshot( *m_internal->simulation[0].game_instance, left_snapshot );
 
     // quantize and clamp right simulation state
 
-    QuantizedSnapshotWithVelocity right_snapshot;
+    QuantizedSnapshot_HighPrecision right_snapshot;
 
-    GetQuantizedSnapshotWithVelocity( m_internal->GetGameInstance( 1 ), right_snapshot );
+    GetQuantizedSnapshot_HighPrecision( m_internal->GetGameInstance( 1 ), right_snapshot );
 
     ClampSnapshot( right_snapshot );
 
-    ApplySnapshot( *m_internal->simulation[1].game_instance, right_snapshot );
+    if ( GetMode() >= SYNC_MODE_QUANTIZE )
+        ApplySnapshot( *m_internal->simulation[1].game_instance, right_snapshot );
 
     // calculate cube priorities and determine which cubes to send in packet
 
@@ -473,11 +494,11 @@ void StatefulDemo::Update()
     CalculateCubePriorities( priority, left_snapshot );
 
     for ( int i = 0; i < NumCubes; ++i )
-        m_stateful->priority_info[i].accum += global.timeBase.deltaTime * priority[i];
+        m_sync->priority_info[i].accum += global.timeBase.deltaTime * priority[i];
 
     CubePriorityInfo priority_info[NumCubes];
 
-    memcpy( priority_info, m_stateful->priority_info, sizeof( CubePriorityInfo ) * NumCubes );
+    memcpy( priority_info, m_sync->priority_info, sizeof( CubePriorityInfo ) * NumCubes );
 
     std::sort( priority_info, priority_info + NumCubes, priority_sort_function );
 
@@ -489,7 +510,7 @@ void StatefulDemo::Update()
         send_cubes[i].send = false;
     }
 
-    const int MaxCubeBytes = 256;           // todo: this should be a function of packet header size and desired amount bandwidth in mode
+    const int MaxCubeBytes = 500;
 
     MeasureCubesToSend( left_snapshot, send_cubes, MaxCubeBytes );
 
@@ -499,21 +520,21 @@ void StatefulDemo::Update()
     {
         if ( send_cubes[i].send )
         {
-            m_stateful->priority_info[send_cubes[i].index].accum = 0.0f;
+            m_sync->priority_info[send_cubes[i].index].accum = 0.0f;
             num_cubes_to_send++;
         }
     }
 
     // construct state packet containing cubes to be sent
 
-    auto state_packet = (StatePacket*) m_stateful->packet_factory.Create( STATE_PACKET );
+    auto state_packet = (StatePacket*) m_sync->packet_factory.Create( SYNC_STATE_PACKET );
 
     auto local_input = m_internal->GetLocalInput();
 
     state_packet->state_update.input = local_input;
-    state_packet->state_update.sequence = m_stateful->send_sequence;
+    state_packet->state_update.sequence = m_sync->send_sequence;
 
-    if ( GetMode() >= STATEFUL_MODE_INPUT_AND_STATE )
+    if ( GetMode() >= SYNC_MODE_INPUT_AND_STATE )
     {
         state_packet->state_update.num_cubes = num_cubes_to_send;
         int j = 0;    
@@ -529,44 +550,47 @@ void StatefulDemo::Update()
         CORE_ASSERT( j == num_cubes_to_send );
     }
 
-    m_stateful->network_simulator->SendPacket( network::Address( "::1", RightPort ), state_packet );
+    m_sync->network_simulator->SendPacket( network::Address( "::1", RightPort ), state_packet );
 
-    m_stateful->send_sequence++;
+    m_sync->send_sequence++;
 
     // update the network simulator
 
-    m_stateful->network_simulator->Update( global.timeBase );
+    m_sync->network_simulator->Update( global.timeBase );
 
     // receive packets from the simulator (with latency, packet loss and jitter applied...)
 
     while ( true )
     {
-        auto packet = m_stateful->network_simulator->ReceivePacket();
+        auto packet = m_sync->network_simulator->ReceivePacket();
         if ( !packet )
             break;
 
-        const auto port = packet->GetAddress().GetPort();
-        const auto type = packet->GetType();
-
-        if ( type == STATE_PACKET && port == RightPort )
+        if ( !m_sync->disable_packets )
         {
-            auto state_packet = (StatePacket*) packet;
+            const auto port = packet->GetAddress().GetPort();
+            const auto type = packet->GetType();
 
-//            printf( "add state update: %d\n", state_packet->sequence );
+            if ( type == SYNC_STATE_PACKET && port == RightPort )
+            {
+                auto state_packet = (StatePacket*) packet;
 
-            m_stateful->jitter_buffer->AddStateUpdate( global.timeBase.time, state_packet->state_update.sequence, state_packet->state_update );
+    //            printf( "add state update: %d\n", state_packet->sequence );
+
+                m_sync->jitter_buffer->AddStateUpdate( global.timeBase.time, state_packet->state_update.sequence, state_packet->state_update );
+            }
         }
 
-        m_stateful->packet_factory.Destroy( packet );
+        m_sync->packet_factory.Destroy( packet );
     }
 
     // push state update to right simulation if available
 
     StateUpdate state_update;
 
-    if ( m_stateful->jitter_buffer->GetStateUpdate( global.timeBase.time, state_update ) )
+    if ( m_sync->jitter_buffer->GetStateUpdate( global.timeBase.time, state_update ) )
     {
-        m_stateful->remote_input = state_update.input;
+        m_sync->remote_input = state_update.input;
 
         ApplyStateUpdate( *m_internal->simulation[1].game_instance, state_update );
     }
@@ -578,18 +602,18 @@ void StatefulDemo::Update()
     update_config.sim[0].num_frames = 1;
     update_config.sim[0].frame_input[0] = local_input;
 
-    update_config.sim[1].num_frames = m_stateful->jitter_buffer->IsRunning( global.timeBase.time ) ? 1 : 0;
-    update_config.sim[1].frame_input[0] = m_stateful->remote_input;
+    update_config.sim[1].num_frames = m_sync->jitter_buffer->IsRunning( global.timeBase.time ) ? 1 : 0;
+    update_config.sim[1].frame_input[0] = m_sync->remote_input;
 
     m_internal->Update( update_config );
 }
 
-bool StatefulDemo::Clear()
+bool SyncDemo::Clear()
 {
     return m_internal->Clear();
 }
 
-void StatefulDemo::Render()
+void SyncDemo::Render()
 {
     CubesRenderConfig render_config;
 
@@ -597,7 +621,7 @@ void StatefulDemo::Render()
 
     m_internal->Render( render_config );
 
-    const float bandwidth = m_stateful->network_simulator->GetBandwidth();
+    const float bandwidth = m_sync->network_simulator->GetBandwidth();
 
     char bandwidth_string[256];
     if ( bandwidth < 1024 )
@@ -616,26 +640,38 @@ void StatefulDemo::Render()
     }
 }
 
-bool StatefulDemo::KeyEvent( int key, int scancode, int action, int mods )
+bool SyncDemo::KeyEvent( int key, int scancode, int action, int mods )
 {
+    if ( key == GLFW_KEY_X )
+    {
+        if ( action == GLFW_PRESS || action == GLFW_REPEAT )
+        {
+            m_sync->disable_packets = true;
+        }
+        else if ( action == GLFW_RELEASE )
+        {
+            m_sync->disable_packets = false;
+        }
+    }
+
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool StatefulDemo::CharEvent( unsigned int code )
+bool SyncDemo::CharEvent( unsigned int code )
 {
     // ...
 
     return false;
 }
 
-int StatefulDemo::GetNumModes() const
+int SyncDemo::GetNumModes() const
 {
-    return STATEFUL_NUM_MODES;
+    return SYNC_NUM_MODES;
 }
 
-const char * StatefulDemo::GetModeDescription( int mode ) const
+const char * SyncDemo::GetModeDescription( int mode ) const
 {
-    return stateful_mode_descriptions[mode];
+    return sync_mode_descriptions[mode];
 }
 
 #endif // #ifdef CLIENT

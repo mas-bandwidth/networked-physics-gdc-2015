@@ -9,15 +9,16 @@
 #include "network/Simulator.h"
 
 static const int RightPort = 1001;
+static const int MaxPacketSize = 64 * 1024;         // this has to be really large for the worst case!
 
 enum SnapshotMode
 {
-    SNAPSHOT_MODE_NAIVE_60PPS,                  // 1. naive snapshots with uncompressed data no jitter @ 60pps
-    SNAPSHOT_MODE_NAIVE_60PPS_JITTER,           // 2. naive snapshots with jitter +/2 frames @ 60pps
-    SNAPSHOT_MODE_NAIVE_10PPS,                  // 3. naive snapshots at 10pps with interpolation
-    SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,   // 5. linear interpolation at 10pps
-    SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS,  // 6. hermite interpolation at 10pps
-    SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS,  // 7. hermite extrapolation at 10pps
+    SNAPSHOT_MODE_NAIVE_60PPS,                      // 1. naive snapshots with uncompressed data no jitter @ 60pps
+    SNAPSHOT_MODE_NAIVE_60PPS_JITTER,               // 2. naive snapshots with jitter +/2 frames @ 60pps
+    SNAPSHOT_MODE_NAIVE_10PPS,                      // 3. naive snapshots at 10pps with interpolation
+    SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,       // 5. linear interpolation at 10pps
+    SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS,      // 6. hermite interpolation at 10pps
+    SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS,      // 7. hermite extrapolation at 10pps
     SNAPSHOT_NUM_MODES
 };
 

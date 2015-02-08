@@ -591,8 +591,8 @@ if not os.is "windows" then
 
     newaction
     {
-        trigger     = "stateful",
-        description = "Build and run state synchronization demo",
+        trigger     = "sync",
+        description = "Build and run state sync demo",
         valid_kinds = premake.action.get("gmake").valid_kinds,
         valid_languages = premake.action.get("gmake").valid_languages,
         valid_tools = premake.action.get("gmake").valid_tools,
@@ -604,7 +604,7 @@ if not os.is "windows" then
             if os.execute "make -j4 Client" ~= 0 then
                 os.exit(1)
             end
-            os.execute "bin/Client +load stateful"
+            os.execute "bin/Client +load sync"
         end
     }
 

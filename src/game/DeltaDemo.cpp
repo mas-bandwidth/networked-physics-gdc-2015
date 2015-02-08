@@ -17,6 +17,7 @@
 static const int LeftPort = 1000;
 static const int RightPort = 1001;
 static const int MaxSnapshots = 256;
+static const int MaxPacketSize = 64 * 1024;         // this has to be really large for the worst case!
 
 #if DELTA_STATS
 

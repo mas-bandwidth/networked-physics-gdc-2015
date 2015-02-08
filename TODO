@@ -4,50 +4,45 @@ TODO:
 
     -------------------------------------------------------------------------
 
-    Output the data set for cube positions relative to player position
-
-    Format for text should be x,y,z,player_x,player_y,player_z
-
-    Optimize the position relative to player cube center (two var: xy, z)
-
-    Implement encoding with this optimal # of bits for xy and z.
-
-    -------------------------------------------------------------------------
-
-    Actually implement serialize measure before cube packet write, so cubes
-    perfectly fit into the allowed # of bytes and we hit requested bandwidth
-    exactly.
-
-    Make sure serialize measure considers center point for position compression
-
-    -------------------------------------------------------------------------
-
-    Make sure we meet the bandwidth expectations exactly.
-
-    If the bandwidth is under then pad with zeros (just send packet of perfect size...)
-
-    -------------------------------------------------------------------------
-
-    Would be very nice to have a button that when pressed disables packets for 1 second.
-
-    This way state recovery in a katamari could be demonstrated. This would make a great video!
-
-    Want a video of this without smoothing, and with smoothing.
-
-    -------------------------------------------------------------------------
-
     Implement error reduction for position (smoothing)
 
     Implement error reduction for orientation (smoothing)
 
-    Maybe demonstrate difference between local space smoothing (error reduction)
-    vs. lagging world space smoothing (following spring...)
-
-    Get video with smoothing to demonstrate
-
     -------------------------------------------------------------------------
 
-    Write stateful synchronization article
+    This article needs to be finished. Don't implement anything beyond here!!!
+
+    In the article discuss improvements past the smoothing.
+
+    Encode position relative to player cube as offset. Output the offsets as 
+    data set and optimize to find the best bit encoding. xy vs. z, try one level
+    and two level bits.
+
+    Use reliability system to know which packets got through (link to article).
+
+    Keep track of, per-cube the last sequence # it changed on. If it hasn't
+    changed since that sequence lower its priority even further (still send it
+    though...)
+
+    Use reliability system to drive delta encoding. Per-cube need 16 bit sequence
+    to identify base, receiver needs to buffer a lot of bases. If last sent packet
+    exceeds time then the object isn't changing much, so the lowering priority
+    if it is unchanged picks up this case.
+
+    If input changes and a packet is lost with that change there will be visual glitches
+
+    To fix, add *some* small delay @ 60fps (85ms or so) to handle lost packets and 
+    jitter, to make it *EXTREMELY* unlikely that an input would be lost, and then
+    use the same technique from deterministic lockstep to redundantly send unacked
+    inputs.
+
+    In fact, there is almost a continuum of the deterministic lockstep <-> this technique
+    depending on how long you are willing to wait for input, if you wait forever, it's
+    deterministic lockstep and state never needs to be sent, if you wait a finite amount
+    of time, it's practically completely deterministic, but state is sent just to fixup
+    when input is lost (1 second of packet loss)
+
+    Anyway. Interesting to see how this technique blurs into det lockstep.
 
     -------------------------------------------------------------------------
 

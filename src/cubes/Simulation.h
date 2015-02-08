@@ -45,9 +45,9 @@ namespace cubes
 			Friction = 100.0f;
 			Gravity = 20.0f;
 			QuickStep = true;
-			RestTime = 0.2f;
-			LinearRestThresholdSquared = 0.5f * 0.5f;
-			AngularRestThresholdSquared = 0.5f * 0.5f;
+			RestTime = 0.1f;
+			LinearRestThresholdSquared = 0.25f * 0.25f;
+			AngularRestThresholdSquared = 0.25f * 0.25f;
 		}  
 	};
 

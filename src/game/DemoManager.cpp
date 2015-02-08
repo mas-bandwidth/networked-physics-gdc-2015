@@ -9,7 +9,7 @@
 #include "SnapshotDemo.h"
 #include "CompressionDemo.h"
 #include "DeltaDemo.h"
-#include "StatefulDemo.h"
+#include "SyncDemo.h"
 #include "Render.h"
 #include "Global.h"
 #include "Console.h"
@@ -62,9 +62,9 @@ bool DemoManager::LoadDemo( const char * name )
     {
         m_demo = CORE_NEW( *m_allocator, DeltaDemo, *m_allocator );
     }
-    else if ( strcmp( name, "stateful" ) == 0 )
+    else if ( strcmp( name, "sync" ) == 0 )
     {
-        m_demo = CORE_NEW( *m_allocator, StatefulDemo, *m_allocator );
+        m_demo = CORE_NEW( *m_allocator, SyncDemo, *m_allocator );
     }
     else
     {
