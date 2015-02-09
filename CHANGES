@@ -1,4 +1,33 @@
 
+Monday Morning, February 9th, 2015
+----------------------------------
+
+    Implement error reduction for position (smoothing)
+
+    Implement error reduction for orientation (smoothing)
+
+    Added position and orientation error arrays.
+
+    Need a way to add the position/orientation error to the real state before render.
+
+    Should be passed into render config because it needs to be per-view/sim.
+
+    Added RenderConfigPerView struct, inside position/orientation error pointers initially nullptr.
+
+    Make sure it position/orientation error is passed in to right simulation in mode 5 (smoothing) and is cleared to identity for now.
+
+    Something crazy is going on -- multiplying the orientation by quat identity
+    is resulting in a quat which is forced to identity.
+
+    Maybe something is wrong with the * operator? Maybe it is a result of deriving from vec4f?
+
+    Appears to be so because the goddamn quaternion * operator is just not defined.
+
+    This explain why the relative quaternion was having problems during compression.
+
+    Should probably return to that and try to understand if it can be made to work once this is fixed.
+
+
 Sunday Morning, February 8th, 2015
 ----------------------------------
 

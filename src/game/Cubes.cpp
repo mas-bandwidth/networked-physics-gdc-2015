@@ -225,7 +225,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         render.ResizeDisplay( width, height );
 
-        view[0].objects.GetRenderState( view[0].cubes );
+        view[0].objects.GetRenderState( view[0].cubes, render_config.view[0].position_error, render_config.view[0].orientation_error );
 
         render.BeginScene( 0, 0, width, height );
 
@@ -251,7 +251,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         // left view
 
-        view[0].objects.GetRenderState( view[0].cubes );
+        view[0].objects.GetRenderState( view[0].cubes, render_config.view[0].position_error, render_config.view[0].orientation_error );
 
         render.BeginScene( 0, 0, width/2 - border/2, height );
 
@@ -267,7 +267,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
 
         // right view
 
-        view[1].objects.GetRenderState( view[1].cubes );
+        view[1].objects.GetRenderState( view[1].cubes, render_config.view[1].position_error, render_config.view[1].orientation_error );
 
         render.BeginScene( width/2 + border/2, 0, width, height );
 

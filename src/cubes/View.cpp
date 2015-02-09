@@ -173,7 +173,7 @@ namespace view
 			return NULL;
 	}
 
-    void ObjectManager::GetRenderState( Cubes & renderState )
+    void ObjectManager::GetRenderState( Cubes & renderState, const vectorial::vec3f * position_error, const vectorial::quat4f * orientation_error )
     {
         renderState.numCubes = objects.size();
 
@@ -184,12 +184,14 @@ namespace view
         {
             Object * object = itor->second;
             assert( object );
-            
-            vectorial::mat4f translation = vectorial::mat4f::translation( object->position );
-            vectorial::mat4f rotation = vectorial::mat4f::rotation( object->orientation );
+
+            const int id = object->id;
+
+            vectorial::mat4f translation = vectorial::mat4f::translation( object->position + ( position_error ? position_error[id] : vectorial::vec3f(0,0,0) ) );
+            vectorial::mat4f rotation = vectorial::mat4f::rotation( object->orientation * vectorial::quat4f(0,0,0,1) );//( orientation_error ? orientation_error[id] : vectorial::quat4f(0,0,0,1) ) );
             vectorial::mat4f scale = vectorial::mat4f::scale( object->scale * 0.5f );
 
-            vectorial::mat4f inv_translation = vectorial::mat4f::translation( -object->position );
+            vectorial::mat4f inv_translation = vectorial::mat4f::translation( - ( object->position + ( position_error ? position_error[id] : vectorial::vec3f(0,0,0) ) ) );
             vectorial::mat4f inv_rotation = transpose( rotation );
             vectorial::mat4f inv_scale = vectorial::mat4f::scale( 1.0f / ( object->scale * 0.5f ) );
 

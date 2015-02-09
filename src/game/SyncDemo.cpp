@@ -277,6 +277,8 @@ struct SyncInternal
         {
             priority_info[i].index = i;
             priority_info[i].accum = 0.0f;
+            position_error[i] = vectorial::vec3f(0,0,0);
+            orientation_error[i] = vectorial::quat4f(0,0,0,1);
         }
     }
 
@@ -288,6 +290,8 @@ struct SyncInternal
     StatePacketFactory packet_factory;
     CubePriorityInfo priority_info[NumCubes];
     StateJitterBuffer * jitter_buffer;
+    vectorial::vec3f position_error[NumCubes];
+    vectorial::quat4f orientation_error[NumCubes];
 };
 
 SyncDemo::SyncDemo( core::Allocator & allocator )
@@ -615,11 +619,21 @@ bool SyncDemo::Clear()
 
 void SyncDemo::Render()
 {
+    // render cube simulations
+
     CubesRenderConfig render_config;
 
     render_config.render_mode = CUBES_RENDER_SPLITSCREEN;
 
+    if ( GetMode() >= SYNC_MODE_SMOOTHING )
+    {
+        render_config.view[1].position_error = m_sync->position_error;
+        render_config.view[1].orientation_error = m_sync->orientation_error;
+    }
+
     m_internal->Render( render_config );
+
+    // render bandwidth overlay
 
     const float bandwidth = m_sync->network_simulator->GetBandwidth();
 

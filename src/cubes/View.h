@@ -89,7 +89,7 @@ namespace view
 
 		Object * GetObject( unsigned int id );
 
-		void GetRenderState( Cubes & renderState );
+		void GetRenderState( Cubes & renderState, const vectorial::vec3f * position_error, const vectorial::quat4f * orientation_error );
 
 	private:
 

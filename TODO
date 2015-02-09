@@ -2,18 +2,38 @@ DONE:
 
 TODO:
 
+    Fix the * and *= operators between quat4f.
+
+    --------------------------------------------------------------------------
+
+    Implement code to reduce the position error over time.
+
+    Implement code to reduce the orientation error over time (slerp towards identity)
+
+    Make sure neither case have issues with denormals, esp. position.
+
+    When a state update is applied, recalculate the position/orientation error.
+
+    Verify that in smoothing mode the smoothing is working properly (katamari ball)
+
+    Tune it so it looks as good as possible.
+
     -------------------------------------------------------------------------
 
-    Implement error reduction for position (smoothing)
+    There appears to be some jittering on the right side in mode 5.
 
-    Implement error reduction for orientation (smoothing)
+    Only appears after a while in the katamari cube
+
+    What is going on?!
+
+    (I suspect the input frame is getting out of sync somehow?)
 
     -------------------------------------------------------------------------
 
     This article needs to be finished. Don't implement anything beyond here!!!
 
-    In the article discuss improvements past the smoothing.
-
+    In the article discuss improvements past the smoothing but don't implement!
+    
     Encode position relative to player cube as offset. Output the offsets as 
     data set and optimize to find the best bit encoding. xy vs. z, try one level
     and two level bits.
@@ -29,6 +49,11 @@ TODO:
     exceeds time then the object isn't changing much, so the lowering priority
     if it is unchanged picks up this case.
 
+    Can do better than 16 bit base per-object. Moving objects get updated frequently, 
+    so any object that has moved in the last 1 second @ 60pps = [0,63], 5 bits per-object,
+    4 bits for 1/2 second, 2 bits for 1/4 second. Use statistics to identify the profitable
+    bit range for deltas (depends on the average rate of update for moving objects)
+
     If input changes and a packet is lost with that change there will be visual glitches
 
     To fix, add *some* small delay @ 60fps (85ms or so) to handle lost packets and 
@@ -43,6 +68,8 @@ TODO:
     when input is lost (1 second of packet loss)
 
     Anyway. Interesting to see how this technique blurs into det lockstep.
+
+    Idea, encode base sequnece # per-object relative to most recent ack packet (header)
 
     -------------------------------------------------------------------------
 

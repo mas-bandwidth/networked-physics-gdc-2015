@@ -136,6 +136,12 @@ enum CubesRenderMode
     CUBES_RENDER_QUADSCREEN
 };
 
+struct CubesRenderConfigPerView
+{
+    vectorial::vec3f * position_error = nullptr;
+    vectorial::quat4f * orientation_error = nullptr;
+};
+
 struct CubesRenderConfig
 {
     CubesRenderConfig()
@@ -144,6 +150,7 @@ struct CubesRenderConfig
     }
 
     CubesRenderMode render_mode;
+    CubesRenderConfigPerView view[MaxViews];
 };
 
 #endif
