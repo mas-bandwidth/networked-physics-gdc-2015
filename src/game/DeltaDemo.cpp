@@ -649,7 +649,7 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     const int relative_quaternion_delta_x = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_x );
     const int relative_quaternion_delta_y = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_y );
     const int relative_quaternion_delta_z = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_z );
-    const int relative_quaternion_delta_w = abs( ( MaxRelativeQuaternionDelta / 2 - 1 ) - relative_quaternion_w );
+    const int relative_quaternion_delta_w = abs( ( MaxRelativeQuaternionDelta - 1 ) - relative_quaternion_w );
 
     CORE_ASSERT( relative_quaternion_delta_x >= 0 );
     CORE_ASSERT( relative_quaternion_delta_y >= 0 );

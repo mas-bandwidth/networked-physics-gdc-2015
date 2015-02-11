@@ -111,6 +111,29 @@ namespace vectorial
 
         return a * beta + b * alpha * flip;
     }
+
+    static inline quat4f multiply( const quat4f & a, const quat4f & b )
+    {
+        const float a_x = a.x();
+        const float a_y = a.y();
+        const float a_z = a.z();
+        const float a_w = a.w();
+
+        const float b_x = b.x();
+        const float b_y = b.y();
+        const float b_z = b.z();
+        const float b_w = b.w();
+
+        return quat4f( a_w * b_x + a_x * b_w + a_y * b_z - a_z * b_y, 
+                       a_w * b_y - a_x * b_z + a_y * b_w + a_z * b_x,
+                       a_w * b_z + a_x * b_y - a_y * b_x + a_z * b_w,
+                       a_w * b_w - a_x * b_x - a_y * b_y - a_z * b_z );
+    }
+
+    static inline quat4f operator * ( const quat4f & lhs, const quat4f & rhs )
+    {
+        return multiply( lhs, rhs );
+    }
 }
 
 #endif

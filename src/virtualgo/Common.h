@@ -66,7 +66,7 @@ namespace virtualgo
 
     inline void AngularVelocityToSpin( const quat4f & orientation, vec3f angularVelocity, quat4f & spin )
     {
-        spin = 0.5f * quat4f( 0, angularVelocity.x(), angularVelocity.y(), angularVelocity.z() ) * orientation;
+        spin = 0.5f * ( quat4f( 0, angularVelocity.x(), angularVelocity.y(), angularVelocity.z() ) * orientation );
     }
 
     inline void RigidBodyInverse( const mat4f & matrix, const mat4f & transposeRotation, mat4f & inverse )

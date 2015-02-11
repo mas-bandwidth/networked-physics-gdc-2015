@@ -101,7 +101,7 @@ end
 
 smallest_three_bandwidth_estimates.sort! { |a,b| a.total_bits <=> b.total_bits }
 
-absolute_smallest_three_bits = ( 1 + 2 + 9 + 9 + 9 ) * smallest_three_values.size
+absolute_smallest_three_bits = ( 2 + 9 + 9 + 9 ) * smallest_three_values.size
 
 puts
 puts "num smallest three samples: #{smallest_three_values.size}"

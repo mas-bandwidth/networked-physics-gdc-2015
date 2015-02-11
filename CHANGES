@@ -1,4 +1,34 @@
 
+Wednesday Morning, February 11th, 2015
+--------------------------------------
+
+    Fix the * and *= operators between quat4f.
+
+    Re-evaluate the relative quaternion statistics for delta encoding.
+
+    It may be a lot better know. Previous statistics were completely thrown off by
+    incorrect quaternion multiply!!!
+
+    Seems to still be in the same ballpark: 90% of original size at best.
+
+    My guess is that the smallest 3 is still the best, although it may
+    be possible to get close to it, or even maybe beat it with a smart
+    two-level encoding for the relative quaternion deltas.
+
+    Nope. Relative encoding is promising. It should be explored. Do it!
+
+    Explored it. The encoding is just slightly worse than the smallest 3 delta encode.
+
+    eg. 81.6% best, vs. 80.8% best for smallest three delta.
+
+    Very interesting!
+
+    I wonder if axis-angle delta would provide wins over both of these?
+
+    It probably would. Conclusion for compression article still stands, although
+    a slightly adjustment needs to be made for the relative quaternion encoding.
+
+
 Monday Morning, February 9th, 2015
 ----------------------------------
 

@@ -10,7 +10,7 @@
 #include "protocol/Object.h"
 #include "protocol/SequenceBuffer.h"
 
-//#define DELTA_STATS 1
+#define DELTA_STATS 1
 //#define SERIALIZE_ANGULAR_VELOCITY
 
 static const int NumCubes = 900 + MaxPlayers;

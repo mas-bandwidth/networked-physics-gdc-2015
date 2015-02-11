@@ -205,6 +205,8 @@ end
   puts "  #{threshold}: #{percent_x.round(1)}% #{percent_y.round(1)}% #{percent_z.round(1)}% #{percent_w.round(1)}%"
 end
 
+=begin
+  
 puts "\ndelta relative quaternion:\n\n"
 
 delta_relative_quaternion_x = []
@@ -220,7 +222,7 @@ File.readlines( 'scripts/delta_relative_quaternion.txt' ).each do |line|
   relative_quaternion_x = values[0].to_i
   relative_quaternion_y = values[1].to_i
   relative_quaternion_z = values[2].to_i
-  relative_quaternion_w = values[3].to_i
+  relative_quaternion_w = values [3].to_i
   delta_relative_quaternion_x.push relative_quaternion_x
   delta_relative_quaternion_y.push relative_quaternion_y
   delta_relative_quaternion_z.push relative_quaternion_z
@@ -248,6 +250,8 @@ end
   percent_w = count_w / delta_relative_quaternion_total_w.to_f * 100.0
   puts "  #{threshold}: #{percent_x.round(1)}% #{percent_y.round(1)}% #{percent_z.round(1)}% #{percent_w.round(1)}%"
 end
+
+=end
 
 puts "\nrelative quaternion values:\n"
 
@@ -279,10 +283,10 @@ File.readlines( 'scripts/relative_quaternion_values.txt' ).each do |line|
 
   values = line.split( ',' )
 
-  quaternion = Quaternion.new( values[0].to_i - 511, 
-                               values[1].to_i - 511,
-                               values[2].to_i - 511,
-                               values[3].to_i - 511 )
+  quaternion = Quaternion.new( 511 - values[0].to_i, 
+                               511 - values[1].to_i,
+                               511 - values[2].to_i,
+                               values[3].to_i )
 
   relative_quaternion_values.push quaternion
   

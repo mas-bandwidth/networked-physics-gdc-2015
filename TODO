@@ -2,8 +2,6 @@ DONE:
 
 TODO:
 
-    Fix the * and *= operators between quat4f.
-
     --------------------------------------------------------------------------
 
     Implement code to reduce the position error over time.
