@@ -1,4 +1,30 @@
 
+Wednesday Evening, February 11th, 2015
+--------------------------------------
+
+    I was sending relative orientation with 10 bits [0,1023] precision for deltas.
+
+    It should actually be encoded at 9 bits total [0,511] with 255 midpoint.
+
+    This means I was encoding at twice the precision, and that relative orientation
+    is likely to beat the smallest three delta now.
+
+    Wow! I'm at 72% of absolute smallest three size!!!
+
+        num relative quaternion samples: 189625
+
+        absolute smallest three: 5499125 bits
+
+        compression 4-7: 3998144 (72.7)
+        compression 5-7: 4040001 (73.5)
+        compression 3-7: 4091706 (74.4)
+        compression 4-6: 4114374 (74.8)
+        compression 5-6: 4120000 (74.9)
+        compression 3-6: 4179849 (76.0)
+
+    The snapshot compression article needs to be updated with this. This is a big improvement!
+
+
 Wednesday Morning, February 11th, 2015
 --------------------------------------
 

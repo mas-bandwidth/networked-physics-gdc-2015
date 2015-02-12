@@ -114,4 +114,8 @@ for i in 0..9
   puts "compression #{bandwidth_estimate.name}: #{bandwidth_estimate.total_bits} (#{(bandwidth_estimate.total_bits/absolute_smallest_three_bits.to_f*100.0).round(1)})"
 end
 
+best = smallest_three_bandwidth_estimates[0]
+
+puts "\naverage bits per-smallest three delta: #{(best.total_bits/smallest_three_values.size.to_f).round(2)}"
+
 puts

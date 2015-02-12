@@ -124,4 +124,8 @@ for i in 0..9
   puts "compression #{bandwidth_estimate.name}: #{bandwidth_estimate.total_bits} (#{(bandwidth_estimate.total_bits/absolute_position_bits.to_f*100.0).round(1)})"
 end
 
+best = position_bandwidth_estimates[0]
+
+puts "\naverage bits per-position: #{(best.total_bits/position_values.size.to_f).round(2)}"
+
 puts

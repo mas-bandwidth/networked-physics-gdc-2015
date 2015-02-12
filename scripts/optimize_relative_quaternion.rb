@@ -16,10 +16,10 @@ File.readlines( 'scripts/relative_quaternion_values.txt' ).each do |line|
 
   values = line.split( ',' )
 
-  relative_quaternion = RelativeQuaternion.new( 511 - values[0].to_i,
-                                                511 - values[1].to_i,
-                                                511 - values[2].to_i,
-                                                values[3].to_i )
+  relative_quaternion = RelativeQuaternion.new( 255 - values[0].to_i / 2,
+                                                255 - values[1].to_i / 2,
+                                                255 - values[2].to_i / 2,
+                                                values[3].to_i / 2 )
 
   relative_quaternion_values.push relative_quaternion
 
@@ -75,7 +75,7 @@ end
 relative_quaternion_bandwidth_estimates = []
 
 for small_bits in 2..6
-  for large_bits in 5..10
+  for large_bits in 6..10
     next if small_bits >= large_bits
     bandwidth_estimate = RelativeQuaternionBandwidthEstimate.new( small_bits, large_bits )
     puts bandwidth_estimate.name
@@ -98,5 +98,9 @@ for i in 0..5
   bandwidth_estimate = relative_quaternion_bandwidth_estimates[i]
   puts "compression #{bandwidth_estimate.name}: #{bandwidth_estimate.total_bits} (#{(bandwidth_estimate.total_bits/absolute_smallest_three_bits.to_f*100.0).round(1)})"
 end
+
+best = relative_quaternion_bandwidth_estimates[0]
+
+puts "\naverage bits per-relative quaternion: #{(best.total_bits/relative_quaternion_values.size.to_f).round(2)}"
 
 puts

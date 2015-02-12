@@ -610,6 +610,29 @@ void SyncDemo::Update()
     update_config.sim[1].frame_input[0] = m_sync->remote_input;
 
     m_internal->Update( update_config );
+
+    // reduce position and orientation error
+
+    static const float PositionErrorTightness = 0.95f;
+    static const float OrientationErrorTightness = 0.95f;
+
+    const vectorial::quat4f identity = vectorial::quat4f::identity();
+
+    for ( int i = 0; i < NumCubes; ++i )
+    {
+        if ( vectorial::length_squared( m_sync->position_error[i] ) >= 0.001f )
+             m_sync->position_error[i] *= PositionErrorTightness;
+        else
+             m_sync->position_error[i] = vectorial::vec3f(0,0,0);
+
+        if ( vectorial::dot( m_sync->orientation_error[i], identity ) < 0 )
+             m_sync->orientation_error[i] = -m_sync->orientation_error[i];
+
+        if ( fabs( vectorial::dot( m_sync->orientation_error[i], vectorial::quat4f::identity() ) ) > 0.001f )
+            m_sync->orientation_error[i] = vectorial::slerp( 1.0f - OrientationErrorTightness, m_sync->orientation_error[i], identity );
+        else
+            m_sync->orientation_error[i] = identity;
+    }
 }
 
 bool SyncDemo::Clear()
