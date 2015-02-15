@@ -391,7 +391,7 @@ void ApplySnapshot( GameInstance & game_instance, QuantizedSnapshot_HighPrecisio
     }
 }
 
-void ApplyStateUpdate( GameInstance & game_instance, const StateUpdate & state_update )
+void ApplyStateUpdate( GameInstance & game_instance, const StateUpdate & state_update, vectorial::vec3f * position_error, vectorial::quat4f * orientation_error )
 {
     for ( int i = 0; i < state_update.num_cubes; ++i )
     {
@@ -404,6 +404,16 @@ void ApplyStateUpdate( GameInstance & game_instance, const StateUpdate & state_u
             CubeState cube;
 
             state_update.cube_state[i].Save( cube );
+
+            vectorial::vec3f old_position( active_object->position.x, active_object->position.y, active_object->position.z );
+            vectorial::vec3f new_position = cube.position;
+
+            position_error[id] = ( old_position + position_error[id] ) - new_position;  
+
+            vectorial::quat4f old_orientation( active_object->orientation.x, active_object->orientation.y, active_object->orientation.z, active_object->orientation.w );
+            vectorial::quat4f new_orientation = cube.orientation;
+
+            orientation_error[id] = vectorial::conjugate( new_orientation ) * ( old_orientation * orientation_error[id] );
 
             active_object->position = math::Vector( cube.position.x(), cube.position.y(), cube.position.z() );
             active_object->orientation = math::Quaternion( cube.orientation.w(), cube.orientation.x(), cube.orientation.y(), cube.orientation.z() );
@@ -596,7 +606,7 @@ void SyncDemo::Update()
     {
         m_sync->remote_input = state_update.input;
 
-        ApplyStateUpdate( *m_internal->simulation[1].game_instance, state_update );
+        ApplyStateUpdate( *m_internal->simulation[1].game_instance, state_update, m_sync->position_error, m_sync->orientation_error );
     }
 
     // run the simulation
@@ -613,25 +623,71 @@ void SyncDemo::Update()
 
     // reduce position and orientation error
 
-    static const float PositionErrorTightness = 0.95f;
-    static const float OrientationErrorTightness = 0.95f;
+    static const float TightnessA = 0.95f;
+    static const float TightnessB = 0.85f;
+
+    static const float PositionA = 0.25f;
+    static const float PositionB = 1.0f;
+
+    static const float OrientationA = 0.2f;
+    static const float OrientationB = 0.5f;
 
     const vectorial::quat4f identity = vectorial::quat4f::identity();
 
     for ( int i = 0; i < NumCubes; ++i )
     {
-        if ( vectorial::length_squared( m_sync->position_error[i] ) >= 0.001f )
-             m_sync->position_error[i] *= PositionErrorTightness;
+        const float position_error_dist_squared = vectorial::length_squared( m_sync->position_error[i] );
+
+        if ( position_error_dist_squared >= 0.000001f )
+        {
+            const float position_error_dist = sqrtf( position_error_dist_squared );
+
+            float tightness = TightnessA;
+
+            if ( position_error_dist > PositionA && position_error_dist < PositionB )
+            {
+                const float alpha = ( position_error_dist - PositionA ) / ( PositionB - PositionA );
+                
+                tightness = TightnessA * ( 1.0f - alpha ) + TightnessB * ( alpha );
+            }
+            else if ( position_error_dist_squared >= PositionB )
+            {
+                tightness = TightnessB;
+            }
+
+            m_sync->position_error[i] *= tightness;
+        }
         else
+        {
              m_sync->position_error[i] = vectorial::vec3f(0,0,0);
+        }
 
         if ( vectorial::dot( m_sync->orientation_error[i], identity ) < 0 )
              m_sync->orientation_error[i] = -m_sync->orientation_error[i];
 
-        if ( fabs( vectorial::dot( m_sync->orientation_error[i], vectorial::quat4f::identity() ) ) > 0.001f )
-            m_sync->orientation_error[i] = vectorial::slerp( 1.0f - OrientationErrorTightness, m_sync->orientation_error[i], identity );
+        const float orientation_error_dot = fabs( vectorial::dot( m_sync->orientation_error[i], vectorial::quat4f::identity() ) );
+
+        if ( orientation_error_dot > 0.000001f )
+        {
+            float tightness = TightnessA;
+
+            if ( orientation_error_dot > PositionA && orientation_error_dot < OrientationB )
+            {
+                const float alpha = ( orientation_error_dot - OrientationA ) / ( OrientationB - OrientationA );
+                
+                tightness = TightnessA * ( 1.0f - alpha ) + TightnessB * ( alpha );
+            }
+            else if ( orientation_error_dot >= OrientationB )
+            {
+                tightness = TightnessB;
+            }
+
+            m_sync->orientation_error[i] = vectorial::slerp( 1.0f - tightness, m_sync->orientation_error[i], identity );
+        }
         else
+        {
             m_sync->orientation_error[i] = identity;
+        }
     }
 }
 

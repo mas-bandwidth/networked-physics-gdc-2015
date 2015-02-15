@@ -1,4 +1,52 @@
 
+Sunday Morning, February 15th, 2015
+-----------------------------------
+
+    Implement code to reduce the position error over time.
+
+    Implement code to reduce the orientation error over time (slerp towards identity)
+
+    Make sure neither case have issues with denormals, esp. position.
+
+    There appears to be some jittering on the right side in mode 5.
+
+    Only appears after a while in the katamari cube
+
+    What is going on?!
+
+    (I suspect the input frame is getting out of sync somehow?)
+
+    Either way, this is good. There needs to be something to do apply smoothing to.
+
+    When a state update is applied, recalculate the position error.
+
+    Relcalulate the orientation error.
+
+    Verify that in smoothing mode the smoothing is working properly (katamari ball)
+
+    Tune it so it looks as good as possible.
+
+    Position error smoothing is now working.
+
+    Orientation smoothing is now working.
+
+    Tuned smoothing to look as good as possible. Orientation smoothing factor needs to be slower than position.
+
+    There is still jitter on the right side.
+
+    Suspect orientation smoothing is not working properly.
+
+    Orientation error was not actually being applied, so no smoothing.
+
+    Fixed.
+
+    Now make sure the math is correct.
+
+    Need 15 bits per-quaternion a,b,c to get the required orientation precision.
+
+    Implemented two level tightness. It's definitely visually better.
+
+
 Wednesday Evening, February 11th, 2015
 --------------------------------------
 

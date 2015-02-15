@@ -1545,7 +1545,10 @@ bool DeltaDemo::Initialize()
 
     auto game_instance = m_internal->GetGameInstance( 0 );
 
-    bool result = GetQuantizedSnapshot( game_instance, m_delta->quantized_initial_snapshot );
+    #ifdef _DEBUG
+    bool result =
+    #endif 
+        GetQuantizedSnapshot( game_instance, m_delta->quantized_initial_snapshot );
     CORE_ASSERT( result );
 
     return true;

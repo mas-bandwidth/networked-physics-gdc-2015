@@ -1,57 +1,8 @@
 DONE:
 
-    Implement code to reduce the position error over time.
-
-    Implement code to reduce the orientation error over time (slerp towards identity)
-
-    Make sure neither case have issues with denormals, esp. position.
-
 TODO:
 
-    -------------------------------------------------------------------------
-
-    When a state update is applied, recalculate the position error.
-
-    Relcalulate the orientation error.
-
-    Verify that in smoothing mode the smoothing is working properly (katamari ball)
-
-    Tune it so it looks as good as possible.
-
-    -------------------------------------------------------------------------
-
-    There appears to be some jittering on the right side in mode 5.
-
-    Only appears after a while in the katamari cube
-
-    What is going on?!
-
-    (I suspect the input frame is getting out of sync somehow?)
-
-    Either way, this is good. There needs to be something to do apply smoothing to.
-
-    -------------------------------------------------------------------------
-
-    Actually implement the relative quaternion delta compression. 
-
-    Make sure the 9 bit delta is actually sufficient. Technically it's
-    actually a bit less bits than the smallest three, plus there is the
-    inaccuracy of encoding relative to a delta which is already clamped,
-    so it may not be accurate enough.
-
-    If it's good enough, record a video of the end result and update the article.
-
-    --------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-    This article series needs to be finished. Don't implement anything beyond here!!!
+    ------------------------------------
 
     In the article discuss improvements past the smoothing but don't implement!
     
@@ -70,10 +21,19 @@ TODO:
     exceeds time then the object isn't changing much, so the lowering priority
     if it is unchanged picks up this case.
 
+    Note that prioritizing recently rest objects higher, eg. resending these just at
+    rest objects more rapidly (not as high as moving, but higher than the rest)
+    until a state with their update is acked would ensure that these at rest
+    objects are rapidly "committed" to the other side (note that on post-smoothing
+    fixup, often at rest objects "grey" fixes for these objects trickle in... 
+    this would fix that!)
+
     Can do better than 16 bit base per-object. Moving objects get updated frequently, 
     so any object that has moved in the last 1 second @ 60pps = [0,63], 5 bits per-object,
     4 bits for 1/2 second, 2 bits for 1/4 second. Use statistics to identify the profitable
     bit range for deltas (depends on the average rate of update for moving objects)
+
+    Idea, encode base sequence # per-object relative to most recent ack packet (header)
 
     If input changes and a packet is lost with that change there will be visual glitches
 
@@ -82,15 +42,15 @@ TODO:
     use the same technique from deterministic lockstep to redundantly send unacked
     inputs.
 
-    In fact, there is almost a continuum of the deterministic lockstep <-> this technique
+    However, go with smoothing instead because this is different to det lockstep.
+
+    Two level smoothing.
+
+    In fact, there is a continuum of the deterministic lockstep <-> this technique
     depending on how long you are willing to wait for input, if you wait forever, it's
     deterministic lockstep and state never needs to be sent, if you wait a finite amount
     of time, it's practically completely deterministic, but state is sent just to fixup
     when input is lost (1 second of packet loss)
-
-    Anyway. Interesting to see how this technique blurs into det lockstep.
-
-    Idea, encode base sequnece # per-object relative to most recent ack packet (header)
 
     -------------------------------------------------------------------------
 
@@ -121,6 +81,16 @@ TODO:
     Once the basic outline is working hand over to Chantel to create the diagrams w. illustrator.
 
     Finish slides for GDC.
+
+    -------------------------------------------------------------------------
+
+    Update article with results of relative quaternion compression.
+
+    70% of absolute smallest three.
+
+    Don't have time to investigate further.
+
+    Also mention axis-angle representation compression directly.
 
     -------------------------------------------------------------------------
 

@@ -1,25 +1,17 @@
 BUGS
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
-Stencil shadows are broken? Caused by brew upgrade of GLFW?
+Sync demo breaks on reload (ESC)
 
-------------------------------------------------------------------------
-
-Compression mode seems to have a lot more latency than specified!!!
-
-------------------------------------------------------------------------
-
-Compression demo has periods of no snapshot to interpolate towards and I don't know why
-
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 Lockstep demo mode holds the cube in the air for a second on reload (ESC)
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 There is a very small shadow pop as the player cubes rotates around. 
 
 Angles slightly incorrect for sihoutte generation?
 
-------------------------------------------------------------------------
+------------------------------------------------------------------------------
