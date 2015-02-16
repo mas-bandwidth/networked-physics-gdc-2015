@@ -1,50 +1,10 @@
 DONE:
 
-    Finish writing the advanced section of the article.
-
-    Make sure to basically say, look it's already good enough but...
-
-    Go through the mind blowing cool stuff...
-
-    And then go to the conclusion.
+    Sketch out conclusion article in draft point form.
 
     Hurry this *must* be done tonight!
 
 TODO:
-
-    ------------------------------------
-
-    In the article discuss improvements past the smoothing but don't implement!
-    
-    Encode position relative to player cube as offset. Output the offsets as 
-    data set and optimize to find the best bit encoding. xy vs. z, try one level
-    and two level bits.
-
-    Use reliability system to know which packets got through (link to article).
-
-    Keep track of, per-cube the last sequence # it changed on. If it hasn't
-    changed since that sequence lower its priority even further (still send it
-    though...)
-
-    Use reliability system to drive delta encoding. Per-cube need 16 bit sequence
-    to identify base, receiver needs to buffer a lot of bases. If last sent packet
-    exceeds time then the object isn't changing much, so the lowering priority
-    if it is unchanged picks up this case.
-
-    Note that prioritizing recently rest objects higher, eg. resending these just at
-    rest objects more rapidly (not as high as moving, but higher than the rest)
-    until a state with their update is acked would ensure that these at rest
-    objects are rapidly "committed" to the other side (note that on post-smoothing
-    fixup, often at rest objects "grey" fixes for these objects trickle in... 
-    this would fix that!)
-
-    Can do better than 16 bit base per-object. Moving objects get updated frequently, 
-    so any object that has moved in the last 1 second @ 60pps = [0,63], 5 bits per-object,
-    4 bits for 1/2 second, 2 bits for 1/4 second. Use statistics to identify the profitable
-    bit range for deltas (depends on the average rate of update for moving objects)
-
-    For at rest objects you don't need to encode them relative, because they are 
-    typically only sent infrequently, so they don't need
 
     -------------------------------------------------------------------------
 
@@ -52,27 +12,13 @@ TODO:
 
     Record the videos. Put them in the article.
 
-    Make a list of diagrams that need to be created, add placeholders to article.
-
     -------------------------------------------------------------------------
 
-    Write conclusion article (pros/cons of each technique) ---> SHORT
+    Polish pass the state synchronization article
 
-    Need this because I need the arc of conclusion for the GDC talk.
+    Polish pass the conclusion article
 
-        1. The simulation
-
-        2. Deterministic lockstep
-
-        3. Snapshots and interpolation
-
-            *** snapshot compression worked example ***
-
-        4. Stateful synchronization
-
-        5. Conclusion: Pros/cons
-
-        6. Question time: latency hiding, client/server, implementation details etc.
+    Revise/edit pass the 
 
     -------------------------------------------------------------------------
 
