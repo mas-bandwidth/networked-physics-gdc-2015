@@ -1,5 +1,15 @@
 DONE:
 
+    Finish writing the advanced section of the article.
+
+    Make sure to basically say, look it's already good enough but...
+
+    Go through the mind blowing cool stuff...
+
+    And then go to the conclusion.
+
+    Hurry this *must* be done tonight!
+
 TODO:
 
     ------------------------------------
@@ -33,24 +43,16 @@ TODO:
     4 bits for 1/2 second, 2 bits for 1/4 second. Use statistics to identify the profitable
     bit range for deltas (depends on the average rate of update for moving objects)
 
-    Idea, encode base sequence # per-object relative to most recent ack packet (header)
+    For at rest objects you don't need to encode them relative, because they are 
+    typically only sent infrequently, so they don't need
 
-    If input changes and a packet is lost with that change there will be visual glitches
+    -------------------------------------------------------------------------
 
-    To fix, add *some* small delay @ 60fps (85ms or so) to handle lost packets and 
-    jitter, to make it *EXTREMELY* unlikely that an input would be lost, and then
-    use the same technique from deterministic lockstep to redundantly send unacked
-    inputs.
+    Make a list of videos that need to be recorded for state synhronization article.
 
-    However, go with smoothing instead because this is different to det lockstep.
+    Record the videos. Put them in the article.
 
-    Two level smoothing.
-
-    In fact, there is a continuum of the deterministic lockstep <-> this technique
-    depending on how long you are willing to wait for input, if you wait forever, it's
-    deterministic lockstep and state never needs to be sent, if you wait a finite amount
-    of time, it's practically completely deterministic, but state is sent just to fixup
-    when input is lost (1 second of packet loss)
+    Make a list of diagrams that need to be created, add placeholders to article.
 
     -------------------------------------------------------------------------
 

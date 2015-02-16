@@ -1,4 +1,23 @@
 
+Sunday Afternoon and Evening, February 15th, 2015
+-------------------------------------------------
+
+    Cleaned up introduction to network physics series to conform to the talk content.
+
+    Deleted additional article outlines that I will not have time to write.
+
+    Articles should now map very, very well (perfectly) to talk content.
+
+    Added conclusion page at end of networked physics article series. Empty for now.
+    Will be used to summarize pros and cons of each technique, conclude the talk.
+    It's essential for the GDC talk, and this article series must perfectly match
+    that so *done*.
+
+    Wrote the first draft of the bulk of the state synchronization article.
+
+    Hit all the main implementation points, worked out what videos should be recorded.
+
+
 Sunday Morning, February 15th, 2015
 -----------------------------------
 

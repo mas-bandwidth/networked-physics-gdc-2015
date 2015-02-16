@@ -157,7 +157,7 @@ protected:
 struct CubePriorityInfo
 {
     int index;
-    float accum;
+    double accum;
 };
 
 struct StateJitterBuffer
@@ -276,7 +276,7 @@ struct SyncInternal
         for ( int i = 0; i < NumCubes; ++i )
         {
             priority_info[i].index = i;
-            priority_info[i].accum = 0.0f;
+            priority_info[i].accum = 0.0;
             position_error[i] = vectorial::vec3f(0,0,0);
             orientation_error[i] = vectorial::quat4f(0,0,0,1);
         }
@@ -534,7 +534,7 @@ void SyncDemo::Update()
     {
         if ( send_cubes[i].send )
         {
-            m_sync->priority_info[send_cubes[i].index].accum = 0.0f;
+            m_sync->priority_info[send_cubes[i].index].accum = 0.0;
             num_cubes_to_send++;
         }
     }
