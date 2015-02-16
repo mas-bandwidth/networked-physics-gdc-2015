@@ -18,7 +18,92 @@ TODO:
 
     Polish pass the conclusion article
 
-    Revise/edit pass the 
+    -------------------------------------------------------------------------
+
+    Sketch out slides from outline:
+
+    0. Introduction
+
+    - what we are trying to do: network simulation from left -> right
+    - what we are not talking about: topology: client/server, vs. p2p. anti-cheat. lag hiding (too much detail. derails...)
+    - three main synchronization techniques: 1. deterministic lockstep, 2. snapshots and interpolation, 3. state synchronization
+    - will also cover bandwidth compression techniques in detail using snapshots as a case study.
+    - conclusion: pros and cons of each technique. how to select the right technique for your simulation
+    - (this talk is at an advanced level. not introductory at all. the content of this talk is the state of the art at this point in time)
+
+    1. The example simulation being networked (cube sim)
+
+    - rigid body simulation.
+    - one player controlled cube
+    - 900 small cubes the player can interact with
+    - all objects are gameplay effecting (not cosmetic)
+    - different modes of interaction to demonstrate difficult networking cases, eg. coupled interactions between objects.
+    - in general: rigid body simulation is non-linear and difficult to predict/extrapolate
+    - standard networking techniques (extrapolation, dead reckoning) break down.
+    - different techniques are required.
+
+    2. Deterministic lockstep
+
+    - bandwidth required is independent of the # of object in the world.
+    - requires absolute determinism down to the bits. this is hard (summarize difficulty, but don't bog down)
+    - virtually impossible to guarantee across different OS, different compiler or machine arch.
+    - possible, with work, across intel/AMD, same compiler, same OS.
+    - requires same framerate on both sides
+    - send only inputs. *must* wait for input n before simulating frame n.
+    - even though all inputs must be reliable, don't use TCP. show result of implantation over TCP @ 1%, 2%, 5% @ 250ms.
+    - use UDP and redundantly send un-acked inputs each each packet
+    - compression scheme for inputs => bandwidth result (50kbps @ 60 packets per-second, mostly packet header)
+    - video of it it working at 25% packet loss and 250ms latency = perfect.
+
+    3. Snapshots and interpolation
+
+    - don't run the simulation on the right side
+    - instead send only visual state and interpolate between snapshots for render
+    - snapshots are the state of the entire world. eg. 900 position/orientation quat pairs + interacting (red) bool
+    - snapshot packet is very large (big number). don't worry for now, we'll compress this shortly.
+    - send across: strobing @ 10 pps. not very good.
+    - buffer snapshots and delay them so that 2 consecutive packets can be lost without hitching
+    - at 10 packets per-second, 350ms of additional delay required to handle 5% packet loss, +/- 2 frames of jitter @ 60fps (typical)
+    - interpolate linear. OK but some artifacts
+    - improve position interpolation by sending linear velocity. hermite interpolation
+    - orientation interpolation with slerp good enough. nlerp has artifacts at 10pps (non-uniform angular speed = discontinuities).
+    - end result: video @ 5% packet loss with snapshot. basically perfect. contrast with strobing. It's quite amazing we can get such a good result at such a low send rate + hermite interpolation.
+
+    4. Bandwidth optimization case study: compressing snapshots
+
+    - additional delay (350) @ 10pps is very large. too much.
+    - would like to send snapshots more rapidly but bandwidth is off the charts
+    - compress absolute quaternion: smallest 3
+    - bound and compress linear velocity.
+    - at rest optimization
+    - why are we sending velocity at all? linear interpolation good enough at higher send rates.
+    - bound position and quantize
+    - as far as we can go with absolute compression
+    - delta compression
+    - changed bits
+    - absolute indices, cross over point
+    - relative index compression (measure bits required and fall back to changed bits)
+    - relative position: two level encoding with optimization, fallback to absolute position
+    - relative orientation: trickier. much larger % of quaternion space covered in delta vs. position. harder gains
+    - delta axis/angle, delta relative quaternion large w, delta smallest 3 (90% delta base have same largest component)
+    - conclusion: video showing several orders of magnitude improvement. 18mbps down to 256kbps on average.
+
+    5. State synchronization
+
+    - run simulation on both sides. 
+    - send input and n state updates per-packet
+    - use priority accumulator
+    - fit as many cubes in packet as possible, given bandwidth target (may be dynamic)
+    - quantize sim on both sides to avoid misprediction on right side
+    - higher precision required for position/orientation due to quantization
+    - snap state and use position/orientation error reduction for smoothing (local space)
+    - good enough at this point: additional extra things that can be done to get even more efficient (delta, at rest optimization and so on)
+
+    6. Conclusion
+
+    - pros and cons of each technique. 
+    - how to decide which technique is appropriate for your simulation
+    - Q&A
 
     -------------------------------------------------------------------------
 
