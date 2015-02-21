@@ -1,4 +1,93 @@
 
+Friday Evening, February 20th, 2015
+-----------------------------------
+
+    Make list of all diagrams
+
+    1. Concept of deterministic lockstep, eg. start at same
+       initial state, apply same inputs -> same result.
+
+    2. Send all unacked packets to right side, ack packets come back,
+
+    3. Packet structure of input packet sent (sequence, ack, inputs)
+
+    4. Diagram showing encoding relative, one bit, input not changed.
+
+    5. Diagram showing linear interpolation position artifacts
+
+    6. Diagram showing linear artifacts for katamari ball (shortest path)
+
+    7. Diagram showing how packets come in, interpolation buffer, delayed and then interpolation
+
+    8. Diagram showing how to handle packet loss by interpolating to the next snapshot
+
+    9. Diagram of cubes struct (from old)
+
+    10. Diagram showing smallest three compression --> show uncompressed bits to compressed (x%)
+
+    11. Bound and quantize linear velocity --> diagram showing uncompressed to compressed (x%)
+
+    12. At rest flag --> diagram showing two cases, at rest, not at rest. (bits)
+
+    13. Compressed position, bound and quantize. --> diagram showing reduction (x%)
+
+    14. Delta compression, acks flow of packets.
+
+    15. Buffering of snapshots on send and receive for delta encoding.
+
+    16. Diagram of packet structure with not changed flag
+
+    17. Diagram of packet structure with index.
+
+    18. Diagram showing header with one bit selecting encoding.
+
+    19. Diagram showing relative index compression, eg. two level encoding with bits, fallback to absolute
+
+    20. Perhaps some statistics, tables or something to back up the analysis
+
+    21. Relative position. tables or something. two level encoding, draw it.
+
+    22. Relative orientation. diagram of two level encoding per-smallest three component delta, fallback to absolute
+
+    23. Diagram showing packet structure sent across with state updates, and updates being applied to sim
+
+    24. State update struct
+
+    25. Priority accumulator diagram
+
+    26. Algorithm in diagram, add priority, sort, pick top n.
+
+    27. Packing as many in packet as will fit, skip past if not fit, small ones at end.
+
+    28. Take n sent ones and clear to zero, need to bubble up from zero.
+
+    29. Diagram showing snap position, calculate new error offset (same concept for orientation)
+
+    30. Reliability system diagrams for header, sequence, ack, ack bits
+
+    31. Diagram of delta encoding for state sync (bits)
+
+    32. Diagram showing per-state update bit packing for delta
+
+
+Friday Morning, February 20th, 2015
+-----------------------------------
+
+    Finish sketching out conclusion slides (pros/cons, relative rankings for bandwidth, latency...)
+
+    Make a list of videos that need to be recorded for state synchronization
+
+    1. Video showing input desync on packet loss
+
+    2. Video showing jitter before quantize
+
+    3. Video showing jitter fixed after quantize, but then after a lost input -> jitter on right (cascading failure)
+
+    4. Video showing smoothing, looking good, and then recovering nicely from long second hitches and staying smooth.    
+
+    Record the videos and insert into slides
+
+
 Early Friday Morning (2-3AM)
 ----------------------------
 
@@ -7,7 +96,7 @@ Early Friday Morning (2-3AM)
     Fleshed out more slide/diagrams for deterministic lockstep
 
 
-Thursday Evening, February 20th, 2015
+Thursday Evening, February 19th, 2015
 -------------------------------------
 
     Sketched out keynote slides from outline:
