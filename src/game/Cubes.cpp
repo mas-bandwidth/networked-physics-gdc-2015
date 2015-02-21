@@ -27,10 +27,10 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
         game_config.cellHeight = game_config.cellWidth;
         game_config.activationDistance = 100.0f;
 
-        game_config.simConfig.ERP = 0.25f;
-        game_config.simConfig.CFM = 0.001f;
+        game_config.simConfig.ERP = config.soften_simulation ? 0.5f : 0.25f;
+        game_config.simConfig.CFM = config.soften_simulation ? 0.01f : 0.001f;
         game_config.simConfig.MaxIterations = 64;
-        game_config.simConfig.MaximumCorrectingVelocity = 250.0f;
+        game_config.simConfig.MaximumCorrectingVelocity = config.soften_simulation ? 10.0f : 250.0f;
         game_config.simConfig.ContactSurfaceLayer = 0.01f;
         game_config.simConfig.Elasticity = 0.0f;
         game_config.simConfig.LinearDrag = 0.001f;
@@ -175,9 +175,6 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
         {
             if ( simulation && i < config.num_simulations )
             {
-                // todo: we need a mapping describing where the view should get its view packet from
-                // either from a simulation, or it should be passed in explicitly by the demo (eg. snapshot interpolation)
-
                 simulation[i].game_instance->GetViewPacket( view[i].packet );
 
                 getViewObjectUpdates( view[i].updates, view[i].packet );

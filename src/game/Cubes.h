@@ -94,6 +94,7 @@ struct CubesConfig
 {
     int num_simulations = 1;
     int num_views = 1;
+    bool soften_simulation = false;
 };
 
 struct CubesSimulation

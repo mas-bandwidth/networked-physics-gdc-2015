@@ -26,6 +26,7 @@ bool CubesDemo::Initialize()
 
     config.num_simulations = 1;
     config.num_views = 1;
+    config.soften_simulation = true;
 
     m_internal->Initialize( *m_allocator, config, m_settings );
 

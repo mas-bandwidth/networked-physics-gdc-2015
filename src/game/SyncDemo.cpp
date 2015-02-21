@@ -327,6 +327,7 @@ bool SyncDemo::Initialize()
     
     config.num_simulations = 2;
     config.num_views = 2;
+    config.soften_simulation = true;
 
     m_internal->Initialize( *m_allocator, config, m_settings );
 

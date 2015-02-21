@@ -1,4 +1,26 @@
 
+Saturday Morning, February 21st, 2015
+-------------------------------------
+
+    Tuned the simulation to work better in the sync demo.
+
+    Basically, push apart collisions in a softer way, add some bounce for push out as well (penetration resolution)
+
+    Adds softness but also a nice springiness.
+
+    Added config "soften_simulation" to enable this. Turned on for sync demo only.
+
+    Turned on for singleplayer cubes demo as well. I like it.
+
+    Re-recorded katamari demo for physics simulation section.
+
+    Re-record the cube video
+
+    Re-record the cubes roll video
+
+    Re-record the cubes blow video
+
+
 Friday Evening, February 20th, 2015
 -----------------------------------
 
