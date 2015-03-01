@@ -4,6 +4,12 @@ TODO:
 
     -------------------------------------------------------------------------
 
+    Re-record "perfectly good" state sync end result at 4096 position
+
+    Re-record pop and recover as well, it can be made better, and is smoother at 4096.
+
+    -------------------------------------------------------------------------
+
     Finish bandwidth optimization slides:
 
       Absolute index
@@ -14,7 +20,19 @@ TODO:
 
       Relative orientation
 
-      20pps 2-3 snapshots per-packet
+    -------------------------------------------------------------------------
+
+    Finish state synchronization slides:
+
+      Priority accumulator (done)
+
+      Priority per-player, interacting, default (done)
+
+      Reliability system diagram: ack, ack_bits
+
+      Diagram for delta encoding base per-state update (-5, -2, -10 etc...)
+
+      Diagram for comitting at rest cubes w. reliability system
 
     -------------------------------------------------------------------------
 
@@ -69,6 +87,10 @@ TODO:
     -------------------------------------------------------------------------
 
     Implement javascript to pause video when it is not currently visible
+
+    -------------------------------------------------------------------------
+
+    Convert all the virtual go latex to images instead of realtime (jetpack)
 
     -------------------------------------------------------------------------
 
