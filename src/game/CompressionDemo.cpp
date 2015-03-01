@@ -30,6 +30,7 @@ enum CompressionMode
     COMPRESSION_MODE_ORIENTATION,
     COMPRESSION_MODE_LINEAR_VELOCITY,
     COMPRESSION_MODE_AT_REST_FLAG,
+    COMPRESSION_MODE_NO_VELOCITY,
     COMPRESSION_MODE_POSITION,
     COMPRESSION_NUM_MODES
 };
@@ -40,6 +41,7 @@ const char * compression_mode_descriptions[]
     "Orientation",
     "Linear velocity",
     "At rest flag",
+    "No velocity",
     "Position",
 };
 
@@ -47,7 +49,7 @@ struct CompressionModeData : public SnapshotModeData
 {
     CompressionModeData()
     {
-        playout_delay = 0.067f;
+        playout_delay = 0.05f;
         send_rate = 60.0f;
         latency = 0.05f;      // 100ms round trip
         packet_loss = 5.0f;
@@ -170,6 +172,18 @@ struct CompressionSnapshotPacket : public protocol::Packet
                         serialize_compressed_vector( stream, cubes[i].linear_velocity, MaxLinearSpeed, 0.01f );
                     else if ( Stream::IsReading )
                         cubes[i].linear_velocity = vectorial::vec3f::zero();
+                }
+            }
+            break;
+
+            case COMPRESSION_MODE_NO_VELOCITY:
+            {
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    serialize_bool( stream, cubes[i].interacting );
+                    serialize_vector( stream, cubes[i].position );
+                    serialize_compressed_quaternion( stream, cubes[i].orientation, 9 );
+                    cubes[i].linear_velocity = vectorial::vec3f::zero();
                 }
             }
             break;
@@ -301,7 +315,10 @@ struct CompressionInternal
 
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
 {
+    SetMode( COMPRESSION_MODE_AT_REST_FLAG );
+
     InitCompressionModes();
+
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );

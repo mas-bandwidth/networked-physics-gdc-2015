@@ -1,27 +1,20 @@
 DONE:
 
-
 TODO:
 
     -------------------------------------------------------------------------
 
-    Re-record video with the smoothing and the long pop correction.
+    Finish bandwidth optimization slides:
 
-    -------------------------------------------------------------------------
+      Absolute index
 
-    Take the existing slides and bring their structure back into a tree diagram
+      Relative index
 
-    Should see exactly what is being talked about -- identify the technical sections
+      Relative position
 
-    -------------------------------------------------------------------------
+      Relative orientation
 
-    Pass over all slides and check with flow vs. article series.
-
-    Is there cool stuff that I'm missing?
-
-    -------------------------------------------------------------------------
-
-    Sketch out the diagrams roughly with pencil/paper.
+      20pps 2-3 snapshots per-packet
 
     -------------------------------------------------------------------------
 
@@ -56,16 +49,12 @@ TODO:
 
     -------------------------------------------------------------------------
 
+    Rework diagrams back into articles, especially diagrams for snapshot compression
+    and state synchronization articles (both diagram heavy)
+
     Polish pass the state synchronization article.
 
     Polish pass the conclusion article.
-
-    Rename Snapshots and Interpolation to "Snapshot Interpolation"
-
-    -------------------------------------------------------------------------
-
-    Rework diagrams back into articles, especially diagrams for snapshot compression
-    and state synchronization articles (both diagram heavy)
 
     -------------------------------------------------------------------------
 
@@ -94,4 +83,3 @@ TODO:
     Back to work at Respawn!
 
     -------------------------------------------------------------------------
-    

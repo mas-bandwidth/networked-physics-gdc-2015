@@ -1,4 +1,69 @@
 
+Saturday Lunch, February 28th, 2015
+-----------------------------------
+
+    Pass over slides and work out what videos need to be recorded again
+
+      1. Single cube video needs to be a bit shorter (done)
+
+      2. Cube blow video should start out with blow and have smoother motion (done)
+
+      3. Katamari roll video introduction is too long. Don't need the big spin and spray off bit (done)
+
+      3.5 - UDP @ 25% packet loss video needs to be shorter. Just show blow and katamari roll (done)
+
+      6. Video with linear velocity not sent, before position compression (done)
+
+    Lockstep demo needs a fix so the cubes don't show up until first packet.
+
+    Fixed. Added note because this is incompatible with delta.
+
+      4. Video showing 60 snapshots per-second uncompressed is too long. It just needs to show cube blow.
+
+      5. Video showing orientation compression only (pretty big win -- short, blow only)
+
+      7. Video with at rest flag, skip katamari bit.
+
+      8. End result video for delta compression is long winded. shorten, but do show both blow and katamari
+
+      9. Short state synchronization video (looking perfect @ 250kbps). just blow? maybe a small katamari.
+
+    Need the math and cool bits for the smallest three. this is a big win!
+
+    Find site that converts latex -> images (hires)
+
+    Put formulas and working out into the slides.
+
+    Added basic delta encoding diagrams
+
+
+Saturday Morning, February 28th, 2015
+-------------------------------------
+
+    Diagram pass for deterministic lockstep
+
+    Polish pass the input/ack articles.
+
+    Diagram pass over snapshot interpolation.
+
+    Setup the intro slide into the bandwidth optimization.
+
+    Restructure slides for state synchronization. Was moving way too slow in practice
+
+    Cut down some deterministic lockstep slides because the behavior was obvious
+    and it felt drawn out going through 5 cycles of redundant inputs.
+
+
+Monday Evening, February 22nd, 2015
+-----------------------------------
+
+    Take the existing slides and bring their structure back into a tree diagram
+
+    Should see exactly what is being talked about -- identify the technical sections
+
+    see "SLIDES" text file.
+
+
 Saturday Morning, February 21st, 2015
 -------------------------------------
 

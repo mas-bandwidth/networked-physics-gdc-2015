@@ -96,7 +96,7 @@ struct DeltaModeData : public SnapshotModeData
 {
     DeltaModeData()
     {
-        playout_delay = 0.067f;
+        playout_delay = 0.05f;
         send_rate = 60.0f;
         latency = 0.005f;      // 100ms round trip -- IMPORTANT! Otherwise delta compression is too easy!
         packet_loss = 5.0f;
@@ -1459,6 +1459,8 @@ void DumpDeltaAccumulators()
 DeltaDemo::DeltaDemo( core::Allocator & allocator )
 {
     InitDeltaModes();
+
+    SetMode( DELTA_MODE_RELATIVE_ORIENTATION );
 
     m_allocator = &allocator;
     m_internal = nullptr;

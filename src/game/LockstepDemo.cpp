@@ -25,8 +25,8 @@ enum LockstepModes
     LOCKSTEP_MODE_TCP_100MS_1PC,
     LOCKSTEP_MODE_TCP_200MS_2PC,
     LOCKSTEP_MODE_TCP_250MS_5PC,
-    LOCKSTEP_MODE_UDP_2000MS_25PC,
-    LOCKSTEP_MODE_UDP_2000MS_50PC,
+    LOCKSTEP_MODE_UDP_250MS_25PC,
+    LOCKSTEP_MODE_UDP_250MS_50PC,
     LOCKSTEP_NUM_MODES
 };
 
@@ -78,17 +78,17 @@ static void InitLockstepModes()
     lockstep_mode_data[LOCKSTEP_MODE_TCP_250MS_5PC].packet_loss = 5.0f;
     lockstep_mode_data[LOCKSTEP_MODE_TCP_250MS_5PC].jitter = 1.0f / 60.0f;
 
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].tcp = false;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].playout_delay = 0.1f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].latency = 1.0f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].packet_loss = 25.0f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_25PC].jitter = 1.0f / 60.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].tcp = false;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].playout_delay = 0.1f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].latency = 0.125f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].packet_loss = 25.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].jitter = 1.0f / 60.0f;
 
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].tcp = false;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].playout_delay = 0.25f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].latency = 1.0f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].packet_loss = 50.0f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_2000MS_50PC].jitter = 1.0f / 60.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].tcp = false;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].playout_delay = 0.25f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].latency = 0.125f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].packet_loss = 50.0f;
+    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].jitter = 1.0f / 60.0f;
 }
 
 typedef protocol::SlidingWindow<game::Input> LockstepInputSlidingWindow;
@@ -308,6 +308,9 @@ struct LockstepInternal
 
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
+    // temp
+    SetMode( LOCKSTEP_MODE_UDP_250MS_25PC );
+
     InitLockstepModes();
     m_allocator = &allocator;
     m_internal = nullptr;
@@ -336,6 +339,7 @@ bool LockstepDemo::Initialize()
     
     config.num_simulations = 2;
     config.num_views = 2;
+    config.soften_simulation = true;
 
     m_internal->Initialize( *m_allocator, config, m_settings );
 

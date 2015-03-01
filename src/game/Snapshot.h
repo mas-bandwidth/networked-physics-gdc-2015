@@ -1167,7 +1167,7 @@ struct Snapshot
 
 struct SnapshotModeData
 {
-    float playout_delay = 0.35f;        // one lost packet = no problem. two lost packets in a row = hitch
+    float playout_delay = 0.3f;
     float send_rate = 60.0f;
     float latency = 0.0f;
     float packet_loss = 0.0f;

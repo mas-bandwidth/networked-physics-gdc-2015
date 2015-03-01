@@ -635,13 +635,13 @@ namespace game
 								float distance = math::sqrt( distanceSquared );
 								math::Vector direction = difference / distance;
 								float magnitude = 1.0f / distanceSquared * 200.0f;
-								if ( magnitude > 1000.0f )
-									magnitude = 1000.0f;
+								if ( magnitude > 500.0f )
+									magnitude = 500.0f;
 								math::Vector force = direction * magnitude;
 								if ( activeObject != activePlayerObject )
 									force *= mass;
 								else if ( pull )
-									force *= 10;
+									force *= 20;
 
 								if ( authority == MaxPlayers || playerId == authority )
 								{

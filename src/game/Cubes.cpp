@@ -52,7 +52,7 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
             const int count = CubeSteps;
             for ( int y = 0; y < count; ++y )
                 for ( int x = 0; x < count; ++x )
-                    AddCube( simulation[i].game_instance, 0, vectorial::vec3f(x+origin,y+origin,z) );
+                    AddCube( simulation[i].game_instance, 0, vectorial::vec3f(x+origin+0.5f,y+origin+0.5f,z) );
 
             simulation[i].game_instance->InitializeEnd();
 
@@ -65,7 +65,9 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
             simulation[i].game_instance->SetFlag( game::FLAG_Push );
             simulation[i].game_instance->SetFlag( game::FLAG_Pull );
 
-            simulation[i].game_instance->Update( 1.0f / 60.0f );        // IMPORTANT: give simulation one initial update so objects activate!
+            // todo: need to be able to toggle this on/off -- we don't want this for lockstep
+            // but we do need it for lockstep to capture initial state for delta compression!
+//            simulation[i].game_instance->Update( 1.0f / 60.0f );        // IMPORTANT: give simulation one initial update so objects activate!
         }
     }
     else
