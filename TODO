@@ -22,25 +22,13 @@ TODO:
 
     -------------------------------------------------------------------------
 
-    Finish state synchronization slides:
-
-      Priority accumulator (done)
-
-      Priority per-player, interacting, default (done)
-
-      Reliability system diagram: ack, ack_bits
-
-      Diagram for delta encoding base per-state update (-5, -2, -10 etc...)
-
-      Diagram for comitting at rest cubes w. reliability system
-
-    -------------------------------------------------------------------------
-
     Polish pass the GDC slides.
 
     -------------------------------------------------------------------------
 
+    Fill out slide notes very loosely. I probably won't use them.
 
+    -------------------------------------------------------------------------
 
 
 
