@@ -639,54 +639,62 @@ void SyncDemo::Update()
     {
         const float position_error_dist_squared = vectorial::length_squared( m_sync->position_error[i] );
 
-        if ( position_error_dist_squared >= 0.000001f )
+        if ( position_error_dist_squared < 10.0f * 10.0f )
         {
-            const float position_error_dist = sqrtf( position_error_dist_squared );
-
-            float tightness = TightnessA;
-
-            if ( position_error_dist > PositionA && position_error_dist < PositionB )
+            if ( position_error_dist_squared >= 0.000001f )
             {
-                const float alpha = ( position_error_dist - PositionA ) / ( PositionB - PositionA );
-                
-                tightness = TightnessA * ( 1.0f - alpha ) + TightnessB * ( alpha );
+                const float position_error_dist = sqrtf( position_error_dist_squared );
+
+                float tightness = TightnessA;
+
+                if ( position_error_dist > PositionA && position_error_dist < PositionB )
+                {
+                    const float alpha = ( position_error_dist - PositionA ) / ( PositionB - PositionA );
+                    
+                    tightness = TightnessA * ( 1.0f - alpha ) + TightnessB * ( alpha );
+                }
+                else if ( position_error_dist_squared >= PositionB )
+                {
+                    tightness = TightnessB;
+                }
+
+                m_sync->position_error[i] *= tightness;
             }
-            else if ( position_error_dist_squared >= PositionB )
+            else
             {
-                tightness = TightnessB;
+                 m_sync->position_error[i] = vectorial::vec3f(0,0,0);
             }
 
-            m_sync->position_error[i] *= tightness;
+            if ( vectorial::dot( m_sync->orientation_error[i], identity ) < 0 )
+                 m_sync->orientation_error[i] = -m_sync->orientation_error[i];
+
+            const float orientation_error_dot = fabs( vectorial::dot( m_sync->orientation_error[i], vectorial::quat4f::identity() ) );
+
+            if ( orientation_error_dot > 0.000001f )
+            {
+                float tightness = TightnessA;
+
+                if ( orientation_error_dot > PositionA && orientation_error_dot < OrientationB )
+                {
+                    const float alpha = ( orientation_error_dot - OrientationA ) / ( OrientationB - OrientationA );
+                    
+                    tightness = TightnessA * ( 1.0f - alpha ) + TightnessB * ( alpha );
+                }
+                else if ( orientation_error_dot >= OrientationB )
+                {
+                    tightness = TightnessB;
+                }
+
+                m_sync->orientation_error[i] = vectorial::slerp( 1.0f - tightness, m_sync->orientation_error[i], identity );
+            }
+            else
+            {
+                m_sync->orientation_error[i] = identity;
+            }
         }
         else
         {
-             m_sync->position_error[i] = vectorial::vec3f(0,0,0);
-        }
-
-        if ( vectorial::dot( m_sync->orientation_error[i], identity ) < 0 )
-             m_sync->orientation_error[i] = -m_sync->orientation_error[i];
-
-        const float orientation_error_dot = fabs( vectorial::dot( m_sync->orientation_error[i], vectorial::quat4f::identity() ) );
-
-        if ( orientation_error_dot > 0.000001f )
-        {
-            float tightness = TightnessA;
-
-            if ( orientation_error_dot > PositionA && orientation_error_dot < OrientationB )
-            {
-                const float alpha = ( orientation_error_dot - OrientationA ) / ( OrientationB - OrientationA );
-                
-                tightness = TightnessA * ( 1.0f - alpha ) + TightnessB * ( alpha );
-            }
-            else if ( orientation_error_dot >= OrientationB )
-            {
-                tightness = TightnessB;
-            }
-
-            m_sync->orientation_error[i] = vectorial::slerp( 1.0f - tightness, m_sync->orientation_error[i], identity );
-        }
-        else
-        {
+            m_sync->position_error[i] = vectorial::vec3f(0,0,0);
             m_sync->orientation_error[i] = identity;
         }
     }

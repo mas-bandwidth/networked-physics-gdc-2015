@@ -30,7 +30,7 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
         game_config.simConfig.ERP = config.soften_simulation ? 0.5f : 0.25f;
         game_config.simConfig.CFM = config.soften_simulation ? 0.01f : 0.001f;
         game_config.simConfig.MaxIterations = 64;
-        game_config.simConfig.MaximumCorrectingVelocity = config.soften_simulation ? 10.0f : 250.0f;
+        game_config.simConfig.MaximumCorrectingVelocity = config.soften_simulation ? 5.0f : 250.0f;
         game_config.simConfig.ContactSurfaceLayer = 0.01f;
         game_config.simConfig.Elasticity = 0.0f;
         game_config.simConfig.LinearDrag = 0.001f;

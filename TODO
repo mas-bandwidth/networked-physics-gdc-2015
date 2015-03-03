@@ -2,55 +2,6 @@ DONE:
 
 TODO:
 
-    -------------------------------------------------------------------------
-
-    Re-record "perfectly good" state sync end result at 4096 position
-
-    Re-record pop and recover as well, it can be made better, and is smoother at 4096.
-
-    -------------------------------------------------------------------------
-
-    Finish bandwidth optimization slides:
-
-      Absolute index
-
-      Relative index
-
-      Relative position
-
-      Relative orientation
-
-    -------------------------------------------------------------------------
-
-    Polish pass the GDC slides.
-
-    -------------------------------------------------------------------------
-
-    Fill out slide notes very loosely. I probably won't use them.
-
-    -------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     *** POST GDC ***
 
     -------------------------------------------------------------------------

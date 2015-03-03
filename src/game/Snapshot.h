@@ -24,9 +24,9 @@ static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 static const int QuantizedLinearVelocityBound = UnitsPerMeter * MaxLinearSpeed;
 static const int QuantizedAngularVelocityBound = UnitsPerMeter * MaxAngularSpeed;
 
-static const int UnitsPerMeter_HighPrecision = 4096;
-static const int VelocityUnits_HighPrecision = 4096;
-static const int OrientationBits_HighPrecision = 15;
+static const int UnitsPerMeter_HighPrecision = 512;//4096;
+static const int VelocityUnits_HighPrecision = 512;//4096;
+static const int OrientationBits_HighPrecision = 9;//15;
 static const int QuantizedPositionBoundXY_HighPrecision = UnitsPerMeter_HighPrecision * PositionBoundXY;
 static const int QuantizedPositionBoundZ_HighPrecision = UnitsPerMeter_HighPrecision * PositionBoundZ;
 static const int QuantizedLinearVelocityBound_HighPrecision = VelocityUnits_HighPrecision * MaxLinearSpeed;

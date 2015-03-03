@@ -1,6 +1,66 @@
 
-Sunday Morning, February 29th, 2015
------------------------------------
+Monday Afternoon, March 2nd
+---------------------------
+
+    Relative index
+
+    Absolute index
+
+    Relative position
+
+    Relative orientation
+
+    Final pass over slides.
+
+    Upload final slides to google drive:    
+
+    Slide link is: https://drive.google.com/open?id=0BwUw_ra2ndJTdnV0M3VmaWJOTVU&authuser=0
+
+
+Monday Morning, March 2nd
+-------------------------
+
+    Re-record "perfectly good" state sync end result at 4096 position
+
+    Passed over all slides and prepped slide notes.
+
+    Sketch out difficult slides, what I still need to do:
+
+      Absolute index
+
+        -- diagram to show what the skip bits looks like, eg. 900 bits (125.5bytes) just to say "no cubes have changed"
+        -- diagram to show num changed cubes, changed index, cube data, etc.
+        -- something to show that in the header you can choose between two encodings (one bit)
+        -- since each index is 10 bits, cross-over point is about 90 cubes. more than 90 cubes changed, better off using skip bits.
+
+      Relative index
+
+        -- list of numbers, converted to +1, +5, +2, +10, etc.
+        -- information about the encoding I'm using. variable encoding, avg. 5.5 bits per-index (almost half off)
+        -- you could probably optimize this encoding over the data set but this seemed pretty good.
+
+      Relative position
+
+        -- delta baseline data x,y,z,base_x,base_y,base_z
+        -- optimize for two level encoding. small bit per-component, otherwise large bits
+        -- if any of the components don't fit into the large encoding, fall back to absolute position
+        -- ruby script to run a greedy search over different small/large bit encodings and sort according to least bits
+        -- results: show a table of results, winner x% reduction
+        -- best result: x bits per relative position, that's just 8.5 bits per-component. Pretty good.
+
+      Relative orientation
+
+        -- harder. different representations to choose from
+        -- axis/angle (4 values)
+        -- axis multiplied by angle (3 values)
+        -- relative quaternion (conjugate(base_orientation) * orientation)
+        -- smallest three representation directly
+        -- best result: 70% of uncompressed size (relative quaternion)
+        -- second best result: 81.3% of uncompressed size (delta smallest three)
+
+
+Sunday Morning, March 1st, 2015
+-------------------------------
 
     Finish state synchronization slides:
 
