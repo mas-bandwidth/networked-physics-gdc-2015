@@ -1,31 +1,52 @@
 DONE:
 
+    Published snasphots and interpolation article.
+
+    Implement javascript to pause video when it is not currently visible
+
+    Polish pass the snapshot compression article.
+
+    Work up the snapshot compression article conclusion. It's currently weak. Should be firm!
+
+    Work out what videos need to be converted for the snapshot compression.
+
+        1. orientation compression only
+
+        2. compressed linear velocity
+
+        3. without linear velocity
+
 TODO:
 
-    *** POST GDC ***
+    Get those videos named such that they fit in with the rest and convert them to mp4 and webm
+
+    Move those videos to the correct folder for the article.
+
+    Upload those videos to media library
+
+    curl those videos down to my linode.
+
+    Convert linode to business card (it's currently on personal for some reason)
+
+    Verify all videos are up.
+
+    Publish article.
+
+    Publicize article on twitter.
 
     -------------------------------------------------------------------------
 
-    Rework diagrams back into articles, especially diagrams for snapshot compression
-    and state synchronization articles (both diagram heavy)
+    Rework slide material back into articles
 
-    Polish pass the state synchronization article.
+    Especially rework the conclusion with the z-buffer overall winner approach, which is a strong conclusion.
+
+    Polish pass the state synchronization article. Especially try to get some diagrams from the talk back into it.
 
     Polish pass the conclusion article.
 
     -------------------------------------------------------------------------
 
-    Update article with results of relative quaternion compression.
-
-    70% of absolute smallest three.
-
-    Don't have time to investigate further.
-
-    Also mention axis-angle representation compression directly.
-
-    -------------------------------------------------------------------------
-
-    Implement javascript to pause video when it is not currently visible
+    Pass over all videos and set their starting frame to white image.
 
     -------------------------------------------------------------------------
 
@@ -37,10 +58,10 @@ TODO:
 
     -------------------------------------------------------------------------
 
-    Networked physics articles go live.
+    Publicize articles.
 
-    -------------------------------------------------------------------------
+    (Twitter, facebook, blog post, linkedin, linked in physics programmers group...)
 
-    Back to work at Respawn!
+    Update linkedin profile.
 
     -------------------------------------------------------------------------
