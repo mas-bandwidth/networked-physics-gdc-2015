@@ -1,38 +1,18 @@
 DONE:
 
-    Published snasphots and interpolation article.
-
-    Implement javascript to pause video when it is not currently visible
-
-    Polish pass the snapshot compression article.
-
-    Work up the snapshot compression article conclusion. It's currently weak. Should be firm!
-
-    Work out what videos need to be converted for the snapshot compression.
-
-        1. orientation compression only
-
-        2. compressed linear velocity
-
-        3. without linear velocity
-
 TODO:
 
-    Get those videos named such that they fit in with the rest and convert them to mp4 and webm
+    Actually run my own coding scheme over the data. 
 
-    Move those videos to the correct folder for the article.
+    Implement it in C++ so I can reuse bits of my existing code.
 
-    Upload those videos to media library
+    This will give me the # of bits encoding for the data set, as well as validation for compression/decompression.
 
-    curl those videos down to my linode.
+    -------------------------------------------------------------------------
 
-    Convert linode to business card (it's currently on personal for some reason)
+    Refine and simplify snapshot compression article.
 
-    Verify all videos are up.
-
-    Publish article.
-
-    Publicize article on twitter.
+    Refine snapshot article. Cut down etc.
 
     -------------------------------------------------------------------------
 
@@ -47,6 +27,16 @@ TODO:
     -------------------------------------------------------------------------
 
     Pass over all videos and set their starting frame to white image.
+
+    -------------------------------------------------------------------------
+
+    Videos are still hitching. What the fuck.
+
+    Javascript to determine that the video is fully downloaded?
+
+    Why does the video hitch embedded but plays flawlessly always in the viewer?
+
+    Fucking safari. Piece of shit.
 
     -------------------------------------------------------------------------
 

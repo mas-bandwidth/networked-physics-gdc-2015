@@ -19,6 +19,23 @@ static const int RightPort = 1001;
 static const int MaxSnapshots = 256;
 static const int MaxPacketSize = 64 * 1024;         // this has to be really large for the worst case!
 
+#if DELTA_DATA
+
+struct DeltaData
+{
+    float orientation_x;
+    float orientation_y;
+    float orientation_z;
+    float orientation_w;
+    float position_x;
+    float position_y;
+    float position_z;
+};
+
+static FILE * delta_data = nullptr;
+
+#endif // #if DELTA_DATA
+
 #if DELTA_STATS
 
 static const int MaxPositionDelta = 1024;
@@ -99,8 +116,13 @@ struct DeltaModeData : public SnapshotModeData
         playout_delay = 0.05f;
         send_rate = 60.0f;
         latency = 0.005f;      // 100ms round trip -- IMPORTANT! Otherwise delta compression is too easy!
+#if DELTA_DATA
+        packet_loss = 0.0f;
+        jitter = 0.0f;
+#else
         packet_loss = 5.0f;
         jitter = 1.0 / 60.0f;
+#endif
         interpolation = SNAPSHOT_INTERPOLATION_LINEAR;
     }
 };
@@ -1505,10 +1527,23 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
     axis_angle_values = fopen( "output/axis_angle_values.txt", "w" );
 
 #endif // #if DELTA_STATS
+
+#if DELTA_DATA
+
+    delta_data = fopen( "output/delta_data.bin", "wb" );
+
+#endif // #if DELTA_DATA
 }
 
 DeltaDemo::~DeltaDemo()
 {
+#if DELTA_DATA
+
+    fclose( delta_data );
+
+#endif // #if DELTA_DATA
+
+
 #if DELTA_STATS
 
     DumpDeltaAccumulators();
@@ -1547,11 +1582,7 @@ bool DeltaDemo::Initialize()
 
     auto game_instance = m_internal->GetGameInstance( 0 );
 
-    #ifdef _DEBUG
-    bool result =
-    #endif 
-        GetQuantizedSnapshot( game_instance, m_delta->quantized_initial_snapshot );
-    CORE_ASSERT( result );
+    GetQuantizedSnapshot( game_instance, m_delta->quantized_initial_snapshot );
 
     return true;
 }
@@ -1605,9 +1636,40 @@ void DeltaDemo::Update()
         auto & snapshot = m_delta->quantized_snapshot_sliding_window->Insert( sequence );
 
         if ( GetQuantizedSnapshot( game_instance, snapshot ) )
+        {
             m_delta->network_simulator->SendPacket( network::Address( "::1", RightPort ), snapshot_packet );
+
+#if DELTA_DATA
+
+            const int reps = ( sequence == 0 ) ? 6 : 1;
+
+            for ( int j = 0; j < reps; ++j )
+            {
+                auto * cubes = (QuantizedCubeState*) &snapshot.cubes[0];
+
+                for ( int i = 0; i < NumCubes; ++i )
+                {
+                    DeltaData current;
+
+                    current.orientation_x = cubes[i].original_orientation.x();
+                    current.orientation_y = cubes[i].original_orientation.y();
+                    current.orientation_z = cubes[i].original_orientation.z();
+                    current.orientation_w = cubes[i].original_orientation.w();
+                    current.position_x = cubes[i].original_position.x();
+                    current.position_y = cubes[i].original_position.y();
+                    current.position_z = cubes[i].original_position.z();
+
+                    fwrite( &current, sizeof( DeltaData ), 1, delta_data );
+                }
+            }
+
+#endif // #if DELTA_DATA
+
+        }
         else
+        {
             m_delta->packet_factory.Destroy( snapshot_packet );
+        }
     }
 
     // update the network simulator

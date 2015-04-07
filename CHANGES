@@ -1,4 +1,51 @@
 
+Saturday Evening, March 14th, 2015
+----------------------------------
+
+    Export data set for Ryg to crunch on. Don't give him the result to aim for though.
+
+    While he's working on it, calculate the best result on this data set using my existing encoding in bits.
+
+    When he starts reporting back compression bits then I hold the cards and can tell him "not even close".
+
+    This way I can be assured he will actually push the compression as far as possible vs. stopping as
+    soon as he goes past 5% (he will, he's pragmatic...)
+
+
+Saturday, March 14th, 2015
+--------------------------
+
+    Published snasphots and interpolation article.
+
+    Implement javascript to pause video when it is not currently visible
+
+    Polish pass the snapshot compression article.
+
+    Work up the snapshot compression article conclusion. It's currently weak. Should be firm!
+
+    Work out what videos need to be converted for the snapshot compression.
+
+        1. orientation compression only
+
+        2. compressed linear velocity
+
+        3. without linear velocity
+
+    Get those videos named such that they fit in with the rest and convert them to mp4 and webm
+
+    Upload those videos to the media library
+
+    curl those videos down to my linode.
+
+    Move those videos to the correct folder for the article locally.
+
+    Verify all videos are up.
+
+    Publish article.
+
+    Publicize article on twitter.
+
+
 Monday Afternoon, March 2nd
 ---------------------------
 

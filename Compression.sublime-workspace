@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"Quantized",
+				"QuantizedSnapshot"
+			],
+			[
 				"COMP",
 				"COMPRESSION_MODE_ORIENTATION"
 			],
@@ -510,41 +514,29 @@
 			[
 				"test_async",
 				"test_async_sockets_node_mesh"
-			],
-			[
-				"Calculate",
-				"CalculateChunkSizeWithHeader"
 			]
 		]
 	},
 	"buffers":
 	[
 	],
-	"build_system": "Packages/C++/C++ Single File.sublime-build",
+	"build_system": "Packages/User/C++11 (Client).sublime-build",
 	"build_system_choices":
 	[
 		[
 			[
 				[
-					"Packages/C++/C++ Single File.sublime-build",
+					"Packages/User/C++11 (Client).sublime-build",
 					""
 				],
 				[
-					"Packages/C++/C++ Single File.sublime-build",
-					"Run"
-				],
-				[
-					"Packages/User/Markdown Render [Grip].sublime-build",
-					""
-				],
-				[
-					"Packages/User/Markdown Render [Grip].sublime-build",
+					"Packages/User/C++11 (Client).sublime-build",
 					"Run"
 				]
 			],
 			[
-				"Packages/C++/C++ Single File.sublime-build",
-				""
+				"Packages/User/C++11 (Client).sublime-build",
+				"Run"
 			]
 		]
 	],
@@ -646,36 +638,29 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/gaffer/git/protocol"
+		"/Users/gaffer/git/compression"
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/premake4.lua",
-		"/Users/gaffer/git/protocol/src/Cubes/Config.h",
-		"/Users/gaffer/git/protocol/src/Game/Cubes.h",
-		"/Users/gaffer/git/protocol/src/Game/SyncDemo.cpp",
+		"/Users/gaffer/git/compression/delta_data_round_two.bin",
+		"/Users/gaffer/git/compression/delta_compression_round_two.cpp",
+		"/Users/gaffer/git/compression/orientation_values.txt",
+		"/Users/gaffer/git/compression/delta_compression_2.cpp",
+		"/Users/gaffer/git/compression/delta_frames.bin",
+		"/Users/gaffer/git/compression/delta_data.bin",
+		"/Users/gaffer/git/compression/delta_compression.cpp",
+		"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/algorithm",
+		"/Users/gaffer/git/compression/delta_frames.bin.7z",
+		"/Users/gaffer/git/compression/packets.bin",
 		"/Users/gaffer/git/protocol/src/Game/Snapshot.h",
+		"/Users/gaffer/git/protocol/src/Protocol/BitPacker.cpp",
 		"/Users/gaffer/git/protocol/src/Game/DeltaDemo.cpp",
-		"/Users/gaffer/git/protocol/external/ode/ode/src/ode.cpp",
-		"/Users/gaffer/git/protocol/src/Game/Render.cpp",
-		"/Users/gaffer/git/protocol/src/Game/Cubes.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Simulation.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Simulation.h",
-		"/Users/gaffer/git/protocol/src/Game/Game.cpp",
-		"/Users/gaffer/git/protocol/src/Game/Demo.h",
-		"/Users/gaffer/git/protocol/src/Game/DemoManager.cpp",
-		"/Users/gaffer/git/protocol/tests/Cubes/TestCubes.cpp",
-		"/Users/gaffer/git/protocol/src/Game/DeltaDemo.h",
-		"/Users/gaffer/git/protocol/src/Protocol/Packet.h",
-		"/Users/gaffer/git/protocol/src/Game/Render.h",
-		"/Users/gaffer/git/protocol/src/Game/ReplayManager.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
-		"/Users/gaffer/git/protocol/src/Network/Simulator.h",
+		"/Users/gaffer/git/protocol/src/Game/Cubes.h",
+		"/Users/gaffer/git/protocol/src/Core/Config.h",
+		"/Users/gaffer/git/protocol/src/Protocol/Object.h",
 		"/Users/gaffer/git/protocol/src/Core/Core.h",
-		"/Users/gaffer/git/protocol/src/VirtualGo/CollisionResponse.h",
-		"/Users/gaffer/git/protocol/CHANGES",
-		"/Users/gaffer/git/protocol/output/delta_quaternion.txt",
 		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/src/Game/DeltaDemo.h",
 		"/Users/gaffer/git/protocol/scripts/delta_angle.txt",
 		"/Users/gaffer/git/protocol/src/Cubes/Mathematics.h",
 		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/MemoryOutStream.cpp",
@@ -685,21 +670,31 @@
 		"/Users/gaffer/git/protocol/src/Protocol/BitArray.h",
 		"/Users/gaffer/git/protocol/src/VirtualGo/Biconvex.cpp",
 		"/Users/gaffer/git/protocol/BUGS",
+		"/Users/gaffer/git/protocol/CHANGES",
 		"/Users/gaffer/git/protocol/src/Cubes/Hypercube.h",
 		"/Users/gaffer/git/protocol/output/delta_data.bin",
+		"/Users/gaffer/git/protocol/output/delta_quaternion.txt",
 		"/Users/gaffer/git/protocol/output/delta_smallest_three.txt",
 		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/TestDetails.cpp",
 		"/Users/gaffer/git/protocol/src/Game/CompressionDemo.cpp",
+		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/src/Game/Cubes.cpp",
+		"/Users/gaffer/git/protocol/src/Game/SyncDemo.cpp",
 		"/Users/gaffer/git/protocol/scripts/optimize_position.rb",
 		"/Users/gaffer/git/protocol/src/Network/Simulator.cpp",
+		"/Users/gaffer/git/protocol/src/Network/Simulator.h",
 		"/Users/gaffer/git/protocol/src/Game/SyncDemo.h",
 		"/Users/gaffer/git/protocol/SORTED POST SEND",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/plane.cpp",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/.deps/cylinder.Plo",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/.deps/collision_cylinder_trimesh.Plo",
+		"/Users/gaffer/git/protocol/src/Protocol/Packet.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Simulation.h",
+		"/Users/gaffer/git/protocol/src/Game/Game.cpp",
 		"/Users/gaffer/git/protocol/src/Game/LockstepDemo.cpp",
 		"/Users/gaffer/git/protocol/src/Game/SnapshotDemo.cpp",
 		"/Users/gaffer/git/protocol/src/Game/CubesDemo.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
 		"/Users/gaffer/git/protocol/src/Game/CompressionDemo.h",
 		"/Users/gaffer/git/protocol/SLIDES",
 		"/Users/gaffer/git/protocol/scripts/axis_angle_values.txt",
@@ -716,8 +711,10 @@
 		"/Users/gaffer/git/protocol/scripts/delta_smallest_three.txt",
 		"/Users/gaffer/git/protocol/src/VirtualGo/CollisionDetection.h",
 		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/DeferredTestReporter.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Config.h",
 		"/Users/gaffer/git/protocol/assets/CubeMaps/ennis.hdr",
 		"/Users/gaffer/git/protocol/src/Cubes/Engine.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/Simulation.cpp",
 		"/Users/gaffer/git/protocol/external/ode/drawstuff/src/internal.h",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/.deps/collision_trimesh_opcode.Plo",
 		"/Users/gaffer/git/protocol/build/obj/x64/Release/Client/StoneDemo.d",
@@ -743,6 +740,8 @@
 		"/Users/gaffer/git/protocol/scripts/optimize_smallest_three.rb",
 		"/Users/gaffer/git/protocol/src/Cubes/View.h",
 		"/Users/gaffer/git/protocol/external/vectorial/vec3f.h",
+		"/Users/gaffer/git/protocol/src/Game/ReplayManager.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Render.cpp",
 		"/Users/gaffer/git/protocol/external/ode/include/ode/error.h",
 		"/Users/gaffer/git/protocol/external/vectorial/quat4f.h",
 		"/Users/gaffer/git/protocol/external/ode/test-driver",
@@ -762,6 +761,7 @@
 		"/Users/gaffer/git/protocol/external/ode/GIMPACT/include/GIMPACT/gim_math.h",
 		"/Users/gaffer/git/protocol/WOULD BE NICE",
 		"/Users/gaffer/git/protocol/src/VirtualGo/RigidBody.h",
+		"/Users/gaffer/git/protocol/src/Game/Render.h",
 		"/Users/gaffer/git/protocol/NEXT",
 		"/Users/gaffer/git/protocol/SNAPSHOTS",
 		"/Users/gaffer/git/protocol/external/ode/GIMPACT/include/GIMPACT/gim_tri_capsule_collision.h",
@@ -769,15 +769,7 @@
 		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_TriBoxOverlap.h",
 		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.h",
 		"/Users/gaffer/git/protocol/ClientServer.make",
-		"/Users/gaffer/git/protocol/scripts/quaternion_values.txt",
-		"/Users/gaffer/git/protocol/src/Game/SnapshotDemo.h",
-		"/Users/gaffer/git/protocol/src/Protocol/Stream.h",
-		"/Users/gaffer/git/protocol/src/Game/DemoManager.h",
-		"/Users/gaffer/git/protocol/src/Game/StatefulDemo.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Activation.h",
-		"/Users/gaffer/git/protocol/src/Cubes/Activation.cpp",
-		"/Users/gaffer/git/protocol/external/vectorial/mat4f.h",
-		"/Users/gaffer/git/protocol/src/Game/StatefulDemo.h"
+		"/Users/gaffer/git/protocol/scripts/quaternion_values.txt"
 	],
 	"find":
 	{
@@ -828,29 +820,31 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"dxBodyMaxAngularSpeed",
-			"dxBodyLinearDamping",
-			"SetMax",
-			"SimulationConfig",
-			"Config",
-			"MaxAngularSpeed",
-			"MaxAngularVelocity",
-			"original_",
-			"DeltaData",
-			"DELTA_DATA",
-			"NonPlayerCubeSize",
-			"CubeSteps",
-			"AddCube",
-			"glClear",
-			"Clear()",
-			"Clear",
-			"clear",
-			"framebuffer_size",
-			"Timer",
-			"gravity",
-			"min(",
-			"PositionBoundXY",
-			"delta_data",
+			"// ",
+			":1474",
+			"gcgggg",
+			"relative_index",
+			"QuantizedPositionBoundXY",
+			"relative_to_base",
+			"delta_z",
+			"delta_x = ",
+			"orientation_changed",
+			"serialize_relative",
+			"serialize_cube_changed",
+			"compress_relative_pos",
+			"relative_to_baseline",
+			"stride",
+			"striden",
+			"relative_index",
+			"count_relative_index_bits",
+			"compressed_quaternion",
+			"CORE_ASSERT",
+			"serialize_relative_position",
+			"m_bitsWritten +=",
+			"to_baseline",
+			"position_x <=",
+			"CORE_ASSERT",
+			"CORE_ASS",
 			"DELTA_DATA",
 			"DELTA_STATS",
 			"position_x = ",
@@ -953,9 +947,7 @@
 			"state_updates",
 			"state_update",
 			"playout_delay",
-			"player",
-			"recv_sequence",
-			"send"
+			"player"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1046,8 +1038,8 @@
 	{
 		"height": 0.0
 	},
-	"pinned_build_system": "",
-	"project": "Protocol.sublime-project",
+	"pinned_build_system": "Packages/User/C++11 (Client).sublime-build",
+	"project": "Compression.sublime-project",
 	"replace":
 	{
 		"height": 46.0
@@ -1060,64 +1052,60 @@
 		"selected_items":
 		[
 			[
-				"cubes.h",
-				"src/Game/Cubes.h"
+				"todo",
+				"delta_data_round_two.bin"
 			],
 			[
-				"syncdemo.cpp",
-				"src/Game/SyncDemo.cpp"
+				"orient",
+				"orientation_values.txt"
 			],
 			[
-				"pre",
-				"premake4.lua"
+				"det",
+				"delta_compression_round_two.cpp"
 			],
 			[
-				"snapshot.h",
-				"src/Game/Snapshot.h"
+				"delta_compressino_2.cpp",
+				"delta_compression_2.cpp"
+			],
+			[
+				"delta",
+				"delta_compression.cpp"
+			],
+			[
+				"delta_",
+				"delta_compression_2.cpp"
+			],
+			[
+				"delta_frames.bin",
+				"delta_frames.bin"
+			],
+			[
+				"delta_frames",
+				"delta_frames.bin"
+			],
+			[
+				"delta_compression.cpp",
+				"delta_compression.cpp"
+			],
+			[
+				"packets.bin",
+				"packets.bin"
+			],
+			[
+				"delta_com",
+				"delta_compression.cpp"
+			],
+			[
+				"",
+				"delta_compression.cpp"
+			],
+			[
+				"com",
+				"compression.cpp"
 			],
 			[
 				"deltademo.cpp",
 				"src/Game/DeltaDemo.cpp"
-			],
-			[
-				"demo",
-				"src/Game/DemoManager.cpp"
-			],
-			[
-				"demo.cpp",
-				"src/Game/SyncDemo.cpp"
-			],
-			[
-				"premake4.lua",
-				"premake4.lua"
-			],
-			[
-				"premake",
-				"premake4.lua"
-			],
-			[
-				"render.cpp",
-				"src/Game/Render.cpp"
-			],
-			[
-				"game.cpp",
-				"src/Game/Game.cpp"
-			],
-			[
-				"simulation.h",
-				"src/Cubes/Simulation.h"
-			],
-			[
-				"simulation.cpp",
-				"src/Cubes/Simulation.cpp"
-			],
-			[
-				"core.h",
-				"src/Core/Core.h"
-			],
-			[
-				"todo",
-				"TODO"
 			],
 			[
 				"changes",
@@ -1128,12 +1116,20 @@
 				"output/delta_data.bin"
 			],
 			[
+				"snapshot.h",
+				"src/Game/Snapshot.h"
+			],
+			[
 				"simulator.cpp",
 				"src/Network/Simulator.cpp"
 			],
 			[
-				"com",
-				"src/Game/CompressionDemo.cpp"
+				"syncdemo.cpp",
+				"src/Game/SyncDemo.cpp"
+			],
+			[
+				"premake4.lua",
+				"premake4.lua"
 			],
 			[
 				"sync",
@@ -1152,12 +1148,20 @@
 				"src/Cubes/Game.h"
 			],
 			[
+				"cubes.h",
+				"src/Game/Cubes.h"
+			],
+			[
 				"lockstepdemo.cpp",
 				"src/Game/LockstepDemo.cpp"
 			],
 			[
 				"cubes.cpp",
 				"src/Game/Cubes.cpp"
+			],
+			[
+				"game.cpp",
+				"src/Game/Game.cpp"
 			],
 			[
 				"lock",
@@ -1260,6 +1264,14 @@
 				"WOULD BE NICE"
 			],
 			[
+				"simulation.h",
+				"src/Cubes/Simulation.h"
+			],
+			[
+				"simulation.cpp",
+				"src/Cubes/Simulation.cpp"
+			],
+			[
 				"simulat",
 				"src/Network/Simulator.h"
 			],
@@ -1360,10 +1372,6 @@
 				"src/Game/DeltaDemo.cpp"
 			],
 			[
-				"delta",
-				"src/Game/DeltaDemo.h"
-			],
-			[
 				"deltademo.h",
 				"src/Game/DeltaDemo.h"
 			],
@@ -1382,10 +1390,6 @@
 			[
 				"packet.h",
 				"src/Protocol/Packet.h"
-			],
-			[
-				"",
-				"src/Network/Simulator.cpp"
 			],
 			[
 				"config.",
@@ -1476,6 +1480,10 @@
 				"output/delta_quaternion.txt"
 			],
 			[
+				"core.h",
+				"src/Core/Core.h"
+			],
+			[
 				"quat",
 				"external/vectorial/quat4f.h"
 			],
@@ -1554,22 +1562,6 @@
 			[
 				"testclientserver.cpp",
 				"tests/ClientServer/TestClientServer.cpp"
-			],
-			[
-				"simulator",
-				"src/Network/Simulator.h"
-			],
-			[
-				"hy",
-				"src/Cubes/Hypercube.h"
-			],
-			[
-				"fonts.json",
-				"assets/Fonts/Fonts.json"
-			],
-			[
-				"sliding",
-				"src/Protocol/SlidingWindow.h"
 			]
 		],
 		"width": 0.0

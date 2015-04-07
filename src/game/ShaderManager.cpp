@@ -80,10 +80,7 @@ void ShaderManager::Load()
             unsigned int shader = load_shader( vertex_shader_path, fragment_shader_path );
 
             if ( shader == 0 )
-            {
-                printf( "error: failed to load shader\n" );
                 continue;
-            }
 
             uint32_t key = core::hash_string( filename_without_extension );
 
@@ -99,7 +96,6 @@ void ShaderManager::Unload()
     for ( auto itor = core::hash::begin( m_shaders ); itor != core::hash::end( m_shaders ); ++itor )
     {
         const uint32_t shader = itor->value;
-//        printf( "%.3f: Delete shader %u\n", global.timeBase.time, shader );
         delete_shader( shader );
     }
  

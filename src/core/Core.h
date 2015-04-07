@@ -82,7 +82,7 @@ namespace core
 
     inline uint32_t host_to_network( uint32_t value )
     {
-#if COR_ENDIAN == CORE_BIG_ENDIAN
+#if CORE_ENDIAN == CORE_BIG_ENDIAN
         return __builtin_bswap32( value );
 #else
         return value;
@@ -180,7 +180,7 @@ namespace core
 
     template <typename T> const T & min( const T & a, const T & b )
     {
-        return ( a > b ) ? a : b;
+        return ( a < b ) ? a : b;
     }
 
     template <typename T> const T & max( const T & a, const T & b )

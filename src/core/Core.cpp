@@ -43,7 +43,7 @@ namespace core
     void sleep_milliseconds( uint32_t milliseconds )
     {
         #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
-            usleep( milliseconds * 1000);
+            usleep( milliseconds * 1000 );
         #elif CORE_PLATFORM == CORE_PLATFORM_WINDOWS
             Sleep( milliseconds );
         #else

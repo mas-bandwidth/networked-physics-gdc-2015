@@ -11,6 +11,7 @@
 #include "protocol/SequenceBuffer.h"
 
 #define DELTA_STATS 1
+#define DELTA_DATA 1
 //#define SERIALIZE_ANGULAR_VELOCITY
 
 static const int NumCubes = 900 + MaxPlayers;
@@ -24,9 +25,9 @@ static const int QuantizedPositionBoundZ = UnitsPerMeter * PositionBoundZ;
 static const int QuantizedLinearVelocityBound = UnitsPerMeter * MaxLinearSpeed;
 static const int QuantizedAngularVelocityBound = UnitsPerMeter * MaxAngularSpeed;
 
-static const int UnitsPerMeter_HighPrecision = 512;//4096;
-static const int VelocityUnits_HighPrecision = 512;//4096;
-static const int OrientationBits_HighPrecision = 9;//15;
+static const int UnitsPerMeter_HighPrecision = 4096;
+static const int VelocityUnits_HighPrecision = 4096;
+static const int OrientationBits_HighPrecision = 15;
 static const int QuantizedPositionBoundXY_HighPrecision = UnitsPerMeter_HighPrecision * PositionBoundXY;
 static const int QuantizedPositionBoundZ_HighPrecision = UnitsPerMeter_HighPrecision * PositionBoundZ;
 static const int QuantizedLinearVelocityBound_HighPrecision = VelocityUnits_HighPrecision * MaxLinearSpeed;
@@ -848,9 +849,10 @@ struct QuantizedCubeState
     int position_z;
     compressed_quaternion<OrientationBits> orientation;
 
-#if DELTA_STATS
-    vectorial::quat4f original_orientation;     // for output/delta_float_values.txt only!
-#endif // #if DELTA_STATS
+#if defined( DELTA_STATS ) || defined( DELTA_DATA )
+    vectorial::vec3f original_position;
+    vectorial::quat4f original_orientation;
+#endif // #if defined( DELTA_STATS ) || defined( DELTA_DATA )
 
     void Load( const CubeState & cube_state )
     {
@@ -859,9 +861,10 @@ struct QuantizedCubeState
         position_y = (int) floor( cube_state.position.y() * UnitsPerMeter + 0.5f );
         position_z = (int) floor( cube_state.position.z() * UnitsPerMeter + 0.5f );
         orientation.Load( cube_state.orientation );
-#if DELTA_STATS
+#if defined( DELTA_STATS ) || defined( DELTA_DATA )
+        original_position = cube_state.position;
         original_orientation = cube_state.orientation;
-#endif // #if DELTA_STATS
+#endif // defined( DELTA_STATS ) || defined( DELTA_DATA )
     }
 
     void Save( CubeState & cube_state ) const
