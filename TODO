@@ -2,12 +2,6 @@ DONE:
 
 TODO:
 
-    Actually run my own coding scheme over the data. 
-
-    Implement it in C++ so I can reuse bits of my existing code.
-
-    This will give me the # of bits encoding for the data set, as well as validation for compression/decompression.
-
     -------------------------------------------------------------------------
 
     Refine and simplify snapshot compression article.
