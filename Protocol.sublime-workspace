@@ -650,34 +650,50 @@
 	],
 	"file_history":
 	[
-		"/Users/gaffer/git/protocol/premake4.lua",
+		"/Users/gaffer/git/protocol/src/Protocol/Stream.h",
+		"/Users/gaffer/git/protocol/src/Core/Core.cpp",
+		"/Users/gaffer/git/protocol/src/Core/Core.h",
+		"/Users/gaffer/git/protocol/TODO",
+		"/Users/gaffer/git/protocol/src/Game/Render.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Cubes.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/View.h",
+		"/Users/gaffer/git/protocol/src/Network/Network.cpp",
+		"/Users/gaffer/git/protocol/src/Network/Network.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
+		"/Users/gaffer/git/protocol/src/ClientServer/Client.cpp",
+		"/Users/gaffer/git/protocol/src/Game/Game.cpp",
+		"/Users/gaffer/git/protocol/src/Network/Address.h",
+		"/Users/gaffer/git/protocol/src/Network/BSDSocket.h",
+		"/Users/gaffer/git/protocol/src/Network/Address.cpp",
+		"/Users/gaffer/git/protocol/src/Network/Enums.h",
+		"/Users/gaffer/git/protocol/src/Network/BSDSocket.cpp",
+		"/Users/gaffer/git/protocol/src/Cubes/View.cpp",
+		"/Users/gaffer/git/protocol/src/Game/ShaderManager.cpp",
 		"/Users/gaffer/git/protocol/src/Cubes/Config.h",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.vert",
+		"/Users/gaffer/git/protocol/data/shaders/Subroutine.frag",
 		"/Users/gaffer/git/protocol/src/Game/Cubes.h",
+		"/Users/gaffer/git/protocol/src/Game/Render.h",
+		"/Users/gaffer/git/protocol/CHANGES",
+		"/Users/gaffer/git/protocol/src/Game/ShaderManager.h",
+		"/Users/gaffer/git/protocol/src/Cubes/Mathematics.h",
+		"/Users/gaffer/git/protocol/premake4.lua",
 		"/Users/gaffer/git/protocol/src/Game/SyncDemo.cpp",
 		"/Users/gaffer/git/protocol/src/Game/Snapshot.h",
 		"/Users/gaffer/git/protocol/src/Game/DeltaDemo.cpp",
 		"/Users/gaffer/git/protocol/external/ode/ode/src/ode.cpp",
-		"/Users/gaffer/git/protocol/src/Game/Render.cpp",
-		"/Users/gaffer/git/protocol/src/Game/Cubes.cpp",
 		"/Users/gaffer/git/protocol/src/Cubes/Simulation.cpp",
 		"/Users/gaffer/git/protocol/src/Cubes/Simulation.h",
-		"/Users/gaffer/git/protocol/src/Game/Game.cpp",
 		"/Users/gaffer/git/protocol/src/Game/Demo.h",
 		"/Users/gaffer/git/protocol/src/Game/DemoManager.cpp",
 		"/Users/gaffer/git/protocol/tests/Cubes/TestCubes.cpp",
 		"/Users/gaffer/git/protocol/src/Game/DeltaDemo.h",
 		"/Users/gaffer/git/protocol/src/Protocol/Packet.h",
-		"/Users/gaffer/git/protocol/src/Game/Render.h",
 		"/Users/gaffer/git/protocol/src/Game/ReplayManager.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Game.h",
 		"/Users/gaffer/git/protocol/src/Network/Simulator.h",
-		"/Users/gaffer/git/protocol/src/Core/Core.h",
 		"/Users/gaffer/git/protocol/src/VirtualGo/CollisionResponse.h",
-		"/Users/gaffer/git/protocol/CHANGES",
 		"/Users/gaffer/git/protocol/output/delta_quaternion.txt",
-		"/Users/gaffer/git/protocol/TODO",
 		"/Users/gaffer/git/protocol/scripts/delta_angle.txt",
-		"/Users/gaffer/git/protocol/src/Cubes/Mathematics.h",
 		"/Users/gaffer/git/protocol/external/ode/tests/UnitTest++/src/MemoryOutStream.cpp",
 		"/Users/gaffer/git/protocol/src/Game/Model.cpp",
 		"/Users/gaffer/git/protocol/external/ode/OPCODE/.deps/OPC_Model.Plo",
@@ -739,9 +755,7 @@
 		"/Users/gaffer/git/protocol/obj/x64/Release/ClientServer/ClientServerDataBlock.d",
 		"/Users/gaffer/git/protocol/obj/x64/Release/tinycthread/tinycthread.d",
 		"/Users/gaffer/git/protocol/external/ode/ode/demo/bunny_geom.h",
-		"/Users/gaffer/git/protocol/src/Cubes/View.cpp",
 		"/Users/gaffer/git/protocol/scripts/optimize_smallest_three.rb",
-		"/Users/gaffer/git/protocol/src/Cubes/View.h",
 		"/Users/gaffer/git/protocol/external/vectorial/vec3f.h",
 		"/Users/gaffer/git/protocol/external/ode/include/ode/error.h",
 		"/Users/gaffer/git/protocol/external/vectorial/quat4f.h",
@@ -763,21 +777,7 @@
 		"/Users/gaffer/git/protocol/WOULD BE NICE",
 		"/Users/gaffer/git/protocol/src/VirtualGo/RigidBody.h",
 		"/Users/gaffer/git/protocol/NEXT",
-		"/Users/gaffer/git/protocol/SNAPSHOTS",
-		"/Users/gaffer/git/protocol/external/ode/GIMPACT/include/GIMPACT/gim_tri_capsule_collision.h",
-		"/Users/gaffer/git/protocol/src/Game/InputManager.cpp",
-		"/Users/gaffer/git/protocol/external/ode/OPCODE/OPC_TriBoxOverlap.h",
-		"/Users/gaffer/git/protocol/tools/Stone/ToolMesh.h",
-		"/Users/gaffer/git/protocol/ClientServer.make",
-		"/Users/gaffer/git/protocol/scripts/quaternion_values.txt",
-		"/Users/gaffer/git/protocol/src/Game/SnapshotDemo.h",
-		"/Users/gaffer/git/protocol/src/Protocol/Stream.h",
-		"/Users/gaffer/git/protocol/src/Game/DemoManager.h",
-		"/Users/gaffer/git/protocol/src/Game/StatefulDemo.cpp",
-		"/Users/gaffer/git/protocol/src/Cubes/Activation.h",
-		"/Users/gaffer/git/protocol/src/Cubes/Activation.cpp",
-		"/Users/gaffer/git/protocol/external/vectorial/mat4f.h",
-		"/Users/gaffer/git/protocol/src/Game/StatefulDemo.h"
+		"/Users/gaffer/git/protocol/SNAPSHOTS"
 	],
 	"find":
 	{
@@ -828,6 +828,29 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"ReadBytes",
+			"sequence_greater",
+			"guid",
+			"generate_guid",
+			"guid",
+			"Internal(",
+			"GetObjectInteractions",
+			"getAuthorityColor",
+			"AddPlane",
+			"camera",
+			"SetLightPosition",
+			"lightPosition",
+			"inverse_transform",
+			"CubeInstance",
+			"UpdateSimulation",
+			"failed to load shader",
+			"CubesRender",
+			"CubeRender",
+			"origin",
+			"dOde",
+			"input.right",
+			"soften_simulation",
+			"soften",
 			"dxBodyMaxAngularSpeed",
 			"dxBodyLinearDamping",
 			"SetMax",
@@ -932,30 +955,7 @@
 			"MoveActiveObject",
 			"bool warp",
 			"Save(",
-			"StateUpdate",
-			"authorityTime",
-			"CubesInternal",
-			"CubeInternal",
-			"todo",
-			"num_cubes",
-			"frame[",
-			"ProcessPlayerInput",
-			"deltaTime",
-			"time",
-			"StateUpdate",
-			"GetStateUpdate",
-			"AddStateUpdate",
-			"send_sequence",
-			"GetStateUpdate",
-			"state_update",
-			"jitter_buffer",
-			"stopped",
-			"state_updates",
-			"state_update",
-			"playout_delay",
-			"player",
-			"recv_sequence",
-			"send"
+			"StateUpdate"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1060,8 +1060,120 @@
 		"selected_items":
 		[
 			[
+				"stream.h",
+				"src/Protocol/Stream.h"
+			],
+			[
+				"todo",
+				"TODO"
+			],
+			[
+				"core.h",
+				"src/Core/Core.h"
+			],
+			[
+				"core.cpp",
+				"src/Core/Core.cpp"
+			],
+			[
+				"socket.cpp",
+				"src/Network/BSDSocket.cpp"
+			],
+			[
+				"netowrk.cpp",
+				"src/Network/Network.cpp"
+			],
+			[
+				"network.h",
+				"src/Network/Network.h"
+			],
+			[
+				"bsdsocket.cpp",
+				"src/Network/BSDSocket.cpp"
+			],
+			[
+				"enums.h",
+				"src/Network/Enums.h"
+			],
+			[
+				"socket",
+				"src/Network/BSDSocket.h"
+			],
+			[
+				"address.cpp",
+				"src/Network/Address.cpp"
+			],
+			[
+				"address.h",
+				"src/Network/Address.h"
+			],
+			[
+				"game.cpp",
+				"src/Game/Game.cpp"
+			],
+			[
+				"client.cpp",
+				"src/ClientServer/Client.cpp"
+			],
+			[
+				"render.cpp",
+				"src/Game/Render.cpp"
+			],
+			[
+				"view.cpp",
+				"src/Cubes/View.cpp"
+			],
+			[
+				"view.h",
+				"src/Cubes/View.h"
+			],
+			[
+				"game.h",
+				"src/Cubes/Game.h"
+			],
+			[
+				"render",
+				"src/Game/Render.cpp"
+			],
+			[
+				"changes",
+				"CHANGES"
+			],
+			[
+				"sub",
+				"data/shaders/Subroutine.vert"
+			],
+			[
 				"cubes.h",
 				"src/Game/Cubes.h"
+			],
+			[
+				"config.h",
+				"src/Cubes/Config.h"
+			],
+			[
+				"render.h",
+				"src/Game/Render.h"
+			],
+			[
+				"cubes.cpp",
+				"src/Game/Cubes.cpp"
+			],
+			[
+				"shadermanager.cpp",
+				"src/Game/ShaderManager.cpp"
+			],
+			[
+				"shader",
+				"src/Game/ShaderManager.h"
+			],
+			[
+				"mathem",
+				"src/Cubes/Mathematics.h"
+			],
+			[
+				"game.",
+				"src/Cubes/Game.h"
 			],
 			[
 				"syncdemo.cpp",
@@ -1096,32 +1208,12 @@
 				"premake4.lua"
 			],
 			[
-				"render.cpp",
-				"src/Game/Render.cpp"
-			],
-			[
-				"game.cpp",
-				"src/Game/Game.cpp"
-			],
-			[
 				"simulation.h",
 				"src/Cubes/Simulation.h"
 			],
 			[
 				"simulation.cpp",
 				"src/Cubes/Simulation.cpp"
-			],
-			[
-				"core.h",
-				"src/Core/Core.h"
-			],
-			[
-				"todo",
-				"TODO"
-			],
-			[
-				"changes",
-				"CHANGES"
 			],
 			[
 				"delta_data.bin",
@@ -1148,16 +1240,8 @@
 				"src/Game/LockstepDemo.cpp"
 			],
 			[
-				"game.h",
-				"src/Cubes/Game.h"
-			],
-			[
 				"lockstepdemo.cpp",
 				"src/Game/LockstepDemo.cpp"
-			],
-			[
-				"cubes.cpp",
-				"src/Game/Cubes.cpp"
 			],
 			[
 				"lock",
@@ -1190,10 +1274,6 @@
 			[
 				"bugn",
 				"external/ode/ode/demo/bunny_geom.h"
-			],
-			[
-				"view.cpp",
-				"src/Cubes/View.cpp"
 			],
 			[
 				"quat4f.h",
@@ -1252,10 +1332,6 @@
 				"src/Cubes/Mathematics.h"
 			],
 			[
-				"view.h",
-				"src/Cubes/View.h"
-			],
-			[
 				"wouldbenice",
 				"WOULD BE NICE"
 			],
@@ -1278,14 +1354,6 @@
 			[
 				"compression",
 				"src/Game/CompressionDemo.cpp"
-			],
-			[
-				"config.h",
-				"src/Cubes/Config.h"
-			],
-			[
-				"stream.h",
-				"src/Protocol/Stream.h"
 			],
 			[
 				"wouldbe",
@@ -1496,80 +1564,12 @@
 				"src/Game/ReplayManager.cpp"
 			],
 			[
-				"bsdsocket.cpp",
-				"src/Network/BSDSocket.cpp"
-			],
-			[
 				"steram.h",
 				"src/Protocol/Stream.h"
 			],
 			[
 				"vec3f.h",
 				"external/vectorial/vec3f.h"
-			],
-			[
-				"snaphot.h",
-				"src/Game/Snapshot.h"
-			],
-			[
-				"vec3f",
-				"external/vectorial/vec3f.h"
-			],
-			[
-				"sanpshot.h",
-				"src/Game/Snapshot.h"
-			],
-			[
-				"activation.h",
-				"src/Cubes/Activation.h"
-			],
-			[
-				"snaps",
-				"src/Game/Snapshot.h"
-			],
-			[
-				"sequencebuffer.h",
-				"src/Protocol/SequenceBuffer.h"
-			],
-			[
-				"slidingwindow.h",
-				"src/Protocol/SlidingWindow.h"
-			],
-			[
-				"slidnigwindow.h",
-				"src/Protocol/SlidingWindow.h"
-			],
-			[
-				"interface.h",
-				"src/Network/Interface.h"
-			],
-			[
-				"connectionpacket.h",
-				"src/Protocol/ConnectionPacket.h"
-			],
-			[
-				"teststream.cpp",
-				"tests/Protocol/TestStream.cpp"
-			],
-			[
-				"testclientserver.cpp",
-				"tests/ClientServer/TestClientServer.cpp"
-			],
-			[
-				"simulator",
-				"src/Network/Simulator.h"
-			],
-			[
-				"hy",
-				"src/Cubes/Hypercube.h"
-			],
-			[
-				"fonts.json",
-				"assets/Fonts/Fonts.json"
-			],
-			[
-				"sliding",
-				"src/Protocol/SlidingWindow.h"
 			]
 		],
 		"width": 0.0
