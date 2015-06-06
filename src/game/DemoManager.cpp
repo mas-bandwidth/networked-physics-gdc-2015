@@ -100,6 +100,8 @@ bool DemoManager::ReloadDemo()
 
     const char * demo_name = m_demo->GetName();          // IMPORTANT: Assumes demo get name returns const char* literal
 
+    printf( "reload: %s\n", demo_name );
+
     UnloadDemo();
 
     return LoadDemo( demo_name );

@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef NETWORK_SIMULATOR_H
 #define NETWORK_SIMULATOR_H
@@ -11,7 +11,6 @@
 
 namespace core { class Allocator; }
 
-// todo: network library should not depend on protocol
 namespace protocol
 {
     class Packet; 

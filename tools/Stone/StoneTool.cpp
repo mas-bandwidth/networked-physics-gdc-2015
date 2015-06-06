@@ -1,6 +1,6 @@
 /*
     Stone Tool
-    Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+    Copyright (c) 2008-2015, Glenn Fiedler
 */  
 
 #include "virtualgo/Biconvex.h"
@@ -380,7 +380,9 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
     }
 
     // IMPORTANT: Make sure we haven't blown past 16 bit indices
+    #ifndef NDEBUG
     const int numIndices = mesh.GetNumTriangles() * 3;
+    #endif
     CORE_ASSERT( numIndices <= 65535 );
 }
 

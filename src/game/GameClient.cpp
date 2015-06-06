@@ -111,7 +111,6 @@ void DestroyGameClient( core::Allocator & allocator, GameClient * client )
 
     clientServer::ClientConfig config = client->GetConfig();
 
-    // todo: hack
     typedef network::Interface NetworkInterface;
     typedef network::Simulator NetworkSimulator;
 
@@ -119,20 +118,11 @@ void DestroyGameClient( core::Allocator & allocator, GameClient * client )
     CORE_DELETE( allocator, ChannelStructure, config.channelStructure );
     CORE_DELETE( allocator, NetworkInterface, config.networkInterface );
     CORE_DELETE( allocator, NetworkSimulator, config.networkSimulator );
-
-    // todo: delete packet factory
-
-    // todo: delete message factory
-
-    // todo: delete channel structure
 }
 
 CONSOLE_FUNCTION( connect )
 {
     CORE_ASSERT( global.client );
-
-    // todo: actually parse args, especially strip pre-post whitespace, turn into n args and strings,
-    // and make sure to actually respect open and closing "" for quoted args (and strip the quotes!)
 
     network::Address address( args );
     

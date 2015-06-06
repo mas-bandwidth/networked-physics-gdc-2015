@@ -26,7 +26,6 @@ enum LockstepModes
     LOCKSTEP_MODE_TCP_200MS_2PC,
     LOCKSTEP_MODE_TCP_250MS_5PC,
     LOCKSTEP_MODE_UDP_250MS_25PC,
-    LOCKSTEP_MODE_UDP_250MS_50PC,
     LOCKSTEP_NUM_MODES
 };
 
@@ -38,7 +37,6 @@ static const char * lockstep_mode_descriptions[] =
     "TCP at 200ms latency and 2%% packet loss (100ms playout delay buffer)",
     "TCP at 250ms latency and 5%% packet loss (100ms playout delay buffer)",
     "UDP at 2 seconds latency and 25%% packet loss (100ms playout delay buffer)",
-    "UDP at 2 seconds latency and 50%% packet loss (250ms playout delay buffer)",
 };
 
 struct LockstepModeData
@@ -83,12 +81,6 @@ static void InitLockstepModes()
     lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].latency = 0.125f;
     lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].packet_loss = 25.0f;
     lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_25PC].jitter = 1.0f / 60.0f;
-
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].tcp = false;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].playout_delay = 0.25f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].latency = 0.125f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].packet_loss = 50.0f;
-    lockstep_mode_data[LOCKSTEP_MODE_UDP_250MS_50PC].jitter = 1.0f / 60.0f;
 }
 
 typedef protocol::SlidingWindow<game::Input> LockstepInputSlidingWindow;
@@ -308,9 +300,6 @@ struct LockstepInternal
 
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
-    // temp
-    SetMode( LOCKSTEP_MODE_UDP_250MS_25PC );
-
     InitLockstepModes();
     m_allocator = &allocator;
     m_internal = nullptr;

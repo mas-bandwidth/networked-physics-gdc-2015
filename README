@@ -1,0 +1,155 @@
+
+===============================================================
+Networking for Physics Programmers GDC 2015 Example Source Code
+===============================================================
+
+
+Hey Patreon supporters. Thanks for your support! 
+
+Here is the source code from my GDC 2015 talk: "Networking for Physics Programmers"
+
+I hope you find it useful as reference and maybe learn a few networking tricks. cheers! - Glenn
+
+The video of the GDC talk is available here: 
+
+    http://gdcvault.com/play/1022195/Physics-for-Game-Programmers-Networking
+
+Keynote slides from the talk with high resolution videos are available here: 
+    
+    http://bit.ly/1BFhG80
+
+And there is also an article series supporting the talk on my website:
+
+    http://gafferongames.com/networked-physics/introduction-to-networked-physics/
+
+This is free free software released under the MIT licence. See LICENCE for details.
+
+
+
+1. Building the source code
+---------------------------
+
+This software was developed on MacOSX. 
+
+It uses GLFW to perform rendering so it should be easy to port to windows. I'm not interested in doing that though.
+
+You need premake4 to build this software, which is available here:
+
+    https://premake.github.io/download.html
+
+You need ODE (Open Dynamics Engine) installed for the physics simulation.
+
+The easiest way is to install it via Brew (http://brew.sh). 
+
+Once you have brew, just type "brew install ode". 
+
+You also need GLFW 3.0, you can get this via "brew install glfw3".
+
+You are now ready to build (I hope). Change to the root directory of the source code and type this:
+
+    premake4 gmake
+
+This creates all the makefiles necessary to build the source code.
+
+You can now make everything via:
+
+    make all
+
+And run tests with:
+
+    premake4 test
+
+All tests should pass.
+
+
+
+2. Running the demos
+--------------------
+
+The source code is structured into separate demos. Each demo corresponds roughly to a section of the talk.
+
+This allows me to easily try out new concepts and move from exploring one area like snapshot interpolation,
+to another like delta compression or state synchronization while having code that is reasonably clean and
+specific to what I am currently working on. 
+
+It also avoids breaking old code when I switch from one section to another section, because I start from 
+a clean slate and put the old code off to the side each time I switch to a new thing.
+
+I setup an alias for "premake4" to "pm" on my systems to make it faster to iterate.  I'll use that alias from now on.
+
+You can run these demos from the command line with shortcuts individually:
+
+    1. "pm cubes" -- run the cubes demo in single player.
+
+    2. "pm lockstep" -- run the deterministic lockstep demo
+
+    3. "pm snapshot" -- run the snapshot interpolation demo
+
+    4. "pm compression" -- run the demo of lossy compression techniques (quantize etc.)
+
+    5. "pm delta" -- run the delta compression demo
+
+    6. "pm sync" -- run the state synchronization demo
+
+There is also a bunch of other stuff in there as supporting code, poke around the premake4.lua file and you'll find it.
+
+
+
+
+3. Contols
+----------
+
+Across all demos you can control the player cube as follows:
+
+    arrow keys -- strafe
+    space      -- jump/hover
+    z          -- katamari
+
+You can also reset the current demo at any time by pressing "ESCAPE"
+
+Within each demo you can pick different modes pressing the 1,2,3,4,5 keys:
+
+In the lockstep demo:
+
+    1. Deterministic mode (default)
+    2. Non-deterministic mode
+    3. TCP 100ms round-trip, 1% packet loss
+    4. TCP 200ms round-trip, 2% packet loss
+    5. TCP 250ms round-trip, 5% packet loss
+    6. UDP 250ms round-trip, 25% packet loss
+
+In the snapshot demo:
+
+    1. Snapshots at 60 packets per-second (default)
+    2. Snapshots at 60 packets per-second (with jitter)
+    3. Snapshots at 10 packets per-second
+    4. Linear interpolation at 10 packets per-second
+    5. Hermite interpolation at 10 packets per-second
+
+In the compression demo:
+
+    1. Uncompressed (default)
+    2. Compress orientation
+    3. Compress sinear velocity
+    4. At rest flag
+    5. Don't send velocity at all
+    6. Compress position
+        
+In the delta demo:
+
+    1. Not changed bit (default)
+    2. Changed index
+    3. Relative index
+    4. Relative position
+    5. Relative orientation
+
+In the state synchronization sync demo:
+
+    1. Input and State (default)
+    2. Quantize
+    3. Smoothing
+
+
+
+And that's all there is to it. Enjoy!
+

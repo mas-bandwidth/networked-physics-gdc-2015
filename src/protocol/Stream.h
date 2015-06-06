@@ -1,4 +1,4 @@
-// Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Protocol Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef PROTOCOL_STREAM_H
 #define PROTOCOL_STREAM_H
@@ -48,7 +48,6 @@ namespace protocol
         void Align()
         {
             m_writer.WriteAlign();
-            // todo: should add align bits to bits written
         }
 
         int GetAlignBits() const
@@ -169,7 +168,6 @@ namespace protocol
         void Align()
         {
             m_reader.ReadAlign();
-            // todo: should probably add align bits to m_bitsRead
         }
 
         int GetAlignBits() const
@@ -585,9 +583,6 @@ template <typename Stream, typename T> void serialize_int_relative( Stream & str
             current = previous + difference;
         return;
     }
-
-    // todo: i don't think this is efficient for the 16 bits case
-    // it should instead be in range 5 -> 16 + 4
 
     bool fourBits;
     if ( Stream::IsWriting )

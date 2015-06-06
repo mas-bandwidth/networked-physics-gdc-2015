@@ -138,9 +138,6 @@ protected:
         const float vx = vertex.position.x();
         const float vy = vertex.position.y();
         const float vz = vertex.position.z();
-
-        // todo: this code is dumb. christer says it is faster to test
-        // against adjacent cells vs. adding to multiple buckets here
         
         for ( int ix = -1; ix <= 1; ++ix )
         {

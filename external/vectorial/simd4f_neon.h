@@ -74,8 +74,6 @@ vectorial_inline simd4f simd4f_splat(float v) {
     return s;
 }
 
-// todo: or is simd4f_splat(simd4f_get_x(v))  better?
-
 vectorial_inline simd4f simd4f_splat_x(simd4f v) {
     float32x2_t o = vget_low_f32(v);
     simd4f ret = vdupq_lane_f32(o, 0);

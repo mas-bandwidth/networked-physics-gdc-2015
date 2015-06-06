@@ -315,7 +315,7 @@ struct CompressionInternal
 
 CompressionDemo::CompressionDemo( core::Allocator & allocator )
 {
-    SetMode( COMPRESSION_MODE_AT_REST_FLAG );
+    SetMode( COMPRESSION_MODE_UNCOMPRESSED );
 
     InitCompressionModes();
 

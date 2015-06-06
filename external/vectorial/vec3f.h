@@ -53,7 +53,6 @@ namespace vectorial {
 
     vectorial_inline vec3f clamp( vec3f input, vec3f min, vec3f max )
     {
-        // todo: would be nicer to do this with simd instructions instead
         float values[3];
         input.store( values );
         values[0] = vectorial::clamp( values[0], min.x(), max.x() );

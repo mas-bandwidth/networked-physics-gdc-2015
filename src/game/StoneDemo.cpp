@@ -64,8 +64,6 @@ enum StoneColor
     WHITE
 };
 
-// todo: bring back cool normals visualization mode. top-down with rotation
-
 enum StoneMode
 {
     STONE_MODE_SINGLE_STONE,
@@ -113,8 +111,6 @@ bool StoneDemo::Initialize()
 
 #if 0
     const char * filename = "data/cubemaps/uffizi.dds";
-
-    // todo: check if the filename doesn't exist. if not don't try to load it
 
     CDDSImage image;
     image.load( filename );    

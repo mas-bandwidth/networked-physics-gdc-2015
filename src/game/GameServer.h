@@ -96,12 +96,6 @@ void DestroyGameServer( core::Allocator & allocator, GameServer * server )
     CORE_DELETE( allocator, ChannelStructure, config.channelStructure );
     CORE_DELETE( allocator, NetworkInterface, config.networkInterface );
     CORE_DELETE( allocator, NetworkSimulator, config.networkSimulator );
-
-    // todo: delete packet factory
-
-    // todo: delete message factory
-
-    // todo: delete channel structure
 }
 
 #endif // #ifndef GAME_SERVER_H

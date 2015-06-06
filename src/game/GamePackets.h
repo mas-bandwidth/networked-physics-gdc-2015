@@ -35,7 +35,6 @@ protected:
     {
         switch ( type )
         {
-            // todo: remove the CLIENT_SERVER prefix?
             case clientServer::CLIENT_SERVER_PACKET_CONNECTION_REQUEST:       return CORE_NEW( *m_allocator, clientServer::ConnectionRequestPacket );
             case clientServer::CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE:       return CORE_NEW( *m_allocator, clientServer::ChallengeResponsePacket );
 
@@ -48,8 +47,6 @@ protected:
             case clientServer::CLIENT_SERVER_PACKET_DISCONNECTED:             return CORE_NEW( *m_allocator, clientServer::DisconnectedPacket );
 
             case PACKET_CONNECTION:                                           return CORE_NEW( *m_allocator, protocol::ConnectionPacket );
-
-            // ...
 
             default:
                 return nullptr;

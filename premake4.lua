@@ -3,7 +3,7 @@ solution "Protocol"
     platforms { "x64" }
     configurations { "Release", "Debug" }
     flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
-    configuration "Release"
+    configuration "Debug" --Release"
         flags { "OptimizeSpeed" }
         defines { "NDEBUG" }
 
@@ -81,7 +81,7 @@ project "TestNetwork"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Network/Test*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on protocol or client server
+    links { "Core", "Network", "Protocol", "ClientServer" }
     location "build"
     targetdir "bin"
 
@@ -90,7 +90,7 @@ project "TestProtocol"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/Test*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client server
+    links { "Core", "Network", "Protocol", "ClientServer" }
     location "build"
     targetdir "bin"
 
@@ -100,15 +100,6 @@ project "TestClientServer"
     kind "ConsoleApp"
     files { "tests/ClientServer/Test*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
-    location "build"
-    targetdir "bin"
-
-project "TestCubes"
-    language "C++"
-    buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
-    kind "ConsoleApp"
-    files { "tests/Cubes/*.cpp" }
-    links { "Core", "Cubes", "ode" }
     location "build"
     targetdir "bin"
 
@@ -126,7 +117,7 @@ project "SoakProtocol"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/SoakProtocol.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
     location "build"
 
@@ -144,7 +135,7 @@ project "ProfileProtocol"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/ProfileProtocol.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
     location "build"
 
@@ -316,8 +307,8 @@ if not os.is "windows" then
         valid_tools = premake.action.get("gmake").valid_tools,
      
         execute = function ()
-            if os.execute "make -j4 TestCore; make -j4 TestNetwork; make -j4 TestProtocol; make -j4 TestClientServer; make -j4 TestCubes; make -j4 TestVirtualGo" == 0 then
-                os.execute "cd bin; ./TestCore; ./TestNetwork; ./TestProtocol; ./TestClientServer; ./TestCubes; ./TestVirtualGo"
+            if os.execute "make -j4 TestCore; make -j4 TestNetwork; make -j4 TestProtocol; make -j4 TestClientServer; make -j4 TestVirtualGo" == 0 then
+                os.execute "cd bin; ./TestCore; ./TestNetwork; ./TestProtocol; ./TestClientServer; ./TestVirtualGo"
             end
         end
     }

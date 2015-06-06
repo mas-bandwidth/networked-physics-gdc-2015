@@ -97,21 +97,6 @@ namespace virtualgo
             }
         }
 
-        // todo: i fucked this up. fix it!
-
-        /*
-        // http://wolframalpha.com
-        // integrate ( r^2 - ( y + r - h/2 ) ^ 2 ) ^ 2 dy from y = 0 to h/2
-        //  => 1/480 h^3 (3 h^2-30 h r+80 r^2)
-        const float h = height;
-        const float r = biconvex.GetSphereRadius();
-        const float exact_iz = pi * p * ( 1/480.0f * h*h*h * ( 3*h*h - 30*h*r + 80*r*r ) );
-
-        iz = exact_iz;
-
-        printf( "inertia tensor: %f, %f,%f\n", ix, iy, iz );
-        */
-
         const float inertiaValues[] = { ix, iy, iz };
 
         const float inertiaTensorValues[] = { ix, 0,  0, 0, 

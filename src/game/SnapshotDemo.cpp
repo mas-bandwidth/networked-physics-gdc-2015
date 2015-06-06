@@ -18,7 +18,6 @@ enum SnapshotMode
     SNAPSHOT_MODE_NAIVE_10PPS,                      // 3. naive snapshots at 10pps with interpolation
     SNAPSHOT_MODE_LINEAR_INTERPOLATION_10PPS,       // 5. linear interpolation at 10pps
     SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS,      // 6. hermite interpolation at 10pps
-    SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS,      // 7. hermite extrapolation at 10pps
     SNAPSHOT_NUM_MODES
 };
 
@@ -29,7 +28,6 @@ const char * snapshot_mode_descriptions[]
     "Snapshots at 10 packets per-second",
     "Linear interpolation at 10 packets per-second",
     "Hermite interpolation at 10 packets per-second",
-    "Hermite extrapolation at 10 packets per-second",
 };
 
 static SnapshotModeData snapshot_mode_data[SNAPSHOT_NUM_MODES];
@@ -50,11 +48,6 @@ static void InitSnapshotModes()
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].packet_loss = 5;
     snapshot_mode_data[SNAPSHOT_MODE_HERMITE_INTERPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE;
-
-    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].send_rate = 10.0f;
-    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].jitter = 2 * 1.0f / 60.0f;
-    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].packet_loss = 5;
-    snapshot_mode_data[SNAPSHOT_MODE_HERMITE_EXTRAPOLATION_10PPS].interpolation = SNAPSHOT_INTERPOLATION_HERMITE_WITH_EXTRAPOLATION;
 }
 
 enum SnapshotPackets

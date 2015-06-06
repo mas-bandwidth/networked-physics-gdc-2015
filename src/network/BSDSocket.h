@@ -1,11 +1,11 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef NETWORK_BSD_SOCKET_H
 #define NETWORK_BSD_SOCKET_H
 
 #include "core/Types.h"
 #include "network/Interface.h"
-#include "protocol/PacketFactory.h"  // todo: we need to decouple from protocol here!
+#include "protocol/PacketFactory.h"
 
 namespace core { class Allocator; }
 

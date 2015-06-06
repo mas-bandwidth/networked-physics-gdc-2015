@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef NETWORK_RESOLVER_H
 #define NETWORK_RESOLVER_H
@@ -9,8 +9,8 @@
 
 #include "core/Core.h"
 #include "network/Address.h"
-#include <future>   // todo: ewwwww!
-#include <string>   // todo: ewwwww!
+#include <future>
+#include <string>
 
 namespace network
 {

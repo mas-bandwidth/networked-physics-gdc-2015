@@ -129,8 +129,6 @@ void MeshManager::Clear()
 void MeshManager::Reload()
 {
     printf( "%.3f: Reloading meshes\n", global.timeBase.time );
-
-    // todo: reload currently loaded meshes from disk
 }
 
 void MeshManager::LoadMesh( const char * filename )

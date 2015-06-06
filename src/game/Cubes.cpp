@@ -56,18 +56,12 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
             simulation[i].game_instance->InitializeEnd();
 
-            // todo: players joining and leaving and local player per-sim
-            // should definitely be parameterized not hardcoded like this
             simulation[i].game_instance->OnPlayerJoined( 0 );
             simulation[i].game_instance->SetLocalPlayer( 0 );
             simulation[i].game_instance->SetPlayerFocus( 0, 1 );
 
             simulation[i].game_instance->SetFlag( game::FLAG_Push );
             simulation[i].game_instance->SetFlag( game::FLAG_Pull );
-
-            // todo: need to be able to toggle this on/off -- we don't want this for lockstep
-            // but we do need it for lockstep to capture initial state for delta compression!
-//            simulation[i].game_instance->Update( 1.0f / 60.0f );        // IMPORTANT: give simulation one initial update so objects activate!
         }
     }
     else
@@ -122,12 +116,11 @@ void CubesInternal::Free( core::Allocator & allocator )
 void CubesInternal::AddCube( GameInstance * game_instance, int player, const vectorial::vec3f & position )
 {
     hypercube::DatabaseObject object;
-    // todo: convert to vectorial
     math::Vector stupid_position( position.x(), position.y(), position.z() );
     cubes::CompressPosition( stupid_position, object.position );
     cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
     object.enabled = player;
-    object.session = 0;             // todo: do we still need sessions?
+    object.session = 0;
     object.player = player;
     activation::ObjectId id = game_instance->AddObject( object, position.x(), position.y() );
     if ( player )
@@ -151,8 +144,6 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
     if ( simulation )
     {
-        // todo: run simulations wide on multiple threads
-
         for ( int i = 0; i < config.num_simulations; ++i )
         {
             for ( int j = 0; j < update_config.sim[i].num_frames; ++j )
@@ -186,7 +177,7 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
             view[i].objects.Update( deltaTime );
 
-            view::Object * player = view[i].objects.GetObject( 1 );     // todo: focus object should be configurable per-view
+            view::Object * player = view[i].objects.GetObject( 1 );
 
             vectorial::vec3f origin = player ? player->position : vectorial::vec3f(0,0,0);
 

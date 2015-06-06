@@ -1,4 +1,4 @@
-// Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Protocol Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #include "protocol/Connection.h"
 #include "core/Memory.h"

@@ -19,7 +19,6 @@ static const int RightPort = 1001;
 
 enum SyncMode
 {
-    SYNC_MODE_INPUT_ONLY_DESYNC,
     SYNC_MODE_INPUT_AND_STATE,
     SYNC_MODE_QUANTIZE,
     SYNC_MODE_SMOOTHING,
@@ -28,9 +27,8 @@ enum SyncMode
 
 const char * sync_mode_descriptions[]
 {
-    "Input Only Desync",
     "Input and State",
-    "Quantize",
+    "Quantize on both sides",
     "Smoothing"
 };
 
@@ -296,7 +294,7 @@ SyncDemo::SyncDemo( core::Allocator & allocator )
 {
     InitSyncModes();
 
-    SetMode( SYNC_MODE_SMOOTHING );
+    SetMode( SYNC_MODE_INPUT_AND_STATE );
 
     m_allocator = &allocator;
     m_internal = nullptr;

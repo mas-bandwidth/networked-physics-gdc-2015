@@ -1,4 +1,4 @@
-// Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Protocol Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef PROTOCOL_PACKET_FACTORY_H
 #define PROTOCOL_PACKET_FACTORY_H

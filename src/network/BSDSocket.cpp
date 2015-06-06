@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #include "network/Network.h"
 #include "network/BSDSocket.h"
@@ -109,8 +109,6 @@ namespace network
                 return;
             }
         }
-
-        // todo: get the actual port we bound to in the case of passing in port 0 we must ask the OS
 
         m_port = m_config.port;
 
@@ -387,7 +385,6 @@ namespace network
 
             if ( !stream.Check( 0x51246234 ) )
             {
-                // todo: counter for truncated packets
                 m_config.packetFactory->Destroy( packet );
                 continue;
             }

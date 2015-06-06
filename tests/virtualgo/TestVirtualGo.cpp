@@ -18,7 +18,9 @@ void test_biconvex()
 
     Biconvex biconvex( 2.0f, 1.0f );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
 
     CORE_ASSERT_CLOSE( biconvex.GetWidth(), 2.0f, epsilon );
     CORE_ASSERT_CLOSE( biconvex.GetHeight(), 1.0f, epsilon );
@@ -31,7 +33,9 @@ void test_intersect_ray_sphere_hit()
 {
     printf( "test_intersect_ray_sphere_hit\n" );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
 
     vec3f rayStart(0,0,-10);
     vec3f rayDirection(0,0,1);
@@ -41,7 +45,10 @@ void test_intersect_ray_sphere_hit()
     float sphereRadiusSquared = sphereRadius * sphereRadius;
     float t = 0;
     
-    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
+    #ifndef NDEBUG
+    bool hit = 
+    #endif
+        IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
     
     CORE_ASSERT( hit );
     CORE_ASSERT_CLOSE( t, 9.0f, epsilon );
@@ -59,7 +66,10 @@ void test_intersect_ray_sphere_miss()
     float sphereRadiusSquared = sphereRadius * sphereRadius;
     float t = 0;
     
-    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
+    #ifndef NDEBUG
+    bool hit = 
+    #endif
+        IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
     
     CORE_ASSERT( !hit );
 }
@@ -79,7 +89,10 @@ void test_intersect_ray_sphere_inside()
     float sphereRadiusSquared = sphereRadius * sphereRadius;
     float t = 0;
     
-    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
+    #ifndef NDEBUG
+    bool hit = 
+    #endif
+        IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
     
     CORE_ASSERT( !hit );
 }
@@ -120,8 +133,12 @@ void test_biconvex_surface_normal_at_point()
 {
     printf( "test_biconvex_surface_normal_at_point\n" );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
+
     Biconvex biconvex( 2.0f, 1.0f );
+    
     vec3f normal(0,0,0);
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(1,0,0), biconvex, normal );
@@ -147,8 +164,12 @@ void test_nearest_point_on_biconvex_surface()
 {
     printf( "test_nearest_point_on_biconvex_surface\n" );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
+
     Biconvex biconvex( 2.0f, 1.0f );
+
     vec3f nearest;
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(0,0,10), biconvex );
@@ -174,7 +195,9 @@ void test_biconvex_support_local_space()
 {
     printf( "test_biconvex_support_local_space\n" );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
 
     Biconvex biconvex( 2.0f, 1.0f );
 
@@ -209,7 +232,9 @@ void test_biconvex_support_world_space()
 {
     printf( "test_biconvex_support_world_space\n" );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
 
     Biconvex biconvex( 2.0f, 1.0f );
     vec3f biconvexCenter(10,0,0);
@@ -246,7 +271,9 @@ void test_biconvex_sat()
 {
     printf( "test_biconvex_sat\n" );
 
+    #ifndef NDEBUG
     const float epsilon = 0.001f;
+    #endif
 
     Biconvex biconvex( 2.0f, 1.0f );
 
@@ -283,6 +310,8 @@ void test_stone_board_collision_type()
 {
     printf( "test_stone_board_collision_type\n" );
 
+    #ifndef NDEBUG
+
     Board board( 9 );
 
     const float w = board.GetWidth() * 0.5f;
@@ -292,6 +321,8 @@ void test_stone_board_collision_type()
     const float radius = 1.0f;
 
     bool broadPhaseReject = false;
+
+    #endif
 
     CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(0,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
     CORE_ASSERT( broadPhaseReject == false );
@@ -333,16 +364,19 @@ void test_stone_board_collision_none()
 
     Board board( 9 );
 
+    #ifndef NDEBUG
     const float w = board.GetWidth() * 0.5f;
     const float h = board.GetHeight() * 0.5f;
     const float t = board.GetThickness();
+    #endif
 
     Biconvex biconvex( 2.0f, 1.0f );
 
+    #ifndef NDEBUG
     const float r = biconvex.GetBoundingSphereRadius();
-
     float depth;
     vec3f point, normal;
+    #endif
 
     CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,0,t+r*2) ), normal, depth ) );
     CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(-w-r*2,0,0) ), normal, depth ) );
@@ -537,7 +571,7 @@ int main()
     test_stone_board_collision_type();
     test_stone_board_collision_none();
 
-    // todo: these tests are broken!
+    // these tests are broken!
     /*
     test_stone_board_collision_primary();
     test_stone_board_collision_left_side();

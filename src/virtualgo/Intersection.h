@@ -141,10 +141,6 @@ namespace virtualgo
                     return t;
             }
         }
-
-        // todo: other cases
-        // left side, right side, top side, bottom side
-
         return -1;
     }
 

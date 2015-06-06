@@ -26,9 +26,6 @@ namespace view
 		// 1. mark all objects as pending removal
 		//  - allows us to detect deleted objects in O(n) instead of O(n^2)
 
-		// todo: convert to bit array
-		// todo: hot/cold split for "remove" flag.
-
 		for ( object_map::iterator itor = objects.begin(); itor != objects.end(); ++itor )
 		{
  			Object * object = itor->second;

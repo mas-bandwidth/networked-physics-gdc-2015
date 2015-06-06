@@ -161,14 +161,16 @@ namespace virtualgo
                                        stonePoint,
                                        boardPoint );
 
-        const float x = boardPoint.x();
         const float y = boardPoint.y();
-        const float z = boardPoint.z();
 
+        #ifndef NDEBUG
+        const float x = boardPoint.x();
+        const float z = boardPoint.z();
         const float dx = fabs( x - (-w) );
         const float dz = fabs( z - t );
         CORE_ASSERT( dx < 0.001f );
         CORE_ASSERT( dz < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;
@@ -242,14 +244,16 @@ namespace virtualgo
                                        stonePoint,
                                        boardPoint );
 
-        const float x = boardPoint.x();
         const float y = boardPoint.y();
-        const float z = boardPoint.z();
 
+        #ifndef NDEBUG
+        const float x = boardPoint.x();
+        const float z = boardPoint.z();
         const float dx = fabs( x - w );
         const float dz = fabs( z - t );
         CORE_ASSERT( dx < 0.001f );
         CORE_ASSERT( dz < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;
@@ -324,13 +328,15 @@ namespace virtualgo
                                      boardPoint );
 
         const float x = boardPoint.x();
+
+        #ifndef NDEBUG
         const float y = boardPoint.y();
         const float z = boardPoint.z();
-
         const float dy = fabs( y - h );
         const float dz = fabs( z - t );
         CORE_ASSERT( dy < 0.001f );
         CORE_ASSERT( dz < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;
@@ -405,13 +411,15 @@ namespace virtualgo
                                        boardPoint );
 
         const float x = boardPoint.x();
+
+        #ifndef NDEBUG
         const float y = boardPoint.y();
         const float z = boardPoint.z();
-
         const float dy = fabs( y - (-h) );
         const float dz = fabs( z - t );
         CORE_ASSERT( dy < 0.001f );
         CORE_ASSERT( dz < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;
@@ -450,14 +458,16 @@ namespace virtualgo
                                      stonePoint,
                                      boardPoint );
 
-      const float x = boardPoint.x();
-      const float y = boardPoint.y();
       const float z = boardPoint.z();
 
+      #ifndef NDEBUG
+      const float x = boardPoint.x();
+      const float y = boardPoint.y();
       const float dx = fabs( x - (-w) );
       const float dy = fabs( y - (-h) );
       CORE_ASSERT( dx < 0.001f );
       CORE_ASSERT( dy < 0.001f );
+      #endif
 
       vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
       vec3f local_normal;
@@ -496,14 +506,16 @@ namespace virtualgo
                                        stonePoint,
                                        boardPoint );
 
-        const float x = boardPoint.x();
-        const float y = boardPoint.y();
         const float z = boardPoint.z();
 
+        #ifndef NDEBUG
+        const float x = boardPoint.x();
+        const float y = boardPoint.y();
         const float dx = fabs( x - w );
         const float dy = fabs( y - (-h) );
         CORE_ASSERT( dx < 0.001f );
         CORE_ASSERT( dy < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;
@@ -542,14 +554,16 @@ namespace virtualgo
                                        stonePoint,
                                        boardPoint );
 
-        const float x = boardPoint.x();
-        const float y = boardPoint.y();
         const float z = boardPoint.z();
 
+        #ifndef NDEBUG
+        const float x = boardPoint.x();
+        const float y = boardPoint.y();
         const float dx = fabs( x - (-w) );
         const float dy = fabs( y - h );
         CORE_ASSERT( dx < 0.001f );
         CORE_ASSERT( dy < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;
@@ -588,14 +602,16 @@ namespace virtualgo
                                        stonePoint,
                                        boardPoint );
 
-        const float x = boardPoint.x();
-        const float y = boardPoint.y();
         const float z = boardPoint.z();
 
+        #ifndef NDEBUG
+        const float x = boardPoint.x();
+        const float y = boardPoint.y();
         const float dx = fabs( x - w );
         const float dy = fabs( y - h );
         CORE_ASSERT( dx < 0.001f );
         CORE_ASSERT( dy < 0.001f );
+        #endif
 
         vec3f local_point = transformPoint( biconvexTransform.worldToLocal, stonePoint );
         vec3f local_normal;

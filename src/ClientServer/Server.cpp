@@ -1,4 +1,4 @@
-// Client Server Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #include "clientServer/Server.h"
 #include "network/Simulator.h"

@@ -1,8 +1,8 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #include "network/Simulator.h"
 #include "core/Memory.h"
-#include "protocol/PacketFactory.h"      // todo: we need to not depend on protocol from network
+#include "protocol/PacketFactory.h"
 
 namespace network
 {

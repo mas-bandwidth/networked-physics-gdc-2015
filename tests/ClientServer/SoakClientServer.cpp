@@ -343,7 +343,6 @@ void soak_test()
         timeBase.time += timeBase.deltaTime;
     }
 
-    // todo: hack
     typedef network::Interface NetworkInterface;
 
     for ( int i = 0; i < NumServers; ++i )

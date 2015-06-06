@@ -31,7 +31,7 @@ public:
 
     virtual bool CharEvent( unsigned int code ) override;
 
-    virtual const char * GetName() const override { return "stateful"; }
+    virtual const char * GetName() const override { return "sync"; }
 
     virtual int GetNumModes() const override;
 

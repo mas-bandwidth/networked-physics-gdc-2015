@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef NETWORK_ADDRESS_H
 #define NETWORK_ADDRESS_H

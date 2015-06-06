@@ -1,4 +1,4 @@
-// Client Server Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Client Server Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef CLIENT_SERVER_ENUMS_H
 #define CLIENT_SERVER_ENUMS_H

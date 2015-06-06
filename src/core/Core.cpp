@@ -1,4 +1,4 @@
-// Core Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Core Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #include "core/Core.h"
 #include <time.h>

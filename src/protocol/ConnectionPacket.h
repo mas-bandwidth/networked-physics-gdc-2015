@@ -1,4 +1,4 @@
-// Protocol Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Protocol Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #ifndef PROTOCOL_CONNECTION_PACKET_H
 #define PROTOCOL_CONNECTION_PACKET_H
@@ -9,7 +9,6 @@
 #include "Memory.h"
 #include "PacketFactory.h"
 
-// todo: protocol should not depend on client/server
 #include "clientServer/ClientServerContext.h"
 #include "clientServer/ClientServerEnums.h"
 
@@ -58,8 +57,6 @@ namespace protocol
 
             CORE_ASSERT( numChannels > 0 );
             CORE_ASSERT( numChannels <= MaxChannels );
-
-            // todo: protocol should not depend on client/server
 
             // IMPORTANT: Context here is used when running under client/server
             // so we can filter out connection packets that do not match any connected client.

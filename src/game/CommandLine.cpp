@@ -11,7 +11,6 @@ void StoreCommandLine( int argc, char * argv[] )
     commandLineBuffer[0] = '\0';
     for ( int i = 1; i < argc; ++i )
     {
-        // todo: this should be strncat!!!
         strcat( commandLineBuffer, argv[i] );
         if ( i != argc -1 )
             strcat( commandLineBuffer, " " );
@@ -26,8 +25,6 @@ void StoreCommandLine( const char * commandLine )
 
 void ProcessCommandLine()
 {
-    // todo: implement proper command line parsing, eg. "-blah", "-blah = X", "+command something something something -switch"
-
     // muahahaha I'm so lazy.
 
 //    printf( "command line: '%s'\n", buffer );

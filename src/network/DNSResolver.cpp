@@ -1,4 +1,4 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+// Network Library - Copyright (c) 2008-2015, Glenn Fiedler
 
 #include "network/DNSResolver.h"
 
@@ -61,18 +61,12 @@ namespace network
         m_ipv6 = ipv6;
     }
 
-    DNSResolver::~DNSResolver()
-    {
-        // todo: this class owns the entry pointers so it is responsible for deleting them
-    }
-
     void DNSResolver::Resolve( const std::string & name )
     {
         auto itor = map.find( name );
         if ( itor != map.end() )
             return;
 
-        // todo: convert to custom allocator
         auto entry = new ResolveEntry();
         entry->status = RESOLVE_IN_PROGRESS;
         const int ipv6 = m_ipv6;
