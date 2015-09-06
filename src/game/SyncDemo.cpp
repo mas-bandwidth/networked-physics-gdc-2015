@@ -22,9 +22,8 @@ enum SyncMode
     SYNC_MODE_UNCOMPRESSED,
     SYNC_MODE_COMPRESSED,
     SYNC_MODE_QUANTIZE_ON_BOTH_SIDES,
-    /*
-    SYNC_MODE_SMOOTHING,        // todo: split apart smoothing and adaptive smoothing
-    */
+    SYNC_MODE_BASIC_SMOOTHING,
+    SYNC_MODE_ADAPTIVE_SMOOTHING,
     SYNC_NUM_MODES
 };
 
@@ -33,9 +32,8 @@ const char * sync_mode_descriptions[]
     "Uncompressed",
     "Compressed",
     "Quantize on both sides",
-    /*
-    "Smoothing"
-    */
+    "Basic Smoothing",
+    "Adaptive Smoothing"
 };
 
 struct SyncModeData
@@ -84,10 +82,20 @@ template <typename Stream> void serialize_cube_state_uncompressed( Stream & stre
     serialize_vector( stream, cube.position );
     serialize_quaternion( stream, cube.orientation );
 
-    // todo: include "at_rest" in cube state, serialize it here and imply velocity to zero.
+    bool at_rest = Stream::IsWriting ? cube.AtRest() : false;
+    
+    serialize_bool( stream, at_rest );
 
-    serialize_vector( stream, cube.linear_velocity );
-    serialize_vector( stream, cube.angular_velocity );
+    if ( !at_rest )
+    {
+        serialize_vector( stream, cube.linear_velocity );
+        serialize_vector( stream, cube.angular_velocity );
+    }
+    else if ( Stream::IsReading )
+    {
+        cube.linear_velocity = vectorial::vec3f(0,0,0);
+        cube.angular_velocity = vectorial::vec3f(0,0,0);
+    }
 }
 
 template <typename Stream> void serialize_cube_state_compressed( Stream & stream, int & index, QuantizedCubeState_HighPrecision & cube )
@@ -479,9 +487,7 @@ void ApplyStateUpdateUncompressed( GameInstance & game_instance, const StateUpda
             active_object->linearVelocity = math::Vector( cube.linear_velocity.x(), cube.linear_velocity.y(), cube.linear_velocity.z() );
             active_object->angularVelocity = math::Vector( cube.angular_velocity.x(), cube.angular_velocity.y(), cube.angular_velocity.z() );
             active_object->authority = cube.interacting ? 0 : MaxPlayers;
-
-            // todo: stash the enabled flag inside the cube state
-            active_object->enabled = true;
+            active_object->enabled = !cube.AtRest();
 
             game_instance.MoveActiveObject( active_object );
         }
@@ -517,8 +523,6 @@ void ApplyStateUpdateCompressed( GameInstance & game_instance, const StateUpdate
             active_object->linearVelocity = math::Vector( cube.linear_velocity.x(), cube.linear_velocity.y(), cube.linear_velocity.z() );
             active_object->angularVelocity = math::Vector( cube.angular_velocity.x(), cube.angular_velocity.y(), cube.angular_velocity.z() );
             active_object->authority = cube.interacting ? 0 : MaxPlayers;
-
-            // todo: rework the quantized cube state to include at rest flag pulled from sim
             active_object->enabled = !state_update.cube_state[i].AtRest();
 
             game_instance.MoveActiveObject( active_object );
@@ -919,14 +923,11 @@ void SyncDemo::Render()
 
     render_config.render_mode = CUBES_RENDER_SPLITSCREEN;
 
-    // todo: hook up smoothing modes here
-    /*
-    if ( GetMode() >= SYNC_MODE_SMOOTHING )
+    if ( GetMode() >= SYNC_MODE_BASIC_SMOOTHING )
     {
         render_config.view[1].position_error = m_sync->position_error;
         render_config.view[1].orientation_error = m_sync->orientation_error;
     }
-    */
 
     m_internal->Render( render_config );
 

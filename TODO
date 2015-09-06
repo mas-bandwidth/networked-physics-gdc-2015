@@ -14,28 +14,15 @@ DONE:
 
     Implement uncompressed state sync mode.
 
-TODO:
-
-    --------------------------
-
-    *** FIX THE AT REST HANDLING ***
-
-    I note that the "AtRest" function is approximate, and really is not if the object is actually at rest according to simulation.
-
-    You really want to get this to make sure the solver runs the same way for the extrapolation
-
-    To make the at rest sync actually correct, not only do you need to send the at rest flag,
-    but you also need to send frames until at rest for objects that are not at rest.
-
-    Typically frames until at rest will be either maximum, or zero for truly at rest objects.
-
-    Do I really want to go down this far in the article? Honestly, it's probably appropriate.
-
-    --------------------------
-
     Hook up compressed state sync mode (not quantized)
 
     Hook up quantized state sync mode (quantize both sides)
+
+    Fixed at rest handling. Current setup is "good enough". Move on.
+
+TODO:
+
+    --------------------------
 
     Split apart smoothing and adaptive smoothing modes
 
@@ -45,11 +32,11 @@ TODO:
 
     Record videos for state synchronization article:
 
-        1. State synchronization uncompressed (basic stuff)
+        1. State synchronization uncompressed (basic stuff)      <--- should already look pretty much perfect
 
-        2. Video showing popping due to not quantizing state in remote view
+        2. Video showing popping due to not quantizing state in remote view        <---- will need to construct a large stack of objects to see the popping
 
-        3. Video showing quantize on both sides
+        3. Video showing quantize on both sides                  <--- should look perfect again.
 
         4. Video showing smoothing looking good, but too slow with with large jumps
 
@@ -68,8 +55,23 @@ TODO:
 
     -------------------------
 
+    Article should describe smoothing, desire smooth (slow) reduction for small pops, and fast corrections
+    for large jumps (because it looks silly to draw it out)
+
+    Smooth and snappy at the same time? How?
+
+    Adaptive smoothing.
+
+    -------------------------
+
     Write "Conclusion to Part One" article with pros/cons of each approach
     and leader into part two article (paid) behind patreon.
+
+    -------------------------
+
+    Copy across updated SyncDemo.cpp code and Snapshot.h to the release branch
+
+    Make sure to not let across any "The Network Protocol Company" copyright notices.
 
     -------------------------
         
