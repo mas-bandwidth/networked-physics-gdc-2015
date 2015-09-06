@@ -308,9 +308,6 @@ struct LockstepInternal
 
 LockstepDemo::LockstepDemo( core::Allocator & allocator )
 {
-    // temp
-    SetMode( LOCKSTEP_MODE_UDP_250MS_25PC );
-
     InitLockstepModes();
     m_allocator = &allocator;
     m_internal = nullptr;

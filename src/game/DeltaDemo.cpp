@@ -543,15 +543,15 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     if ( vectorial::dot( orientation, base_orientation ) < 0 )
         orientation = -orientation;
 
-    const int quaternion_x = core::clamp( ( orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int quaternion_y = core::clamp( ( orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int quaternion_z = core::clamp( ( orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int quaternion_w = core::clamp( ( orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-
-    const int base_quaternion_x = core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int base_quaternion_y = core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int base_quaternion_z = core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
-    const int base_quaternion_w = core::clamp( ( base_orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_x = (int) core::clamp( ( orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_y = (int) core::clamp( ( orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_z = (int) core::clamp( ( orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int quaternion_w = (int) core::clamp( ( orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+ 
+    const int base_quaternion_x = (int) core::clamp( ( base_orientation.x() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_y = (int) core::clamp( ( base_orientation.y() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_z = (int) core::clamp( ( base_orientation.z() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
+    const int base_quaternion_w = (int) core::clamp( ( base_orientation.w() + 1.0f ) / 2.0f * ( MaxQuaternionDelta - 1 ) + 0.5f, 0.0f, float( MaxQuaternionDelta - 1 ) );
 
     fprintf( quaternion_values, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
         quaternion_x, quaternion_y, quaternion_z, quaternion_w, 
@@ -1482,7 +1482,7 @@ DeltaDemo::DeltaDemo( core::Allocator & allocator )
 {
     InitDeltaModes();
 
-    SetMode( DELTA_MODE_RELATIVE_ORIENTATION );
+    SetMode( DELTA_MODE_NOT_CHANGED );
 
     m_allocator = &allocator;
     m_internal = nullptr;
@@ -1581,6 +1581,11 @@ bool DeltaDemo::Initialize()
     m_internal->Initialize( *m_allocator, config, m_settings );
 
     auto game_instance = m_internal->GetGameInstance( 0 );
+
+    // hack: we must pump one physics update to make sure initial state is valid
+    CubesUpdateConfig update_config;
+    update_config.sim[0].num_frames = 1;
+    m_internal->Update( update_config );    
 
     GetQuantizedSnapshot( game_instance, m_delta->quantized_initial_snapshot );
 

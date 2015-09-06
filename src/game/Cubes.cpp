@@ -30,7 +30,7 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
         game_config.simConfig.ERP = config.soften_simulation ? 0.5f : 0.25f;
         game_config.simConfig.CFM = config.soften_simulation ? 0.01f : 0.001f;
         game_config.simConfig.MaxIterations = 64;
-        game_config.simConfig.MaximumCorrectingVelocity = config.soften_simulation ? 5.0f : 250.0f;
+        game_config.simConfig.MaximumCorrectingVelocity = config.soften_simulation ? 1.0f : 250.0f;
         game_config.simConfig.ContactSurfaceLayer = 0.01f;
         game_config.simConfig.Elasticity = 0.0f;
         game_config.simConfig.LinearDrag = 0.001f;
@@ -64,10 +64,6 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
             simulation[i].game_instance->SetFlag( game::FLAG_Push );
             simulation[i].game_instance->SetFlag( game::FLAG_Pull );
-
-            // todo: need to be able to toggle this on/off -- we don't want this for lockstep
-            // but we do need it for lockstep to capture initial state for delta compression!
-//            simulation[i].game_instance->Update( 1.0f / 60.0f );        // IMPORTANT: give simulation one initial update so objects activate!
         }
     }
     else

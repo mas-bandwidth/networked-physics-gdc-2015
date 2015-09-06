@@ -1,51 +1,81 @@
 DONE:
 
+    Final pass over state synchronization ready for publish.
+
+    Tell patreon supporters what I'm up to.
+
+    Fix various bugs in state synchronization demo.
+
+    Sketch out state sync demo functions to support uncompressed and compressed
+
+    Templatize jitter buffer, needs to support both compressed and uncompressed state updates.
+
+    Convert all the other bits that need uncompressed state updates.
+
+    Implement uncompressed state sync mode.
+
 TODO:
 
-    -------------------------------------------------------------------------
+    --------------------------
 
-    Refine and simplify snapshot compression article.
+    *** FIX THE AT REST HANDLING ***
 
-    Refine snapshot article. Cut down etc.
+    I note that the "AtRest" function is approximate, and really is not if the object is actually at rest according to simulation.
 
-    -------------------------------------------------------------------------
+    You really want to get this to make sure the solver runs the same way for the extrapolation
 
-    Rework slide material back into articles
+    To make the at rest sync actually correct, not only do you need to send the at rest flag,
+    but you also need to send frames until at rest for objects that are not at rest.
 
-    Especially rework the conclusion with the z-buffer overall winner approach, which is a strong conclusion.
+    Typically frames until at rest will be either maximum, or zero for truly at rest objects.
 
-    Polish pass the state synchronization article. Especially try to get some diagrams from the talk back into it.
+    Do I really want to go down this far in the article? Honestly, it's probably appropriate.
 
-    Polish pass the conclusion article.
+    --------------------------
 
-    -------------------------------------------------------------------------
+    Hook up compressed state sync mode (not quantized)
 
-    Pass over all videos and set their starting frame to white image.
+    Hook up quantized state sync mode (quantize both sides)
 
-    -------------------------------------------------------------------------
+    Split apart smoothing and adaptive smoothing modes
 
-    Videos are still hitching. What the fuck.
+    Ready to record videos.
 
-    Javascript to determine that the video is fully downloaded?
+    --------------------------
 
-    Why does the video hitch embedded but plays flawlessly always in the viewer?
+    Record videos for state synchronization article:
 
-    Fucking safari. Piece of shit.
+        1. State synchronization uncompressed (basic stuff)
 
-    -------------------------------------------------------------------------
+        2. Video showing popping due to not quantizing state in remote view
 
-    Convert all the virtual go latex to images instead of realtime (jetpack)
+        3. Video showing quantize on both sides
 
-    -------------------------------------------------------------------------
+        4. Video showing smoothing looking good, but too slow with with large jumps
 
-    Polish pass over everything.
+        5. Video showing better smoothing with large jumps (adaptive according to distance)
 
-    -------------------------------------------------------------------------
+        6. Lazy update of grey cubes
 
-    Publicize articles.
+    -------------------------
 
-    (Twitter, facebook, blog post, linkedin, linked in physics programmers group...)
+    Add note to quantize on both sides exactly what that means. Each frame before physics simulation
+    quantize all the physics state exactly as it would be sent over the network.
 
-    Update linkedin profile.
+    Switch article to get "easy win" of at rest flag -> implied zero velocity/angvel before quantize.
 
-    -------------------------------------------------------------------------
+    There is really no reason to ever send lin/ang vel when at rest, even when uncompressed. It's dumb!
+
+    -------------------------
+
+    Write "Conclusion to Part One" article with pros/cons of each approach
+    and leader into part two article (paid) behind patreon.
+
+    -------------------------
+        
+    Publish new article. This is intended as a drive to new patreon supporters because
+    it must link to the conclusion to part 1 which drives people to the patreon page.
+
+    Do not publish until the conclusion to pt 1 is written!
+
+    -------------------------

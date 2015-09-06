@@ -37,7 +37,7 @@ namespace cubes
 			ERP = 0.1f;
 			CFM = 0.001f;
 			MaxIterations = 12;
-			MaximumCorrectingVelocity = 100.0f;
+			MaximumCorrectingVelocity = 10.0f;
 			ContactSurfaceLayer = 0.02f;
 			Elasticity = 0.2f;
 			LinearDrag = 0.0f;

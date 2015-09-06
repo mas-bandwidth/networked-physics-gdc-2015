@@ -2,14 +2,6 @@ BUGS
 
 ------------------------------------------------------------------------------
 
-Sync demo breaks on reload (ESC)
-
-------------------------------------------------------------------------------
-
-Lockstep demo mode holds the cube in the air for a second on reload (ESC)
-
-------------------------------------------------------------------------------
-
 There is a very small shadow pop as the player cubes rotates around. 
 
 Angles slightly incorrect for sihoutte generation?
