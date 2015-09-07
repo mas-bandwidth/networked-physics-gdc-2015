@@ -1,4 +1,41 @@
 
+Sunday, Sept 6th, 2015
+----------------------
+
+    Final pass over state synchronization ready for publish.
+
+    Tell patreon supporters what I'm up to.
+
+    Fix various bugs in state synchronization demo.
+
+    Sketch out state sync demo functions to support uncompressed and compressed
+
+    Templatize jitter buffer, needs to support both compressed and uncompressed state updates.
+
+    Convert all the other bits that need uncompressed state updates.
+
+    Implement uncompressed state sync mode.
+
+    Hook up compressed state sync mode (not quantized)
+
+    Hook up quantized state sync mode (quantize both sides)
+
+    Fixed at rest handling. Current setup is "good enough". Move on.
+
+    Split apart smoothing and adaptive smoothing modes
+
+    Implement packet loss mode (you should see pops when input changes occur with packet loss)
+
+    Add a display at the bottom of the screen "SYNC DISABLED" in red, so the user can clearly see 
+    what is going on, that synchronization is disabled immediately, and when it is removed.
+
+    Otherwise the videos would be a bit hard too follow.
+
+    NOTE: If you disable sync and blow cubes around, you can watch as the grey cubes touched take a while to update
+
+    This is a good example of lazy updates of grey cubes that would benefit from "comitting" at rest state w. reliability.
+
+
 Tuesday Morning, April 7th, 2015
 --------------------------------
 

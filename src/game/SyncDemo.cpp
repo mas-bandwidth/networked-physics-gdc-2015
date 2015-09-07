@@ -22,6 +22,7 @@ enum SyncMode
     SYNC_MODE_UNCOMPRESSED,
     SYNC_MODE_COMPRESSED,
     SYNC_MODE_QUANTIZE_ON_BOTH_SIDES,
+    SYNC_MODE_PACKET_LOSS,
     SYNC_MODE_BASIC_SMOOTHING,
     SYNC_MODE_ADAPTIVE_SMOOTHING,
     SYNC_NUM_MODES
@@ -32,6 +33,7 @@ const char * sync_mode_descriptions[]
     "Uncompressed",
     "Compressed",
     "Quantize on both sides",
+    "Packet Loss",
     "Basic Smoothing",
     "Adaptive Smoothing"
 };
@@ -48,7 +50,9 @@ static SyncModeData sync_mode_data[SYNC_NUM_MODES];
 
 static void InitSyncModes()
 {
-    // ...
+    sync_mode_data[SYNC_MODE_PACKET_LOSS].packet_loss = 10.0f;
+    sync_mode_data[SYNC_MODE_BASIC_SMOOTHING].packet_loss = 10.0f;
+    sync_mode_data[SYNC_MODE_ADAPTIVE_SMOOTHING].packet_loss = 10.0f;
 }
 
 enum SyncPackets
@@ -364,8 +368,8 @@ SyncDemo::SyncDemo( core::Allocator & allocator )
 {
     InitSyncModes();
 
-    SetMode( SYNC_MODE_UNCOMPRESSED );
-
+    //SetMode( SYNC_MODE_UNCOMPRESSED );
+    SetMode( SYNC_MODE_ADAPTIVE_SMOOTHING );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
@@ -832,25 +836,57 @@ void SyncDemo::Update()
 
     // reduce position and orientation error
 
-    // todo: generalize this to support smoothing with/without adaptive tightness
-
-    static const float TightnessA = 0.95f;
-    static const float TightnessB = 0.85f;
-
-    static const float PositionA = 0.25f;
-    static const float PositionB = 1.0f;
-
-    static const float OrientationA = 0.2f;
-    static const float OrientationB = 0.5f;
-
-    const vectorial::quat4f identity = vectorial::quat4f::identity();
-
-    for ( int i = 0; i < NumCubes; ++i )
+    if ( GetMode() == SYNC_MODE_BASIC_SMOOTHING )
     {
-        const float position_error_dist_squared = vectorial::length_squared( m_sync->position_error[i] );
+        static const float Tightness = 0.975f;
 
-        if ( position_error_dist_squared < 10.0f * 10.0f )
+        const vectorial::quat4f identity = vectorial::quat4f::identity();
+
+        for ( int i = 0; i < NumCubes; ++i )
         {
+            const float position_error_dist_squared = vectorial::length_squared( m_sync->position_error[i] );
+
+            if ( position_error_dist_squared >= 0.000001f )
+            {
+                m_sync->position_error[i] *= Tightness;
+            }
+            else
+            {
+                m_sync->position_error[i] = vectorial::vec3f(0,0,0);
+            }
+
+            if ( vectorial::dot( m_sync->orientation_error[i], identity ) < 0 )
+                m_sync->orientation_error[i] = -m_sync->orientation_error[i];
+
+            const float orientation_error_dot = fabs( vectorial::dot( m_sync->orientation_error[i], vectorial::quat4f::identity() ) );
+
+            if ( orientation_error_dot > 0.000001f )
+            {
+                m_sync->orientation_error[i] = vectorial::slerp( 1.0f - Tightness, m_sync->orientation_error[i], identity );
+            }
+            else
+            {
+                m_sync->orientation_error[i] = identity;
+            }
+        }
+    }
+    else if ( GetMode() >= SYNC_MODE_ADAPTIVE_SMOOTHING )
+    {
+        static const float TightnessA = 0.95f;
+        static const float TightnessB = 0.85f;
+
+        static const float PositionA = 0.25f;
+        static const float PositionB = 1.0f;
+
+        static const float OrientationA = 0.2f;
+        static const float OrientationB = 0.5f;
+
+        const vectorial::quat4f identity = vectorial::quat4f::identity();
+
+        for ( int i = 0; i < NumCubes; ++i )
+        {
+            const float position_error_dist_squared = vectorial::length_squared( m_sync->position_error[i] );
+
             if ( position_error_dist_squared >= 0.000001f )
             {
                 const float position_error_dist = sqrtf( position_error_dist_squared );
@@ -902,11 +938,6 @@ void SyncDemo::Update()
                 m_sync->orientation_error[i] = identity;
             }
         }
-        else
-        {
-            m_sync->position_error[i] = vectorial::vec3f(0,0,0);
-            m_sync->orientation_error[i] = identity;
-        }
     }
 }
 
@@ -931,39 +962,50 @@ void SyncDemo::Render()
 
     m_internal->Render( render_config );
 
-    // render bandwidth overlay
-
-    const float bandwidth = m_sync->network_simulator->GetBandwidth();
-
-    char bandwidth_string[256];
-    if ( bandwidth < 1024 )
-        snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %d kbps", (int) bandwidth );
-    else
-        snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %.2f mbps", bandwidth / 1000 );
+    // render text overlays
 
     Font * font = global.fontManager->GetFont( "Bandwidth" );
     if ( font )
     {
-        const float text_x = ( global.displayWidth - font->GetTextWidth( bandwidth_string ) ) / 2;
-        const float text_y = 5;
-        font->Begin();
-        font->DrawText( text_x, text_y, bandwidth_string, Color( 0.27f,0.81f,1.0f ) );
-        font->End();
+        if ( m_sync->disable_packets )
+        {
+            // render sync disabled
+
+            const char *sync_string = "*** Sync disabled! ***";
+            const float text_x = ( global.displayWidth - font->GetTextWidth( sync_string ) ) / 2;
+            const float text_y = 5;
+            font->Begin();
+            font->DrawText( text_x, text_y, sync_string, Color( 1.0f, 0.0f, 0.0f ) );
+            font->End();
+        }
+        else
+        {
+            // render bandwidth overlay
+
+            const float bandwidth = m_sync->network_simulator->GetBandwidth();
+
+            char bandwidth_string[256];
+            if ( bandwidth < 1024 )
+                snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %d kbps", (int) bandwidth );
+            else
+                snprintf( bandwidth_string, (int) sizeof( bandwidth_string ), "Bandwidth: %.2f mbps", bandwidth / 1000 );
+
+            {
+                const float text_x = ( global.displayWidth - font->GetTextWidth( bandwidth_string ) ) / 2;
+                const float text_y = 5;
+                font->Begin();
+                font->DrawText( text_x, text_y, bandwidth_string, Color( 0.27f,0.81f,1.0f ) );
+                font->End();
+            }
+        }
     }
 }
 
 bool SyncDemo::KeyEvent( int key, int scancode, int action, int mods )
 {
-    if ( key == GLFW_KEY_X )
+    if ( key == GLFW_KEY_ENTER && action == GLFW_RELEASE )
     {
-        if ( action == GLFW_PRESS || action == GLFW_REPEAT )
-        {
-            m_sync->disable_packets = true;
-        }
-        else if ( action == GLFW_RELEASE )
-        {
-            m_sync->disable_packets = false;
-        }
+        m_sync->disable_packets = !m_sync->disable_packets;
     }
 
     return m_internal->KeyEvent( key, scancode, action, mods );
