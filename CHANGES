@@ -1,4 +1,28 @@
 
+Monday, Sept 7th, 2015
+----------------------
+
+    Record videos for state synchronization article:
+
+        1. State synchronization uncompressed (basic stuff)      <--- should already look pretty much perfect
+
+        2. Video showing popping due to not quantizing state in remote view        
+
+            ^---------- will need to construct a large stack of objects to see the popping
+
+            ^---------- may need to drop to lower precision to emphasize the popping
+
+        3. Video showing quantize on both sides                  <--- should look perfect again.
+
+        4. Video showing smoothing too slow with with large jumps
+
+        5. Video showing better smoothing with large jumps (adaptive according to distance)
+
+    Convert videos to web formats (need to dig up commands from CHANGES file)
+
+    Finish writing and restructuring state synchronization article. Wow that was a lot of work.
+
+
 Sunday, Sept 6th, 2015
 ----------------------
 

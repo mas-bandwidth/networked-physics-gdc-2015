@@ -1,65 +1,11 @@
 DONE:
 
-    Record videos for state synchronization article:
-
-        1. State synchronization uncompressed (basic stuff)      <--- should already look pretty much perfect
-
-        2. Video showing popping due to not quantizing state in remote view        
-
-            ^---------- will need to construct a large stack of objects to see the popping
-
-            ^---------- may need to drop to lower precision to emphasize the popping
-
-        3. Video showing quantize on both sides                  <--- should look perfect again.
-
-        4. Video showing smoothing too slow with with large jumps
-
 TODO:
-
-        5. Video showing better smoothing with large jumps (adaptive according to distance)
-
-        6. Lazy update of grey cubes (probably best demonstrated in packet loss mode)      
-
-            ^--------- (demonstrate by pushing cubes and letting them come to rest with sync disabled, then turning sync on = lazy updates)
-
-    -------------------------
-
-    Convert videos to web formats (need to dig up commands from CHANGES file)
-
-    -------------------------
-
-    Add note to quantize on both sides exactly what that means. Each frame before physics simulation
-    quantize all the physics state exactly as it would be sent over the network.
-
-    Switch article to get "easy win" of at rest flag -> implied zero velocity/angvel before quantize.
-
-    There is really no reason to ever send lin/ang vel when at rest, even when uncompressed. It's dumb!
-
-    -------------------------
-
-    Article should describe smoothing, desire smooth (slow) reduction for small pops, and fast corrections
-    for large jumps (because it looks silly to draw it out)
-
-    Smooth and snappy at the same time? How?
-
-    Adaptive smoothing.
-
-    -------------------------
-
-    Write "Conclusion to Part One" article with pros/cons of each approach
-    and leader into part two article (paid) behind patreon.
 
     -------------------------
 
     Copy across updated SyncDemo.cpp code and Snapshot.h to the release branch
 
     Make sure to not let across any "The Network Protocol Company" copyright notices.
-
-    -------------------------
-        
-    Publish new article. This is intended as a drive to new patreon supporters because
-    it must link to the conclusion to part 1 which drives people to the patreon page.
-
-    Do not publish until the conclusion to pt 1 is written!
 
     -------------------------

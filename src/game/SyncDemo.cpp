@@ -51,8 +51,8 @@ static SyncModeData sync_mode_data[SYNC_NUM_MODES];
 static void InitSyncModes()
 {
     sync_mode_data[SYNC_MODE_PACKET_LOSS].packet_loss = 10.0f;
-    sync_mode_data[SYNC_MODE_BASIC_SMOOTHING].packet_loss = 10.0f;
-    sync_mode_data[SYNC_MODE_ADAPTIVE_SMOOTHING].packet_loss = 10.0f;
+    //sync_mode_data[SYNC_MODE_BASIC_SMOOTHING].packet_loss = 10.0f;
+    //sync_mode_data[SYNC_MODE_ADAPTIVE_SMOOTHING].packet_loss = 10.0f;
 }
 
 enum SyncPackets
@@ -369,7 +369,7 @@ SyncDemo::SyncDemo( core::Allocator & allocator )
     InitSyncModes();
 
     //SetMode( SYNC_MODE_UNCOMPRESSED );
-    SetMode( SYNC_MODE_ADAPTIVE_SMOOTHING );
+    SetMode( SYNC_MODE_PACKET_LOSS );
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
