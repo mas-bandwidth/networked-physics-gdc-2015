@@ -49,6 +49,16 @@ struct CubeState
     vectorial::vec3f linear_velocity;
     vectorial::vec3f angular_velocity;
 
+    bool AtRest() const
+    {
+        return linear_velocity.x() == 0.0f &&
+               linear_velocity.y() == 0.0f &&
+               linear_velocity.z() == 0.0f &&
+               angular_velocity.x() == 0.0f &&
+               angular_velocity.y() == 0.0f &&
+               angular_velocity.z() == 0.0f;
+    }
+
     bool operator == ( const CubeState & other ) const
     {
         if ( interacting != other.interacting )
