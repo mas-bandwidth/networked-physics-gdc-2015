@@ -1,27 +1,31 @@
 DONE:
 
+    Upgrade to premake5
+
+    Some problem with 'find' in clean. Already solved in my other premakes.
+
+    Brought across clean hack from yojimbo
+
+    Some problems including freetype headers... wtf
+
+    Verified that cube demos run now.
+
+    Disabled font tool.
+
+    Generate a cubes dataset for Mark B. Reynolds (uncompressed, non-quantized...)
+
+    Done! Sending off!
+
+    Update copyright and licence to The Network Protocol Company, Inc. BSD 3-Clause.
+
 TODO:
 
-    -------------------------
+    --------------
 
-    Copy across updated SyncDemo.cpp code and Snapshot.h to the release branch
+    Bug. I fucked up the stencil shadows with a change I made to fix warnings. Dumbass.
 
-    Make sure to not let across any "The Network Protocol Company" copyright notices.
+    Do some more work to build warning free. Get it done.
 
-    -------------------------
+    Convert back to release and make sure it works. For tests I need to convert from 'CORE_ASSERT' to 'check' macro
 
-    Write a blog post advertising the completion of "part 1" of the article series.
-
-    Make a case for the remaining articles I'm working on and redirect to patreon for more support
-
-    -------------------------
-    
-    Write a blog post response to this:
-
-    https://www.reddit.com/r/gamedev/comments/1tvbe0/is_it_just_me_or_is_networking_really_hard/
-
-    Fucking nail this guy and the stupid know-it-all reddit poster.
-
-    "Horribly flawed" my ass.
-
-    -------------------------
+    Bonus points, port to windows. Give supporters and updated version of the GDC 2015 example source code.

@@ -8,7 +8,7 @@
 #include "virtualgo/CollisionDetection.h"
 #include <time.h>
 
-#define CORE_ASSERT_CLOSE_VEC3( value, expected, epsilon ) CORE_ASSERT_CLOSE( length( value - expected ), 0.0f, epsilon )
+#define CORE_CHECK_CLOSE_VEC3( value, expected, epsilon ) CORE_CHECK_CLOSE( length( value - expected ), 0.0f, epsilon )
 
 using namespace virtualgo;
 
@@ -20,11 +20,11 @@ void test_biconvex()
 
     const float epsilon = 0.001f;
 
-    CORE_ASSERT_CLOSE( biconvex.GetWidth(), 2.0f, epsilon );
-    CORE_ASSERT_CLOSE( biconvex.GetHeight(), 1.0f, epsilon );
-    CORE_ASSERT_CLOSE( biconvex.GetSphereRadius(), 1.25f, epsilon );
-    CORE_ASSERT_CLOSE( biconvex.GetSphereOffset(), 0.75f, epsilon );
-    CORE_ASSERT_CLOSE( biconvex.GetSphereDot(), 0.799927f, epsilon );
+    CORE_CHECK_CLOSE( biconvex.GetWidth(), 2.0f, epsilon );
+    CORE_CHECK_CLOSE( biconvex.GetHeight(), 1.0f, epsilon );
+    CORE_CHECK_CLOSE( biconvex.GetSphereRadius(), 1.25f, epsilon );
+    CORE_CHECK_CLOSE( biconvex.GetSphereOffset(), 0.75f, epsilon );
+    CORE_CHECK_CLOSE( biconvex.GetSphereDot(), 0.799927f, epsilon );
 }    
 
 void test_intersect_ray_sphere_hit()
@@ -41,10 +41,10 @@ void test_intersect_ray_sphere_hit()
     float sphereRadiusSquared = sphereRadius * sphereRadius;
     float t = 0;
     
-    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
+    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadiusSquared, t );
     
-    CORE_ASSERT( hit );
-    CORE_ASSERT_CLOSE( t, 9.0f, epsilon );
+    CORE_CHECK( hit );
+    CORE_CHECK_CLOSE( t, 9.0f, epsilon );
 }
 
 void test_intersect_ray_sphere_miss()
@@ -59,9 +59,9 @@ void test_intersect_ray_sphere_miss()
     float sphereRadiusSquared = sphereRadius * sphereRadius;
     float t = 0;
     
-    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
+    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadiusSquared, t );
     
-    CORE_ASSERT( !hit );
+    CORE_CHECK( !hit );
 }
 
 void test_intersect_ray_sphere_inside()
@@ -79,9 +79,9 @@ void test_intersect_ray_sphere_inside()
     float sphereRadiusSquared = sphereRadius * sphereRadius;
     float t = 0;
     
-    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadius, sphereRadiusSquared, t );
+    bool hit = IntersectRaySphere( rayStart, rayDirection, sphereCenter, sphereRadiusSquared, t );
     
-    CORE_ASSERT( !hit );
+    CORE_CHECK( !hit );
 }
 
 void test_point_inside_biconvex()
@@ -90,14 +90,14 @@ void test_point_inside_biconvex()
 
     Biconvex biconvex( 2.0f, 1.0f );
 
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(0,0,0), biconvex ) );
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(-1,0,0), biconvex ) );
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(+1,0,0), biconvex ) );
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(0,-1,0), biconvex ) );
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(0,+1,0), biconvex ) );
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(0,0,0.5), biconvex ) );
-    CORE_ASSERT( PointInsideBiconvex_LocalSpace( vec3f(0,0,-0.5), biconvex ) );
-    CORE_ASSERT( !PointInsideBiconvex_LocalSpace( vec3f(0,0.5,0.5f), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(0,0,0), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(-1,0,0), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(+1,0,0), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(0,-1,0), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(0,+1,0), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(0,0,0.5), biconvex ) );
+    CORE_CHECK( PointInsideBiconvex_LocalSpace( vec3f(0,0,-0.5), biconvex ) );
+    CORE_CHECK( !PointInsideBiconvex_LocalSpace( vec3f(0,0.5,0.5f), biconvex ) );
 }
 
 void test_point_on_biconvex_surface()
@@ -125,22 +125,22 @@ void test_biconvex_surface_normal_at_point()
     vec3f normal(0,0,0);
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(1,0,0), biconvex, normal );
-    CORE_ASSERT_CLOSE_VEC3( normal, vec3f(1,0,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( normal, vec3f(1,0,0), epsilon );
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(-1,0,0), biconvex, normal );
-    CORE_ASSERT_CLOSE_VEC3( normal, vec3f(-1,0,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( normal, vec3f(-1,0,0), epsilon );
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(0,0,1), biconvex, normal );
-    CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,0,1), epsilon );
+    CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,0,1), epsilon );
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(0,0,-1), biconvex, normal );
-    CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,0,-1), epsilon );
+    CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,0,-1), epsilon );
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(0,0.5,0), biconvex, normal );
-    CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
 
     GetBiconvexSurfaceNormalAtPoint_LocalSpace( vec3f(0,-0.5,0), biconvex, normal );
-    CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,-1,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,-1,0), epsilon );
 }
 
 void test_nearest_point_on_biconvex_surface()
@@ -152,22 +152,22 @@ void test_nearest_point_on_biconvex_surface()
     vec3f nearest;
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(0,0,10), biconvex );
-    CORE_ASSERT_CLOSE_VEC3( nearest, vec3f(0,0,0.5f), epsilon );
+    CORE_CHECK_CLOSE_VEC3( nearest, vec3f(0,0,0.5f), epsilon );
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(0,0,-10), biconvex );
-    CORE_ASSERT_CLOSE_VEC3( nearest, vec3f(0,0,-0.5f), epsilon );
+    CORE_CHECK_CLOSE_VEC3( nearest, vec3f(0,0,-0.5f), epsilon );
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(-10,0,0), biconvex );
-    CORE_ASSERT_CLOSE_VEC3( nearest, vec3f(-1,0,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( nearest, vec3f(-1,0,0), epsilon );
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(10,0,0), biconvex );
-    CORE_ASSERT_CLOSE_VEC3( nearest, vec3f(1,0,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( nearest, vec3f(1,0,0), epsilon );
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(0,-10,0), biconvex );
-    CORE_ASSERT_CLOSE_VEC3( nearest, vec3f(0,-1,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( nearest, vec3f(0,-1,0), epsilon );
 
     nearest = GetNearestPointOnBiconvexSurface_LocalSpace( vec3f(0,10,0), biconvex );
-    CORE_ASSERT_CLOSE_VEC3( nearest, vec3f(0,1,0), epsilon );
+    CORE_CHECK_CLOSE_VEC3( nearest, vec3f(0,1,0), epsilon );
 }
 
 void test_biconvex_support_local_space()
@@ -181,28 +181,28 @@ void test_biconvex_support_local_space()
     float s1,s2;
 
     BiconvexSupport_LocalSpace( biconvex, vec3f(0,0,1), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -0.5f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 0.5f, epsilon );
+    CORE_CHECK_CLOSE( s1, -0.5f, epsilon );
+    CORE_CHECK_CLOSE( s2, 0.5f, epsilon );
 
     BiconvexSupport_LocalSpace( biconvex, vec3f(0,0,-1), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -0.5f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 0.5f, epsilon );
+    CORE_CHECK_CLOSE( s1, -0.5f, epsilon );
+    CORE_CHECK_CLOSE( s2, 0.5f, epsilon );
 
     BiconvexSupport_LocalSpace( biconvex, vec3f(1,0,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 
     BiconvexSupport_LocalSpace( biconvex, vec3f(-1,0,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 
     BiconvexSupport_LocalSpace( biconvex, vec3f(0,1,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 
     BiconvexSupport_LocalSpace( biconvex, vec3f(0,-1,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 }
 
 void test_biconvex_support_world_space()
@@ -218,28 +218,28 @@ void test_biconvex_support_world_space()
     float s1,s2;
 
     BiconvexSupport_WorldSpace( biconvex, biconvexCenter, biconvexUp, vec3f(0,1,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 
     BiconvexSupport_WorldSpace( biconvex, biconvexCenter, biconvexUp, vec3f(0,-1,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 
     BiconvexSupport_WorldSpace( biconvex, biconvexCenter, biconvexUp, vec3f(1,0,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, 9.5f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 10.5f, epsilon );
+    CORE_CHECK_CLOSE( s1, 9.5f, epsilon );
+    CORE_CHECK_CLOSE( s2, 10.5f, epsilon );
 
     BiconvexSupport_WorldSpace( biconvex, biconvexCenter, biconvexUp, vec3f(-1,0,0), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -10.5f, epsilon );
-    CORE_ASSERT_CLOSE( s2, -9.5f, epsilon );
+    CORE_CHECK_CLOSE( s1, -10.5f, epsilon );
+    CORE_CHECK_CLOSE( s2, -9.5f, epsilon );
 
     BiconvexSupport_WorldSpace( biconvex, biconvexCenter, biconvexUp, vec3f(0,0,1), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 
     BiconvexSupport_WorldSpace( biconvex, biconvexCenter, biconvexUp, vec3f(0,0,-1), s1, s2 );
-    CORE_ASSERT_CLOSE( s1, -1.0f, epsilon );
-    CORE_ASSERT_CLOSE( s2, 1.0f, epsilon );
+    CORE_CHECK_CLOSE( s1, -1.0f, epsilon );
+    CORE_CHECK_CLOSE( s2, 1.0f, epsilon );
 }
 
 void test_biconvex_sat()
@@ -250,33 +250,33 @@ void test_biconvex_sat()
 
     Biconvex biconvex( 2.0f, 1.0f );
 
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,-1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(-1,0,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,0,1), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,0,-1), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,-1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(-1,0,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,0,1), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,0), vec3f(0,1,0), vec3f(0,0,-1), epsilon ) );
 
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(1,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(-1,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,1,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,-1,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,1), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,-1), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(1,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(-1,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,1,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,-1,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,1), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,-1), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
 
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(10,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(-10,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,10,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,-10,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,10), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,-10), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(10,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(-10,0,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,10,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,-10,0), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,10), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,-10), vec3f(0,1,0), vec3f(0,1,0), epsilon ) );
 
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(10,0,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(-10,0,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,10,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,-10,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,10), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
-    CORE_ASSERT( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,-10), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(10,0,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(-10,0,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,10,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,-10,0), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,10), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
+    CORE_CHECK( !Biconvex_SAT( biconvex, vec3f(0,0,0), vec3f(0,0,-10), vec3f(0,1,0), vec3f(1,0,0), epsilon ) );
 }
 
 void test_stone_board_collision_type()
@@ -293,38 +293,38 @@ void test_stone_board_collision_type()
 
     bool broadPhaseReject = false;
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(0,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(0,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(0,0,-100), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(0,0,-100), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(-w,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_LeftSide );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(-w,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_LeftSide );
+    CORE_CHECK( broadPhaseReject == false );
     
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(+w,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_RightSide );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(+w,0,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_RightSide );
+    CORE_CHECK( broadPhaseReject == false );
     
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(0,+h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_TopSide );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(0,+h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_TopSide );
+    CORE_CHECK( broadPhaseReject == false );
     
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(0,-h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_BottomSide );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(0,-h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_BottomSide );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(-w,+h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_TopLeftCorner );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(-w,+h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_TopLeftCorner );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(+w,+h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_TopRightCorner );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(+w,+h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_TopRightCorner );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(+w,-h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_BottomRightCorner );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(+w,-h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_BottomRightCorner );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(-w,-h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_BottomLeftCorner );
-    CORE_ASSERT( broadPhaseReject == false );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(-w,-h,0), radius, broadPhaseReject ) == STONE_BOARD_REGION_BottomLeftCorner );
+    CORE_CHECK( broadPhaseReject == false );
 
-    CORE_ASSERT( DetermineStoneBoardRegion( board, vec3f(0,0,t+radius + 0.01f), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
-    CORE_ASSERT( broadPhaseReject == true );
+    CORE_CHECK( DetermineStoneBoardRegion( board, vec3f(0,0,t+radius + 0.01f), radius, broadPhaseReject ) == STONE_BOARD_REGION_Primary );
+    CORE_CHECK( broadPhaseReject == true );
 }
 
 void test_stone_board_collision_none()
@@ -344,11 +344,11 @@ void test_stone_board_collision_none()
     float depth;
     vec3f point, normal;
 
-    CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,0,t+r*2) ), normal, depth ) );
-    CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(-w-r*2,0,0) ), normal, depth ) );
-    CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(+w+r*2,0,0) ), normal, depth ) );
-    CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,-h-r*2,0) ), normal, depth ) );
-    CORE_ASSERT( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,+h+r*2,0) ), normal, depth ) );
+    CORE_CHECK( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,0,t+r*2) ), normal, depth ) );
+    CORE_CHECK( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(-w-r*2,0,0) ), normal, depth ) );
+    CORE_CHECK( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(+w+r*2,0,0) ), normal, depth ) );
+    CORE_CHECK( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,-h-r*2,0) ), normal, depth ) );
+    CORE_CHECK( !IntersectStoneBoard( board, biconvex, RigidBodyTransform( vec3f(0,+h+r*2,0) ), normal, depth ) );
 }
 
 void test_stone_board_collision_primary()
@@ -378,8 +378,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, t + 1.0f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,0,1), epsilon );
+        CORE_CHECK_CLOSE( depth, t + 1.0f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,0,1), epsilon );
     }
     
     // test away from origin with identity rotation
@@ -390,8 +390,8 @@ void test_stone_board_collision_primary()
 
         printf( "depth = %f\n", depth );
 
-        CORE_ASSERT_CLOSE( depth, t + 1.0f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,0,1), epsilon );
+        CORE_CHECK_CLOSE( depth, t + 1.0f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,0,1), epsilon );
     }
 
     // test at origin flipped upside down (180 degrees)
@@ -400,8 +400,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, 1.0f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+        CORE_CHECK_CLOSE( depth, 1.0f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
     }
 
     // test away from origin flipped upside down (180degrees)
@@ -410,8 +410,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, 1.0f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+        CORE_CHECK_CLOSE( depth, 1.0f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
     }
 
     // test away from origin rotated 90 degrees clockwise around z axis
@@ -420,8 +420,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, 1.5f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+        CORE_CHECK_CLOSE( depth, 1.5f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
     }
 
     // test away from origin rotated 90 degrees counter-clockwise around z axis
@@ -430,8 +430,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, 1.5f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+        CORE_CHECK_CLOSE( depth, 1.5f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
     }
 
     // test away from origin rotated 90 degrees clockwise around x axis
@@ -440,8 +440,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, 1.5f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+        CORE_CHECK_CLOSE( depth, 1.5f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
     }
 
     // test away from origin rotated 90 degrees counter-clockwise around x axis
@@ -450,8 +450,8 @@ void test_stone_board_collision_primary()
 
         CORE_ASSERT( IntersectStoneBoard( board, biconvex, biconvexTransform, normal, depth ) );
 
-        CORE_ASSERT_CLOSE( depth, 1.5f, epsilon );
-        CORE_ASSERT_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
+        CORE_CHECK_CLOSE( depth, 1.5f, epsilon );
+        CORE_CHECK_CLOSE_VEC3( normal, vec3f(0,1,0), epsilon );
     }
     */
 }

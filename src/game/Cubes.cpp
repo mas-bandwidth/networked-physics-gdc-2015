@@ -286,7 +286,7 @@ void CubesInternal::Render( const CubesRenderConfig & render_config )
     }
 }
 
-bool CubesInternal::KeyEvent( int key, int scancode, int action, int mods )
+bool CubesInternal::KeyEvent( int key, int /*scancode*/, int action, int /*mods*/ )
 {
     if ( action == GLFW_PRESS || action == GLFW_REPEAT )
     {
@@ -716,8 +716,6 @@ inline void GenerateSilhoutteVerts( int & vertex_index,
                                     const vectorial::vec3f & world_light,
                                     vectorial::vec3f a, 
                                     vectorial::vec3f b,
-                                    const vectorial::vec3f & left_normal,
-                                    const vectorial::vec3f & right_normal,
                                     bool left_dot,
                                     bool right_dot )
 {
@@ -816,20 +814,19 @@ void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
         
         assert( vertex_index < MaxCubeShadowVertices );
 
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, b, normals[5], normals[2], dot[5], dot[2] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, c, normals[0], normals[2], dot[0], dot[2] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, d, normals[4], normals[2], dot[4], dot[2] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, a, normals[1], normals[2], dot[1], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, b, dot[5], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, c, dot[0], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, d, dot[4], dot[2] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, a, dot[1], dot[2] );
         
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, e, f, normals[3], normals[5], dot[3], dot[5] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, f, g, normals[3], normals[0], dot[3], dot[0] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, g, h, normals[3], normals[4], dot[3], dot[4] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, h, e, normals[3], normals[1], dot[3], dot[1] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, e, f, dot[3], dot[5] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, f, g, dot[3], dot[0] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, g, h, dot[3], dot[4] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, h, e, dot[3], dot[1] );
 
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, e, normals[1], normals[5], dot[1], dot[5] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, f, normals[5], normals[0], dot[5], dot[0] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, g, normals[0], normals[4], dot[0], dot[4] );
-        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, h, normals[4], normals[1], dot[4], dot[1] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, e, dot[1], dot[5] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, f, dot[5], dot[0] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, g, dot[0], dot[4] );
 
         assert( vertex_index < MaxCubeShadowVertices );
     }

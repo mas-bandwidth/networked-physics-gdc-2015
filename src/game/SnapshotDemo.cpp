@@ -403,7 +403,7 @@ bool SnapshotDemo::KeyEvent( int key, int scancode, int action, int mods )
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool SnapshotDemo::CharEvent( unsigned int code )
+bool SnapshotDemo::CharEvent( unsigned int /*code*/ )
 {
     // ...
 

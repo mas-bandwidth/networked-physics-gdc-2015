@@ -32,7 +32,7 @@ bool load_text_file( const char * filename, char * buffer, int buffer_size )
     uint64_t file_size = ftell( file );
     fseek( file, 0L, SEEK_SET );
 
-    if ( file_size >= buffer_size )
+    if ( file_size >= (uint64_t) buffer_size )
     {
         fclose( file );
         return false;

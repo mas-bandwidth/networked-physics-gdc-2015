@@ -79,9 +79,9 @@ void test_reliable_message_channel_messages()
                     packet = nullptr;
                 }
 
-                CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-                CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-                CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+                CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= uint64_t( iteration + 1 ) );
+                CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == uint64_t( iteration + 1 ) );
+                CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= uint64_t( iteration + 1 ) );
 
                 while ( true )
                 {
@@ -90,7 +90,7 @@ void test_reliable_message_channel_messages()
                     if ( !message )
                         break;
 
-                    CORE_CHECK( message->GetId() == numMessagesReceived );
+                    CORE_CHECK( message->GetId() == (int) numMessagesReceived );
                     CORE_CHECK( message->GetType() == MESSAGE_TEST );
 
                     auto testMessage = static_cast<TestMessage*>( message );
@@ -198,9 +198,9 @@ void test_reliable_message_channel_small_blocks()
                 packet = nullptr;
             }
 
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= uint64_t( iteration + 1 ) );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == uint64_t( iteration + 1 ) );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= uint64_t( iteration + 1 ) );
 
             while ( true )
             {
@@ -209,14 +209,14 @@ void test_reliable_message_channel_small_blocks()
                 if ( !message )
                     break;
 
-                CORE_CHECK( message->GetId() == numMessagesReceived );
+                CORE_CHECK( message->GetId() == (int) numMessagesReceived );
                 CORE_CHECK( message->GetType() == MESSAGE_BLOCK );
 
                 auto blockMessage = static_cast<protocol::BlockMessage*>( message );
 
                 protocol::Block & block = blockMessage->GetBlock();
 
-                CORE_CHECK( block.GetSize() == numMessagesReceived + 1 );
+                CORE_CHECK( block.GetSize() == int( numMessagesReceived + 1 ) );
                 const uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
                     CORE_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );
@@ -228,11 +228,11 @@ void test_reliable_message_channel_small_blocks()
 
             connection.Update( timeBase );
 
-            CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == NumMessagesSent );
-            CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == numMessagesReceived );
+            CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_SENT ) == uint64_t( NumMessagesSent ) );
+            CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_RECEIVED ) == uint64_t( numMessagesReceived ) );
             CORE_CHECK( messageChannel->GetCounter( protocol::RELIABLE_MESSAGE_CHANNEL_COUNTER_MESSAGES_EARLY ) == 0 );
 
-            if ( numMessagesReceived == NumMessagesSent )
+            if ( numMessagesReceived == uint64_t( NumMessagesSent ) )
                 break;
 
             timeBase.time += timeBase.deltaTime;
@@ -315,9 +315,9 @@ void test_reliable_message_channel_large_blocks()
                 packet = nullptr;
             }
         
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= uint64_t( iteration + 1 ) );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == uint64_t( iteration + 1 ) );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= uint64_t( iteration + 1 ) );
 
             while ( true )
             {
@@ -326,7 +326,7 @@ void test_reliable_message_channel_large_blocks()
                 if ( !message )
                     break;
 
-                CORE_CHECK( message->GetId() == numMessagesReceived );
+                CORE_CHECK( message->GetId() == (int) numMessagesReceived );
                 CORE_CHECK( message->GetType() == MESSAGE_BLOCK );
 
                 auto blockMessage = static_cast<protocol::BlockMessage*>( message );
@@ -335,7 +335,7 @@ void test_reliable_message_channel_large_blocks()
 
 //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                CORE_CHECK( block.GetSize() == ( numMessagesReceived + 1 ) * 64 + numMessagesReceived );
+                CORE_CHECK( block.GetSize() == int( ( numMessagesReceived + 1 ) * 64 + numMessagesReceived ) );
                 const uint8_t * data = block.GetData();
                 for ( int i = 0; i < block.GetSize(); ++i )
                     CORE_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );
@@ -447,9 +447,9 @@ void test_reliable_message_channel_mixture()
                 packet = nullptr;
             }
             
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= iteration + 1 );
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == iteration + 1 );
-            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= iteration + 1 );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_READ ) <= uint64_t( iteration + 1 ) );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_WRITTEN ) == uint64_t( iteration + 1 ) );
+            CORE_CHECK( connection.GetCounter( protocol::CONNECTION_COUNTER_PACKETS_ACKED ) <= uint64_t( iteration + 1 ) );
 
             while ( true )
             {
@@ -458,7 +458,7 @@ void test_reliable_message_channel_mixture()
                 if ( !message )
                     break;
 
-                CORE_CHECK( message->GetId() == numMessagesReceived );
+                CORE_CHECK( message->GetId() == (int) numMessagesReceived );
 
                 if ( message->GetType() == MESSAGE_BLOCK )
                 {
@@ -470,7 +470,7 @@ void test_reliable_message_channel_mixture()
 
     //                printf( "received block %d (%d bytes)\n", blockMessage->GetId(), (int) block->size() );
 
-                    CORE_CHECK( block.GetSize() == ( numMessagesReceived + 1 ) * 8 + numMessagesReceived );
+                    CORE_CHECK( block.GetSize() == int( ( numMessagesReceived + 1 ) * 8 + numMessagesReceived ) );
                     const uint8_t * data = block.GetData();
                     for ( int i = 0; i < block.GetSize(); ++i )
                         CORE_CHECK( data[i] == ( numMessagesReceived + i ) % 256 );

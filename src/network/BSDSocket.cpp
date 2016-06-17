@@ -1,4 +1,26 @@
-// Network Library - Copyright (c) 2008-2015, The Network Protocol Company, Inc.
+/*
+    Networked Physics Demo
+
+    Copyright © 2008 - 2016, The Network Protocol Company, Inc.
+
+    Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+        1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+        2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+           in the documentation and/or other materials provided with the distribution.
+
+        3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived 
+           from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+    USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "network/Network.h"
 #include "network/BSDSocket.h"
@@ -163,14 +185,14 @@ namespace network
             m_socket = 0;
         }
 
-        for ( int i = 0; i < core::queue::size( m_send_queue ); ++i )
+        for ( int i = 0; i < (int) core::queue::size( m_send_queue ); ++i )
         {
             auto packet = m_send_queue[i];
             CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
-        for ( int i = 0; i < core::queue::size( m_receive_queue ); ++i )
+        for ( int i = 0; i < (int) core::queue::size( m_receive_queue ); ++i )
         {
             auto packet = m_receive_queue[i];
             CORE_ASSERT( packet );
@@ -204,7 +226,7 @@ namespace network
         
         packet->SetAddress( address );
 
-        if ( core::queue::size( m_send_queue ) == m_config.sendQueueSize )
+        if ( (int) core::queue::size( m_send_queue ) == m_config.sendQueueSize )
         {
             m_config.packetFactory->Destroy( packet );
             return;
@@ -228,7 +250,7 @@ namespace network
         return packet;
     }
 
-    void BSDSocket::Update( const core::TimeBase & timeBase )
+    void BSDSocket::Update( const core::TimeBase & /*timeBase*/ )
     {
         if ( m_error )
             return;
@@ -329,7 +351,7 @@ namespace network
     {
         while ( true )
         {
-            if ( core::queue::size( m_receive_queue ) == m_config.receiveQueueSize )
+            if ( (int) core::queue::size( m_receive_queue ) == m_config.receiveQueueSize )
                 break;
 
             Address address;
@@ -403,7 +425,7 @@ namespace network
         CORE_ASSERT( m_socket );
         CORE_ASSERT( address.IsValid() );
         CORE_ASSERT( bytes > 0 );
-        CORE_ASSERT( bytes <= m_config.maxPacketSize );
+        CORE_ASSERT( (int) bytes <= m_config.maxPacketSize );
 
         bool result = false;
 
@@ -417,7 +439,7 @@ namespace network
             s_addr.sin6_port = htons( address.GetPort() );
             memcpy( &s_addr.sin6_addr, address.GetAddress6(), sizeof( s_addr.sin6_addr ) );
             const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in6) );
-            result = sent_bytes == bytes;
+            result = sent_bytes == (int) bytes;
         }
         else if ( address.GetType() == ADDRESS_IPV4 )
         {
@@ -427,7 +449,7 @@ namespace network
             s_addr.sin_addr.s_addr = address.GetAddress4();
             s_addr.sin_port = htons( (unsigned short) address.GetPort() );
             const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in) );
-            result = sent_bytes == bytes;
+            result = sent_bytes == (int) bytes;
         }
 
         if ( !result )

@@ -368,8 +368,8 @@ SyncDemo::SyncDemo( core::Allocator & allocator )
 {
     InitSyncModes();
 
-    //SetMode( SYNC_MODE_UNCOMPRESSED );
-    SetMode( SYNC_MODE_PACKET_LOSS );
+    SetMode( SYNC_MODE_UNCOMPRESSED );
+    
     m_allocator = &allocator;
     m_internal = nullptr;
     m_settings = CORE_NEW( *m_allocator, CubesSettings );
@@ -1011,7 +1011,7 @@ bool SyncDemo::KeyEvent( int key, int scancode, int action, int mods )
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool SyncDemo::CharEvent( unsigned int code )
+bool SyncDemo::CharEvent( unsigned int /*code*/ )
 {
     return false;
 }

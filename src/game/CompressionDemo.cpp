@@ -512,7 +512,7 @@ bool CompressionDemo::KeyEvent( int key, int scancode, int action, int mods )
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool CompressionDemo::CharEvent( unsigned int code )
+bool CompressionDemo::CharEvent( unsigned int /*code*/ )
 {
     // ...
 

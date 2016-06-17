@@ -34,7 +34,7 @@ public:
 
     virtual int GetNumModes() const override { return 0; }
 
-    virtual const char * GetModeDescription( int mode ) const override { return ""; }
+    virtual const char * GetModeDescription( int /*mode*/ ) const override { return ""; }
 
 private:
 

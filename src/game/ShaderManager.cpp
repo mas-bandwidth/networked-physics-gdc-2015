@@ -104,6 +104,8 @@ void ShaderManager::Unload()
 
 CONSOLE_FUNCTION( reload_shaders )
 {
+    (void)args;
+
     CORE_ASSERT( global.fontManager );
 
     global.shaderManager->Reload();

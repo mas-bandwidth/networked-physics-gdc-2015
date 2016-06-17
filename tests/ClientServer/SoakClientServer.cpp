@@ -166,14 +166,6 @@ void soak_test()
         {
             serverInfo[i].server->Update( timeBase );
 
-            while ( true )
-            {
-                auto packet = clientInfo[i].networkSimulator->ReceivePacket();
-                if ( !packet )
-                    break;
-                clientInfo[i].networkInterface->SendPacket( packet->GetAddress(), packet );
-            }
-
             serverInfo[i].networkInterface->Update( timeBase );
 
             for ( int j = 0; j < NumClientsPerServer; ++j )
@@ -299,14 +291,6 @@ void soak_test()
 
             if ( clientInfo[i].client->IsConnected() )
             {
-                while ( true )
-                {
-                    auto packet = clientInfo[i].networkSimulator->ReceivePacket();
-                    if ( !packet )
-                        break;
-                    clientInfo[i].networkInterface->SendPacket( packet->GetAddress(), packet );
-                }
-
                 clientInfo[i].networkInterface->Update( timeBase );
 
                 if ( clientInfo[i].receiveSequence > 100 && ( rand() % 100 ) == 0 )

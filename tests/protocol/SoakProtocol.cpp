@@ -34,17 +34,17 @@ public:
 
 protected:
 
-    const char * GetChannelNameInternal( int channelIndex ) const
+    const char * GetChannelNameInternal( int /*channelIndex*/ ) const
     {
         return "reliable message channel";
     }
 
-    protocol::Channel * CreateChannelInternal( int channelIndex )
+    protocol::Channel * CreateChannelInternal( int /*channelIndex*/ )
     {
         return CORE_NEW( GetChannelAllocator(), protocol::ReliableMessageChannel, m_config );
     }
 
-    protocol::ChannelData * CreateChannelDataInternal( int channelIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int /*channelIndex*/ )
     {   
         return CORE_NEW( GetChannelDataAllocator(), protocol::ReliableMessageChannelData, m_config );
     }

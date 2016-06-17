@@ -137,7 +137,7 @@ struct ConsoleInternal
 
     void CharacterTyped( char c )
     {
-        if ( commandLength < sizeof( commandString ) - 1 )
+        if ( commandLength < (int) ( sizeof( commandString ) - 1 ) )
         {
             if ( commandCursorPosition < commandLength )
             {
@@ -295,8 +295,12 @@ Console::~Console()
     CORE_DELETE( *m_allocator, ConsoleInternal, m_internal );
 }
 
-bool Console::KeyEvent( int key, int scancode, int action, int mods )
+bool Console::KeyEvent( int key, int /*scancode*/, int action, int mods )
 {
+    (void)key;
+    (void)mods;
+    (void)action;
+
 #ifdef CLIENT
 
     if ( !IsActive() )
@@ -364,6 +368,8 @@ bool Console::KeyEvent( int key, int scancode, int action, int mods )
 
 bool Console::CharEvent( unsigned int code )
 {
+    (void)code;
+
 #ifdef CLIENT
 
     if ( m_internal->justDeactivated )
@@ -506,7 +512,7 @@ static void RenderQuad( ConsoleInternal & internal, const ConsoleVertex & a, con
     RenderTriangles( internal, vertex, 2 );
 }
 
-static void RenderBackground( ConsoleInternal & internal )
+static void RenderBackground( ConsoleInternal & /*internal*/ )
 {
     // ...
 }

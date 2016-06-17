@@ -100,6 +100,8 @@ void FontManager::Unload()
 
 CONSOLE_FUNCTION( reload_fonts )
 {
+    (void)args;
+
     CORE_ASSERT( global.fontManager );
 
     global.fontManager->Reload();        

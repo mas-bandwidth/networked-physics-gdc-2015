@@ -151,6 +151,8 @@ CONSOLE_FUNCTION( connect )
 
 CONSOLE_FUNCTION( disconnect )
 {
+    (void)args;
+
     CORE_ASSERT( global.client );
 
     global.client->Disconnect();

@@ -29,11 +29,13 @@ static const bool fullscreen = false;
 
 CONSOLE_FUNCTION( quit )
 {
+    (void)args;
     global.quit = true;    
 }
 
 CONSOLE_FUNCTION( reload )
 {
+    (void)args;
     global.fontManager->Reload();
     global.shaderManager->Reload();
     global.meshManager->Reload();
@@ -224,7 +226,7 @@ static void game_render()
     check_opengl_error( "after render" );
 }
 
-void framebuffer_size_callback( GLFWwindow * window, int width, int height )
+void framebuffer_size_callback( GLFWwindow * /*window*/, int width, int height )
 {
     global.displayWidth = width;
     global.displayHeight = height;
@@ -233,13 +235,13 @@ void framebuffer_size_callback( GLFWwindow * window, int width, int height )
 }
 
 
-void key_callback( GLFWwindow * window, int key, int scancode, int action, int mods )
+void key_callback( GLFWwindow * /*window*/, int key, int scancode, int action, int mods )
 {
     if ( !global.replayManager->IsPlayback() )
         global.inputManager->KeyEvent( key, scancode, action, mods );
 }
 
-void char_callback( GLFWwindow * window, unsigned int code )
+void char_callback( GLFWwindow * /*window*/, unsigned int code )
 {
     if ( !global.replayManager->IsPlayback() )
         global.inputManager->CharEvent( code );
@@ -368,7 +370,7 @@ int main( int argc, char * argv[] )
 
 #include "GameServer.h"
 
-int main( int argc, char ** argv )
+int main( int /*argc*/, char ** /*argv*/ )
 {
     srand( time( nullptr ) );
 

@@ -249,6 +249,8 @@ CONSOLE_FUNCTION( load )
 
 CONSOLE_FUNCTION( unload )
 {
+    (void)args;
+
     CORE_ASSERT( global.demoManager );
 
     global.demoManager->UnloadDemo();

@@ -360,7 +360,7 @@ void StoneDemo::Render()
     glUseProgram( 0 );
 }
 
-bool StoneDemo::KeyEvent( int key, int scancode, int action, int mods )
+bool StoneDemo::KeyEvent( int key, int /*scancode*/, int action, int mods )
 {
     if ( ( action == GLFW_PRESS || action == GLFW_REPEAT ) && mods == 0 )
     {

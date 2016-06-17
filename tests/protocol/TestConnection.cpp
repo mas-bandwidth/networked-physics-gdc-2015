@@ -16,17 +16,17 @@ public:
 
 protected:
 
-    const char * GetChannelNameInternal( int channelIndex ) const
+    const char * GetChannelNameInternal( int /*channelIndex*/ ) const
     {
         return "fake channel";
     }
 
-    protocol::Channel * CreateChannelInternal( int channeIndex )
+    protocol::Channel * CreateChannelInternal( int /*channeIndex*/ )
     {
         return CORE_NEW( GetChannelAllocator(), FakeChannel );
     }
 
-    protocol::ChannelData * CreateChannelDataInternal( int channeIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int /*channeIndex*/ )
     {
         return nullptr;
     }
@@ -82,7 +82,7 @@ public:
     AckChannel( int * _ackedPackets )
         : ackedPackets( _ackedPackets ) {}
 
-    bool ProcessData( uint16_t sequence, protocol::ChannelData * data )
+    bool ProcessData( uint16_t /*sequence*/, protocol::ChannelData * /*data*/ )
     {
         return rand() % 10 != 0;
     }
@@ -108,17 +108,17 @@ public:
 
 protected:
 
-    const char * GetChannelNameInternal( int channelIndex ) const
+    const char * GetChannelNameInternal( int /*channelIndex*/ ) const
     {
         return "ack channel";
     }
 
-    protocol::Channel * CreateChannelInternal( int channelIndex )
+    protocol::Channel * CreateChannelInternal( int /*channelIndex*/ )
     {
         return CORE_NEW( GetChannelAllocator(), AckChannel, ackedPackets );
     }
 
-    protocol::ChannelData * CreateChannelDataInternal( int channelIndex )
+    protocol::ChannelData * CreateChannelDataInternal( int /*channelIndex*/ )
     {
         return nullptr;
     }

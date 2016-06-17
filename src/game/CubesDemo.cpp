@@ -80,7 +80,7 @@ bool CubesDemo::KeyEvent( int key, int scancode, int action, int mods )
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool CubesDemo::CharEvent( unsigned int code )
+bool CubesDemo::CharEvent( unsigned int /*code*/ )
 {
     return false;
 }

@@ -121,10 +121,10 @@ const void* Image::getLevel( int level, GLenum face) const {
 
     face = face - GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 
-    assert( (face*_levelCount + level) < (int)_data.size());
+    assert( (face*_levelCount + level) < (unsigned int)_data.size());
 
     // make sure we don't hand back a garbage pointer
-    if (level >=_levelCount || (int)face >= _layers)
+    if (level >=_levelCount || (int)face >= (int)_layers)
         return NULL;
 
     return _data[ face*_levelCount + level];
@@ -140,7 +140,7 @@ void* Image::getLevel( int level, GLenum face) {
 
     face = face - GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 
-    assert( (face*_levelCount + level) < (int)_data.size());
+    assert( (int)(face*_levelCount + level) < (int)_data.size());
 
     // make sure we don't hand back a garbage pointer
     if (level >=_levelCount || (int)face >= _layers)

@@ -1,7 +1,26 @@
 /*
     Stone Tool
-    Copyright (c) 2008-2015, The Network Protocol Company, Inc.
-*/  
+
+    Copyright © 2008 - 2016, The Network Protocol Company, Inc.
+
+    Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+        1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+        2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+           in the documentation and/or other materials provided with the distribution.
+
+        3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived 
+           from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+    USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "virtualgo/Biconvex.h"
 #include "virtualgo/InertiaTensor.h"
@@ -96,7 +115,7 @@ const float StoneBevel[]
     0.08f       // 40
 };
 
-inline float GetStoneWidth( StoneSize size, StoneColor color )
+inline float GetStoneWidth( StoneSize /*size*/, StoneColor /*color*/ )
 {
     return 2.2f;
 }
@@ -303,7 +322,7 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
             const float z1 = bevel / 2 - i * delta_z;
             const float z2 = bevel / 2 - (i+1) * delta_z;
 
-            for ( int j = 0; j < circleAngles.size(); ++j )
+            for ( int j = 0; j < (int) circleAngles.size(); ++j )
             {
                 const float angle1 = circleAngles[j];
                 const float angle2 = circleAngles[(j+1)%circleAngles.size()];
@@ -379,9 +398,11 @@ void GenerateBiconvexMesh( Mesh<Vertex> & mesh, const virtualgo::Biconvex & bico
         SubdivideBiconvexMesh( mesh, biconvex, false, false, true, a, b, c, an, bn, cn, sphereCenter, false, -h, 0, subdivisions );
     }
 
+#if DEBUG
     // IMPORTANT: Make sure we haven't blown past 16 bit indices
     const int numIndices = mesh.GetNumTriangles() * 3;
     CORE_ASSERT( numIndices <= 65535 );
+#endif // #if DEBUG
 }
 
 void FindBiconvexWithRealWidth( virtualgo::Biconvex & biconvex, float real_width, float height, float bevel, float threshold = 0.0001f )
@@ -436,7 +457,7 @@ void FindBiconvexWithRealWidth( virtualgo::Biconvex & biconvex, float real_width
     }
 }
 
-int main( int argc, char * argv[] )
+int main( int /*argc*/, char * /*argv*/[] )
 {
     const char * stoneDirectory = "data/stones";
 

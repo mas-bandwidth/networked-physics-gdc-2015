@@ -156,6 +156,8 @@ Mesh * MeshManager::GetMesh( const char * filename )
 
 CONSOLE_FUNCTION( reload_meshes )
 {
+    (void)args;
+
     CORE_ASSERT( global.meshManager );
 
     global.meshManager->Reload();

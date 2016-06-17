@@ -477,6 +477,7 @@ template <typename Stream> void serialize_cube_relative_orientation( Stream & st
 
 void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState & base )
 {
+    /*
     // IMPORTANT: Don't count identical cubes in delta stats. These are already handled by changed flag.
     if ( cube == base )
         return;
@@ -499,6 +500,7 @@ void UpdateDeltaStats( const QuantizedCubeState & cube, const QuantizedCubeState
     {
         return;
     }
+    */
 
     fprintf( smallest_three_values, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
         cube.orientation.largest, cube.orientation.integer_a, cube.orientation.integer_b, cube.orientation.integer_c, 
@@ -1792,7 +1794,7 @@ bool DeltaDemo::KeyEvent( int key, int scancode, int action, int mods )
     return m_internal->KeyEvent( key, scancode, action, mods );
 }
 
-bool DeltaDemo::CharEvent( unsigned int code )
+bool DeltaDemo::CharEvent( unsigned int /*code*/ )
 {
     // ...
 

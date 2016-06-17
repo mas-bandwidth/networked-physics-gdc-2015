@@ -2,7 +2,8 @@ solution "Protocol"
     includedirs { "src", "external", "tools", "." }
     platforms { "x64" }
     configurations { "Release", "Debug" }
-    flags { "Symbols", "ExtraWarnings", "EnableSSE2", "FloatFast" , "NoRTTI", "NoExceptions" }
+    flags { "Symbols", "ExtraWarnings", "EnableSSE2" }
+    rtti "Off"
     configuration "Release"
         flags { "OptimizeSpeed" }
         defines { "NDEBUG" }
@@ -73,7 +74,6 @@ project "TestCore"
     kind "ConsoleApp"
     files { "tests/Core/*.cpp" }
     links { "Core" }
-    location "build"
     targetdir "bin"
 
 project "TestNetwork"
@@ -81,8 +81,7 @@ project "TestNetwork"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Network/Test*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on protocol or client server
-    location "build"
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
 
 project "TestProtocol"
@@ -90,8 +89,7 @@ project "TestProtocol"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/Test*.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client server
-    location "build"
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
 
 project "TestClientServer"
@@ -100,7 +98,6 @@ project "TestClientServer"
     kind "ConsoleApp"
     files { "tests/ClientServer/Test*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
-    location "build"
     targetdir "bin"
 
 project "TestCubes"
@@ -109,7 +106,6 @@ project "TestCubes"
     kind "ConsoleApp"
     files { "tests/Cubes/*.cpp" }
     links { "Core", "Cubes", "ode" }
-    location "build"
     targetdir "bin"
 
 project "TestVirtualGo"
@@ -118,7 +114,6 @@ project "TestVirtualGo"
     kind "ConsoleApp"
     files { "tests/VirtualGo/*.cpp" }
     links { "Core", "VirtualGo", "ode" }
-    location "build"
     targetdir "bin"
 
 project "SoakProtocol"
@@ -126,9 +121,8 @@ project "SoakProtocol"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/SoakProtocol.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
-    location "build"
 
 project "SoakClientServer"
     language "C++"
@@ -137,16 +131,14 @@ project "SoakClientServer"
     files { "tests/ClientServer/SoakClientServer.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
-    location "build"
 
 project "ProfileProtocol"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tests/Protocol/ProfileProtocol.cpp" }
-    links { "Core", "Network", "Protocol", "ClientServer" }     -- todo: should not depend on client/server
+    links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
-    location "build"
 
 project "ProfileClientServer"
     language "C++"
@@ -155,16 +147,15 @@ project "ProfileClientServer"
     files { "tests/ClientServer/ProfileClientServer.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer" }
     targetdir "bin"
-    location "build"
 
-project "FontTool"
+--[[project "FontTool"
     language "C++"
     buildoptions "-std=c++11 -stdlib=libc++ -Wno-deprecated-declarations"
     kind "ConsoleApp"
     files { "tools/Font/*.cpp" }
     links { "Core", "Freetype", "Jansson" }
-    location "build"
     targetdir "bin"
+--]]
 
 project "StoneTool"
     language "C++"
@@ -172,7 +163,6 @@ project "StoneTool"
     kind "ConsoleApp"
     files { "tools/Stone/*.cpp" }
     links { "Core", "VirtualGo", "Jansson" }
-    location "build"
     targetdir "bin"
 
 project "Client"
@@ -181,7 +171,6 @@ project "Client"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer", "VirtualGo", "Cubes", "nvImage", "tinycthread", "ode", "glew", "glfw3", "GLUT.framework", "OpenGL.framework", "Cocoa.framework", "CoreVideo.framework", "IOKit.framework" }
-    location "build"
     targetdir "bin"
     defines { "CLIENT" }
 
@@ -191,24 +180,25 @@ project "Server"
     kind "ConsoleApp"
     files { "src/game/*.cpp" }
     links { "Core", "Network", "Protocol", "ClientServer", "Cubes", "ode" }
-    location "build"
     targetdir "bin"
 
 if _ACTION == "clean" then
     os.rmdir "bin"
     os.rmdir "lib"
     os.rmdir "obj"
-    os.rmdir "build"
     if not os.is "windows" then
-        os.execute "rm -f Protocol.zip"
-        os.execute "rm -f *.txt"
+        os.execute "rm -rf bin"
+        os.execute "rm -rf obj"
+        os.execute "rm -f Makefile"
+        os.execute "rm -f *.zip"
+        os.execute "rm -f *.make"
         os.execute "rm -f replay.bin"
         os.execute "rm -rf output"
-        os.execute "find . -name *.DS_Store -type f -exec rm {} \\;"
+        os.execute "find . -name .DS_Store -delete"
         os.execute "cd external/ode; make clean > /dev/null 2>&1"
     else
         os.rmdir "ipch"
-        os.execute "del /F /Q Protocol.zip"
+        os.execute "del /F /Q *.zip"
     end
 end
 
@@ -317,7 +307,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestCore; make -j4 TestNetwork; make -j4 TestProtocol; make -j4 TestClientServer; make -j4 TestCubes; make -j4 TestVirtualGo" == 0 then
-                os.execute "cd bin; ./TestCore; ./TestNetwork; ./TestProtocol; ./TestClientServer; ./TestCubes; ./TestVirtualGo"
+                os.execute "./bin/TestCore; ./bin/TestNetwork; ./bin/TestProtocol; ./bin/TestClientServer; ./bin/TestCubes; ./bin/TestVirtualGo"
             end
         end
     }
@@ -332,7 +322,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestCore" == 0 then
-                os.execute "cd bin; ./TestCore"
+                os.execute "./bin/TestCore"
             end
         end
     }
@@ -347,7 +337,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestNetwork" == 0 then
-                os.execute "cd bin; ./TestNetwork"
+                os.execute "./bin/TestNetwork"
             end
         end
     }
@@ -362,7 +352,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestProtocol" == 0 then
-                os.execute "cd bin; ./TestProtocol"
+                os.execute "./bin/TestProtocol"
             end
         end
     }
@@ -377,7 +367,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestClientServer" == 0 then
-                os.execute "cd bin; ./TestClientServer"
+                os.execute "./bin/TestClientServer"
             end
         end
     }
@@ -392,7 +382,7 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestCubes" == 0 then
-                os.execute "cd bin; ./TestCubes"
+                os.execute "./bin/TestCubes"
             end
         end
     }
@@ -407,12 +397,12 @@ if not os.is "windows" then
      
         execute = function ()
             if os.execute "make -j4 TestVirtualGo" == 0 then
-                os.execute "cd bin; ./TestVirtualGo"
+                os.execute "./bin/TestVirtualGo"
             end
         end
     }
 
-    newaction
+--[[    newaction
     {
         trigger     = "fonts",
         description = "Build fonts",
@@ -428,6 +418,7 @@ if not os.is "windows" then
             end
         end
     }
+--]]
 
     newaction
     {

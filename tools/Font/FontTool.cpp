@@ -1,7 +1,3 @@
-/*
-    Font Tool
-    Copyright (c) 2008-2015, The Network Protocol Company, Inc.
-*/  
 
 #include "core/Core.h"
 #include "core/File.h"

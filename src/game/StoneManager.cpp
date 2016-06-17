@@ -131,6 +131,8 @@ void StoneManager::Unload()
 
 CONSOLE_FUNCTION( reload_stones )
 {
+    (void)args;
+
     CORE_ASSERT( global.stoneManager );
 
     global.stoneManager->Reload();

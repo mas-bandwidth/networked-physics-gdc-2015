@@ -31,7 +31,6 @@ namespace virtualgo
     inline bool IntersectRaySphere( vec3f rayStart,
                                     vec3f rayDirection, 
                                     vec3f sphereCenter, 
-                                    float sphereRadius, 
                                     float sphereRadiusSquared, 
                                     float & t )
     {
@@ -57,12 +56,11 @@ namespace virtualgo
                                                  vec3f & normal )
     {
         const float sphereOffset = biconvex.GetSphereOffset();
-        const float sphereRadius = biconvex.GetSphereRadius();
         const float sphereRadiusSquared = biconvex.GetSphereRadiusSquared();
 
         // intersect ray with bottom sphere
         vec3f bottomSphereCenter( 0, 0, -sphereOffset );
-        if ( IntersectRaySphere( rayStart, rayDirection, bottomSphereCenter, sphereRadius, sphereRadiusSquared, t ) )
+        if ( IntersectRaySphere( rayStart, rayDirection, bottomSphereCenter, sphereRadiusSquared, t ) )
         {
             point = rayStart + rayDirection * t;
             if ( point.z() >= 0 )
@@ -74,7 +72,7 @@ namespace virtualgo
 
         // intersect ray with top sphere
         vec3f topSphereCenter( 0, 0, sphereOffset );
-        if ( IntersectRaySphere( rayStart, rayDirection, topSphereCenter, sphereRadius, sphereRadiusSquared, t ) )
+        if ( IntersectRaySphere( rayStart, rayDirection, topSphereCenter, sphereRadiusSquared, t ) )
         {
             point = rayStart + rayDirection * t;
             if ( point.z() <= 0 )
@@ -212,8 +210,7 @@ namespace virtualgo
                                      vec3f & normal,
                                      float & depth,
                                      bool hasPreferredDirection = false,
-                                     const vec3f & preferredDirection = vec3f(0,0,1),
-                                     float epsilon = 0.0001f )
+                                     const vec3f & preferredDirection = vec3f(0,0,1) )
     {
         const float boundingSphereRadius = biconvex.GetBoundingSphereRadius();
 

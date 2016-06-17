@@ -1,36 +1,5 @@
 NEXT
 
-    -------------------------------------------
-
-    Stateful synchronization demo
-
-    -------------------------------------------
-
-    Stateful synchronization article
-
-    -------------------------------------------
-
-    Write rest of article series
-
-    -------------------------------------------
-
-    Polish cube demo implementation as much as possible
-
-    Port to windows and make sure it runs on Win64
-
-    Release source code for singleplayer, lockstep, snapshot and stateful demos.
-
-    -------------------------------------------
-
-    Prepare GDC slides from article series
-
-    -------------------------------------------
-
-
-
-
-
-
     --------------------------------------------------------------
 
     Explore various different interpolation strategies to use for 2D linear motion.
