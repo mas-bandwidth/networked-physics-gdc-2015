@@ -31,6 +31,8 @@ namespace protocol
     ReliableMessageChannelData::ReliableMessageChannelData( const ReliableMessageChannelConfig & _config ) 
         : config( _config ), numMessages(0), fragmentId(0), blockSize(0), blockId(0), largeBlock(0)
     {
+        messages = NULL;
+        fragment = NULL;
 //      printf( "create reliable message channel data: %p\n", this );
     }
 

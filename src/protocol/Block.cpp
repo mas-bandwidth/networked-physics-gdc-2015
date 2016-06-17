@@ -29,8 +29,8 @@ namespace protocol
 {
     Block::Block()
     {
-        m_allocator = nullptr;
-        m_data = nullptr;
+        m_allocator = NULL;
+        m_data = NULL;
         m_size = 0;
     }
 
@@ -68,8 +68,8 @@ namespace protocol
         // call this when you are taking ownership of the block
         // data away from this block instance and giving it to
         // something else.
-        m_data = nullptr;
-        m_allocator = nullptr;
+        m_data = NULL;
+        m_allocator = NULL;
         m_size = 0;
     }
 
@@ -81,8 +81,8 @@ namespace protocol
         CORE_ASSERT( m_allocator );
         CORE_ASSERT( m_size > 0 );
         m_allocator->Free( m_data );
-        m_data = nullptr;
+        m_data = NULL;
         m_size = 0;
-        m_allocator = nullptr;
+        m_allocator = NULL;
     }
 }

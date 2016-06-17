@@ -38,7 +38,7 @@ namespace protocol
 
         core::Allocator * m_allocator;
 
-        int num_allocated_messages = 0;
+        int num_allocated_messages;
 
         int m_numTypes;
 
@@ -46,6 +46,7 @@ namespace protocol
 
         MessageFactory( core::Allocator & allocator, int numTypes )
         {
+            num_allocated_messages = 0;
             m_allocator = &allocator;
             m_numTypes = numTypes;
         }

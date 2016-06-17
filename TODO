@@ -1,36 +1,10 @@
 DONE:
 
-    Upgrade to premake5
-
-    Some problem with 'find' in clean. Already solved in my other premakes.
-
-    Brought across clean hack from yojimbo
-
-    Some problems including freetype headers... wtf
-
-    Verified that cube demos run now.
-
-    Disabled font tool.
-
-    Generate a cubes dataset for Mark B. Reynolds (uncompressed, non-quantized...)
-
-    Done! Sending off!
-
-    Update copyright and licence to The Network Protocol Company, Inc. BSD 3-Clause.
-
-    Do some more work to build warning free. Get it done.
-
-    Convert back to release and make sure it works. For tests I need to convert from 'CORE_ASSERT' to 'check' macro
-
-    Bug. I fucked up the stencil shadows with a change I made to fix warnings... fix it!
-
-    Just an accidental deletion of a line. Fixed now.
-
 TODO:
 
-    Port to windows. 
+    Now need to back port to Mac OS X and take stock.
 
-    Might need to include a version of glfw for windows.
+    First step should be to remove C++11 crap. Strip it out.
 
     --------
 

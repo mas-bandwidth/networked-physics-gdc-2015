@@ -56,9 +56,9 @@ namespace protocol
         m_allocator->Free( m_data );
         m_allocator->Free( m_receivedFragment );
 
-        m_allocator = nullptr;
-        m_data = nullptr;
-        m_receivedFragment = nullptr;
+        m_allocator = NULL;
+        m_data = NULL;
+        m_receivedFragment = NULL;
     }
 
     void DataBlockReceiver::Clear()
@@ -136,7 +136,7 @@ namespace protocol
             return &m_block;
         }
         else
-            return nullptr;
+            return NULL;
     }
 }
 

@@ -53,7 +53,7 @@ void test_connection()
 
         for ( int i = 0; i < NumAcks*2; ++i )
         {
-            auto packet = connection.WritePacket();
+            protocol::ConnectionPacket * packet = connection.WritePacket();
 
             CORE_CHECK( packet );
 
@@ -77,10 +77,13 @@ class AckChannel : public protocol::ChannelAdapter
 {
 public:
 
-    int * ackedPackets = nullptr;
+    int * ackedPackets;
 
     AckChannel( int * _ackedPackets )
-        : ackedPackets( _ackedPackets ) {}
+        : ackedPackets( _ackedPackets ) 
+    {
+        ackedPackets = NULL;
+    }
 
     bool ProcessData( uint16_t /*sequence*/, protocol::ChannelData * /*data*/ )
     {
@@ -96,7 +99,7 @@ public:
 
 class AckChannelStructure : public protocol::ChannelStructure
 {
-    int * ackedPackets = nullptr;
+    int * ackedPackets;
 
 public:
 
@@ -150,7 +153,7 @@ void test_acks()
 
         for ( int i = 0; i < NumIterations; ++i )
         {
-            auto packet = connection.WritePacket();
+            protocol::ConnectionPacket * packet = connection.WritePacket();
 
             CORE_CHECK( packet );
 

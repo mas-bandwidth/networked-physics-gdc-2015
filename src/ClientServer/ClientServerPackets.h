@@ -60,9 +60,12 @@ namespace clientServer
 
     struct ConnectionRequestPacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
+        uint16_t clientId;
 
-        ConnectionRequestPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_REQUEST ) {}
+        ConnectionRequestPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_REQUEST ) 
+        {
+            clientId = 0;
+        }
 
         PROTOCOL_SERIALIZE_OBJECT( stream )
         {
@@ -72,10 +75,14 @@ namespace clientServer
 
     struct ChallengeResponsePacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
+        uint16_t clientId;
+        uint16_t serverId;
 
-        ChallengeResponsePacket() : Packet( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE ) {}
+        ChallengeResponsePacket() : Packet( CLIENT_SERVER_PACKET_CHALLENGE_RESPONSE ) 
+        {
+            clientId = 0;
+            serverId = 0;
+        }
 
         PROTOCOL_SERIALIZE_OBJECT( stream )
         {
@@ -86,10 +93,14 @@ namespace clientServer
 
     struct ConnectionDeniedPacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint32_t reason = 0;
+        uint16_t clientId;
+        uint32_t reason;
 
-        ConnectionDeniedPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_DENIED ) {}
+        ConnectionDeniedPacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_DENIED )
+        {
+            clientId = 0;
+            reason = 0;
+        }
 
         PROTOCOL_SERIALIZE_OBJECT( stream )
         {
@@ -100,10 +111,14 @@ namespace clientServer
 
     struct ConnectionChallengePacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
+        uint16_t clientId;
+        uint16_t serverId;
 
-        ConnectionChallengePacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE ) {}
+        ConnectionChallengePacket() : Packet( CLIENT_SERVER_PACKET_CONNECTION_CHALLENGE )
+        {
+            clientId = 0;
+            serverId = 0;
+        }
 
         PROTOCOL_SERIALIZE_OBJECT( stream )
         {
@@ -114,10 +129,14 @@ namespace clientServer
 
     struct ReadyForConnectionPacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
+        uint16_t clientId;
+        uint16_t serverId;
 
-        ReadyForConnectionPacket() : Packet( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION ) {}
+        ReadyForConnectionPacket() : Packet( CLIENT_SERVER_PACKET_READY_FOR_CONNECTION ) 
+        {
+            clientId = 0;
+            serverId = 0;
+        }
 
         PROTOCOL_SERIALIZE_OBJECT( stream )
         {
@@ -128,19 +147,25 @@ namespace clientServer
 
     struct DataBlockFragmentPacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
-        uint32_t blockSize = 0;
-        uint32_t fragmentSize : 16;
-        uint32_t numFragments : 16;
-        uint32_t fragmentId : 16;
-        uint32_t fragmentBytes : 16;
-        uint8_t * fragmentData = nullptr;
+        uint16_t clientId;
+        uint16_t serverId;
+        uint32_t blockSize;
+        uint32_t fragmentSize;
+        uint32_t numFragments;
+        uint32_t fragmentId;
+        uint32_t fragmentBytes;
+        uint8_t * fragmentData;
 
         DataBlockFragmentPacket() : Packet( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT ) 
         {
-            fragmentId = 0;
+            clientId = 0;
+            serverId = 0;
+            blockSize = 0;
             fragmentSize = 0;
+            numFragments = 0;
+            fragmentId = 0;
+            fragmentBytes = 0;
+            fragmentData = NULL;
         }
 
         ~DataBlockFragmentPacket()
@@ -180,12 +205,14 @@ namespace clientServer
 
     struct DataBlockFragmentAckPacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
-        uint32_t fragmentId : 16;
+        uint16_t clientId;
+        uint16_t serverId;
+        uint32_t fragmentId;
 
         DataBlockFragmentAckPacket() : Packet( CLIENT_SERVER_PACKET_DATA_BLOCK_FRAGMENT_ACK ) 
         {
+            clientId = 0;
+            serverId = 0;
             fragmentId = 0;
         }
 
@@ -199,10 +226,14 @@ namespace clientServer
 
     struct DisconnectedPacket : public protocol::Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
+        uint16_t clientId;
+        uint16_t serverId;
 
-        DisconnectedPacket() : Packet( CLIENT_SERVER_PACKET_DISCONNECTED ) {}
+        DisconnectedPacket() : Packet( CLIENT_SERVER_PACKET_DISCONNECTED )
+        {
+            clientId = 0;
+            serverId = 0;
+        }
 
         PROTOCOL_SERIALIZE_OBJECT( stream )
         {

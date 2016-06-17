@@ -32,6 +32,14 @@ namespace protocol
         CORE_ASSERT( config.packetFactory );
         CORE_ASSERT( config.channelStructure );
 
+        m_error = CONNECTION_ERROR_NONE;
+
+        m_sentPackets = NULL;
+
+        m_receivedPackets = NULL;
+        
+        m_numChannels = 0;
+
         m_allocator = config.allocator ? config.allocator : &core::memory::default_allocator();
 
         m_sentPackets = CORE_NEW( *m_allocator, SentPackets, *m_allocator, m_config.slidingWindowSize );
@@ -131,7 +139,7 @@ namespace protocol
         if ( m_error != CONNECTION_ERROR_NONE )
             return nullptr;
 
-        auto packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( CONNECTION_PACKET ) );
+        ConnectionPacket * packet = static_cast<ConnectionPacket*>( m_config.packetFactory->Create( CONNECTION_PACKET ) );
 
         packet->sequence = m_sentPackets->GetSequence();
 
@@ -140,7 +148,7 @@ namespace protocol
         for ( int i = 0; i < m_numChannels; ++i )
             packet->channelData[i] = m_channels[i]->GetData( packet->sequence );
 
-        auto entry = m_sentPackets->Insert( packet->sequence );
+        SentPacketData * entry = m_sentPackets->Insert( packet->sequence );
         CORE_ASSERT( entry );
         entry->acked = 0;
 
@@ -170,7 +178,7 @@ namespace protocol
             if ( !packet->channelData[i] )
                 continue;
 
-            auto result = m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
+            bool result = m_channels[i]->ProcessData( packet->sequence, packet->channelData[i] );
 
             if ( !result )
                 discardPacket = true;

@@ -42,7 +42,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        WriteStream( uint8_t * buffer, int bytes ) : m_writer( buffer, bytes ), m_context( nullptr ), m_aborted( false ) {}
+        WriteStream( uint8_t * buffer, int bytes ) : m_writer( buffer, bytes ), m_context( NULL ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -133,7 +133,7 @@ namespace protocol
         {
             CORE_ASSERT( index >= 0 );
             CORE_ASSERT( index < protocol::MaxContexts );
-            return m_context ? m_context[index] : nullptr;
+            return m_context ? m_context[index] : NULL;
         }
 
         void Abort()
@@ -160,7 +160,7 @@ namespace protocol
         enum { IsWriting = 0 };
         enum { IsReading = 1 };
 
-        ReadStream( uint8_t * buffer, int bytes ) : m_bitsRead(0), m_reader( buffer, bytes ), m_context( nullptr ), m_aborted( false ) {}
+        ReadStream( uint8_t * buffer, int bytes ) : m_bitsRead(0), m_reader( buffer, bytes ), m_context( NULL ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t & value, int32_t min, int32_t max )
         {
@@ -230,7 +230,7 @@ namespace protocol
         {
             CORE_ASSERT( index >= 0 );
             CORE_ASSERT( index < MaxContexts );
-            return m_context ? m_context[index] : nullptr;
+            return m_context ? m_context[index] : NULL;
         }
 
         void Abort()
@@ -263,7 +263,7 @@ namespace protocol
         enum { IsWriting = 1 };
         enum { IsReading = 0 };
 
-        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0), m_context( nullptr ), m_aborted( false ) {}
+        MeasureStream( int bytes ) : m_totalBytes( bytes ), m_bitsWritten(0), m_context( NULL ), m_aborted( false ) {}
 
         void SerializeInteger( int32_t value, int32_t min, int32_t max )
         {
@@ -343,7 +343,7 @@ namespace protocol
         {
             CORE_ASSERT( index >= 0 );
             CORE_ASSERT( index < MaxContexts );
-            return m_context ? m_context[index] : nullptr;
+            return m_context ? m_context[index] : NULL;
         }
 
         void Abort()
@@ -380,37 +380,37 @@ template <typename T> void serialize_object( protocol::MeasureStream & stream, T
     object.SerializeMeasure( stream );
 }
 
-#define serialize_int( stream, value, min, max )            \
-    do                                                      \
-    {                                                       \
-        CORE_ASSERT( min < max );                           \
-        int32_t int32_value;                                \
-        if ( Stream::IsWriting )                            \
-        {                                                   \
-            CORE_ASSERT( value >= min );                    \
-            CORE_ASSERT( value <= max );                    \
-            int32_value = (int32_t) value;                  \
-        }                                                   \
-        stream.SerializeInteger( int32_value, min, max );   \
-        if ( Stream::IsReading )                            \
-        {                                                   \
-            value = (decltype(value)) int32_value;          \
-            CORE_ASSERT( value >= min );                    \
-            CORE_ASSERT( value <= max );                    \
-        }                                                   \
+#define serialize_int( stream, value, min, max )                    \
+    do                                                              \
+    {                                                               \
+        CORE_ASSERT( min < max );                                   \
+        int32_t int32_value;                                        \
+        if ( Stream::IsWriting )                                    \
+        {                                                           \
+            CORE_ASSERT( int64_t(value) >= int64_t(min) );          \
+            CORE_ASSERT( int64_t(value) <= int64_t(max) );          \
+            int32_value = (int32_t) value;                          \
+        }                                                           \
+        stream.SerializeInteger( int32_value, min, max );           \
+        if ( Stream::IsReading )                                    \
+        {                                                           \
+            value = int32_value;                                    \
+            if ( value < min || value > max )                       \
+                stream.Abort();                                     \
+        }                                                           \
     } while (0)
 
-#define serialize_bits( stream, value, bits )               \
-    do                                                      \
-    {                                                       \
-        CORE_ASSERT( bits > 0 );                            \
-        CORE_ASSERT( bits <= 32 );                          \
-        uint32_t uint32_value;                              \
-        if ( Stream::IsWriting )                            \
-            uint32_value = (uint32_t) value;                \
-        stream.SerializeBits( uint32_value, bits );         \
-        if ( Stream::IsReading )                            \
-            value = (decltype(value)) uint32_value;         \
+#define serialize_bits( stream, value, bits )                       \
+    do                                                              \
+    {                                                               \
+        CORE_ASSERT( bits > 0 );                                    \
+        CORE_ASSERT( bits <= 32 );                                  \
+        uint32_t uint32_value;                                      \
+        if ( Stream::IsWriting )                                    \
+            uint32_value = (uint32_t) value;                        \
+        stream.SerializeBits( uint32_value, bits );                 \
+        if ( Stream::IsReading )                                    \
+            value = uint32_value;                                   \
     } while (0)
 
 #define serialize_bool( stream, value )                             \
@@ -671,7 +671,7 @@ template <typename Stream, typename T> void serialize_int_relative( Stream & str
     uint32_t value = current;
     serialize_uint32( stream, value );
     if ( Stream::IsReading )
-        current = (decltype(current)) value;
+        current = value;
 }
 
 template <typename Stream> bool serialize_check( Stream & stream, uint32_t magic )

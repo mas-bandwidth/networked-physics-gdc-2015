@@ -50,8 +50,14 @@ struct TestMessage : public protocol::Message
 
 struct TestContext
 {
-    int value_min = 0;
-    int value_max = 0;
+    int value_min;
+    int value_max;
+
+    TestContext()
+    {
+        value_min = 0;
+        value_max = 0;
+    }
 };
 
 struct TestContextMessage : public protocol::Message
@@ -75,7 +81,7 @@ struct TestContextMessage : public protocol::Message
         if ( numRemainderBits > 0 )
             serialize_bits( stream, dummy, numRemainderBits );
 
-        auto testContext = (const TestContext*) stream.GetContext( protocol::CONTEXT_CONNECTION );
+        const TestContext * testContext = (const TestContext*) stream.GetContext( protocol::CONTEXT_CONNECTION );
         CORE_ASSERT( testContext );
         serialize_int( stream, value, testContext->value_min, testContext->value_max );
 

@@ -41,7 +41,7 @@ namespace protocol
             m_sequence = 0;     // not a valid entry. insertion point for next sequence.
             m_ack = 0xFFFF;     // not a valid entry. last "acked" sequence number.
             m_allocator = &allocator;
-            m_entries = (T*) allocator.Allocate( sizeof(T) * size, alignof(T) );
+            m_entries = (T*) allocator.Allocate( sizeof(T) * size );
             Reset();
         }
 

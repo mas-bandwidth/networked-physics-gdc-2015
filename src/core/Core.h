@@ -253,8 +253,14 @@ namespace core
 
     struct TimeBase
     {
-        double time = 0.0;                // frame time. 0.0 is start of process
-        double deltaTime = 0.0;           // delta time this frame in seconds.
+        double time;
+        double deltaTime;
+
+        TimeBase()
+        {
+            time = 0.0;
+            deltaTime = 0.0;
+        }
     };
 
     uint64_t nanoseconds();

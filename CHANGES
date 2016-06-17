@@ -1,4 +1,58 @@
 
+Friday, June 17, 2016
+---------------------
+
+    Upgrade to premake5
+
+    Some problem with 'find' in clean. Already solved in my other premakes.
+
+    Brought across clean hack from yojimbo
+
+    Some problems including freetype headers... wtf
+
+    Verified that cube demos run now.
+
+    Disabled font tool.
+
+    Generate a cubes dataset for Mark B. Reynolds (uncompressed, non-quantized...)
+
+    Done! Sending off!
+
+    Update copyright and licence to The Network Protocol Company, Inc. BSD 3-Clause.
+
+    Do some more work to build warning free. Get it done.
+
+    Convert back to release and make sure it works. For tests I need to convert from 'CORE_ASSERT' to 'check' macro
+
+    Bug. I fucked up the stencil shadows with a change I made to fix warnings... fix it!
+
+    Just an accidental deletion of a line. Fixed now.
+
+    Port to windows. 
+
+    Hoooooly shit this is so much work.
+
+    After much pain, got everything basically *compiling*
+
+    Network test passes.
+
+    Protocol test fails and hangs on reliable messages.
+
+    WTF... the actual protocol is here is broken. I need to fix this up. What a fucking disgrace.
+
+    Soak protocol seems to be working fine though...
+
+    No it seems to be hanging, at least for long periods while receiving chunks. Not sure why.
+
+    The tests being so fragmented into separate source files is incredibly obnoxious under Visual Studio.
+
+    Next step is to get a version of ODE that is pre-built for Windows (64bit)
+
+    Definitely will want to pre-package this as building ODE is a bit of a pain in the ass under windows.
+
+    Got this working. Good.
+
+
 Monday, Sept 7th, 2015
 ----------------------
 

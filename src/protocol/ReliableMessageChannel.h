@@ -51,6 +51,10 @@ namespace protocol
             packetBudget = 128;
             giveUpBits = 128;
             align = true;
+            messageFactory = NULL;
+            messageAllocator = NULL;
+            smallBlockAllocator = NULL;
+            largeBlockAllocator = NULL;
         }
 
         core::Allocator * allocator;    // allocator used for allocations matching life cycle of this object. if null falls back to default allocator.
@@ -68,11 +72,11 @@ namespace protocol
         int giveUpBits;                 // give up trying to add more messages to packet if we have less than this # of bits available.
         bool align;                     // if true then insert align at key points, eg. before messages etc. good for dictionary based LZ compressors
 
-        MessageFactory * messageFactory = nullptr;
+        MessageFactory * messageFactory;
 
-        core::Allocator * messageAllocator = nullptr;
-        core::Allocator * smallBlockAllocator = nullptr;
-        core::Allocator * largeBlockAllocator = nullptr;
+        core::Allocator * messageAllocator;
+        core::Allocator * smallBlockAllocator;
+        core::Allocator * largeBlockAllocator;
     };
 
     class ReliableMessageChannelData : public ChannelData
@@ -84,8 +88,8 @@ namespace protocol
 
         const ReliableMessageChannelConfig & config;
 
-        Message ** messages = nullptr;          // array of messages.
-        uint8_t * fragment = nullptr;           // the  fragment data. only valid if sending large block.
+        Message ** messages;                    // array of messages.
+        uint8_t * fragment;                     // the  fragment data. only valid if sending large block.
         uint64_t numMessages : 16;              // number of messages in array.
         uint64_t fragmentId : 16;               // fragment id. valid if sending large block.
         uint64_t blockSize : 32;                // block size in bytes. valid if sending large block.
@@ -211,9 +215,9 @@ namespace protocol
 
         const ReliableMessageChannelConfig m_config;                        // constant configuration data
 
-        core::Allocator * m_allocator = nullptr;                            // allocator for allocations matching life cycle of object.
+        core::Allocator * m_allocator;                                      // allocator for allocations matching life cycle of object.
 
-        int m_error = 0;                                                    // current error state. set to non-zero if an error occurs.
+        int m_error;                                                        // current error state. set to non-zero if an error occurs.
 
         int m_maxBlockFragments;                                            // maximum number of fragments per-block
         int m_messageOverheadBits;                                          // number of bits overhead per-serialized message
@@ -223,9 +227,9 @@ namespace protocol
         uint16_t m_receiveMessageId;                                        // id for next message to be received
         uint16_t m_oldestUnackedMessageId;                                  // id for oldest unacked message in send queue
 
-        SequenceBuffer<SendQueueEntry> * m_sendQueue;                        // message send queue
-        SequenceBuffer<SentPacketEntry> * m_sentPackets;                     // sent packets (for acks)
-        SequenceBuffer<ReceiveQueueEntry> * m_receiveQueue;                  // message receive queue
+        SequenceBuffer<SendQueueEntry> * m_sendQueue;                       // message send queue
+        SequenceBuffer<SentPacketEntry> * m_sentPackets;                    // sent packets (for acks)
+        SequenceBuffer<ReceiveQueueEntry> * m_receiveQueue;                 // message receive queue
 
         SendLargeBlockData m_sendLargeBlock;                                // data for large block being sent
         ReceiveLargeBlockData m_receiveLargeBlock;                          // data for large block being received

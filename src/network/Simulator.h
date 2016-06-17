@@ -92,8 +92,14 @@ namespace network
 
     struct BandwidthEntry
     {
-        double time = 0.0;
-        int packetSize = 0;
+        double time;
+        int packetSize;
+
+        BandwidthEntry()
+        {
+            time = 0.0;
+            packetSize = 0;
+        }
     };
 
     typedef protocol::SlidingWindow<BandwidthEntry> BandwidthSlidingWindow;
@@ -157,9 +163,16 @@ namespace network
 
         struct PacketData
         {
-            protocol::Packet * packet = nullptr;
-            double dequeueTime = 0.0;
-            uint32_t packetNumber = 0;
+            protocol::Packet * packet;
+            double dequeueTime;
+            uint32_t packetNumber;
+
+            PacketData()
+            {
+                packet = NULL;
+                dequeueTime = 0.0;
+                packetNumber = 0;
+            }
         };
 
         const SimulatorConfig m_config;

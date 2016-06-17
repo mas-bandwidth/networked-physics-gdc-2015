@@ -36,7 +36,7 @@ namespace protocol
         std::map<void*,int> allocated_packets;
         #endif
 
-        int num_allocated_packets = 0;
+        int num_allocated_packets;
 
         core::Allocator * m_allocator;
 
@@ -46,6 +46,7 @@ namespace protocol
 
         PacketFactory( core::Allocator & allocator, int numTypes )
         {
+            num_allocated_packets = 0;
             m_allocator = &allocator;
             m_numTypes = numTypes;
         }

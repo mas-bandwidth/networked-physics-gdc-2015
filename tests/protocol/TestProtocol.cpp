@@ -53,7 +53,7 @@ extern void test_client_server_user_context();
 
 int main()
 {
-    srand( time( nullptr ) );
+    srand( (int) time( NULL ) );
 
     test_message_factory();
     test_packet_factory();

@@ -41,7 +41,7 @@ namespace protocol
             m_size = size;
             m_bytes = 8 * ( ( size / 64 ) + ( ( size % 64 ) ? 1 : 0 ) );
             CORE_ASSERT( m_bytes > 0 );
-            m_data = (uint64_t*) allocator.Allocate( m_bytes, alignof(uint64_t) );
+            m_data = (uint64_t*) allocator.Allocate( m_bytes );
             Clear();
         }
 
@@ -50,8 +50,8 @@ namespace protocol
             CORE_ASSERT( m_data );
             CORE_ASSERT( m_allocator );
             m_allocator->Free( m_data );
-            m_allocator = nullptr;
-            m_data = nullptr;
+            m_allocator = NULL;
+            m_data = NULL;
         }
 
         void Clear()

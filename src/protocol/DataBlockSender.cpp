@@ -53,8 +53,8 @@ namespace protocol
         CORE_ASSERT( m_ackedFragment );
 
         m_allocator->Free( m_ackedFragment );
-        m_ackedFragment = nullptr;
-        m_allocator = nullptr;
+        m_ackedFragment = NULL;
+        m_allocator = NULL;
     }
 
     void DataBlockSender::Clear()

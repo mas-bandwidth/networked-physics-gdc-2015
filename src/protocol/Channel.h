@@ -43,7 +43,7 @@ namespace protocol
 
         Channel()
         {
-            m_context = nullptr;
+            m_context = NULL;
         }
 
         virtual ~Channel() {}
@@ -88,7 +88,7 @@ namespace protocol
 
         int GetError() const { return 0; }
 
-        ChannelData * GetData( uint16_t /*sequence*/ ) { return nullptr; }
+        ChannelData * GetData( uint16_t /*sequence*/ ) { return NULL; }
 
         bool ProcessData( uint16_t /*sequence*/, ChannelData * /*data*/ ) { return true; }
 

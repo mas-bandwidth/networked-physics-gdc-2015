@@ -43,8 +43,8 @@ namespace protocol
             m_first_entry = true;
             m_sequence = 0;
             m_allocator = &allocator;
-            m_entry_sequence = (uint16_t*) allocator.Allocate( sizeof(uint16_t) * size, alignof(uint16_t) );
-            m_entries = (T*) allocator.Allocate( sizeof(T) * size, alignof(T) );
+            m_entry_sequence = (uint16_t*) allocator.Allocate( sizeof(uint16_t) * size );
+            m_entries = (T*) allocator.Allocate( sizeof(T) * size );
             Reset();
         }
 
@@ -54,8 +54,8 @@ namespace protocol
             CORE_ASSERT( m_allocator );
             m_allocator->Free( m_entry_sequence );
             m_allocator->Free( m_entries );
-            m_allocator = nullptr;
-            m_entries = nullptr;
+            m_allocator = NULL;
+            m_entries = NULL;
         }
 
         void Reset()
@@ -80,7 +80,7 @@ namespace protocol
             }
             else if ( core::sequence_less_than( sequence, m_sequence - m_size ) )
             {
-                return nullptr;
+                return NULL;
             }
 
             const int index = sequence % m_size;
@@ -117,7 +117,7 @@ namespace protocol
             if ( m_exists.GetBit( index ) && m_entry_sequence[index] == sequence )
                 return &m_entries[index];
             else
-                return nullptr;
+                return NULL;
         }
 
         T * Find( uint16_t sequence )
@@ -126,14 +126,14 @@ namespace protocol
             if ( m_exists.GetBit( index ) && m_entry_sequence[index] == sequence )
                 return &m_entries[index];
             else
-                return nullptr;
+                return NULL;
         }
 
         T * GetAtIndex( int index )
         {
             CORE_ASSERT( index >= 0 );
             CORE_ASSERT( index < m_size );
-            return m_exists.GetBit( index ) ? &m_entries[index] : nullptr;
+            return m_exists.GetBit( index ) ? &m_entries[index] : NULL;
         }
 
         uint16_t GetSequence() const 

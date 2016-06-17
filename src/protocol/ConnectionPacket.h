@@ -37,15 +37,20 @@ namespace protocol
 {
     struct ConnectionPacket : public Packet
     {
-        uint16_t clientId = 0;
-        uint16_t serverId = 0;
-        uint16_t sequence = 0;
-        uint16_t ack = 0;
-        uint32_t ack_bits = 0;
+        uint16_t clientId;
+        uint16_t serverId;
+        uint16_t sequence;
+        uint16_t ack;
+        uint32_t ack_bits;
         ChannelData * channelData[MaxChannels];
 
         ConnectionPacket() : Packet( CONNECTION_PACKET )
         {
+            clientId = 0;
+            serverId = 0;
+            sequence = 0;
+            ack = 0;
+            ack_bits = 0;
             memset( channelData, 0, sizeof( ChannelData* ) * MaxChannels );
         }
 
@@ -82,7 +87,7 @@ namespace protocol
             // IMPORTANT: Context here is used when running under client/server
             // so we can filter out connection packets that do not match any connected client.
 
-            auto clientServerContext = (const clientServer::ClientServerContext*) stream.GetContext( clientServer::CONTEXT_CLIENT_SERVER );
+            const clientServer::ClientServerContext* clientServerContext = (const clientServer::ClientServerContext*) stream.GetContext( clientServer::CONTEXT_CLIENT_SERVER );
 
             if ( clientServerContext )
             {

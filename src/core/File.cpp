@@ -22,6 +22,7 @@
     USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "core/Config.h"
 #include "core/File.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -30,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if TOOLS
+#if CORE_PLATFORM == CORE_PLATFORM_MACOSX
 
 namespace core
 {
@@ -80,4 +81,4 @@ namespace core
     }
 }
 
-#endif // #if TOOLS
+#endif // #if CORE_PLATFORM == CORE_PLATFORM_MACOSX

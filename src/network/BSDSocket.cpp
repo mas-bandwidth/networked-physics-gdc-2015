@@ -191,14 +191,14 @@ namespace network
 
         for ( int i = 0; i < (int) core::queue::size( m_send_queue ); ++i )
         {
-            auto packet = m_send_queue[i];
+            protocol::Packet * packet = m_send_queue[i];
             CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
 
         for ( int i = 0; i < (int) core::queue::size( m_receive_queue ); ++i )
         {
-            auto packet = m_receive_queue[i];
+            protocol::Packet * packet = m_receive_queue[i];
             CORE_ASSERT( packet );
             m_config.packetFactory->Destroy( packet );
         }
@@ -247,7 +247,7 @@ namespace network
         if ( core::queue::size( m_receive_queue ) == 0 )
             return nullptr;
 
-        auto packet = m_receive_queue[0];
+        protocol::Packet * packet = m_receive_queue[0];
 
         core::queue::consume( m_receive_queue, 1 );
 
@@ -296,7 +296,7 @@ namespace network
     {
         while ( core::queue::size( m_send_queue ) )
         {
-            auto packet = m_send_queue[0];
+            protocol::Packet * packet = m_send_queue[0];
 
             core::queue::consume( m_send_queue, 1 );
 
@@ -383,7 +383,7 @@ namespace network
 
             stream.Align();
 
-            auto packet = m_config.packetFactory->Create( packetType );
+            protocol::Packet * packet = m_config.packetFactory->Create( packetType );
             CORE_ASSERT( packet );
             CORE_ASSERT( packet->GetType() == packetType );
             if ( !packet )

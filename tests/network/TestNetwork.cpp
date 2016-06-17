@@ -20,7 +20,7 @@ extern void test_dns_resolve_failure();
 
 int main()
 {
-    srand( time( nullptr ) );
+    srand( (int) time( NULL ) );
 
     if ( !network::InitializeNetwork() )
     {

@@ -177,7 +177,7 @@ namespace network
 
             if ( m_packets[index].packet && m_packets[index].dequeueTime <= m_timeBase.time )
             {
-                auto packet = m_packets[index].packet;
+                protocol::Packet * packet = m_packets[index].packet;
                 m_packets[index].packet = nullptr;
                 m_packetNumberReceive++;
                 return packet;
@@ -198,7 +198,7 @@ namespace network
 
             if ( oldestPacket )
             {
-                auto packet = oldestPacket->packet;
+                protocol::Packet * packet = oldestPacket->packet;
                 oldestPacket->packet = nullptr;
                 return packet;
             }
@@ -241,7 +241,7 @@ namespace network
         CORE_ASSERT( input );
 
         const int packetType = input->GetType();
-        const auto packetAddress = input->GetAddress();
+        const Address & packetAddress = input->GetAddress();
 
         int bytes = 0;
         uint8_t * buffer = (uint8_t*) alloca( m_config.maxPacketSize );

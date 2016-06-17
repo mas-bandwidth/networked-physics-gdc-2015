@@ -32,21 +32,34 @@ namespace clientServer
 {
     struct ClientServerContext
     {
-        const int ClassId = 0x12345;
+        enum Dummy { ClassId = 0x12345 };
 
-        uint32_t classId = 0;
+        int classId;
 
         struct ClientInfo
         {
             network::Address address;
-            uint16_t clientId = 0;
-            uint16_t serverId = 0;
-            bool connected = false;
+            uint16_t clientId;
+            uint16_t serverId;
+            bool connected;
+
+            ClientInfo()
+            {
+                clientId = 0;
+                serverId = 0;
+                connected = false;
+            }
         };
 
-        int numClients = 0;
+        int numClients;
 
-        ClientInfo * clientInfo = nullptr;
+        ClientInfo * clientInfo;
+
+        ClientServerContext()
+        {
+            numClients = 0;
+            clientInfo = NULL;
+        }
 
         void Initialize( core::Allocator & allocator, int numClients );
 
