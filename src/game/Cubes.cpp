@@ -827,6 +827,7 @@ void CubesRender::RenderCubeShadows( const view::Cubes & cubes )
         GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, a, e, dot[1], dot[5] );
         GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, b, f, dot[5], dot[0] );
         GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, c, g, dot[0], dot[4] );
+        GenerateSilhoutteVerts( vertex_index, shadow_vertices, cube.transform, local_light, world_light, d, h, dot[4], dot[1] );
 
         assert( vertex_index < MaxCubeShadowVertices );
     }

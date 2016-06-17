@@ -18,14 +18,24 @@ DONE:
 
     Update copyright and licence to The Network Protocol Company, Inc. BSD 3-Clause.
 
-TODO:
-
-    --------------
-
-    Bug. I fucked up the stencil shadows with a change I made to fix warnings. Dumbass.
-
     Do some more work to build warning free. Get it done.
 
     Convert back to release and make sure it works. For tests I need to convert from 'CORE_ASSERT' to 'check' macro
 
-    Bonus points, port to windows. Give supporters and updated version of the GDC 2015 example source code.
+    Bug. I fucked up the stencil shadows with a change I made to fix warnings... fix it!
+
+    Just an accidental deletion of a line. Fixed now.
+
+TODO:
+
+    Port to windows. 
+
+    Might need to include a version of glfw for windows.
+
+    --------
+
+    Branch off now and cut down, remove virtual go stuff, tools etc.
+
+    Zip up source code.
+
+    Give supporters and updated version of the GDC 2015 example source code.
