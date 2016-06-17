@@ -33,7 +33,6 @@
 
 namespace core { class Allocator; }
 
-// todo: network library should not depend on protocol
 namespace protocol
 {
     class Packet; 

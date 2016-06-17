@@ -36,9 +36,9 @@ namespace cubes
 		float y = position.y + 512.0f;
 		float z = position.z + 512.0f;
 
-		uint64_t integer_x = math::floor( x * 1024 + 0.5f );
-		uint64_t integer_y = math::floor( y * 1024 + 0.5f );
-		uint64_t integer_z = math::floor( z * 1024 + 0.5f );
+		uint64_t integer_x = (uint64_t) math::floor( x * 1024 + 0.5f );
+		uint64_t integer_y = (uint64_t) math::floor( y * 1024 + 0.5f );
+		uint64_t integer_z = (uint64_t) math::floor( z * 1024 + 0.5f );
 
 		integer_x &= ( 1 << 20 ) - 1;
 		integer_y &= ( 1 << 20 ) - 1;
@@ -177,9 +177,9 @@ namespace cubes
 		const float normal_b = ( b - minimum ) / ( maximum - minimum );
 		const float normal_c = ( c - minimum ) / ( maximum - minimum );
 
- 		uint32_t integer_a = math::floor( normal_a * 1024.0f + 0.5f );
- 		uint32_t integer_b = math::floor( normal_b * 1024.0f + 0.5f );
- 		uint32_t integer_c = math::floor( normal_c * 1024.0f + 0.5f );
+ 		uint32_t integer_a = (uint32_t) math::floor( normal_a * 1024.0f + 0.5f );
+ 		uint32_t integer_b = (uint32_t) math::floor( normal_b * 1024.0f + 0.5f );
+ 		uint32_t integer_c = (uint32_t) math::floor( normal_c * 1024.0f + 0.5f );
 
 //		printf( "integer: a = %d, b = %d, c = %d, largest = %d\n", 
 //			integer_a, integer_b, integer_c, largest );
@@ -277,9 +277,9 @@ namespace cubes
 
 	void QuantizeVector( const math::Vector & vector, int32_t & x, int32_t & y, int32_t & z, float res )
 	{
- 		x = math::floor( vector.x * res + 0.5f );
- 		y = math::floor( vector.y * res + 0.5f );
- 		z = math::floor( vector.z * res + 0.5f );
+ 		x = (int32_t) math::floor( vector.x * res + 0.5f );
+ 		y = (int32_t) math::floor( vector.y * res + 0.5f );
+ 		z = (int32_t) math::floor( vector.z * res + 0.5f );
 	}
 	
 	void DequantizeVector( const int32_t & x, const int32_t & y, const int32_t & z, math::Vector & vector, float res )

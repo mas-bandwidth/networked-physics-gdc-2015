@@ -30,6 +30,7 @@
 #include "Activation.h"
 #include "Simulation.h"
 #include <list>
+#include <algorithm>
 
 namespace cubes
 {
@@ -78,7 +79,7 @@ namespace cubes
 
 		int GetNumObjects() const
 		{
-			return entries.size();
+			return (int) entries.size();
 		}
 
 		void SetAccumulator( int index, float accumulator )

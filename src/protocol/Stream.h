@@ -70,7 +70,6 @@ namespace protocol
         void Align()
         {
             m_writer.WriteAlign();
-            // todo: should add align bits to bits written
         }
 
         int GetAlignBits() const
@@ -191,7 +190,6 @@ namespace protocol
         void Align()
         {
             m_reader.ReadAlign();
-            // todo: should probably add align bits to m_bitsRead
         }
 
         int GetAlignBits() const
@@ -415,7 +413,16 @@ template <typename T> void serialize_object( protocol::MeasureStream & stream, T
             value = (decltype(value)) uint32_value;         \
     } while (0)
 
-#define serialize_bool( stream, value ) serialize_bits( stream, value, 1 )
+#define serialize_bool( stream, value )                             \
+    do                                                              \
+    {                                                               \
+        uint32_t uint32_bool_value;                                 \
+        if ( Stream::IsWriting )                                    \
+            uint32_bool_value = value ? 1 : 0;                      \
+        serialize_bits( stream, uint32_bool_value, 1 );             \
+        if ( Stream::IsReading )                                    \
+            value = uint32_bool_value ? true : false;               \
+    } while (0)
 
 template <typename Stream> void serialize_uint16( Stream & stream, uint16_t & value )
 {
@@ -603,7 +610,7 @@ template <typename Stream, typename T> void serialize_int_relative( Stream & str
 
     bool twoBits;
     if ( Stream::IsWriting )
-        twoBits = difference == difference <= 4;
+        twoBits = difference <= 4;
     serialize_bool( stream, twoBits );
     if ( twoBits )
     {
@@ -613,12 +620,9 @@ template <typename Stream, typename T> void serialize_int_relative( Stream & str
         return;
     }
 
-    // todo: i don't think this is efficient for the 16 bits case
-    // it should instead be in range 5 -> 16 + 4
-
     bool fourBits;
     if ( Stream::IsWriting )
-        fourBits = difference == difference <= 16;
+        fourBits = difference <= 16;
     serialize_bool( stream, fourBits );
     if ( fourBits )
     {
@@ -630,7 +634,7 @@ template <typename Stream, typename T> void serialize_int_relative( Stream & str
 
     bool eightBits;
     if ( Stream::IsWriting )
-        eightBits = difference == difference <= 256;
+        eightBits = difference <= 256;
     serialize_bool( stream, eightBits );
     if ( eightBits )
     {

@@ -24,6 +24,8 @@
 
 #include "core/Core.h"
 #include <time.h>
+#include <stdio.h>
+
 #if CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
 #include <unistd.h>
 #endif
@@ -34,7 +36,7 @@
 #include <windows.h>
 #endif
 
-char * strncpy_safe( char * destination, const char * source, size_t size    )
+char * strncpy_safe( char * destination, const char * source, size_t size )
 {
     // IMPORTANT: Make sure the string is always null terminated even if source is longer than dest
     char * result = strncpy( destination, source, size );
@@ -50,7 +52,11 @@ namespace core
                                int line )
     {
         printf( "Assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+#if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+		__debugbreak();
+#else // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
         __builtin_trap();
+#endif // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
     }
 
     void DefaultCheckHandler( const char * condition, 
@@ -59,7 +65,11 @@ namespace core
                               int line )
     {
         printf( "Check failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+#if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+		__debugbreak();
+#else // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
         __builtin_trap();
+#endif // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
     }
 
     void sleep_milliseconds( uint32_t milliseconds )

@@ -1,4 +1,5 @@
 #include "virtualgo/Common.h"
+#include <stdio.h>
 
 namespace virtualgo
 {

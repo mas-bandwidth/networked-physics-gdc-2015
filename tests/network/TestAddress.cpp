@@ -1,7 +1,18 @@
 #include "network/Address.h"
 #include "core/Memory.h"
 #include <string.h>
-#include <arpa/inet.h>
+
+#if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
+	#define NOMINMAX
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#include <winsock2.h>
+
+#else // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
+	#include <arpa/inet.h>
+
+#endif // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
 
 void test_address4()
 {

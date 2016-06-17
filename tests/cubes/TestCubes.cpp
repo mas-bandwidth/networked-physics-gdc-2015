@@ -318,7 +318,6 @@ void test_activation_sweep()
 	CORE_ASSERT( activationSystem.GetActiveCount() == 0 );
 }
 
-// todo: probably want to pull this out into "cubes stress test" eg. random long soaking trying to break it
 void test_activation_stress_test()
 {
 	printf( "test_activation_stress_test\n" );
@@ -469,9 +468,6 @@ void test_game_initialize_shutdown()
 		instance.Shutdown();
 	}
 }
-
-// TODO: need to extend this test such that it handles multiple player join and leave
-// and verifies that player cubes activate/deactivate on join/leave (new behavior)
 
 void test_game_player_join_and_leave()
 {

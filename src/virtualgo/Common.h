@@ -54,7 +54,7 @@ namespace virtualgo
 
     inline float DecayFactor( float factor, float deltaTime, float ideal_fps = 60 )
     {
-        return pow( factor, ideal_fps * deltaTime );
+        return (float) pow( factor, ideal_fps * deltaTime );
     }
 
     struct Frustum

@@ -5,6 +5,7 @@
 #include "core/Queue.h"
 #include <string.h>
 #include <algorithm>
+#include <time.h>
 
 void test_sequence()
 {
@@ -12,11 +13,11 @@ void test_sequence()
 
     CORE_CHECK( core::sequence_greater_than( 0, 0 ) == false );
     CORE_CHECK( core::sequence_greater_than( 1, 0 ) == true );
-    CORE_CHECK( core::sequence_greater_than( 0, -1 ) == true );
+    CORE_CHECK( core::sequence_greater_than( 0, uint16_t(-1) ) == true );
 
     CORE_CHECK( core::sequence_less_than( 0, 0 ) == false );
     CORE_CHECK( core::sequence_less_than( 0, 1 ) == true );
-    CORE_CHECK( core::sequence_less_than( -1, 0 ) == true );
+    CORE_CHECK( core::sequence_less_than( uint16_t(-1), 0 ) == true );
 
     CORE_CHECK( core::sequence_difference( 0, 0 ) == 0 );
     CORE_CHECK( core::sequence_difference( 0, 1 ) == -1 );
@@ -248,7 +249,7 @@ void test_murmur_hash()
 {
     printf( "test_murmur_hash\n" );
     const char * s = "test_string";
-    const uint64_t h = core::murmur_hash_64( s, strlen(s), 0 );
+    const uint64_t h = core::murmur_hash_64( s, (int) strlen(s), 0 );
     CORE_CHECK( h == 0xe604acc23b568f83ull );
 }
 
@@ -286,8 +287,8 @@ void test_queue()
         for ( int i = 0; i < 10; ++i )
             CORE_CHECK( q[i] == i + 1 );
         
-        core::queue::consume( q, core::queue::end_front(q) - core::queue::begin_front(q) );
-        core::queue::consume( q, core::queue::end_front(q) - core::queue::begin_front(q) );
+        core::queue::consume( q, (int) ( core::queue::end_front(q) - core::queue::begin_front(q) ) );
+        core::queue::consume( q, (int) ( core::queue::end_front(q) - core::queue::begin_front(q) ) );
         
         CORE_CHECK( core::queue::size(q) == 0 );
     }
@@ -316,7 +317,7 @@ void test_pointer_arithmetic()
 
 int main()
 {
-    srand( time( nullptr ) );
+    srand( (uint32_t) time( nullptr ) );
 
     test_memory();
     test_scratch();

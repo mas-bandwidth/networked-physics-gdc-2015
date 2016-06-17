@@ -382,9 +382,9 @@ namespace game
 			return localPlayerId;
 		}
 	
-		void SetPlayerInput( int playerId, const Input & input )
+		void SetPlayerInput( int playerId, const Input & _input )
 		{
-			this->input[playerId] = input;
+			input[playerId] = _input;
 		}
 			
 		void GetPlayerInput( int playerId, Input & input )
@@ -422,9 +422,9 @@ namespace game
 				frame[i]++;
 		}
 		
-		void GetViewPacket( view::Packet & viewPacket )
+		void GetViewPacket( view::Packet & _viewPacket )
 		{
-			viewPacket = this->viewPacket;
+			viewPacket = _viewPacket;
 		}
 		
 		void CopyActiveObjects( ActiveObject * objects, int & count )
@@ -561,7 +561,7 @@ namespace game
 				force[playerId].y += f * (int) input[playerId].up;
 				force[playerId].y -= f * (int) input[playerId].down;
 
-				if ( input[playerId].push < 0.001f )
+				if ( !input[playerId].push )
 				{
 					if ( activePlayerObject->linearVelocity.dot( force[playerId] ) < 0 )
 						force[playerId] *= 2.0f;
@@ -571,8 +571,8 @@ namespace game
 
 				simulation->ApplyForce( playerActiveId, force[playerId] );
 
-				const bool push = input[playerId].push > 0.0f && GetFlag( FLAG_Push );
-				const bool pull = input[playerId].pull > 0.0f && GetFlag( FLAG_Pull );
+				const bool push = input[playerId].push && GetFlag( FLAG_Push );
+				const bool pull = input[playerId].pull && GetFlag( FLAG_Pull );
 
 				if ( push )
 				{
@@ -581,8 +581,8 @@ namespace game
 						float wobble_x = sin(frame[playerId]*0.1+1) + sin(frame[playerId]*0.05f+3) + sin(frame[playerId]+10);
 						float wobble_y = sin(frame[playerId]*0.1+2) + sin(frame[playerId]*0.05f+4) + sin(frame[playerId]+11);
 						float wobble_z = sin(frame[playerId]*0.1+3) + sin(frame[playerId]*0.05f+5) + sin(frame[playerId]+12);
-						math::Vector force = math::Vector( wobble_x, wobble_y, wobble_z ) * 2.0f;
-						simulation->ApplyForce( activePlayerObject->activeId, force );
+						math::Vector wobble_force = math::Vector( wobble_x, wobble_y, wobble_z ) * 2.0f;
+						simulation->ApplyForce( activePlayerObject->activeId, wobble_force );
 					}
 					
 					// bobbing torque on player cube
@@ -655,15 +655,15 @@ namespace game
 								float magnitude = 1.0f / distanceSquared * 200.0f;
 								if ( magnitude > 500.0f )
 									magnitude = 500.0f;
-								math::Vector force = direction * magnitude;
+								math::Vector push_force = direction * magnitude;
 								if ( activeObject != activePlayerObject )
-									force *= mass;
+									push_force *= mass;
 								else if ( pull )
-									force *= 20;
+									push_force *= 20;
 
 								if ( authority == MaxPlayers || playerId == authority )
 								{
-									simulation->ApplyForce( activeObject->activeId, force );
+									simulation->ApplyForce( activeObject->activeId, push_force );
 									activeObject->authority = playerId;
 									activeObject->authorityTime = 0;
 								}
@@ -683,10 +683,10 @@ namespace game
 									float magnitude = 1.0f / distanceSquared * 200.0f;
 									if ( magnitude > 2000.0f )
 										magnitude = 2000.0f;
-									math::Vector force = - direction * magnitude;
+									math::Vector pull_force = - direction * magnitude;
 									if ( authority == playerId || authority == MaxPlayers )
 									{
-										simulation->ApplyForce( activeObject->activeId, force * mass );
+										simulation->ApplyForce( activeObject->activeId, pull_force * mass );
 										activeObject->authority = playerId;
 										activeObject->authorityTime = 0;
 									}

@@ -25,6 +25,12 @@
 #ifndef CORE_CONFIG_H
 #define CORE_CONFIG_H
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning( disable : 4127 )
+#pragma warning( disable : 4244 )
+#endif
+
 //#define CORE_DEBUG_MEMORY_LEAKS 1
 
 #if CORE_DEBUG_MEMORY_LEAKS

@@ -25,6 +25,14 @@
 #include "network/Network.h"
 #include "core/Core.h"
 
+#if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
+	#define NOMINMAX
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#include <winsock2.h>
+
+#endif // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+		  
 namespace network 
 {     
     static bool s_networkInitialized = false;

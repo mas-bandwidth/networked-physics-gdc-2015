@@ -42,7 +42,7 @@ namespace virtualgo
         const float timeHalfChordSquared = sphereRadiusSquared - distanceSquared + timeClosest*timeClosest;
         if ( timeHalfChordSquared < 0 )
             return false;                   // ray misses sphere
-        t = timeClosest - sqrt( timeHalfChordSquared );
+        t = timeClosest - (float) sqrt( timeHalfChordSquared );
         if ( t < 0 )
             return false;                   // ray started inside sphere. we only want one sided collisions from outside of sphere
         return true;
@@ -256,7 +256,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // edge
-            axis[2].normal = vec3f( -0.70710,0,+0.70710 );
+            axis[2].normal = vec3f( -0.70710f, 0, +0.70710f );
             axis[2].d = dot( vec3f( -w, 0, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
         }
@@ -275,7 +275,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // edge
-            axis[2].normal = vec3f( +0.70710,0,+0.70710 );
+            axis[2].normal = vec3f( +0.70710f,0,+0.70710f );
             axis[2].d = dot( vec3f( w, 0, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
         }
@@ -294,7 +294,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // edge
-            axis[2].normal = vec3f( 0,+0.70710,+0.70710 );
+            axis[2].normal = vec3f( 0,+0.70710f,+0.70710f );
             axis[2].d = dot( vec3f( 0, h, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
         }
@@ -313,7 +313,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // edge
-            axis[2].normal = vec3f( 0,-0.70710,+0.70710 );
+            axis[2].normal = vec3f( 0,-0.70710f,+0.70710f );
             axis[2].d = dot( vec3f( 0, -h, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
         }
@@ -332,7 +332,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // left edge
-            axis[2].normal = vec3f( -0.70710,0,+0.70710 );
+            axis[2].normal = vec3f( -0.70710f,0,+0.70710f );
             axis[2].d = dot( vec3f( -w, -h, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
 
@@ -342,17 +342,17 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[3].normal, axis[3].s1, axis[3].s2 );
 
             // bottom edge
-            axis[4].normal = vec3f( 0,-0.70710,+0.70710 );
+            axis[4].normal = vec3f( 0,-0.70710f,+0.70710f );
             axis[4].d = dot( vec3f( -w, -h, t ), axis[4].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[4].normal, axis[4].s1, axis[4].s2 );
 
             // bottom-left corner edge (vertical)
-            axis[5].normal = vec3f( -0.70710,-0.70710, 0 );
+            axis[5].normal = vec3f( -0.70710f,-0.70710f, 0 );
             axis[5].d = dot( vec3f( -w, -h, t ), axis[5].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[5].normal, axis[5].s1, axis[5].s2 );
 
             // bottom-left corner
-            axis[6].normal = vec3f( -0.577271, -0.577271, 0.577271 );
+            axis[6].normal = vec3f( -0.577271f, -0.577271f, 0.577271f );
             axis[6].d = dot( vec3f( -w, -h, t ), axis[6].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[6].normal, axis[6].s1, axis[6].s2 );
         }
@@ -371,7 +371,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // right edge
-            axis[2].normal = vec3f( +0.70710,0,+0.70710 );
+            axis[2].normal = vec3f( +0.70710f,0,+0.70710f );
             axis[2].d = dot( vec3f( w, 0, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
 
@@ -381,17 +381,17 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[3].normal, axis[3].s1, axis[3].s2 );
 
             // bottom edge
-            axis[4].normal = vec3f( 0,-0.70710,+0.70710 );
+            axis[4].normal = vec3f( 0,-0.70710f,+0.70710f );
             axis[4].d = dot( vec3f( 0, -h, t ), axis[4].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[4].normal, axis[4].s1, axis[4].s2 );
 
             // bottom-right corner edge (vertical)
-            axis[5].normal = vec3f( 0.70710,-0.70710, 0 );
+            axis[5].normal = vec3f( 0.70710f,-0.70710f, 0 );
             axis[5].d = dot( vec3f( w, -h, t ), axis[5].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[5].normal, axis[5].s1, axis[5].s2 );
 
             // bottom-right corner
-            axis[6].normal = vec3f( 0.577271, -0.577271, 0.577271 );
+            axis[6].normal = vec3f( 0.577271f, -0.577271f, 0.577271f );
             axis[6].d = dot( vec3f( w, -h, t ), axis[6].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[6].normal, axis[6].s1, axis[6].s2 );
         }
@@ -410,7 +410,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // left edge
-            axis[2].normal = vec3f( -0.70710,0,+0.70710 );
+            axis[2].normal = vec3f( -0.70710f,0,+0.70710f );
             axis[2].d = dot( vec3f( -w, 0, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
 
@@ -420,17 +420,17 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[3].normal, axis[3].s1, axis[3].s2 );
 
             // top edge
-            axis[4].normal = vec3f( 0,0.70710,+0.70710 );
+            axis[4].normal = vec3f( 0,0.70710f,+0.70710f );
             axis[4].d = dot( vec3f( 0, h, t ), axis[4].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[4].normal, axis[4].s1, axis[4].s2 );
 
             // top-left corner edge (vertical)
-            axis[5].normal = vec3f( -0.70710,0.70710,0 );
+            axis[5].normal = vec3f( -0.70710f,0.70710f,0 );
             axis[5].d = dot( vec3f( -w, h, t ), axis[5].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[5].normal, axis[5].s1, axis[5].s2 );
 
             // top-left corner
-            axis[6].normal = vec3f( -0.577271, 0.577271, 0.577271 );
+            axis[6].normal = vec3f( -0.577271f, 0.577271f, 0.577271f );
             axis[6].d = dot( vec3f( -w, h, t ), axis[6].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[6].normal, axis[6].s1, axis[6].s2 );
         }
@@ -449,7 +449,7 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[1].normal, axis[1].s1, axis[1].s2 );
 
             // right edge
-            axis[2].normal = vec3f( 0.70710,0,+0.70710 );
+            axis[2].normal = vec3f( 0.70710f,0,+0.70710f );
             axis[2].d = dot( vec3f( w, 0, t ), axis[2].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[2].normal, axis[2].s1, axis[2].s2 );
 
@@ -459,17 +459,17 @@ namespace virtualgo
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[3].normal, axis[3].s1, axis[3].s2 );
 
             // top edge
-            axis[4].normal = vec3f( 0,0.70710,0.70710 );
+            axis[4].normal = vec3f( 0,0.70710f,0.70710f );
             axis[4].d = dot( vec3f( 0, h, t ), axis[4].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[4].normal, axis[4].s1, axis[4].s2 );
 
             // top-left corner edge (vertical)
-            axis[5].normal = vec3f( 0.70710,0.70710,0 );
+            axis[5].normal = vec3f( 0.70710f,0.70710f,0 );
             axis[5].d = dot( vec3f( w, h, t ), axis[5].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[5].normal, axis[5].s1, axis[5].s2 );
 
             // top-right corner
-            axis[6].normal = vec3f( 0.577271, 0.577271, 0.577271 );
+            axis[6].normal = vec3f( 0.577271f, 0.577271f, 0.577271f );
             axis[6].d = dot( vec3f( w, h, t ), axis[6].normal );
             BiconvexSupport_WorldSpace( biconvex, biconvexPosition, biconvexUp, axis[6].normal, axis[6].s1, axis[6].s2 );
         }
@@ -494,10 +494,10 @@ namespace virtualgo
             penetrationDepth = FLT_MAX;
             for ( int i = 0; i < numAxes; ++i )
             {
-                const float depth = axis[i].d - axis[i].s1;
-                if ( depth < penetrationDepth )
+                const float d = axis[i].d - axis[i].s1;
+                if ( d < penetrationDepth )
                 {
-                    penetrationDepth = depth;
+                    penetrationDepth = d;
                     selectedAxis = &axis[i];
                 }
             }

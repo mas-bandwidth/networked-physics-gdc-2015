@@ -27,12 +27,12 @@
 
 namespace clientServer
 {
-    void ClientServerContext::Initialize( core::Allocator & allocator, int numClients )
+    void ClientServerContext::Initialize( core::Allocator & allocator, int _numClients )
     {
-        CORE_ASSERT( numClients > 0 );
-        this->classId = ClientServerContext::ClassId;
-        this->numClients = numClients;
-        this->clientInfo = (ClientInfo*) CORE_NEW_ARRAY( allocator, ClientInfo, numClients );
+        CORE_ASSERT( _numClients > 0 );
+        classId = ClientServerContext::ClassId;
+        numClients = _numClients;
+        clientInfo = (ClientInfo*) CORE_NEW_ARRAY( allocator, ClientInfo, numClients );
     }
 
     void ClientServerContext::Free( core::Allocator & allocator )

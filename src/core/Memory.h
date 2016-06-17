@@ -28,6 +28,7 @@
 #include "core/Core.h"
 #include "core/Allocator.h"
 #include <new>
+#include <stdio.h>
 
 namespace core
 {
@@ -309,7 +310,7 @@ namespace core
 			// Reached the end of the buffer, wrap around to the beginning.
 			if ( p > m_end )
 			{
-				h->size = ( m_end - (uint8_t*)h ) | 0x80000000u;
+				h->size = uint32_t( m_end - (uint8_t*)h ) | 0x80000000u;
 				
 				p = m_begin;
 				h = (Header*) p;
@@ -321,7 +322,7 @@ namespace core
 			if ( IsAllocated( p ) )
 				return m_backing.Allocate( size, align );
 
-			fill( h, data, p - (uint8_t*) h );
+			fill( h, data, (uint32_t) ( p - (uint8_t*) h ) );
 			m_allocate = p;
 			return data;
 		}
@@ -346,11 +347,11 @@ namespace core
 			int iterations = 0;
 			while ( m_free != m_allocate )
 			{
-				Header * h = (Header*) m_free;
-				if ( ( h->size & 0x80000000u ) == 0 )
+				Header * h2 = (Header*) m_free;
+				if ( ( h2->size & 0x80000000u ) == 0 )
 					break;
 
-				m_free += h->size & 0x7fffffffu;
+				m_free += h2->size & 0x7fffffffu;
 				if ( m_free == m_end )
 					 m_free = m_begin ;
 
@@ -361,12 +362,12 @@ namespace core
 		uint32_t GetAllocatedSize( void * p )
 		{
 			Header * h = header( p );
-			return h->size - ( (uint8_t*)p - (uint8_t*) h );
+			return h->size - uint32_t( (uint8_t*)p - (uint8_t*) h );
 		}
 
 		uint32_t GetTotalAllocated() 
 		{
-			return m_end - m_begin;
+			return (uint32_t) ( m_end - m_begin );
 		}
 	};
 

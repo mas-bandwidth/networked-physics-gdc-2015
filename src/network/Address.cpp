@@ -23,8 +23,28 @@
 */
 
 #include "network/Address.h"
-#include <netdb.h>
-#include <arpa/inet.h>
+#include <stdio.h>
+
+#if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
+    #define NOMINMAX
+    #define _WINSOCK_DEPRECATED_NO_WARNINGS
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <ws2ipdef.h>
+    #pragma comment( lib, "WS2_32.lib" )
+
+    #ifdef SetPort
+    #undef SetPort
+    #endif // #ifdef SetPort
+
+#else // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
+	#include <netdb.h>
+	#include <arpa/inet.h>
+
+#endif // #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
+
 #include <memory.h>
 #include <string.h>
 
@@ -150,7 +170,7 @@ namespace network
         strncpy( address, address_in, 255 );
         address[255] = '\0';
 
-        int addressLength = strlen( address );
+        int addressLength = (int) strlen( address );
         m_port = 0;
         if ( address[0] == '[' )
         {
@@ -162,7 +182,7 @@ namespace network
                     break;
                 if ( address[index] == ':' )
                 {
-                    m_port = atoi( &address[index+1] );
+                    m_port = (uint16_t) atoi( &address[index+1] );
                     address[index-1] = '\0';
                 }
             }
@@ -180,7 +200,7 @@ namespace network
         // 1. look for ":portnum", if found save the portnum and strip it out
         // 2. parse remaining ipv4 address via inet_pton
 
-        addressLength = strlen( address );
+        addressLength = (int) strlen( address );
         const int base_index = addressLength - 1;
         for ( int i = 0; i < 6; ++i )   // note: no need to search past 6 characters as ":65535" is longest port value
         {
@@ -189,7 +209,7 @@ namespace network
                 break;
             if ( address[index] == ':' )
             {
-                m_port = atoi( &address[index+1] );
+                m_port = (uint16_t) atoi( &address[index+1] );
                 address[index] = '\0';
             }
         }
@@ -226,7 +246,7 @@ namespace network
         return m_address6;
     }
 
-    void Address::SetPort( uint64_t port )
+    void Address::SetPort( uint16_t port )
     {
         m_port = port;
     }
@@ -259,13 +279,13 @@ namespace network
         {
             if ( m_port == 0 )
             {
-                inet_ntop( AF_INET6, &m_address6, buffer, bufferSize );
+                inet_ntop( AF_INET6, (void*) &m_address6, buffer, bufferSize );
                 return buffer;
             }
             else
             {
                 char addressString[INET6_ADDRSTRLEN];
-                inet_ntop( AF_INET6, &m_address6, addressString, INET6_ADDRSTRLEN );
+                inet_ntop( AF_INET6, (void*) &m_address6, addressString, INET6_ADDRSTRLEN );
                 snprintf( buffer, bufferSize, "[%s]:%d", addressString, m_port );
                 return buffer;
             }

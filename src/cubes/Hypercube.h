@@ -80,10 +80,10 @@ namespace hypercube
 			enabled = simulationObject.enabled;
 		}
 		
-		void ActiveToView( view::ObjectState & viewObjectState, int authority, bool pendingDeactivation )
+		void ActiveToView( view::ObjectState & viewObjectState, int _authority, bool pendingDeactivation )
 		{
 			viewObjectState.id = id;
-			viewObjectState.authority = authority;
+			viewObjectState.authority = _authority;
 			viewObjectState.position = position;
 			viewObjectState.orientation = orientation;
 			viewObjectState.enabled = enabled;
@@ -93,9 +93,9 @@ namespace hypercube
 			viewObjectState.pendingDeactivation = pendingDeactivation;
 		}
 		
-		void GetPosition( math::Vector & position )
+		void GetPosition( math::Vector & _position )
 		{
-			position = this->position;
+			position = _position;
 		}
 	};
 
@@ -126,9 +126,9 @@ namespace hypercube
 			CompressOrientation( activeObject.orientation, orientation );
 		}
 
-		void GetPosition( math::Vector & position )
+		void GetPosition( math::Vector & _position )
 		{
-			DecompressPosition( this->position, position );
+			DecompressPosition( position, _position );
 		}
 	};
 }

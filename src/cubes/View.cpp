@@ -193,7 +193,7 @@ namespace view
 
     void ObjectManager::GetRenderState( Cubes & renderState, const vectorial::vec3f * position_error, const vectorial::quat4f * orientation_error )
     {
-        renderState.numCubes = objects.size();
+        renderState.numCubes = (int) objects.size();
 
         assert( renderState.numCubes <= MaxViewObjects );
 

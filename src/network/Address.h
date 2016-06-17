@@ -76,7 +76,7 @@ namespace network
 
         const uint16_t * GetAddress6() const;
 
-        void SetPort( uint64_t port );
+        void SetPort( uint16_t port );
 
         uint16_t GetPort() const;
 

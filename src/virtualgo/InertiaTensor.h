@@ -54,8 +54,8 @@ namespace virtualgo
         const float resolution = 0.01f;
         const float width = biconvex.GetWidth();
         const float height = biconvex.GetHeight();
-        const float xy_steps = ceil( width / resolution );
-        const float z_steps = ceil( height / resolution );
+        const float xy_steps = (float) ceil( width / resolution );
+        const float z_steps = (float) ceil( height / resolution );
         const float dx = width / xy_steps;
         const float dy = width / xy_steps;
         const float dz = height / xy_steps;

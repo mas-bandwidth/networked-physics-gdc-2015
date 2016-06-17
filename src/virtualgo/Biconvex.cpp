@@ -30,7 +30,7 @@ namespace virtualgo
         CORE_ASSERT( sphereRadius > 0.0f );
 
         const float z = ( bevel/2 + sphereOffset );
-        bevelCircleRadius = sqrt( sphereRadiusSquared - z*z );
+        bevelCircleRadius = (float) sqrt( sphereRadiusSquared - z*z );
         bevelTorusMajorRadius = ( sphereOffset * bevelCircleRadius ) / ( sphereOffset + bevel/2 );
         bevelTorusMinorRadius = length( vec3f( bevelCircleRadius, 0, bevel/2 ) - vec3f( bevelTorusMajorRadius, 0, 0 ) );
 
@@ -123,7 +123,7 @@ namespace virtualgo
         vec3f b = normalize( vec3f( point.x(), point.y(), 0 ) ) * circleRadius;
         if ( sphereOffset * a.z() > 0 )         // IMPORTANT: only consider "a" if on same half of biconvex as point
             return b;
-        const float pointDot = fabs( dot( vec3f(0,0,1), normalize(point) ) );
+        const float pointDot = (float) fabs( dot( vec3f(0,0,1), normalize(point) ) );
         if ( pointDot < 1.0f - epsilon )
         {
             const float sqr_distance_a = length_squared( point - a );

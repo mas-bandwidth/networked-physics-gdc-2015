@@ -11,7 +11,6 @@ void StoreCommandLine( int argc, char * argv[] )
     commandLineBuffer[0] = '\0';
     for ( int i = 1; i < argc; ++i )
     {
-        // todo: this should be strncat!!!
         strcat( commandLineBuffer, argv[i] );
         if ( i != argc -1 )
             strcat( commandLineBuffer, " " );

@@ -97,8 +97,8 @@ namespace virtualgo
 
         void GetVelocityAtWorldPoint( const vec3f & point, vec3f & velocity ) const
         {
-            vec3f angularVelocity = transformVector( inverseInertiaTensorWorld, angularMomentum );
-            velocity = linearVelocity + cross( angularVelocity, point - position );
+            vec3f angularVel= transformVector( inverseInertiaTensorWorld, angularMomentum );
+            velocity = linearVelocity + cross( angularVel, point - position );
         }
 
         float GetKineticEnergy() const
@@ -149,7 +149,7 @@ namespace virtualgo
         {
             Activate();
             linearMomentum += impulse;
-            UpdateMomentum();                   // todo: can this be avoided?
+            UpdateMomentum();
         }
 
         void ApplyImpulseAtWorldPoint( const vec3f & point, const vec3f & impulse )
@@ -158,7 +158,7 @@ namespace virtualgo
             vec3f r = point - position;
             linearMomentum += impulse;
             angularMomentum += cross( r, impulse );
-            UpdateMomentum();                   // todo: can this be avoided?
+            UpdateMomentum();
         }
     };
 }

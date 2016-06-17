@@ -1028,7 +1028,6 @@ void test_client_connection_server_full()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            // todo: hack!
             typedef network::Interface NetworkInterface;
             CORE_DELETE( core::memory::default_allocator(), NetworkInterface, clientInterface[i] );
         }
@@ -2215,7 +2214,6 @@ void test_client_and_server_data_multiple_clients()
 
         for ( int i = 0; i < NumClients; ++i )
         {
-            // todo: hack!
             typedef network::Interface NetworkInterface;
             CORE_DELETE( core::memory::default_allocator(), NetworkInterface, clientInterface[i] );
         }

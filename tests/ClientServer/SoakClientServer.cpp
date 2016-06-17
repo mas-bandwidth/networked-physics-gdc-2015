@@ -73,10 +73,10 @@ void soak_test()
     for( int i = 0; i < NumServers; ++i )
     {
         serverInfo[i].address = network::Address( "::1" );
-        serverInfo[i].address.SetPort( BaseServerPort + i );
+        serverInfo[i].address.SetPort( uint16_t( BaseServerPort + i ) );
 
         network::BSDSocketConfig bsdSocketConfig;
-        bsdSocketConfig.port = BaseServerPort + i;
+        bsdSocketConfig.port = uint16_t( BaseServerPort + i );
         bsdSocketConfig.maxPacketSize = 1200;
         bsdSocketConfig.packetFactory = &packetFactory;
         serverInfo[i].networkInterface = CORE_NEW( core::memory::default_allocator(), network::BSDSocket, bsdSocketConfig );
@@ -119,10 +119,10 @@ void soak_test()
     for ( int i = 0; i < NumClients; ++i )
     {
         clientInfo[i].address = network::Address( "::1" );
-        clientInfo[i].address.SetPort( BaseClientPort + i );
+        clientInfo[i].address.SetPort( uint16_t( BaseClientPort + i ) );
 
         network::BSDSocketConfig bsdSocketConfig;
-        bsdSocketConfig.port = BaseClientPort + i;
+        bsdSocketConfig.port = uint16_t( BaseClientPort + i );
         bsdSocketConfig.maxPacketSize = 1200;
         bsdSocketConfig.packetFactory = &packetFactory;
         clientInfo[i].networkInterface = CORE_NEW( core::memory::default_allocator(), network::BSDSocket, bsdSocketConfig );
@@ -157,7 +157,7 @@ void soak_test()
     core::TimeBase timeBase;
     timeBase.deltaTime = 1.0 / 60.0;
 
-    float lastConnectedClientTime = 0.0;
+    double lastConnectedClientTime = 0.0;
 
     while ( true )
     //for ( int i = 0; i < 10000; ++i )
@@ -327,7 +327,6 @@ void soak_test()
         timeBase.time += timeBase.deltaTime;
     }
 
-    // todo: hack
     typedef network::Interface NetworkInterface;
 
     for ( int i = 0; i < NumServers; ++i )
@@ -355,11 +354,9 @@ void soak_test()
 
 int main()
 {
-    srand( time( nullptr ) );
+    srand( (int) time( nullptr ) );
 
     core::memory::initialize();
-
-    srand( time( nullptr ) );
 
     if ( !network::InitializeNetwork() )
     {

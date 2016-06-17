@@ -4,10 +4,10 @@
 #include "Console.h"
 #include "ShaderManager.h"
 
-void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig & config, const CubesSettings * settings )
+void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig & _config, const CubesSettings * _settings )
 {
-    this->config = config;
-    this->settings = settings;
+    config = _config;
+    settings = _settings;
 
     // create cube simulations
 
@@ -23,7 +23,7 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
         game_config.maxObjects = CubeSteps * CubeSteps + MaxPlayers + 1;      // note: +1 because 0 is null (or possibly "world")
         game_config.deactivationTime = 0.5f;
         game_config.cellSize = 2.0f;
-        game_config.cellWidth = CubeSteps / game_config.cellSize + 2 * 2;     // note: double so we have some extra space at the edge of the world
+        game_config.cellWidth = int( CubeSteps / game_config.cellSize + 2 * 2 );     // note: double so we have some extra space at the edge of the world
         game_config.cellHeight = game_config.cellWidth;
         game_config.activationDistance = 100.0f;
 
@@ -56,8 +56,6 @@ void CubesInternal::Initialize( core::Allocator & allocator, const CubesConfig &
 
             simulation[i].game_instance->InitializeEnd();
 
-            // todo: players joining and leaving and local player per-sim
-            // should definitely be parameterized not hardcoded like this
             simulation[i].game_instance->OnPlayerJoined( 0 );
             simulation[i].game_instance->SetLocalPlayer( 0 );
             simulation[i].game_instance->SetPlayerFocus( 0, 1 );
@@ -118,12 +116,11 @@ void CubesInternal::Free( core::Allocator & allocator )
 void CubesInternal::AddCube( GameInstance * game_instance, int player, const vectorial::vec3f & position )
 {
     hypercube::DatabaseObject object;
-    // todo: convert to vectorial
     math::Vector stupid_position( position.x(), position.y(), position.z() );
     cubes::CompressPosition( stupid_position, object.position );
     cubes::CompressOrientation( math::Quaternion(1,0,0,0), object.orientation );
     object.enabled = player;
-    object.session = 0;             // todo: do we still need sessions?
+    object.session = 0;
     object.player = player;
     activation::ObjectId id = game_instance->AddObject( object, position.x(), position.y() );
     if ( player )
@@ -138,7 +135,7 @@ extern "C"
 
 void CubesInternal::Update( const CubesUpdateConfig & update_config )
 {
-    const float deltaTime = global.timeBase.deltaTime;
+    const float deltaTime = (float) global.timeBase.deltaTime;
 
 #ifdef CLIENT
     if ( global.console->IsActive() )
@@ -147,8 +144,6 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
     if ( simulation )
     {
-        // todo: run simulations wide on multiple threads
-
         for ( int i = 0; i < config.num_simulations; ++i )
         {
             for ( int j = 0; j < update_config.sim[i].num_frames; ++j )
@@ -182,7 +177,7 @@ void CubesInternal::Update( const CubesUpdateConfig & update_config )
 
             view[i].objects.Update( deltaTime );
 
-            view::Object * player = view[i].objects.GetObject( 1 );     // todo: focus object should be configurable per-view
+            view::Object * player = view[i].objects.GetObject( 1 );
 
             vectorial::vec3f origin = player ? player->position : vectorial::vec3f(0,0,0);
 

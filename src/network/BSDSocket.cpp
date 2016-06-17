@@ -24,14 +24,23 @@
 
 #include "network/Network.h"
 #include "network/BSDSocket.h"
+#include "core/Config.h"
 #include "core/Memory.h"
 #include "core/Queue.h"
 #include <string.h>
 
 #if CORE_PLATFORM == CORE_PLATFORM_WINDOWS
 
+    #define NOMINMAX
+    #define _WINSOCK_DEPRECATED_NO_WARNINGS
     #include <winsock2.h>
-    #pragma comment( lib, "wsock32.lib" )
+    #include <ws2tcpip.h>
+    #include <ws2ipdef.h>
+    #pragma comment( lib, "WS2_32.lib" )
+
+    #ifdef SetPort
+    #undef SetPort
+    #endif // #ifdef SetPort
 
 #elif CORE_PLATFORM == CORE_PLATFORM_MAC || CORE_PLATFORM == CORE_PLATFORM_UNIX
 
@@ -82,7 +91,6 @@ namespace network
 
         if ( m_socket <= 0 )
         {
-            printf( "create socket failed: %s\n", strerror( errno ) );
             m_error = BSD_SOCKET_ERROR_CREATE_FAILED;
             return;
         }
@@ -112,7 +120,6 @@ namespace network
 
             if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
             {
-                printf( "bind socket failed (ipv6) - %s\n", strerror( errno ) );
                 m_socket = BSD_SOCKET_ERROR_BIND_IPV6_FAILED;
                 return;
             }
@@ -126,13 +133,10 @@ namespace network
 
             if ( ::bind( m_socket, (const sockaddr*) &sock_address, sizeof(sock_address) ) < 0 )
             {
-                printf( "bind socket failed (ipv4) - %s\n", strerror( errno ) );
                 m_error = BSD_SOCKET_ERROR_BIND_IPV4_FAILED;
                 return;
             }
         }
-
-        // todo: get the actual port we bound to in the case of passing in port 0 we must ask the OS
 
         m_port = m_config.port;
 
@@ -210,7 +214,7 @@ namespace network
 
     bool BSDSocket::GetError() const
     {
-        return m_error;
+        return m_error != 0;
     }
 
     void BSDSocket::SendPacket( const Address & address, protocol::Packet * packet )
@@ -296,7 +300,7 @@ namespace network
 
             core::queue::consume( m_send_queue, 1 );
 
-            uint8_t buffer[m_config.maxPacketSize];
+            uint8_t * buffer = (uint8_t*) alloca( m_config.maxPacketSize );
 
             typedef protocol::WriteStream Stream;
 
@@ -409,7 +413,6 @@ namespace network
 
             if ( !stream.Check( 0x51246234 ) )
             {
-                // todo: counter for truncated packets
                 m_config.packetFactory->Destroy( packet );
                 continue;
             }
@@ -433,28 +436,27 @@ namespace network
 
         if ( address.GetType() == ADDRESS_IPV6 )
         {
-            sockaddr_in6 s_addr;
-            memset( &s_addr, 0, sizeof( s_addr ) );
-            s_addr.sin6_family = AF_INET6;
-            s_addr.sin6_port = htons( address.GetPort() );
-            memcpy( &s_addr.sin6_addr, address.GetAddress6(), sizeof( s_addr.sin6_addr ) );
-            const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in6) );
+            struct sockaddr_in6 socket_address;
+            memset( &socket_address, 0, sizeof( socket_address ) );
+            socket_address.sin6_family = AF_INET6;
+            socket_address.sin6_port = htons( address.GetPort() );
+            memcpy( &socket_address.sin6_addr, address.GetAddress6(), sizeof( socket_address.sin6_addr ) );
+            const int sent_bytes = sendto( m_socket, (const char*)data, (int) bytes, 0, (sockaddr*)&socket_address, sizeof( sockaddr_in6 ) );
             result = sent_bytes == (int) bytes;
         }
         else if ( address.GetType() == ADDRESS_IPV4 )
         {
-            sockaddr_in s_addr;
-            memset( &s_addr, 0, sizeof( s_addr ) );
-            s_addr.sin_family = AF_INET;
-            s_addr.sin_addr.s_addr = address.GetAddress4();
-            s_addr.sin_port = htons( (unsigned short) address.GetPort() );
-            const int sent_bytes = sendto( m_socket, (const char*)data, bytes, 0, (sockaddr*)&s_addr, sizeof(sockaddr_in) );
+            sockaddr_in socket_address;
+            memset( &socket_address, 0, sizeof( socket_address ) );
+            socket_address.sin_family = AF_INET;
+            socket_address.sin_addr.s_addr = address.GetAddress4();
+            socket_address.sin_port = htons( (unsigned short) address.GetPort() );
+            const int sent_bytes = sendto( m_socket, (const char*)data, (int) bytes, 0, (sockaddr*) &socket_address, sizeof(sockaddr_in) );
             result = sent_bytes == (int) bytes;
         }
 
         if ( !result )
         {
-            printf( "sendto failed: %s\n", strerror( errno ) );
             m_counters[BSD_SOCKET_COUNTER_SEND_FAILURES]++;
         }
 
@@ -480,8 +482,6 @@ namespace network
         {
             if ( errno == EAGAIN )
                 return 0;
-
-            printf( "recvfrom failed: %s\n", strerror( errno ) );
 
             return 0;
         }

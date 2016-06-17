@@ -102,8 +102,8 @@ namespace protocol
 
             CORE_ASSERT( messages );
 
-            int messageTypes[numMessages];
-            uint16_t messageIds[numMessages];
+            int * messageTypes = (int*) alloca( numMessages * sizeof(int) );
+            uint16_t * messageIds = (uint16_t*) alloca( numMessages * sizeof( uint16_t ) );
 
             if ( Stream::IsWriting )
             {
@@ -518,7 +518,7 @@ namespace protocol
                 availableBits -= 3 * 8;
 
             int numMessageIds = 0;
-            uint16_t messageIds[m_config.maxMessagesPerPacket];
+            uint16_t * messageIds = (uint16_t*) alloca( m_config.maxMessagesPerPacket * sizeof( uint16_t ) );
             for ( int i = 0; i < m_config.receiveQueueSize; ++i )
             {
                 if ( availableBits < m_config.giveUpBits )

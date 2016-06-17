@@ -44,7 +44,7 @@ void test_sequence_buffer()
         {
             auto entry = sequence_buffer.Find( index );
             CORE_CHECK( entry );
-            CORE_CHECK( entry->sequence == index );
+            CORE_CHECK( entry->sequence == uint32_t( index ) );
             index--;
         }
 
@@ -69,8 +69,8 @@ void test_generate_ack_bits()
 
         protocol::SequenceBuffer<TestPacketData> received_packets( core::memory::default_allocator(), size );
 
-        uint16_t ack = -1;
-        uint32_t ack_bits = -1;
+        uint16_t ack = 0xFFFF;
+        uint32_t ack_bits = 0xFFFF;
 
         GenerateAckBits( received_packets, ack, ack_bits );
         CORE_CHECK( ack == 0xFFFF );

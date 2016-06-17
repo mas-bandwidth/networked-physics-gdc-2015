@@ -144,7 +144,7 @@ namespace activation
 			Cell & cell = cells[activeObjects[i].cellIndex];
 			CellObject & cellObject = cell.GetObject( activeObjects[i].cellObjectIndex );
 			assert( cellObject.id == activeObjects[i].id );
-			assert( cellObject.activeObjectIndex == last );
+			assert( cellObject.activeObjectIndex == uint32_t( last ) );
 			cellObject.activeObjectIndex = i;
 		}
 		count--;
@@ -219,9 +219,9 @@ namespace activation
 		delete[] cells;
 	}
 
-	void ActivationSystem::SetEnabled( bool enabled )
+	void ActivationSystem::SetEnabled( bool _enabled )
 	{
-		this->enabled = enabled;
+		enabled = _enabled;
 	}
 
 	void ActivationSystem::Update( float deltaTime )
@@ -439,7 +439,7 @@ namespace activation
 		ActiveObject * activeObject = active_objects.FindObject( id );
 		if ( activeObject )
 		{
-			int activeIndex = activeObject - active_objects.GetObjectArray();
+			int activeIndex = int( activeObject - active_objects.GetObjectArray() );
 			MoveActiveObject( activeIndex, x, y );
 		}
 		else
@@ -630,7 +630,7 @@ namespace activation
 	
 	int ActivationSystem::GetEventCount()
 	{
-		return activation_events.size();
+		return (int) activation_events.size();
 	}
 
 	const Event & ActivationSystem::GetEvent( int index )

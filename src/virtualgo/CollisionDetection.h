@@ -45,7 +45,7 @@ namespace virtualgo
                                                          vec3f & planePoint )
     {
         const float sphereDot = biconvex.GetSphereDot();
-        const float planeNormalDot = fabs( dot( vec3f(0,0,1), planeNormal ) );
+        const float planeNormalDot = (float) fabs( dot( vec3f(0,0,1), planeNormal ) );
         if ( planeNormalDot > sphereDot )
         {
             // sphere surface collision

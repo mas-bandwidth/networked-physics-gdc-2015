@@ -30,6 +30,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if TOOLS
+
 namespace core
 {
     bool file_exists( const char * filename )
@@ -53,7 +55,7 @@ namespace core
         char * p = NULL;
         int len;
         snprintf( tmp, sizeof(tmp), "%s", dir );
-        len = strlen( tmp );
+        len = (int) strlen( tmp );
         if ( tmp[len-1] == '/' )
             tmp[len-1] = 0;
         for ( p = tmp + 1; *p; p++ )
@@ -74,6 +76,8 @@ namespace core
         while ( ( next = strpbrk( slash + 1, "\\/" ) ) ) slash = next;
         if ( pf != slash ) slash++;
         *p = strndup( pf, slash - pf );
-        *f = strdup( slash );
+        *f = _strdup( slash );
     }
 }
+
+#endif // #if TOOLS

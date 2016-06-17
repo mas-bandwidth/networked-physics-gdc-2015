@@ -207,7 +207,7 @@ struct ConsoleInternal
         if ( strcmp( string, &commandHistory[previousIndex][0] ) == 0 )
             return;
 
-        strncpy_safe( &commandHistory[commandHistoryIndex][0], string, MaxLine );
+        core::strncpy_safe( &commandHistory[commandHistoryIndex][0], string, MaxLine );
         commandHistoryIndex++;
         commandHistoryIndex %= CommandHistorySize;
         commandHistoryIsEmpty = false;
@@ -233,8 +233,8 @@ struct ConsoleInternal
             {
                 const char * command = &commandHistory[commandHistorySelection][0];
                 memset( commandString, 0, sizeof( commandString ) );
-                strncpy_safe( commandString, command, MaxLine );
-                commandLength = strlen( commandString );
+                core::strncpy_safe( commandString, command, MaxLine );
+                commandLength = (int) strlen( commandString );
                 CursorEnd();
                 return;
             }
@@ -262,8 +262,8 @@ struct ConsoleInternal
             {
                 const char * command = &commandHistory[commandHistorySelection][0];
                 memset( commandString, 0, sizeof( commandString ) );
-                strncpy_safe( commandString, command, MaxLine );
-                commandLength = strlen( commandString );
+                core::strncpy_safe( commandString, command, MaxLine );
+                commandLength = (int) strlen( commandString );
                 CursorEnd();
                 return;
             }

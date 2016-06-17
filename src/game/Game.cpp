@@ -140,7 +140,7 @@ static void update_fps()
         double finish_time = core::time();
         double delta_time = ( finish_time - start_time ) / sample_frames;
         current_fps = (int) floor( ( 1.0 / delta_time ) + 0.001 ); 
-        const int display_refresh_fps = 60; // todo: ideally get this from the OS
+        const int display_refresh_fps = 60;
         if ( current_fps > display_refresh_fps )
             current_fps = display_refresh_fps;
         frame_count = 0;
@@ -372,7 +372,7 @@ int main( int argc, char * argv[] )
 
 int main( int /*argc*/, char ** /*argv*/ )
 {
-    srand( time( nullptr ) );
+    srand( (uint32_t) time( nullptr ) );
 
     global.timeBase.deltaTime = 1.0 / TickRate;
 
@@ -398,13 +398,9 @@ int main( int /*argc*/, char ** /*argv*/ )
     {
         // ...
 
-        // todo: instead of sleeping do sleep(1ms) but if within tolerance < 2ms do a busy spinlock
-
-        // todo: want to detect the CTRL^C signal and actually break outta here
-
         server->Update( global.timeBase );
 
-        core::sleep_milliseconds( global.timeBase.deltaTime * 1000 );
+        core::sleep_milliseconds( (int) ( global.timeBase.deltaTime * 1000.0 ) );
 
         global.timeBase.time += global.timeBase.deltaTime;
     }

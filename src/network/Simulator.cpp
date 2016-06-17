@@ -24,7 +24,7 @@
 
 #include "network/Simulator.h"
 #include "core/Memory.h"
-#include "protocol/PacketFactory.h"      // todo: we need to not depend on protocol from network
+#include "protocol/PacketFactory.h"
 
 namespace network
 {
@@ -232,7 +232,7 @@ namespace network
                 }
                 sequence++;
             }
-            m_bandwidth = bytes * 8.0 / m_config.bandwidthTime / 1000.0;     // kilobits per-second
+            m_bandwidth = bytes * 8.0f / m_config.bandwidthTime / 1000.0f;     // kilobits per-second
         }
     }
 
@@ -244,7 +244,7 @@ namespace network
         const auto packetAddress = input->GetAddress();
 
         int bytes = 0;
-        uint8_t buffer[m_config.maxPacketSize];
+        uint8_t * buffer = (uint8_t*) alloca( m_config.maxPacketSize );
 
         // serialize write
         {

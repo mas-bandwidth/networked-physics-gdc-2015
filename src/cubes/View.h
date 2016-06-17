@@ -30,7 +30,7 @@
 #include "vectorial/mat4f.h"
 #include "vectorial/quat4f.h"
 #include "core/Core.h"
-#include <map>				// todo: remove this
+#include <map>
 
 namespace view
 {
@@ -68,7 +68,7 @@ namespace view
 		{
 			this->id = 0;
 			authority = 0;
-			remove = 0;					// todo: hot-cold split for remove flag would be a great idea
+			remove = 0;
 			visible = 0;
 			blending = 0;
 		}
@@ -111,7 +111,6 @@ namespace view
 
 	private:
 
-		// todo: convert this to use the core hash instead
 		typedef std::map<unsigned int, Object*> object_map;
 		object_map objects;
 	};

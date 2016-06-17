@@ -649,26 +649,26 @@ namespace math
 		// construct a matrix from explicit values for the 3x3 sub matrix.
 		// note: the rest of the matrix (row 4 and column 4 are set to identity)
 
-		void Initialize3x3( float m11, float m12, float m13,
-						    float m21, float m22, float m23,
-						    float m31, float m32, float m33 )
+		void Initialize3x3( float _m11, float _m12, float _m13,
+						    float _m21, float _m22, float _m23,
+						    float _m31, float _m32, float _m33 )
 		{
-			this->m11 = m11;
-			this->m12 = m12;
-			this->m13 = m13;
-			this->m14 = 0;
-			this->m21 = m21;
-			this->m22 = m22;
-			this->m23 = m23;
-			this->m24 = 0;
-			this->m31 = m31;
-			this->m32 = m32;
-			this->m33 = m33;
-			this->m34 = 0;
-			this->m41 = 0;
-			this->m42 = 0;
-			this->m43 = 0;
-			this->m44 = 1;
+			m11 = _m11;
+			m12 = _m12;
+			m13 = _m13;
+			m14 = 0;
+			m21 = _m21;
+			m22 = _m22;
+			m23 = _m23;
+			m24 = 0;
+			m31 = _m31;
+			m32 = _m32;
+			m33 = _m33;
+			m34 = 0;
+			m41 = 0;
+			m42 = 0;
+			m43 = 0;
+			m44 = 1;
 		}
 		
 		// set all entries in matrix to zero.

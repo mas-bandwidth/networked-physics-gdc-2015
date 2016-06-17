@@ -224,7 +224,9 @@ vectorial_inline void simd4x4f_axis_rotation(simd4x4f* m, float angle, simd4f ax
 
     axis = simd4f_normalize3(axis);
 
-    const float radians = angle * M_PI / 180;
+	const float pi = 3.141593f;
+
+    const float radians = angle * pi / 180;
     const float sine = sinf(radians);
     const float cosine = cosf(radians);
 

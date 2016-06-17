@@ -67,19 +67,19 @@ namespace vectorial
     {
         float a[4];
         q.store( a );
-        float r  = sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
-        float et = ::exp( a[3] );
-        float s  = ( r >= 0.00001f ) ? et * sin(r) / r : 0;
-        return quat4f( s*a[0],s *a[1], s*a[2], et*cos(r) );
+        float r  = (float) sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
+        float et = (float) ::exp( a[3] );
+        float s  = (float) ( ( r >= 0.00001f ) ? et * sin(r) / r : 0 );
+        return quat4f( s*a[0],s *a[1], s*a[2], et*(float)cos(r) );
     }
 
     static inline quat4f ln( const quat4f & q ) 
     {
         float a[4];
         q.store( a );
-        float r = sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
-        float t = ( r > 0.00001f ) ? atan2( r, a[3] ) / r : 0;
-        return quat4f( t*a[0], t*a[1], t*a[2], 0.5*log( norm(q) ) );
+        float r = (float) sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
+        float t = (float) ( ( r > 0.00001f ) ? atan2( r, a[3] ) / r : 0 );
+        return quat4f( t*a[0], t*a[1], t*a[2], 0.5f*(float)log( norm(q) ) );
     }
 
     static inline quat4f nlerp( float t, const quat4f & a, const quat4f & b ) 
@@ -104,10 +104,10 @@ namespace vectorial
         if ( ( 1 - cosine ) < epsilon ) 
             return a * ( 1 - t ) + b * ( t * flip ); 
 
-        float theta = acos( cosine ); 
-        float sine = sin( theta ); 
-        float beta = sin( ( 1 - t ) * theta ) / sine; 
-        float alpha = sin( t * theta ) / sine;
+        float theta = (float) acos( cosine ); 
+        float sine = (float) sin( theta ); 
+        float beta = (float) sin( ( 1 - t ) * theta ) / sine; 
+        float alpha = (float) sin( t * theta ) / sine;
 
         return a * beta + b * alpha * flip;
     }

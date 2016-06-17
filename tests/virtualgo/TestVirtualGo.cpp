@@ -7,6 +7,7 @@
 #include "virtualgo/InertiaTensor.h"
 #include "virtualgo/CollisionDetection.h"
 #include <time.h>
+#include <stdio.h>
 
 #define CORE_CHECK_CLOSE_VEC3( value, expected, epsilon ) CORE_CHECK_CLOSE( length( value - expected ), 0.0f, epsilon )
 
@@ -516,7 +517,7 @@ void test_stone_board_collision_bottom_left_corner()
 
 int main()
 {
-    srand( time( nullptr ) );
+    srand( (int) time( nullptr ) );
 
     test_biconvex();
     

@@ -37,7 +37,7 @@ namespace virtualgo
             cellHeight = 2.37f;
             border = 1.5f;
             thickness = 1.0f;
-            lineWidth = 0.1;
+            lineWidth = 0.1f;
             starPointRadius = 0.2f;
         }
 

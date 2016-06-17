@@ -111,7 +111,6 @@ void DestroyGameClient( core::Allocator & allocator, GameClient * client )
 
     clientServer::ClientConfig config = client->GetConfig();
 
-    // todo: hack
     typedef network::Interface NetworkInterface;
     typedef network::Simulator NetworkSimulator;
 
