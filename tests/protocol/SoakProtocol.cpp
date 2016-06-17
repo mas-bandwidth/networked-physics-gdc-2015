@@ -4,6 +4,14 @@
 #include "TestMessages.h"
 #include "TestPackets.h"
 #include <time.h>
+#include <signal.h>
+
+static volatile int quit = 0;
+
+void interrupt_handler( int /*dummy*/ )
+{
+    quit = 1;
+}
 
 class TestChannelStructure : public protocol::ChannelStructure
 {
@@ -106,8 +114,7 @@ void soak_test()
     timeBase.time = 0.0;
     timeBase.deltaTime = 0.01;
 
-//    for ( int i = 0; i < 10000; ++i )
-    while ( true )
+    while ( !quit )
     {
         const int maxMessagesToSend = 1 + rand() % 32;
 
@@ -132,8 +139,8 @@ void soak_test()
                 int index = sendMessageId % 32;
                 protocol::Block block( core::memory::default_allocator(), index + 1 );
                 uint8_t * data = block.GetData();
-                for ( int i = 0; i < block.GetSize(); ++i )
-                    data[i] = ( index + i ) % 256;
+                for ( int j = 0; j < block.GetSize(); ++j )
+                    data[j] = ( index + j ) % 256;
                 messageChannel->SendBlock( block );
             }
             else
@@ -142,8 +149,8 @@ void soak_test()
                 int index = sendMessageId % 4;
                 protocol::Block block( core::memory::default_allocator(), (index+1) * 1024 * 1000 + index );
                 uint8_t * data = block.GetData();
-                for ( int i = 0; i < block.GetSize(); ++i )
-                    data[i] = ( index + i ) % 256;
+                for ( int j = 0; j < block.GetSize(); ++j )
+                    data[j] = ( index + j ) % 256;
                 messageChannel->SendBlock( block );
             }
             

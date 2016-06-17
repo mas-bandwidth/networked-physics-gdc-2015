@@ -95,8 +95,8 @@ namespace cubes
 			uint64_t objectId1 = reinterpret_cast<uint64_t>( dBodyGetData( b1 ) );
 			uint64_t objectId2 = reinterpret_cast<uint64_t>( dBodyGetData( b2 ) );
 
-			interactions[objectId1].push_back( objectId2 );
-			interactions[objectId2].push_back( objectId1 );
+			interactions[objectId1].push_back( (uint16_t) objectId2 );
+			interactions[objectId2].push_back( (uint16_t) objectId1 );
 		}
 
 		static void NearCallback( void * data, dGeomID o1, dGeomID o2 )
@@ -265,7 +265,7 @@ namespace cubes
 	{
 		// find free object slot
 
-		uint64_t id = -1;
+		uint64_t id = 0xFFFFFFFFFFFFFFFFllu;
 		for ( int i = 0; i < (int) impl->objects.size(); ++i )
 		{
 			if ( !impl->objects[i].exists() )
@@ -301,11 +301,11 @@ namespace cubes
 
 		// set object state
 
-		SetObjectState( id, initialObjectState );
+		SetObjectState( (int) id, initialObjectState );
 
 		// success!
 
-		return id;
+		return (int) id;
 	}
 
 	bool Simulation::ObjectExists( int id )

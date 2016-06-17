@@ -8,6 +8,14 @@
 #include "TestClientServer.h"
 #include "TestChannelStructure.h"
 #include <time.h>
+#include <signal.h>
+
+static volatile int quit = 0;
+
+void interrupt_handler( int /*dummy*/ )
+{
+    quit = 1;
+}
 
 const int NumServers = 8;
 const int NumClients = 256;
@@ -159,8 +167,7 @@ void soak_test()
 
     double lastConnectedClientTime = 0.0;
 
-    while ( true )
-    //for ( int i = 0; i < 10000; ++i )
+    while ( !quit )
     {
         for ( int i = 0; i < NumServers; ++i )
         {
